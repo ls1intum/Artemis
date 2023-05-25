@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -17,6 +19,7 @@ export interface FormProperties {
     releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
+    learningGoals?: LearningGoal[];
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -59,6 +62,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     file: File;
     fileName?: string;
     fileInputTouched = false;
+    isFileTooBig: boolean;
 
     constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
@@ -83,6 +87,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [1],
             updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            learningGoals: [undefined as LearningGoal[] | undefined],
         });
     }
 
@@ -91,6 +96,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file.name;
+            this.isFileTooBig = this.file.size > MAX_FILE_SIZE;
         }
     }
 
@@ -115,7 +121,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || !this.fileName);
+        return !(this.form.invalid || !this.fileName) && !this.isFileTooBig;
     }
 
     submitForm() {

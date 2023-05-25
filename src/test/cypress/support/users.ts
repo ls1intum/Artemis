@@ -72,12 +72,27 @@ export class CypressUserManagement {
      * Provides the entire account info for the user that is currently logged in
      * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
      * */
-    public getAccountInfo(func: Function) {
+    public getAccountInfo(func: (response: any) => void) {
         cy.request({ method: GET, url: BASE_API + 'account', log: false }).then((response) => {
             func(response.body);
         });
     }
+
+    public getUserInfo(username: string, func: (response: any) => void) {
+        cy.request({ method: GET, url: BASE_API + 'users/' + username, log: false }).then((response) => {
+            func(response.body);
+        });
+    }
 }
+
+// Users
+export const users = new CypressUserManagement();
+export const admin = users.getAdmin();
+export const instructor = users.getInstructor();
+export const tutor = users.getTutor();
+export const studentOne = users.getStudentOne();
+export const studentTwo = users.getStudentTwo();
+export const studentThree = users.getStudentThree();
 
 /**
  * Container class for user credentials.

@@ -1,33 +1,37 @@
-import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { map } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 type filter = 'all' | 'registered';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
+export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
     tutorialGroups: TutorialGroup[] = [];
     courseId: number;
     course: Course;
+    configuration?: TutorialGroupsConfiguration;
     isLoading = false;
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
 
@@ -35,26 +39,35 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
 
     constructor(
         private router: Router,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private courseManagementService: CourseManagementService,
         private tutorialGroupService: TutorialGroupsService,
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
+        private cdr: ChangeDetectorRef,
     ) {}
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
 
     get registeredTutorialGroups() {
         return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserRegistered);
     }
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.paramMap.subscribe((parentParams) => {
-            this.courseId = Number(parentParams.get('courseId'));
-            if (this.courseId) {
-                this.setCourse();
-                this.setTutorialGroups();
-                this.subscribeToCourseUpdates();
-            }
-        });
+        this.activatedRoute.parent?.parent?.paramMap
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((parentParams) => {
+                this.courseId = Number(parentParams.get('courseId'));
+                if (this.courseId) {
+                    this.setCourse();
+                    this.setTutorialGroups();
+                    this.subscribeToCourseUpdates();
+                }
+            })
+            .add(() => this.cdr.detectChanges());
         this.subscribeToQueryParameter();
         this.updateQueryParameters();
     }
@@ -64,19 +77,27 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     subscribeToQueryParameter() {
-        this.activatedRoute.queryParams.subscribe((queryParams) => {
-            if (queryParams.filter) {
-                this.selectedFilter = queryParams.filter as filter;
-            }
-        });
+        this.activatedRoute.queryParams
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((queryParams) => {
+                if (queryParams.filter) {
+                    this.selectedFilter = queryParams.filter as filter;
+                }
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     subscribeToCourseUpdates() {
-        this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => {
-            this.course = course;
-            this.setFreeDays();
-            this.setTutorialGroups();
-        });
+        this.courseStorageService
+            .subscribeToCourseUpdates(this.courseId)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((course) => {
+                this.course = course;
+                this.configuration = course?.tutorialGroupsConfiguration;
+                this.setFreeDays();
+                this.setTutorialGroups();
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     private setFreeDays() {
@@ -102,18 +123,19 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     loadCourseFromCache() {
-        const cachedCourse = this.courseCalculationService.getCourse(this.courseId);
+        const cachedCourse = this.courseStorageService.getCourse(this.courseId);
         if (cachedCourse === undefined) {
             return false;
         } else {
             this.course = cachedCourse;
+            this.configuration = this.course?.tutorialGroupsConfiguration;
             this.setFreeDays();
             return true;
         }
     }
 
     loadTutorialGroupsFromCache(): boolean {
-        const cachedTutorialGroups = this.courseCalculationService.getCourse(this.courseId)?.tutorialGroups;
+        const cachedTutorialGroups = this.courseStorageService.getCourse(this.courseId)?.tutorialGroups;
         if (cachedTutorialGroups === undefined) {
             return false;
         } else {
@@ -123,10 +145,10 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     updateCachedTutorialGroups() {
-        const course = this.courseCalculationService.getCourse(this.courseId);
+        const course = this.courseStorageService.getCourse(this.courseId);
         if (course) {
             course.tutorialGroups = this.tutorialGroups;
-            this.courseCalculationService.updateCourse(course);
+            this.courseStorageService.updateCourse(course);
         }
     }
 
@@ -139,6 +161,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroups: TutorialGroup[]) => {
@@ -146,7 +169,8 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                     this.updateCachedTutorialGroups();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     loadCourseFromServer() {
@@ -158,14 +182,17 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (course: Course) => {
                     this.course = course;
+                    this.configuration = this.course?.tutorialGroupsConfiguration;
                     this.setFreeDays();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     renderTopBarControls() {
@@ -175,14 +202,16 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     updateQueryParameters() {
-        this.router.navigate([], {
-            relativeTo: this.activatedRoute,
-            queryParams: {
-                filter: this.selectedFilter,
-            },
-            replaceUrl: true,
-            queryParamsHandling: 'merge',
-        });
+        this.router
+            .navigate([], {
+                relativeTo: this.activatedRoute,
+                queryParams: {
+                    filter: this.selectedFilter,
+                },
+                replaceUrl: true,
+                queryParamsHandling: 'merge',
+            })
+            .finally(() => this.cdr.detectChanges());
     }
 
     onFilterChange(newFilter: filter) {

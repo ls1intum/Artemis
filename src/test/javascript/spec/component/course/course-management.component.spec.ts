@@ -23,6 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
@@ -98,6 +99,7 @@ describe('CourseManagementComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(CourseManagementCardComponent),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })

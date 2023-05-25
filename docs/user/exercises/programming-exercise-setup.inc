@@ -12,55 +12,56 @@ Instructors can still use those templates to generate programming exercises and 
 
 - The support for a specific programming language ``templates`` depends on the used ``continuous integration`` system. The table below gives an overview:
 
-  +----------------------+--------+---------+
-  | Programming Language | Bamboo | Jenkins |
-  +======================+========+=========+
-  | Java                 | yes    | yes     |
-  +----------------------+--------+---------+
-  | Python               | yes    | yes     |
-  +----------------------+--------+---------+
-  | C                    | yes    | yes     |
-  +----------------------+--------+---------+
-  | Haskell              | yes    | yes     |
-  +----------------------+--------+---------+
-  | Kotlin               | yes    | no      |
-  +----------------------+--------+---------+
-  | VHDL                 | yes    | no      |
-  +----------------------+--------+---------+
-  | Assembler            | yes    | no      |
-  +----------------------+--------+---------+
-  | Swift                | yes    | yes     |
-  +----------------------+--------+---------+
-  | OCaml                | yes    | no      |
-  +----------------------+--------+---------+
+  +----------------------+--------+---------+-----------+
+  | Programming Language | Bamboo | Jenkins | GitLab CI |
+  +======================+========+=========+===========+
+  | Java                 | yes    | yes     | yes       |
+  +----------------------+--------+---------+-----------+
+  | Python               | yes    | yes     | no        |
+  +----------------------+--------+---------+-----------+
+  | C                    | yes    | yes     | no        |
+  +----------------------+--------+---------+-----------+
+  | Haskell              | yes    | yes     | no        |
+  +----------------------+--------+---------+-----------+
+  | Kotlin               | yes    | yes     | no        |
+  +----------------------+--------+---------+-----------+
+  | VHDL                 | yes    | no      | no        |
+  +----------------------+--------+---------+-----------+
+  | Assembler            | yes    | no      | no        |
+  +----------------------+--------+---------+-----------+
+  | Swift                | yes    | yes     | no        |
+  +----------------------+--------+---------+-----------+
+  | OCaml                | yes    | no      | no        |
+  +----------------------+--------+---------+-+---------+
 
-- Not all ``templates`` support the same feature set.
+- Not all ``templates`` support the same feature set and supported features can also change depending on the continuous integration system set up.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
-  The table below provides an overview of the supported features:
+  The table below provides an overview of the supported features.
+  In case a feature has different support for different continuous integration systems, feature support for Bamboo is denoted first (B), support for Jenkins is denoted second (J), and support for GitLab CI is denoted third (G).
 
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout | Testwise Coverage Analysis                 |
-  +======================+======================+======================+==================+==============+==============+==============================+============================================+
-  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes                                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Python               | yes                  | no                   | yes              | no           | no           | no                           | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | C                    | no                   | yes                  | yes              | no           | no           | no                           | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | C (FACT framework)   | no                   | no                   | yes              | no           | no           | no                           | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Haskell              | yes                  | no                   | no               | no           | no           | yes                          | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Kotlin               | yes                  | no                   | yes              | yes          | no           | no                           | yes                                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | VHDL                 | no                   | no                   | no               | no           | no           | no                           | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Assembler            | no                   | no                   | no               | no           | no           | no                           | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Swift                | no                   | no                   | yes              | no           | no           | no                           | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | OCaml                | no                   | no                   | no               | no           | no           | yes                          | no                                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check    | Package Name | Project Type | Solution Repository Checkout | Testwise Coverage Analysis | Publish Build Plan URL | Auxiliary repositories |
+  +======================+======================+======================+=====================+==============+==============+==============================+============================+========================+========================+
+  | Java                 | B: yes J: yes G:no   | B: yes J: yes G: no  | B: yes J: yes G: no | yes          | yes          | no                           | yes                        | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | Python               | B: yes J: no         | no                   | yes                 | no           | no           | no                           | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | C                    | no                   | B: yes J: no         | yes                 | no           | no           | no                           | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | C (FACT framework)   | no                   | B: yes J: no         | yes                 | no           | no           | no                           | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | Haskell              | B: yes J: no         | no                   | no                  | no           | no           | B: yes J: no                 | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | Kotlin               | yes                  | no                   | yes                 | yes          | no           | no                           | yes                        | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | VHDL                 | no                   | no                   | no                  | no           | no           | no                           | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | Assembler            | no                   | no                   | no                  | no           | no           | no                           | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | Swift                | no                   | yes                  | yes                 | yes          | no           | no                           | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
+  | OCaml                | no                   | no                   | no                  | no           | no           | yes                          | no                         | yes                    | yes                    |
+  +----------------------+----------------------+----------------------+---------------------+--------------+--------------+------------------------------+----------------------------+------------------------+------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
   - *Static Code Analysis*: ``Artemis`` can generate a build plan which additionally executes static code analysis tools.
@@ -70,6 +71,7 @@ Instructors can still use those templates to generate programming exercises and 
   - *Solution Repository Checkout*: Instructors are able to compare a student submission against a sample solution in the solution repository
   - *Testwise Coverage Analysis*: ``Artemis`` can generate a build plan which additionally executes a testwise coverage analysis.
     ``Artemis`` aggregates the recorded data into different metrics. This feature allows instructors to check which code in the solution submission is how often executed by the test cases.
+  - *Publish Build Plan*: ``Artemis`` can display the URL to the build plan (e.g. on Bamboo or Jenkins) to the student. This will not work for the upcoming internal continuous integration system that has no graphical user interface.
 
 .. note::
   Only some ``templates`` for ``Bamboo`` support ``Sequential Test Runs`` at the moment.
@@ -108,6 +110,17 @@ Exercise Creation
 
     .. figure:: programming/course-management-exercise-dashboard.png
               :align: center
+
+    - **Guided Mode**: The form for generating new programming exercises offers the option to switch to the guided mode by clicking the |switch-to-guided-mode-btn|.
+      This mode splits up the generation of a programming exercise into multiple steps. The following video shows an exemplary use of the guided mode.
+
+    |
+
+    .. raw:: html
+
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/26850?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+            Watch this video on TUM-Live.
+        </iframe>
 
 - Artemis provides various options to customize programming exercises:
 
@@ -189,6 +202,7 @@ Exercise Creation
       This date must be after the due date. The results created by this test run will be rated.
     - **Manual Review:** Instructors/Tutors have to manually review the latest student submissions after the automatic tests were executed.
     - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
+    - **Example Solution Publication Date:** The date when the solution repository becomes available to download for students. If left blank, example solutions are never published.
 
     |
 
@@ -726,3 +740,5 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 .. |grading-reevaluate-all| image:: programming/configure-grading-reevaluate-all.png
 .. |grading-trigger-all| image:: programming/configure-grading-trigger-all.png
 .. |import| image:: programming/programming-exercise-import-button.png
+.. |switch-to-guided-mode-btn| image:: programming/switch-to-guided-mode-button.png
+    :width: 160

@@ -40,11 +40,12 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
     /**
      * Generate a BuildLogStatisticsEntry from the given ZonedDateTime (and other parameters) and persist it.
      *
-     * @param programmingSubmission the submission for which the BuildLogStatisticsEntry should be generated
-     * @param agentSetupDuration the BuildJobPartDuration between the start of the build on the CI server and the completion of the agent setup. This includes e.g. pulling the docker images
-     * @param testDuration the BuildJobPartDuration of the test execution
-     * @param scaDuration the BuildJobPartDuration of the SCA execution
-     * @param totalJobDuration the BuildJobPartDuration of the complete job
+     * @param programmingSubmission       the submission for which the BuildLogStatisticsEntry should be generated
+     * @param agentSetupDuration          the BuildJobPartDuration between the start of the build on the CI server and the completion of the agent setup. This includes e.g. pulling
+     *                                        the docker images
+     * @param testDuration                the BuildJobPartDuration of the test execution
+     * @param scaDuration                 the BuildJobPartDuration of the SCA execution
+     * @param totalJobDuration            the BuildJobPartDuration of the complete job
      * @param dependenciesDownloadedCount the number of dependencies downloaded during the build, or null (if it is not exposed through the logs)
      * @return the already persisted BuildLogStatisticsEntry
      */
@@ -53,7 +54,7 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
 
         BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration.durationInSeconds(),
                 testDuration.durationInSeconds(), scaDuration.durationInSeconds(), totalJobDuration.durationInSeconds(), dependenciesDownloadedCount);
-        return this.save(buildLogStatisticsEntry);
+        return save(buildLogStatisticsEntry);
     }
 
 }

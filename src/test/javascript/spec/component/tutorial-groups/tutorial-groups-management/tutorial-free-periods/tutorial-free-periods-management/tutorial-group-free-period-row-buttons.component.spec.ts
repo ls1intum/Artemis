@@ -45,6 +45,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 configuration = generateExampleTutorialGroupsConfiguration({});
                 tutorialFreePeriod = generateExampleTutorialGroupFreePeriod({});
                 setInputValues();
+                fixture.detectChanges();
             });
     });
 
@@ -59,7 +60,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
@@ -76,8 +76,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openEditFreeDayDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#edit-' + tutorialFreePeriod.id);
@@ -86,7 +84,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupFreePeriod).toEqual(tutorialFreePeriod);
             expect(mockModalRef.componentInstance.tutorialGroupsConfiguration).toEqual(configuration);
             expect(mockModalRef.componentInstance.course).toEqual(course);
@@ -97,7 +95,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         const deleteSpy = jest.spyOn(periodService, 'delete').mockReturnValue(of(new HttpResponse<void>({})));
         const deleteEventSpy = jest.spyOn(component.tutorialFreePeriodDeleted, 'emit');
 
-        fixture.detectChanges();
         component.deleteTutorialFreePeriod();
         expect(deleteSpy).toHaveBeenCalledWith(course.id, configuration.id, tutorialFreePeriod.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();

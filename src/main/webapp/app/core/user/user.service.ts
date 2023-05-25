@@ -5,7 +5,7 @@ import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    public resourceUrl = SERVER_API_URL + 'api/users';
+    public resourceUrl = 'api/users';
 
     constructor(private http: HttpClient) {}
 
@@ -15,7 +15,7 @@ export class UserService {
      * @return Observable<User> with the updated user as body.
      */
     syncLdap(userId: number): Observable<User> {
-        return this.http.put<User>(`${this.resourceUrl}/${userId}/ldap-sync`, { observe: 'response' });
+        return this.http.put<User>(`${this.resourceUrl}/${userId}/sync-ldap`, { observe: 'response' });
     }
 
     /**

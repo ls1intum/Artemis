@@ -8,7 +8,7 @@ import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-se
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
-    public notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
+    public notificationSettingsResourceUrl = 'api/notification-settings';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -39,9 +39,7 @@ export class UserSettingsService {
      * @return updated settings structure based on loaded settings
      */
     public loadSettingsSuccessAsSettingsStructure(receivedSettingsFromServer: Setting[], category: UserSettingsCategory): UserSettingsStructure<Setting> {
-        let settingsResult: UserSettingsStructure<Setting>;
-        // load structure as foundation
-        settingsResult = UserSettingsService.loadSettingsStructure(category);
+        const settingsResult = UserSettingsService.loadSettingsStructure(category);
         this.updateSettingsStructure(receivedSettingsFromServer, settingsResult);
         return settingsResult;
     }

@@ -9,6 +9,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-create-learning-goal',
@@ -16,6 +17,7 @@ import { Lecture } from 'app/entities/lecture.model';
     styles: [],
 })
 export class CreateLearningGoalComponent implements OnInit {
+    documentationType = DocumentationType.Competencies;
     learningGoalToCreate: LearningGoal = new LearningGoal();
     isLoading: boolean;
     courseId: number;
@@ -64,11 +66,12 @@ export class CreateLearningGoalComponent implements OnInit {
             return;
         }
 
-        const { title, description, taxonomy, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoalToCreate.title = title;
         this.learningGoalToCreate.description = description;
         this.learningGoalToCreate.taxonomy = taxonomy;
+        this.learningGoalToCreate.masteryThreshold = masteryThreshold;
         this.learningGoalToCreate.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;
@@ -82,7 +85,7 @@ export class CreateLearningGoalComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    // currently at /course-management/{courseId}/goal-management/create, going back to /course-management/{courseId}/goal-management/
+                    // currently at /course-management/{courseId}/competency-management/create, going back to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

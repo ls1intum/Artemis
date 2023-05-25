@@ -1,0 +1,23 @@
+<div *ngIf="isInitialized">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span *ngIf="getAsChannel(activeConversation) as channel">
+                {{ 'artemisApp.dialogs.addUsers.addUsersToChannel' | artemisTranslate }}
+                <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!"></jhi-channel-icon>
+                {{ conversationService.getConversationName(channel) }}
+            </span>
+            <span *ngIf="getAsGroupChat(activeConversation)">
+                {{ 'artemisApp.dialogs.addUsers.addUsersToGroupChat' | artemisTranslate }}
+            </span>
+        </h4>
+        <button type="button" class="btn-close" (click)="dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <jhi-conversation-add-users-form
+            [maxSelectable]="maxSelectable"
+            [courseId]="course.id!"
+            (formSubmitted)="onFormSubmitted($event)"
+            [activeConversation]="activeConversation"
+        ></jhi-conversation-add-users-form>
+    </div>
+</div>

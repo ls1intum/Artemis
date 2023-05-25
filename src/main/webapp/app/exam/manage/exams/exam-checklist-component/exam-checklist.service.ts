@@ -16,7 +16,7 @@ export class ExamChecklistService {
      * @param examChecklist the examChecklist for the exam
      */
     checkAllExamsGenerated(exam: Exam, examChecklist: ExamChecklist): boolean {
-        return examChecklist.numberOfGeneratedStudentExams === exam.numberOfRegisteredUsers;
+        return examChecklist.numberOfGeneratedStudentExams === exam.numberOfExamUsers;
     }
 
     /**
@@ -54,10 +54,10 @@ export class ExamChecklistService {
                 }
             });
 
-            if (sumPointsExerciseGroupsMandatory <= exam.maxPoints!) {
+            if (sumPointsExerciseGroupsMandatory <= exam.examMaxPoints!) {
                 totalPointsMandatory = true;
             }
-            if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= exam.maxPoints!) {
+            if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= exam.examMaxPoints!) {
                 totalPointsMandatoryOptional = true;
             }
         }
@@ -76,6 +76,7 @@ export class ExamChecklistService {
         exam.exerciseGroups?.forEach((exerciseGroup) => {
             let maxPoints = 0;
             if (exerciseGroup.exercises && exerciseGroup.exercises!.length !== 0) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 maxPoints = exerciseGroup.exercises?.[0].maxPoints!;
             }
             return exerciseGroup.exercises?.some((exercise) => {
@@ -150,7 +151,7 @@ export class ExamChecklistService {
      * @param exam the corresponding exam
      */
     checkAtLeastOneRegisteredStudent(exam: Exam): boolean {
-        return !!exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers > 0;
+        return !!exam.numberOfExamUsers && exam.numberOfExamUsers > 0;
     }
 
     /**

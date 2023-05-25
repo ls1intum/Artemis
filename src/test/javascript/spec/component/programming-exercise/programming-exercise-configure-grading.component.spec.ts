@@ -1,60 +1,59 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
-import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
-import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
-import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
-import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
+import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
+import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
+import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import {
     ChartFilterType,
     EditableField,
     ProgrammingExerciseConfigureGradingComponent,
+    Table,
 } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
-import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import {
-    ProgrammingExerciseGradingService,
-    ProgrammingExerciseTestCaseUpdate,
-    StaticCodeAnalysisCategoryUpdate,
-} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
-import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
-import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgModel } from '@angular/forms';
-import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
-import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, of } from 'rxjs';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
+import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -64,28 +63,27 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let route: ActivatedRoute;
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
+    let modalService: NgbModal;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let updateTestCasesStub: jest.SpyInstance;
     let updateCategoriesStub: jest.SpyInstance;
-    let resetTestCasesStub: jest.SpyInstance;
     let resetCategoriesStub: jest.SpyInstance;
     let testCasesChangedStub: jest.SpyInstance;
     let getExerciseTestCaseStateStub: jest.SpyInstance;
     let loadExerciseStub: jest.SpyInstance;
     let loadStatisticsStub: jest.SpyInstance;
+    let importCategoriesFromExerciseStub: jest.SpyInstance;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
     let testCasesChangedSubject: Subject<boolean>;
     let getExerciseTestCaseStateSubject: Subject<{ body: ProgrammingExerciseTestCaseStateDTO }>;
 
-    const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
-    const rowClass = 'datatable-body-row';
     const saveTableButton = '#save-table-button';
     const resetTableButton = '#reset-table-button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
-    const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
     const testCasesUpdated = '#test-case-status-updated';
     const testCasesNoUpdated = '#test-case-status-no-updated';
     const codeAnalysisTableId = '#codeAnalysisTable';
@@ -95,6 +93,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         id: exerciseId,
         staticCodeAnalysisEnabled: true,
         maxPoints: 42,
+        programmingLanguage: ProgrammingLanguage.JAVA,
     } as ProgrammingExercise;
     const testCases = [
         {
@@ -163,18 +162,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         },
     } as ProgrammingExerciseGradingStatistics;
 
-    const sortedTestCases = (tests: ProgrammingExerciseTestCase[]) => {
-        return tests.sort((a, b) => {
-            if (a.testName! < b.testName!) {
-                return -1;
-            } else if (a.testName! > b.testName!) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
-    };
-
     const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs) => ({
         body: {
             released,
@@ -192,10 +179,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         return getElement(debugElement, resetTableButton);
     };
 
-    const getUnsavedChangesBadge = () => {
-        return getElement(debugElement, testCasesUnsavedChanges);
-    };
-
     const getNoUnsavedChangesBadge = () => {
         return getElement(debugElement, testCasesNoUnsavedChanges);
     };
@@ -210,13 +193,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
                 TableEditableFieldComponent,
                 MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
+                MockComponent(ProgrammingExerciseGradingTasksTableComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
@@ -225,12 +209,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
-                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
-                MockDirective(NgbPopover),
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
             ],
             providers: [
@@ -243,6 +224,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
             ],
         })
@@ -257,12 +239,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 const router = debugElement.injector.get(Router);
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                modalService = debugElement.injector.get(NgbModal);
 
-                updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
                 updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
-                resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
                 resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
                 loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
+                importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -315,250 +297,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
     };
 
-    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', () => {
-        initGradingComponent();
-
-        fixture.detectChanges();
-
-        const table = debugElement.query(By.css(testCaseTableId));
-        const rows = table.queryAll(By.css(rowClass));
-
-        expect(comp.testCases).toEqual(testCases);
-        expect(rows).toHaveLength(testCases.filter(({ active }) => active).length);
-
-        const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).not.toBeNull();
-        expect(saveButton.nativeElement.disabled).toBeTrue();
-    });
-
-    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', () => {
-        initGradingComponent({ showInactive: true });
-
-        fixture.detectChanges();
-
-        const table = debugElement.query(By.css(testCaseTableId));
-        const rows = table.queryAll(By.css(rowClass));
-
-        expect(comp.testCases).toEqual(testCases);
-        expect(rows).toHaveLength(testCases.length);
-
-        const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).not.toBeNull();
-        expect(saveButton.nativeElement.disabled).toBeTrue();
-    });
-
-    it('should update test case when an input field is updated', () => {
-        initGradingComponent({ showInactive: true });
-
-        fixture.detectChanges();
-
-        const orderedTests = sortedTestCases(testCases);
-
-        const table = debugElement.query(By.css(testCaseTableId));
-
-        // get first weight input
-        const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(testCases.length * 3);
-
-        const weightInput = editingInputs[0].nativeElement;
-        expect(weightInput).not.toBeNull();
-        weightInput.focus();
-
-        // Set new weight.
-        weightInput.value = '20';
-        weightInput.dispatchEvent(new Event('blur'));
-
-        const multiplierInput = editingInputs[1].nativeElement;
-        expect(multiplierInput).not.toBeNull();
-        multiplierInput.focus();
-
-        // Set new multiplier.
-        multiplierInput.value = '2';
-        multiplierInput.dispatchEvent(new Event('blur'));
-
-        const bonusInput = editingInputs[2].nativeElement;
-        expect(bonusInput).not.toBeNull();
-        bonusInput.focus();
-
-        // Set new bonus.
-        bonusInput.value = '1';
-        bonusInput.dispatchEvent(new Event('blur'));
-
-        fixture.detectChanges();
-
-        expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
-
-        // Save weight.
-        updateTestCasesStub.mockReturnValue(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 2, bonusPoints: 1 }]));
-        const saveButton = getSaveButton();
-        expectElementToBeEnabled(saveButton);
-        saveButton.click();
-
-        fixture.detectChanges();
-
-        let testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledOnce();
-        expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility)]);
-        expect(testThatWasUpdated.weight).toBe(20);
-        expect(testThatWasUpdated.bonusMultiplier).toBe(2);
-        expect(testThatWasUpdated.bonusPoints).toBe(1);
-        expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(77.4);
-
-        testCasesChangedSubject.next(true);
-        // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBeTrue();
-
-        fixture.detectChanges();
-
-        multiplierInput.focus();
-        multiplierInput.value = ''; // test default value
-        bonusInput.dispatchEvent(new Event('input'));
-
-        bonusInput.focus();
-        bonusInput.value = 'a'; // test NaN value
-        bonusInput.dispatchEvent(new Event('input'));
-
-        fixture.detectChanges();
-
-        multiplierInput.dispatchEvent(new Event('blur'));
-        bonusInput.dispatchEvent(new Event('blur'));
-
-        fixture.detectChanges();
-
-        expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
-
-        expect(multiplierInput.value).toBe('1');
-        expect(bonusInput.value).toBe('1');
-
-        // Save weight.
-        updateTestCasesStub.mockReset();
-        updateTestCasesStub.mockReturnValue(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 1, bonusPoints: 1 }]));
-        saveButton.click();
-
-        fixture.detectChanges();
-
-        testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledOnce();
-        expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility)]);
-        expect(testThatWasUpdated.weight).toBe(20);
-        expect(testThatWasUpdated.bonusMultiplier).toBe(1);
-        expect(testThatWasUpdated.bonusPoints).toBe(1);
-        expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(39.2);
-    });
-
-    const setAllWeightsToZero = () => {
-        const table = debugElement.query(By.css(testCaseTableId));
-
-        // get all input fields
-        const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(testCases.length * 3);
-        // Set only the weight input fields to 0 of all test cases
-        for (let i = 0; i < editingInputs.length; i += 3) {
-            const weightInput = editingInputs[i].nativeElement;
-            expect(weightInput).not.toBeNull();
-            weightInput.focus();
-
-            // Set new weight.
-            weightInput.value = '0';
-            weightInput.dispatchEvent(new Event('blur'));
-        }
-    };
-
-    const checkBehaviourForZeroWeight = (assessmentType: AssessmentType) => {
-        initGradingComponent({ showInactive: true });
-        comp.programmingExercise.assessmentType = assessmentType;
-
-        fixture.detectChanges();
-
-        const orderedTests = sortedTestCases(testCases);
-        setAllWeightsToZero();
-
-        fixture.detectChanges();
-        expect(comp.changedTestCaseIds).toEqual(orderedTests.map((test) => test.id));
-
-        // Mock which should be return from update service call
-        const updateTestCases = orderedTests.map((test) => {
-            return { ...test, weight: 0, bonusMultiplier: 2, bonusPoints: 1 };
-        });
-        // Save weight.
-        updateTestCasesStub.mockReturnValue(of(updateTestCases));
-
-        // Initialize spy for error alert
-        const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-
-        const saveButton = getSaveButton();
-        expectElementToBeEnabled(saveButton);
-        saveButton.click();
-
-        if (assessmentType === AssessmentType.AUTOMATIC) {
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
-        } else {
-            expect(alertServiceSpy).not.toHaveBeenCalled();
-        }
-    };
-
-    it('should show an error alert when test case weights are less or equal zero for exercises with automatic feedback', () => {
-        checkBehaviourForZeroWeight(AssessmentType.AUTOMATIC);
-    });
-
-    it('should NOT show an error alert when test case weights are zero for exercises with semiautomatic feedback', () => {
-        checkBehaviourForZeroWeight(AssessmentType.SEMI_AUTOMATIC);
-    });
-
-    it('should NOT show an error alert when test case weights are zero for exercises with manual feedback', () => {
-        checkBehaviourForZeroWeight(AssessmentType.MANUAL);
-    });
-
-    it('should be able to update the value of the visibility', () => {
-        initGradingComponent({ showInactive: true });
-
-        fixture.detectChanges();
-
-        const orderedTests = sortedTestCases(testCases);
-
-        const table = debugElement.query(By.css(testCaseTableId));
-        const dropdowns = table.queryAll(By.all()).filter((elem) => elem.name === 'select');
-        expect(dropdowns).toHaveLength(testCases.length);
-        dropdowns[0].nativeElement.value = Visibility.AfterDueDate;
-        dropdowns[0].nativeElement.dispatchEvent(new Event('change'));
-
-        fixture.detectChanges();
-
-        expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
-
-        // The UI should now show that there are unsaved changes.
-        expect(getUnsavedChangesBadge()).not.toBeNull();
-        expect(getNoUnsavedChangesBadge()).toBeNull();
-
-        // Save weight.
-        updateTestCasesStub.mockReturnValue(of({ ...orderedTests[0], afterDueDate: true }));
-        const saveTestCases = debugElement.query(By.css(saveTableButton));
-        expect(saveTestCases).not.toBeNull();
-        expect(saveTestCases.nativeElement.disabled).toBeFalse();
-        saveTestCases.nativeElement.click();
-
-        fixture.detectChanges();
-
-        const testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledOnce();
-        expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
-    });
-
-    it('should also be able to select after due date as visibility option if the programming exercise does not have a buildAndTestAfterDueDate', () => {
-        initGradingComponent({ hasBuildAndTestAfterDueDate: false, showInactive: true });
-
-        fixture.detectChanges();
-
-        const table = debugElement.query(By.css(testCaseTableId));
-        const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
-        // three options for each test case should still be available
-        expect(options).toHaveLength(testCases.length * 3);
-    });
-
     it('should show the updatedTests badge when the exercise is released and has student results', () => {
         initGradingComponent();
 
@@ -593,56 +331,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         expect(getUpdatedTestCaseBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
-    });
-
-    it('should reset all test cases when the reset button is clicked', () => {
-        initGradingComponent();
-
-        fixture.detectChanges();
-
-        comp.updateEditedField(testCases[0], EditableField.WEIGHT)(3);
-        comp.updateEditedField(testCases[1], EditableField.WEIGHT)(4);
-
-        comp.updateEditedField(testCases[1], EditableField.BONUS_MULTIPLIER)(2);
-        comp.updateEditedField(testCases[2], EditableField.BONUS_MULTIPLIER)(3);
-
-        comp.updateEditedField(testCases[0], EditableField.BONUS_POINTS)(4);
-        comp.updateEditedField(testCases[2], EditableField.BONUS_POINTS)(10);
-
-        const updatedTestCases: ProgrammingExerciseTestCase[] = [
-            { ...testCases[0], weight: 3, bonusPoints: 4 },
-            { ...testCases[1], weight: 4, bonusMultiplier: 2 },
-            { ...testCases[2], bonusMultiplier: 3, bonusPoints: 10 },
-        ];
-        updateTestCasesStub.mockReturnValue(of(updatedTestCases));
-
-        // Save tests.
-        comp.saveTestCases();
-
-        fixture.detectChanges();
-
-        expect(updateTestCasesStub).toHaveBeenCalledOnce();
-
-        expect(comp.changedTestCaseIds).toHaveLength(0);
-        testCasesChangedSubject.next(true);
-
-        // Reset button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBeTrue();
-
-        fixture.detectChanges();
-
-        resetTestCasesStub.mockReturnValue(of(testCases));
-
-        const resetButton = getResetButton();
-        expectElementToBeEnabled(resetButton);
-        resetButton.click();
-
-        fixture.detectChanges();
-
-        expect(resetTestCasesStub).toHaveBeenCalledOnce();
-        expect(resetTestCasesStub).toHaveBeenCalledWith(exerciseId);
-        expect(comp.testCases).toEqual(testCases);
-        expect(comp.changedTestCaseIds).toHaveLength(0);
     });
 
     it('should reset all categories when the reset button is clicked', () => {
@@ -697,6 +385,40 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(codeAnalysisCategories1);
         expect(comp.changedCategoryIds).toHaveLength(0);
+    });
+
+    it('should import a configuration from a different exercise', () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as ProgrammingExercise),
+            componentInstance: {},
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        initGradingComponent({ tab: 'code-analysis' });
+        fixture.detectChanges();
+
+        const button = debugElement.query(By.css('#import-configuration-button'));
+
+        button.nativeElement.click();
+
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
+        expect(mockReturnValue.componentInstance.programmingLanguage).toEqual(ProgrammingLanguage.JAVA);
+
+        expect(importCategoriesFromExerciseStub).toHaveBeenCalledOnce();
+        expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);
+    });
+
+    it('should import categories and update the component', () => {
+        initGradingComponent();
+
+        const newConfiguration = new StaticCodeAnalysisCategory();
+        importCategoriesFromExerciseStub.mockReturnValue(of(newConfiguration));
+
+        comp.importCategories(5);
+
+        expect(comp.staticCodeAnalysisCategoriesForTable).toBe(newConfiguration);
+        expect(comp.staticCodeAnalysisCategoriesForCharts).toBe(newConfiguration);
+        expect(comp.backupStaticCodeAnalysisCategories).toBe(newConfiguration);
     });
 
     it('should update sca category when an input field is updated', () => {
@@ -780,50 +502,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(categoryIssuesCharts[1].category).toEqual(codeAnalysisCategories1[1]);
         expect(categoryIssuesCharts[1].totalStudents).toBe(5);
         expect(categoryIssuesCharts[1].maxNumberOfIssues).toBe(5);
-
-        comp.selectTab('test-cases');
-
-        fixture.detectChanges();
-
-        const passedBuildCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
-        expect(passedBuildCharts).toHaveLength(3);
-
-        // this test case is disabled and has no stats
-        expect(passedBuildCharts[0].testCaseStats).toBeUndefined();
-        expect(passedBuildCharts[0].totalParticipations).toBe(5);
-
-        expect(passedBuildCharts[1].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testBubbleSort);
-        expect(passedBuildCharts[1].totalParticipations).toBe(5);
-
-        expect(passedBuildCharts[2].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testMergeSort);
-        expect(passedBuildCharts[2].totalParticipations).toBe(5);
     });
 
-    const sortAndTestTable = (table: string) => (headerElement: DebugElement, prop: string, dir: string) => {
+    const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
         expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
     };
-
-    it('should sort test-case table', () => {
-        initGradingComponent();
-
-        fixture.detectChanges();
-
-        const table = debugElement.query(By.css(testCaseTableId));
-        const headerColumns = table.queryAll(By.css('.datatable-header-cell-wrapper'));
-
-        const sortAndTest = sortAndTestTable('testCases');
-
-        const weightHeader = headerColumns[1];
-        sortAndTest(weightHeader, 'weight', 'asc');
-        sortAndTest(weightHeader, 'weight', 'desc');
-
-        const passedPercentHeader = headerColumns[6];
-        sortAndTest(passedPercentHeader, 'passedPercent', 'asc');
-        sortAndTest(passedPercentHeader, 'passedPercent', 'desc');
-    });
 
     it('should sort code-analysis table', () => {
         initGradingComponent({ tab: 'code-analysis' });
@@ -846,110 +532,25 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
     });
 
-    it('should calculate the points per test correctly', () => {
-        testCases[0].weight = 2;
-        testCases[1].bonusMultiplier = 1.5;
-        testCases[2].bonusPoints = 1;
+    it('should not require confirmation if there are no unsaved changes', () => {
+        initGradingComponent();
 
-        initGradingComponent({ tab: 'test-cases' });
-
-        fixture.detectChanges();
-
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 21, testBubbleSort: 11.5, testMergeSort: 10.5 });
+        expect(comp.canDeactivate()).toBeTrue();
     });
 
-    it('should update points of individual test correctly', () => {
-        initGradingComponent({ tab: 'test-cases' });
-        fixture.detectChanges();
+    it('should require confirmation if there are unsaved changes', () => {
+        initGradingComponent();
+        comp.changedTestCaseIds = [1, 2, 3];
 
-        testCases[0].weight = 5;
-        comp.updateTestPoints(testCases[0], EditableField.WEIGHT);
+        // Ignore window confirm
+        window.confirm = () => {
+            return false;
+        };
 
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 30, testBubbleSort: 6, testMergeSort: 6 });
-
-        testCases[2].bonusMultiplier = 3;
-        comp.updateTestPoints(testCases[2], EditableField.BONUS_MULTIPLIER);
-
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 30, testBubbleSort: 18, testMergeSort: 6 });
+        expect(comp.canDeactivate()).toBeFalse();
     });
 
     describe('test chart interaction', () => {
-        it('should filter test case table correctly', () => {
-            initGradingComponent();
-            fixture.detectChanges();
-            const testCasesDisplayedByCharts = comp.filteredTestCasesForCharts;
-            const expectedTestCase = {
-                id: 1,
-                testName: 'testBubbleSort',
-                active: true,
-                weight: 1,
-                bonusMultiplier: 1,
-                bonusPoints: 0,
-                visibility: Visibility.Always,
-            };
-
-            comp.filterByChart(1, ChartFilterType.TEST_CASES);
-
-            expect(comp.filteredTestCasesForTable).toHaveLength(1);
-            expect(comp.filteredTestCasesForTable).toEqual([expectedTestCase]);
-            expect(comp.filteredTestCasesForCharts).toEqual(testCasesDisplayedByCharts);
-        });
-
-        it('should update test case accordingly if modified while chart filtering', () => {
-            initGradingComponent();
-            fixture.detectChanges();
-            comp.filterByChart(1, ChartFilterType.TEST_CASES);
-            fixture.detectChanges();
-            const table = debugElement.query(By.css(testCaseTableId));
-            const editingInputs = table.queryAll(By.css(tableEditingInput));
-            expect(editingInputs).toHaveLength(3);
-
-            const weightInput = editingInputs[0].nativeElement;
-            expect(weightInput).not.toBeNull();
-            weightInput.focus();
-
-            // Set new weight.
-            weightInput.value = '40';
-            weightInput.dispatchEvent(new Event('blur'));
-
-            const multiplierInput = editingInputs[1].nativeElement;
-            expect(multiplierInput).not.toBeNull();
-            multiplierInput.focus();
-
-            // Set new multiplier.
-            multiplierInput.value = '4';
-            multiplierInput.dispatchEvent(new Event('blur'));
-
-            const bonusInput = editingInputs[2].nativeElement;
-            expect(bonusInput).not.toBeNull();
-            bonusInput.focus();
-
-            // Set new bonus.
-            bonusInput.value = '7';
-            bonusInput.dispatchEvent(new Event('blur'));
-            fixture.detectChanges();
-
-            const visibleTestCase = {
-                id: 1,
-                testName: 'testBubbleSort',
-                active: true,
-                weight: 40,
-                bonusMultiplier: 4,
-                bonusPoints: 7,
-                visibility: Visibility.Always,
-            };
-
-            expect(comp.filteredTestCasesForTable).toHaveLength(1);
-            expect(comp.filteredTestCasesForTable).toEqual([visibleTestCase]);
-            expect(comp.filteredTestCasesForCharts).toContainEqual(visibleTestCase);
-
-            // we reset the table
-            comp.filterByChart(-5, ChartFilterType.TEST_CASES);
-            const expectedTestCases = testCases.filter((testCase) => testCase.active === true).map((testCase) => (testCase.id !== 1 ? testCase : visibleTestCase));
-
-            expect(comp.filteredTestCasesForTable).toEqual(expectedTestCases);
-        });
-
         it('should filter sca table correctly', () => {
             initGradingComponent({ tab: 'code-analysis' });
             fixture.detectChanges();

@@ -5,6 +5,7 @@
             "sessionOverlapsWithSession": "The session overlaps with the following sessions: {{ sessions }}"
         },
         "generic": {
+            "unknown": "Unknown",
             "more": "More...",
             "offline": "Offline",
             "online": "Online",
@@ -19,11 +20,16 @@
                 "saturday": "Saturday",
                 "sunday": "Sunday"
             },
+            "repetitions": {
+                "everyWeek": "Every week",
+                "everyNWeeks": "Every {{ n }} weeks"
+            },
             "timeZone": "Time Zone: {{ timeZone }}",
             "betaWarning": "This feature is currently in beta. Bugs and breaking changes may occur. Please report any issues on: https://github.com/ls1intum/Artemis/issues"
         },
         "entities": {
             "tutorialGroup": {
+                "locationTime": "Location and Time",
                 "plural": "Tutorial Groups",
                 "course": "Course",
                 "title": "Title",
@@ -34,9 +40,19 @@
                 "language": "Language",
                 "teachingAssistant": "Tutor",
                 "registrations": "Registrations",
+                "capacityWithRegistrations": "Capacity / Registrations",
                 "schedule": "Schedule",
                 "sessions": "Sessions",
-                "nextSession": "Next Session"
+                "nextSession": "Next Session",
+                "channel": "Chat",
+                "channelWithName": "Channel: {{ channel }}",
+                "channelReverse": "Channel of the tutorial group {{ title }}",
+                "utilization": "Utilization",
+                "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
+                "utilizationHelpDetail": "Average attendance divided by capacity",
+                "averageAttendance": "Average attendance: {{ averageAttendance }}",
+                "averageAttendanceDetail": "Average Attendance",
+                "averageAttendanceDetailHelp": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session."
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",
@@ -55,7 +71,8 @@
                 "start": "Start",
                 "end": "End",
                 "status": "Status",
-                "location": "Location"
+                "location": "Location",
+                "attendance": "# of Attendees"
             },
             "tutorialFreePeriod": {
                 "date": "Date",
@@ -70,6 +87,10 @@
                     "requiredValidationError": "Title is required!",
                     "maxLengthValidationError": "Title can be max {{ max }} characters long!",
                     "regexValidationError": "Titles can only contain letters, numbers, spaces and dashes."
+                },
+                "updateChannelNameInput": {
+                    "label": "Update Channel Name",
+                    "explanation": "If there is a messages channel associated with this tutorial group, the name of the channel will be updated with the title of the tutorial group if you enable this option."
                 },
                 "teachingAssistantInput": {
                     "label": "Tutor",
@@ -99,7 +120,12 @@
                 },
                 "languageInput": {
                     "label": "Language",
-                    "placeholder": "Select a Language"
+                    "placeholder": "Select a Language",
+                    "loadingText": "Languages are loading ...",
+                    "notFoundText": "No languages found.",
+                    "languageHelp": "You can search for a language used in other tutorial groups by typing into the field.",
+                    "maxLengthValidationError": "Language is limited to {{ max }} characters!",
+                    "requiredValidationError": "A language is required!"
                 },
                 "isOnlineInput": {
                     "label": "Does this tutorial group meet online or offline?"
@@ -192,6 +218,11 @@
                     "requiredValidationError": "You need to select a period!",
                     "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
                     "invalidRangeError": "Period must be a valid date range"
+                },
+                "useTutorialGroupChannelsInput": {
+                    "label": "Use Artemis managed Tutorial Group Channels",
+                    "channelDeletionWarning": "You have disabled the use of Artemis managed tutorial group channels. All channels that were created by Artemis will be deleted. Are you sure you want to do this?",
+                    "explanation": "If enabled, Artemis will create a dedicated channel for each tutorial group in the 'Messages' section of the course. The channel can still be managed manually but Artemis automatically performs some common management tasks. Artemis will automatically add and remove students from the channel when they register or unregister for the tutorial group. The assigned tutor of the tutorial group will be made a moderator of the channel. The channel will be deleted when the tutorial group is deleted. It can not be deleted manually. This option can be changed later."
                 }
             }
         },

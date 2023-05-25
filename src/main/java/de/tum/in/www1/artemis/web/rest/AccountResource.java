@@ -72,9 +72,9 @@ public class AccountResource {
      * {@code POST  /register} : register the user.
      *
      * @param managedUserVM the managed user View Model.
-     * @throws PasswordViolatesRequirementsException  {@code 400 (Bad Request)} if the password does not meet the requirements.
-     * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
-     * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
+     * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
+     * @throws EmailAlreadyUsedException             {@code 400 (Bad Request)} if the email is already used.
+     * @throws LoginAlreadyUsedException             {@code 400 (Bad Request)} if the login is already used.
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -141,6 +141,8 @@ public class AccountResource {
         User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
+        // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
+        userDTO.setVcsAccessToken(user.getVcsAccessToken());
         log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return userDTO;
     }
@@ -210,13 +212,17 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mailUsername) {
-        List<User> user = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
-        if (!user.isEmpty()) {
-            List<User> internalUsers = user.stream().filter(User::isInternal).toList();
+        List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
+        if (!users.isEmpty()) {
+            List<User> internalUsers = users.stream().filter(User::isInternal).toList();
             if (internalUsers.isEmpty()) {
                 throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
             }
-            else if (userService.prepareUserForPasswordReset(internalUsers.get(0))) {
+            else if (internalUsers.size() >= 2) {
+                throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
+            }
+            var internalUser = internalUsers.get(0);
+            if (userService.prepareUserForPasswordReset(internalUser)) {
                 mailService.sendPasswordResetMail(internalUsers.get(0));
             }
         }
@@ -232,12 +238,17 @@ public class AccountResource {
      *
      * @param keyAndPassword the generated key and the new password.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
-     * @throws RuntimeException         {@code 500 (Internal Server Error)} if the password could not be reset.
+     * @throws RuntimeException                      {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();
+        }
+        // TODO: the key should be 20 characters long according to jhipsters RandomUtil.DEF_COUNT, we should improve the following input validation
+        // Idea: the key follows the same ideas as e.g. JWT: it should only be valid for a short time (i.e. the key should expire e.g. after 2 days)
+        if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
+            throw new AccessForbiddenException("Invalid key for password reset");
         }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
 

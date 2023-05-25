@@ -119,12 +119,16 @@ export class StudentExamDetailComponent implements OnInit {
      * @param studentExamWithGrade
      */
     private setStudentExamWithGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
-        if (studentExamWithGrade.studentExam == undefined) {
+        if (!studentExamWithGrade.studentExam) {
             // This should not happen, the server endpoint should return studentExamWithGrade.studentExam.
             throw new Error('studentExamWithGrade.studentExam is undefined');
         }
 
         this.studentExam = studentExamWithGrade.studentExam;
+        if (this.studentExam.examSessions) {
+            // show the oldest session first (sessions are created sequentially so we can sort after id)
+            this.studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
+        }
         this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
 
         this.initWorkingTimeForm();
@@ -237,24 +241,7 @@ export class StudentExamDetailComponent implements OnInit {
      * Checks if the user should be able to edit the inputs.
      */
     isFormDisabled(): boolean {
-        return this.isSavingWorkingTime || !this.canChangeExamWorkingTime();
-    }
-
-    /**
-     * Checks if the working time of the exam can still be changed.
-     * @private
-     */
-    private canChangeExamWorkingTime(): boolean {
-        if (this.isTestRun) {
-            // for unsubmitted test runs we always want to be able to change the working time
-            return !this.studentExam.submitted;
-        } else if (this.studentExam.exam) {
-            // for student exams it can only be changed before the student is able to see it
-            return dayjs().isBefore(dayjs(this.studentExam.exam.visibleDate));
-        }
-
-        // if there is no exam, then it cannot be changed
-        return false;
+        return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
     }
 
     examIsOver(): boolean {
@@ -263,14 +250,6 @@ export class StudentExamDetailComponent implements OnInit {
             return dayjs(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod!, 'seconds').isBefore(dayjs());
         } else {
             return false;
-        }
-    }
-
-    getWorkingTimeToolTip(): string {
-        if (this.canChangeExamWorkingTime()) {
-            return 'You can change the individual working time of the student here.';
-        } else {
-            return 'You cannot change the individual working time after the exam has become visible.';
         }
     }
 

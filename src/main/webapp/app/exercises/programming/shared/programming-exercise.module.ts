@@ -8,6 +8,10 @@ import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programmi
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
+import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { ProgrammingExerciseResetButtonDirective } from 'app/exercises/programming/manage/reset/programming-exercise-reset-button.directive';
+import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 
 @NgModule({
     imports: [
@@ -18,8 +22,10 @@ import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-pr
         ArtemisProgrammingExerciseStatusModule,
         ArtemisProgrammingExerciseGradingModule,
         ArtemisExerciseScoresModule,
+        ArtemisProgrammingAssessmentModule,
+        ExerciseCategoriesModule,
     ],
-    declarations: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent],
-    exports: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent],
+    declarations: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonDirective, ProgrammingExerciseResetDialogComponent],
+    exports: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonDirective],
 })
 export class ArtemisProgrammingExerciseModule {}

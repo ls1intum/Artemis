@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
-describe('AssessmentWarningComponent', function () {
+describe('AssessmentWarningComponent', () => {
     let component: AssessmentWarningComponent;
     let fixture: ComponentFixture<AssessmentWarningComponent>;
 

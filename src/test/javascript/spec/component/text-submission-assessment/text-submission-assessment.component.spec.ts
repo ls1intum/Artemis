@@ -6,7 +6,6 @@ import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -42,6 +41,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -114,7 +114,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     const route = (): ActivatedRoute =>
         ({
-            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2 })),
+            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
             queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
             data: of({
                 studentParticipation: participation,
@@ -134,7 +134,6 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockComponent(ConfirmIconComponent),
                 MockComponent(AssessmentLayoutComponent),
                 MockComponent(ScoreDisplayComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
@@ -147,14 +146,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(Router),
             ],
-        })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
     });
 
     beforeEach(() => {
@@ -257,15 +249,24 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
-        const complaintResponse = new ComplaintResponse();
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
-        component.updateAssessmentAfterComplaint(complaintResponse);
+        component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
+        expect(onSuccessCalled).toBeFalse();
+        expect(onErrorCalled).toBeTrue();
     });
 
-    it('should send update when complaint resolved and assessments are valid', () => {
+    it.each([false, true])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.credits = 5;
         unreferencedFeedback.detailText = 'gj';
@@ -274,12 +275,22 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [unreferencedFeedback];
 
         const updateAssessmentAfterComplaintStub = jest.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
-        updateAssessmentAfterComplaintStub.mockReturnValue(of(new HttpResponse({ body: new Result() })));
+        const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
+        updateAssessmentAfterComplaintStub.mockReturnValue(serverResponse);
 
         // would be called on receive of event
-        const complaintResponse = new ComplaintResponse();
-        component.updateAssessmentAfterComplaint(complaintResponse);
+        let onSuccessCalled = false;
+        let onErrorCalled = false;
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => (onSuccessCalled = true),
+            onError: () => (onErrorCalled = true),
+        };
+
+        component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(updateAssessmentAfterComplaintStub).toHaveBeenCalledOnce();
+        expect(onSuccessCalled).toBe(!serverReturnsError);
+        expect(onErrorCalled).toBe(serverReturnsError);
     });
 
     it('should submit the assessment with correct parameters', () => {

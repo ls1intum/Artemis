@@ -12,6 +12,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { MockComponent } from 'ng-mocks';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -84,7 +86,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [PlagiarismCasesInstructorViewComponent],
+            declarations: [PlagiarismCasesInstructorViewComponent, MockComponent(DocumentationButtonComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

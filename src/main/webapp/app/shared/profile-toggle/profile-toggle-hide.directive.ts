@@ -1,4 +1,4 @@
-import { Directive, HostBinding, Input, OnDestroy, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Directive, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';

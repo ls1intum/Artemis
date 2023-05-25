@@ -4,7 +4,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -17,8 +16,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
  * participation submissions. The type of penalty is determined by the concrete type of the
  * submission policy. The system supports two types of policies:
  * <ol>
- *     <li>Lock Repository: Locks the participation repository after x submissions</li>
- *     <li>Submission Penalty: Reduces the possible achievable score after x submissions</li>
+ * <li>Lock Repository: Locks the participation repository after x submissions</li>
+ * <li>Submission Penalty: Reduces the possible achievable score after x submissions</li>
  * </ol>
  * More information can be found at {@link LockRepositoryPolicy} and {@link SubmissionPenaltyPolicy} respectively.
  */
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("SP")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

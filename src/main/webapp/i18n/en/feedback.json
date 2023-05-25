@@ -3,8 +3,7 @@
         "feedback": {
             "home": {
                 "title": "Feedbacks",
-                "createLabel": "Create a new Feedback",
-                "createOrEditLabel": "Create or edit a Feedback"
+                "createLabel": "Create a new Feedback"
             },
             "created": "Created new Feedback with identifier {{ param }}",
             "updated": "Updated Feedback with identifier {{ param }}",
@@ -18,7 +17,19 @@
             "text": "Text",
             "detailText": "Detail Text",
             "type": "Type",
-            "result": "Result"
+            "result": "Result",
+            "truncatedInfo": "This feedback is too long to be displayed fully here and has been truncated.",
+            "downloadFullFeedback": "Download full feedback",
+            "modal": {
+                "submitted": "Submitted",
+                "linkedToCommit": "linked to commit"
+            },
+            "group": {
+                "wrong": "Wrong",
+                "warning": "Warning",
+                "info": "Info",
+                "correct": "Correct"
+            }
         }
     }
 }

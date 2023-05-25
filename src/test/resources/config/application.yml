@@ -23,9 +23,23 @@ artemis:
     external-system-request:
         batch-size: 1  # wait the time below after 1 requests (make it easier to test the corresponding code)
         batch-waiting-time: 5   # 5ms (make the tests faster)
+    iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
+    androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
+    androidSha256CertFingerprints: "D4:5C:58:77:B2:4E:2F:15:60:59:BB:C0:9C:1C:B0:A9:FD:3D:D8:F3:88:A8:B3:EA:DB:05:06:3B:7E:AF:0C:4F"
     continuous-integration:
     # Defines the used docker images for certain programming languages
         build:
+            default-docker-flags:
+                - flag: --cpus
+                  value: 2
+                # Set `memory-swap` and `memory` to the same value to turn off SWAP.
+                # See -> https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details
+                - flag: --memory
+                  value: 2g
+                - flag: --memory-swap
+                  value: 2g
+                - flag: --pids-limit
+                  value: 1000
             images:
                 # java intentionally uppercase to make sure both variants are
                 # accepted
@@ -49,13 +63,15 @@ artemis:
                     default: "~~invalid~~"
                 ocaml:
                     default: "~~invalid~~"
+    athene:
+        token-validity-in-seconds: 10800
+        base64-secret: "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo="
 
 spring:
     application:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
         name:
         username:
         password:
@@ -71,34 +87,37 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: tech.jhipster.domain.util.FixedH2Dialect
+        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
+        database: h2        # Alternatives h2 / POSTGRESQL / MYSQL
         open-in-view: false
         show-sql: false
         hibernate:
-#            ddl-auto: none                         # out commented because it would lead to test execution errors
+            ddl-auto: none
             naming:
                 physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
-            hibernate.jdbc.time_zone: UTC
             hibernate.id.new_generator_mappings: true
-            hibernate.connection.provider_disables_autocommit: true
-            hibernate.cache.use_second_level_cache: true
-            hibernate.cache.use_query_cache: false
+            hibernate.connection.provider_disables_autocommit: false
+            hibernate.connection.autocommit: false
             hibernate.generate_statistics: false
-            # modify batch size as necessary
-            hibernate.jdbc.batch_size: 25
             hibernate.order_inserts: true
             hibernate.order_updates: true
 #            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
             hibernate.query.in_clause_parameter_padding: true
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
             hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
             hibernate.cache.hazelcast.instance_name: Artemis
             hibernate.cache.hazelcast.use_lite_member: true
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.jdbc.time_zone: UTC
+            hibernate.jdbc.lob.non_contextual_creation: true
     liquibase:
         contexts: tests
-        enabled: false
+        enabled: true
     mail:
         host: localhost
     main:
@@ -142,6 +161,41 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+
+zonky:
+    test:
+        database:
+            prefetching:
+                concurrency: 1
+            type: H2  # Alternatives: H2 / MYSQL / POSTGRES
+            postgres:
+                docker:
+                    image: "postgres:15.2-alpine"
+                    tmpfs:
+                        enabled: true
+                server:
+                    properties:
+                        max_connections: 10
+                        shared_buffers: 1GB
+                        effective_cache_size: 3GB
+                        maintenance_work_mem: 256MB
+                        checkpoint_completion_target: 0.9
+                        wal_buffers: 16MB
+                        default_statistics_target: 100
+                        random_page_cost: 1.1
+                        effective_io_concurrency: 200
+                        work_mem: 26214kB
+                        min_wal_size: 1GB
+                        max_wal_size: 4GB
+                        max_worker_processes: 4
+                        max_parallel_workers_per_gather: 2
+                        max_parallel_workers: 4
+                        max_parallel_maintenance_workers: 2
+            mysql:
+                docker:
+                    image: "mysql:8.0.32"
+                    tmpfs:
+                        enabled: true
 
 server:
     port: 8080

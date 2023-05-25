@@ -88,6 +88,6 @@
         <div *ngIf="exam.startDate && exam.endDate" class="col-12">
             {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds : true }}
         </div>
-        <div *ngIf="exam.maxPoints" class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate : { points: exam.maxPoints } }}</div>
+        <div *ngIf="exam.examMaxPoints" class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate : { points: exam.examMaxPoints } }}</div>
     </div>
 </div>

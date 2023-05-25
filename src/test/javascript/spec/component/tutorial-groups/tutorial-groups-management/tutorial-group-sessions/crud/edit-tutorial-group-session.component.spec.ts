@@ -51,6 +51,7 @@ describe('EditTutorialGroupSessionComponent', () => {
                 component.tutorialGroupSession = exampleSession;
                 component.tutorialGroup = exampleTutorialGroup;
                 component.initialize();
+                fixture.detectChanges();
             });
     });
 
@@ -59,20 +60,16 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should set form data correctly', () => {
-        fixture.detectChanges();
         const formStub: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
         expect(formStub.formData).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        fixture.detectChanges();
-
         const changedSession: TutorialGroupSession = {
             ...exampleSession,
             location: 'Changed',

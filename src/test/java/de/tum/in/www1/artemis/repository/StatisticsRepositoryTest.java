@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 
 class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "statisticsrepository";
+
     @Autowired
     private StatisticsRepository statisticsRepository;
 
@@ -40,6 +42,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Tests that filterDuplicatedUsers() works as intended for logged in students with weekly and quarterly view.
+     *
      * @param spanType the different views (either weekly or quarterly)
      */
     @ParameterizedTest
@@ -51,17 +54,17 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
         var endDate = spanType == SpanType.WEEK ? ZonedDateTime.of(2021, 11, 21, 23, 59, 59, 0, startDate.getZone())
                 : ZonedDateTime.of(2022, 2, 6, 23, 59, 59, 0, startDate.getZone());
         // we need to add users in order to get non-empty results returned
-        database.addUsers(2, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         // the persistentEvents simulate a log in of a student
         // here we simulate that student1 logged in on 15.11.21
-        var persistentEventStudent1 = setupPersistentEvent("student1", startDate);
+        var persistentEventStudent1 = setupPersistentEvent(TEST_PREFIX + "student1", startDate);
         // here we simulate student1 logged in again on 19.11.21 for the weekly view and for the quarter view a login on 15.01.22
-        var persistentEventStudent1Later = spanType == SpanType.WEEK ? setupPersistentEvent("student1", startDate.plusDays(4))
-                : setupPersistentEvent("student1", startDate.plusMonths(2));
+        var persistentEventStudent1Later = spanType == SpanType.WEEK ? setupPersistentEvent(TEST_PREFIX + "student1", startDate.plusDays(4))
+                : setupPersistentEvent(TEST_PREFIX + "student1", startDate.plusMonths(2));
         // here we simulate that student2 logged in on 19.11.21
-        var persistentEventStudent2 = setupPersistentEvent("student2", startDate.plusDays(4));
+        var persistentEventStudent2 = setupPersistentEvent(TEST_PREFIX + "student2", startDate.plusDays(4));
         // we simulate the same case again in order to have duplication in the result of the query
-        var persistentEventStudent2Duplicate = setupPersistentEvent("student2", startDate.plusDays(4).plusHours(2));
+        var persistentEventStudent2Duplicate = setupPersistentEvent(TEST_PREFIX + "student2", startDate.plusDays(4).plusHours(2));
         // save the events
         persistenceAuditEventRepository.saveAll(List.of(persistentEventStudent1, persistentEventStudent1Later, persistentEventStudent2, persistentEventStudent2Duplicate));
         // this is the entry that should be returned by both span types
@@ -83,12 +86,12 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(entryList).as("Result has 2 entries for two time slots").hasSize(2);
         assertThat(entryList).as("Result contains the entry for 19.11.21").anyMatch((entry) -> compareStatisticsEntries(entry, entry191121));
 
-        database.resetDatabase();
         persistenceAuditEventRepository.deleteAll();
     }
 
     /**
      * Tests how getNumberOfEntriesPerTimeSlot() handles views that are not expected for on different graph types
+     *
      * @param graphType The graph type that is tested. Note that not all possible graph types are tested, as some cover every possible view in the code already
      */
     @ParameterizedTest
@@ -138,6 +141,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * A helper method in order to prevent code duplication for comparison of StatisticEntries
+     *
      * @param entry1 the first entry to compare
      * @param entry2 the second entry to compare
      * @return true if both entries contain the same day and amount, false otherwise
@@ -148,6 +152,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Setup method in order to prevent code duplication for initialisation of entry list
+     *
      * @return entry list used as input for tests
      */
     private List<StatisticsEntry> setupStatisticsEntryList() {
@@ -163,8 +168,9 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     /**
      * Creates persistent event for tests
+     *
      * @param principal the student login that should be used
-     * @param date the timestamp the login should be simulated
+     * @param date      the timestamp the login should be simulated
      * @return PersistentAuditEvent representing the login of the given user for at the given point in time
      */
     private PersistentAuditEvent setupPersistentEvent(String principal, ZonedDateTime date) {

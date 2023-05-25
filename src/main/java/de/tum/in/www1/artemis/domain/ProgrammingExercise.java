@@ -6,24 +6,24 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -34,9 +34,15 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "P")
+@JsonTypeName("programming")
 @SecondaryTable(name = "programming_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "programming";
+    }
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
@@ -87,6 +93,11 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
 
+    @Size(max = 36)
+    @Nullable
+    @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
+    private String buildPlanAccessSecret;
+
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -114,9 +125,6 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private SubmissionPolicy submissionPolicy;
 
-    @Transient
-    private boolean isLocalSimulationTransient;
-
     @Nullable
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
@@ -129,6 +137,9 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "branch", table = "programming_exercise_details")
     private String branch;
+
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
+    private boolean releaseTestsWithExampleSolution;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -283,8 +294,17 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    @JsonIgnore
     public String getBranch() {
         return branch;
+    }
+
+    public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
+        this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
+    }
+
+    public boolean isReleaseTestsWithExampleSolution() {
+        return releaseTestsWithExampleSolution;
     }
 
     /**
@@ -431,9 +451,9 @@ public class ProgrammingExercise extends Exercise {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
-     * Gets a URL of the  templateRepositoryUrl if there is one
+     * Gets a URL of the templateRepositoryUrl if there is one
      *
-     * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
+     * @return a URL object of the templateRepositoryUrl or null if there is no templateRepositoryUrl
      */
     @JsonIgnore
     public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
@@ -622,6 +642,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * Get all results of a student participation which are rated or unrated
+     *
      * @param participation The current participation
      * @return all results which are completed and are either automatic or manually assessed
      */
@@ -631,7 +652,32 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     *
+     * @param participations the list of available participations
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
+     */
+    @Override
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
+        List<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
+        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isTestRun()).toList();
+        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isTestRun).toList();
+
+        if (gradedParticipations.size() > 1) {
+            gradedParticipations = super.findRelevantParticipation(gradedParticipations);
+        }
+        if (practiceParticipations.size() > 1) {
+            practiceParticipations = super.findRelevantParticipation(practiceParticipations);
+        }
+
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).toList();
+    }
+
+    /**
      * Check if manual results are allowed for the exercise
+     *
      * @return true if manual results are allowed, false otherwise
      */
     public boolean areManualResultsAllowed() {
@@ -652,6 +698,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This checks if the current result is rated and has a completion date.
+     *
      * @param result The current result
      * @return true if the result is manual and assessed, false otherwise
      */
@@ -678,14 +725,6 @@ public class ProgrammingExercise extends Exercise {
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
-    public boolean getIsLocalSimulation() {
-        return this.isLocalSimulationTransient;
-    }
-
-    public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
-        this.isLocalSimulationTransient = isLocalSimulationTransient;
-    }
-
     public boolean getCheckoutSolutionRepository() {
         return this.checkoutSolutionRepositoryTransient;
     }
@@ -695,21 +734,8 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
-     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
-     * no connection to a version control and continuous integration server
-     *
-     */
-    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
-        if (getTestRepositoryUrl().contains("artemislocalhost")) {
-            setIsLocalSimulation(true);
-        }
-    }
-
-    /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
-     *
      */
     public void validateProgrammingSettings() {
 
@@ -751,7 +777,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check if the programming language supports static code analysis
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.staticCodeAnalysis()) {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 
@@ -784,11 +810,11 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.isNull(this.getDueDate())) {
+        if (this.getDueDate() == null) {
             throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
             throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
@@ -799,5 +825,18 @@ public class ProgrammingExercise extends Exercise {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
+    }
+
+    public boolean hasBuildPlanAccessSecretSet() {
+        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
+    }
+
+    @Nullable
+    public String getBuildPlanAccessSecret() {
+        return buildPlanAccessSecret;
+    }
+
+    public void generateAndSetBuildPlanAccessSecret() {
+        buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 }

@@ -47,7 +47,7 @@ public class StatisticsResource {
 
     /**
      * GET management/statistics/data-for-content : get the graph data in the last "span" days in the given period for a specific entity, like course,
-     *                                              exercise or exam.
+     * exercise or exam.
      *
      * @param span        the spanTime of which the amount should be calculated
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
@@ -74,7 +74,7 @@ public class StatisticsResource {
     /**
      * GET management/statistics/course-statistics : get the data for the average score graph in the course statistics
      *
-     * @param courseId    the id of the course for which the data should be fetched
+     * @param courseId the id of the course for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/course-statistics")
@@ -88,7 +88,7 @@ public class StatisticsResource {
     /**
      * GET management/statistics/exercise-statistics: get the data for the score distribution in the exercise statistics
      *
-     * @param exerciseId    the id of the exercise for which the data should be fetched
+     * @param exerciseId the id of the exercise for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/exercise-statistics")

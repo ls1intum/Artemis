@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 
 import { RouterModule } from '@angular/router';
 import { tutorialGroupManagementRoutes } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.route';
@@ -34,7 +34,7 @@ import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-gr
 import { NgModule } from '@angular/core';
 import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-course-information/tutorial-groups-course-information.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { TutorialGroupsRegistrationImportDialog } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsRegistrationImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -76,7 +76,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         TutorialGroupFreePeriodRowButtonsComponent,
         EditTutorialGroupFreePeriodComponent,
         TutorialGroupsImportButtonComponent,
-        TutorialGroupsRegistrationImportDialog,
+        TutorialGroupsRegistrationImportDialogComponent,
         TutorialGroupsChecklistComponent,
     ],
 })

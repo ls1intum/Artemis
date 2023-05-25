@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 
 class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "lectureimport";
+
     @Autowired
     private LectureImportService lectureImportService;
 
@@ -36,8 +38,8 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(0, 0, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, true);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().get().getId();
         this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1Id);
@@ -51,17 +53,16 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     void tearDown() {
         // Delete lecture, which removes testing files on disk for associated attachments
         lectureRepository.delete(this.lecture1);
-        database.resetDatabase();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportLectureToCourse() {
         int lectureCount = this.course2.getLectures().size();
 
         lectureImportService.importLecture(this.lecture1, this.course2);
 
-        assertThat(this.course2.getLectures().size()).isEqualTo(lectureCount + 1);
+        assertThat(this.course2.getLectures()).hasSize(lectureCount + 1);
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().get().getId();

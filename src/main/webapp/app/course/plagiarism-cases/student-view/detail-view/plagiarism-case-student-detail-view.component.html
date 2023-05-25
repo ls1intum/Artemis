@@ -41,7 +41,24 @@
             <section>
                 <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
                 <div class="row">
-                    <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
+                    <div *ngIf="posts && posts.length > 0" class="row mb-2 col-12">
+                        <div class="col-12">
+                            <jhi-post #post [readOnlyMode]="false" [posting]="posts[0]" [showAnswers]="true" [isCourseMessagesPage]="false" [hasChannelModerationRights]="false">
+                            </jhi-post>
+                        </div>
+                        <div class="alert alert-warning my-2" *ngIf="(this.posts[0].answers?.length ?? 0) === 0">
+                            <h5
+                                *ngIf="posts[0].creationDate"
+                                [innerHTML]="
+                                    'artemisApp.plagiarism.replyToAccusationDeadlineNotification'
+                                        | artemisTranslate : { deadline: posts[0].creationDate.add(7, 'day').format('DD.MM.YYYY') }
+                                "
+                            ></h5>
+                            <jhi-button [btnType]="ButtonType.WARNING" (click)="postComponent.openCreateAnswerPostModal()" title="artemisApp.plagiarism.replyToAccusation">
+                            </jhi-button>
+                        </div>
+                        <div class="mt-3"></div>
+                    </div>
                 </div>
             </section>
 

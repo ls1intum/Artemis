@@ -14,14 +14,14 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
@@ -47,7 +47,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseInstructorSubmissionStateComponent,
                 ProgrammingExerciseTriggerAllButtonComponent,
@@ -55,7 +55,6 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 FeatureToggleDirective,
                 FeatureToggleLinkDirective,
                 TranslatePipeMock,
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
                 MockPipe(DurationPipe),
             ],

@@ -19,7 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.lti.Claims;
-import de.tum.in.www1.artemis.service.connectors.Lti13Service;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -28,7 +28,6 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
  * Processes an LTI 1.3 Authorization Request response.
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
- *
  */
 public class Lti13LaunchFilter extends OncePerRequestFilter {
 

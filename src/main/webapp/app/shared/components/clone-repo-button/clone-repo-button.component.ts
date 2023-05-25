@@ -10,6 +10,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -27,6 +28,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     repositoryUrl?: string;
     @Input()
     participations?: ProgrammingExerciseStudentParticipation[];
+    @Input()
+    exercise?: Exercise;
 
     useSsh = false;
     sshKeysUrl: string;
@@ -81,9 +84,13 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
 
     ngOnChanges() {
         if (this.participations?.length) {
-            this.isTeamParticipation = !!this.participations.first()?.team;
-            this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
-            this.cloneHeadline = this.activeParticipation.testRun ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+            const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
+            this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
+            this.cloneHeadline =
+                this.activeParticipation.testRun && !this.exercise?.exerciseGroup
+                    ? 'artemisApp.exerciseActions.clonePracticeRepository'
+                    : 'artemisApp.exerciseActions.cloneRatedRepository';
+            this.isTeamParticipation = !!this.activeParticipation?.team;
         } else if (this.repositoryUrl) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }

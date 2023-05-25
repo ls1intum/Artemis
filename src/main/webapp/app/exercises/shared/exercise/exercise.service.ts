@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,9 +18,21 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { SafeHtml } from '@angular/platform-browser';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
+export type ExampleSolutionInfo = {
+    modelingExercise?: ModelingExercise;
+    exampleSolution?: SafeHtml;
+    exampleSolutionUML: any;
+    programmingExercise?: ProgrammingExercise;
+};
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
@@ -34,8 +46,8 @@ export interface ExerciseServicable<T extends Exercise> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/exercises';
+    public resourceUrl = 'api/exercises';
+    public adminResourceUrl = 'api/admin/exercises';
 
     constructor(
         private http: HttpClient,
@@ -157,13 +169,16 @@ export class ExerciseService {
     }
 
     /**
-     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
-     * @param { number } exerciseId - programming exercise for which build plans in respective student participations are deleted
-     * @param { boolean } deleteRepositories - if true, the repositories get deleted
+     * Get basic exercise information for the purpose of displaying its example solution. If the example solution is not yet
+     * published, returns error.
+     * @param { number } exerciseId - Id of the exercise to get the example solution
      */
-    cleanup(exerciseId: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/cleanup`, { params, observe: 'response' });
+    getExerciseForExampleSolution(exerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/example-solution`, { observe: 'response' }).pipe(
+            tap((res: EntityResponseType) => {
+                this.processExerciseEntityResponse(res);
+            }),
+        );
     }
 
     /**
@@ -223,7 +238,7 @@ export class ExerciseService {
         const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && !exercise.quizEnded);
         return (
             // 1st priority is an active quiz
-            nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
+            nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise as QuizExercise)) ||
             // 2nd priority is a visible quiz
             nextQuizExercises?.find((exercise: QuizExercise) => exercise.visibleToStudents) ||
             // 3rd priority is the next due exercise
@@ -235,11 +250,11 @@ export class ExerciseService {
         );
     }
 
-    isActiveQuiz(exercise: Exercise) {
+    isActiveQuiz(exercise: QuizExercise) {
         return (
-            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
+            exercise?.quizBatches?.some((batch) => batch.started) ||
+            exercise.studentParticipations?.[0]?.initializationState === InitializationState.INITIALIZED ||
+            exercise.studentParticipations?.[0]?.initializationState === InitializationState.FINISHED
         );
     }
 
@@ -427,7 +442,7 @@ export class ExerciseService {
         }
     }
 
-    toggleSecondCorrection(exerciseId: number): Observable<Boolean> {
+    toggleSecondCorrection(exerciseId: number): Observable<boolean> {
         return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 
@@ -495,5 +510,50 @@ export class ExerciseService {
         return this.http
             .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
             .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
+    }
+
+    /**
+     * Returns an ExampleSolutionInfo object containing the processed example solution and related fields
+     * if exampleSolution exists on the exercise. The example solution is processed (parsed, sanitized, etc.)
+     * depending on the exercise type.
+     *
+     * @param exercise Exercise model that may have an exampleSolution.
+     * @param artemisMarkdown An ArtemisMarkdownService instance so we don't need to include it in the same bundle with ExerciseService when compiling.
+     */
+    static extractExampleSolutionInfo(exercise: Exercise, artemisMarkdown: ArtemisMarkdownService): ExampleSolutionInfo {
+        // ArtemisMarkdownService is expected as a parameter as opposed to a dependency in the constructor because doing
+        // that increased initial bundle size from 2.31 MB to 3.75 MB and caused production build to fail with error since
+        // it exceeded maximum budget.
+
+        let modelingExercise = undefined;
+        let exampleSolution = undefined;
+        let exampleSolutionUML = undefined;
+        let programmingExercise = undefined;
+
+        switch (exercise.type) {
+            case ExerciseType.MODELING:
+                modelingExercise = exercise as ModelingExercise;
+                if (modelingExercise.exampleSolutionModel) {
+                    exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
+                }
+                break;
+            case ExerciseType.TEXT:
+            case ExerciseType.FILE_UPLOAD:
+                const textOrFileUploadExercise = exercise as TextExercise & FileUploadExercise;
+                if (textOrFileUploadExercise.exampleSolution) {
+                    exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadExercise.exampleSolution);
+                }
+                break;
+            case ExerciseType.PROGRAMMING:
+                programmingExercise = exercise as ProgrammingExercise;
+                break;
+        }
+
+        return {
+            modelingExercise,
+            exampleSolution,
+            exampleSolutionUML,
+            programmingExercise,
+        };
     }
 }

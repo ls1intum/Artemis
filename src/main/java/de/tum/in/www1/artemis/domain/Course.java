@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
-import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
-import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -16,9 +13,13 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -53,7 +54,6 @@ public class Course extends DomainObject {
 
     @Column(name = "description")
     @JsonView(QuizView.Before.class)
-    @Lob
     private String description;
 
     @Column(name = "short_name", unique = true)
@@ -88,8 +88,8 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String semester;
 
-    @Column(name = "test_course")
-    @JsonView(QuizView.Before.class)
+    @Column(name = "test_course", nullable = false)
+    @JsonView({ QuizView.Before.class })
     private boolean testCourse = false;
 
     @Enumerated(EnumType.STRING)
@@ -110,38 +110,39 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
-    @Column(name = "max_complaints")
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "info_sharing_config", nullable = false)
     @JsonView(QuizView.Before.class)
-    private Integer maxComplaints;
+    private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
-    @Column(name = "max_team_complaints")
+    @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
-    private Integer maxTeamComplaints;
+    private Integer maxComplaints = 3;  // default value
 
-    @Column(name = "max_complaint_time_days")
+    @Column(name = "max_team_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTimeDays;
+    private Integer maxTeamComplaints = 3;  // default value
+
+    @Column(name = "max_complaint_time_days", nullable = false)
+    @JsonView(QuizView.Before.class)
+    private int maxComplaintTimeDays = 7;   // default value
+
+    @Column(name = "max_request_more_feedback_time_days", nullable = false)
+    @JsonView(QuizView.Before.class)
+    private int maxRequestMoreFeedbackTimeDays = 7;   // default value
 
     @Column(name = "max_complaint_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTextLimit;
+    private int maxComplaintTextLimit = 2000;
 
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintResponseTextLimit;
-
-    @Column(name = "posts_enabled")
-    @JsonView(QuizView.Before.class)
-    private boolean postsEnabled;
+    private int maxComplaintResponseTextLimit = 2000;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Post> posts = new HashSet<>();
-
-    @Column(name = "max_request_more_feedback_time_days")
-    @JsonView(QuizView.Before.class)
-    private int maxRequestMoreFeedbackTimeDays;
 
     @Column(name = "color")
     private String color;
@@ -164,9 +165,9 @@ public class Course extends DomainObject {
     @Column(name = "max_points")
     private Integer maxPoints;
 
-    @Column(name = "accuracy_of_scores")
+    @Column(name = "accuracy_of_scores", nullable = false)
     @JsonView(QuizView.Before.class)
-    private Integer accuracyOfScores;
+    private Integer accuracyOfScores = 1; // default value
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
@@ -321,6 +322,17 @@ public class Course extends DomainObject {
         this.endDate = endDate;
     }
 
+    /**
+     * Determine whether the current date is within the course period (after start, before end).
+     *
+     * @return true if the current date is within the course period, false otherwise
+     */
+    @JsonIgnore
+    public boolean isActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
+    }
+
     public String getSemester() {
         return semester;
     }
@@ -414,14 +426,6 @@ public class Course extends DomainObject {
         // and then either maxComplaints, maxTeamComplaints is larger than zero
         // See CourseResource for more details on the validation
         return this.maxComplaintTimeDays > 0;
-    }
-
-    public boolean getPostsEnabled() {
-        return postsEnabled;
-    }
-
-    public void setPostsEnabled(boolean postsEnabled) {
-        this.postsEnabled = postsEnabled;
     }
 
     public Set<Post> getPosts() {
@@ -784,8 +788,10 @@ public class Course extends DomainObject {
 
     /**
      * Returns true if the start and end date of the course fulfill all requirements
+     *
      * @return true if the dates are valid
      */
+    @JsonIgnore
     public boolean isValidStartAndEndDate() {
         return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
     }
@@ -795,7 +801,6 @@ public class Course extends DomainObject {
      * use this method to return the customized courseGroup name
      *
      * @param courseGroup the courseGroup we want to add the user to
-     *
      * @return the customized userGroupName
      */
     public String defineCourseGroupName(String courseGroup) {
@@ -815,4 +820,13 @@ public class Course extends DomainObject {
     public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
+
+    public CourseInformationSharingConfiguration getCourseInformationSharingConfiguration() {
+        return courseInformationSharingConfiguration;
+    }
+
+    public void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
+    }
+
 }

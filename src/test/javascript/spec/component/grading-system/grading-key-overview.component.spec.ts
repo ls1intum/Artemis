@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
@@ -20,6 +20,9 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseScores, StudentScores } from 'app/course/course-scores/course-scores';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -50,6 +53,8 @@ describe('GradeKeyOverviewComponent', () => {
         gradeType: GradeType.BONUS,
         gradeSteps: [gradeStep1, gradeStep2],
         maxPoints: 100,
+        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
     };
 
     const studentGrade = '2.0';
@@ -82,6 +87,8 @@ describe('GradeKeyOverviewComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
                 MockProvider(BonusService),
+                MockProvider(CourseStorageService),
+                MockProvider(ScoresStorageService),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
@@ -129,6 +136,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize when params are in parent route', () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         route.parent!.snapshot.params = route.parent?.parent?.snapshot.params!;
         route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
 
@@ -136,6 +144,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize when params are in current route', () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         route.snapshot.params = route.parent?.parent?.snapshot.params!;
         route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
 
@@ -157,6 +166,7 @@ describe('GradeKeyOverviewComponent', () => {
             } as HttpResponse<Bonus>),
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         route.snapshot.params = route.parent?.parent?.snapshot.params!;
         route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
         route.snapshot.data.forBonus = true;
@@ -165,6 +175,36 @@ describe('GradeKeyOverviewComponent', () => {
 
         expect(bonusServiceSpy).toHaveBeenCalledOnce();
         expect(bonusServiceSpy).toHaveBeenCalledWith(345, 123, true);
+    });
+
+    it('should initialize for courses', () => {
+        route.parent!.parent!.snapshot!.params.examId = undefined;
+        const courseId = route.parent!.parent!.snapshot!.params.courseId;
+        const reachablePoints = 200;
+
+        const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
+        const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, new StudentScores()));
+        const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
+
+        jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
+        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
+
+        fixture.detectChanges();
+
+        expect(fixture).toBeTruthy();
+        expect(comp).toBeTruthy();
+        expect(comp.examId).toBeUndefined();
+        expect(comp.courseId).toBe(courseId);
+        expect(comp.studentGrade).toBe(studentGrade);
+        expect(comp.title).toBe('Title');
+        expect(comp.isBonus).toBeTrue();
+        expect(comp.isExam).toBeFalse();
+
+        expect(getStoredScoresStub).toHaveBeenCalledOnce();
+        expect(getStoredScoresStub).toHaveBeenCalledWith(courseId);
+
+        expect(gradingSystemServiceSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemServiceSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], reachablePoints);
     });
 
     it('should print PDF', fakeAsync(() => {
@@ -179,6 +219,26 @@ describe('GradeKeyOverviewComponent', () => {
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();
         expect(comp.round(5)).toBe(5);
-        expect(comp.round(3.33333333333333333)).toBe(3.33);
+        expect(comp.round(3.333333333333333)).toBe(3.33);
+    });
+
+    it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {
+        const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
+        const navUtilServiceSpy = jest.spyOn(navUtilService, 'navigateBack');
+        const courseId = 213;
+
+        comp.courseId = courseId;
+        comp.examId = examId;
+        comp.isExam = examId !== undefined;
+
+        comp.previousState();
+
+        expect(navUtilServiceSpy).toHaveBeenCalledOnce();
+
+        if (examId == undefined) {
+            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'statistics']);
+        } else {
+            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'exams', examId.toString()]);
+        }
     });
 });

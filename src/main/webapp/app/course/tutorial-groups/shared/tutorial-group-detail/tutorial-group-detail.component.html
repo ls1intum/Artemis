@@ -28,6 +28,26 @@
         <dd>
             <span *ngIf="tutorialGroup.title">{{ tutorialGroup.title }}</span>
         </dd>
+        <!-- Channel -->
+        <ng-container *ngIf="tutorialGroup.channel && isMessagingEnabled(course)">
+            <dt>
+                <a class="th-link" [routerLink]="['/courses', course.id!, 'messages']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
+            </dt>
+            <dd>
+                <ng-container *ngIf="tutorialGroup.channel.isMember; else notChannelMember">
+                    <a
+                        [id]="'channel-' + tutorialGroup.id + '-' + tutorialGroup.channel.id"
+                        [routerLink]="['/courses', course.id!, 'messages']"
+                        [queryParams]="{ conversationId: tutorialGroup.channel.id }"
+                        class="link-primary"
+                        >{{ tutorialGroup.channel.name }}</a
+                    >
+                </ng-container>
+                <ng-template #notChannelMember>
+                    <span>{{ tutorialGroup.channel.name }}</span>
+                </ng-template>
+            </dd>
+        </ng-container>
         <!-- Tutor -->
         <dt>
             <span>{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</span>
@@ -36,6 +56,31 @@
             <span *ngIf="tutorialGroup.teachingAssistantName; else teachingAssistantNotSet">{{ tutorialGroup.teachingAssistantName }}</span>
             <ng-template #teachingAssistantNotSet>
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span>
+            </ng-template>
+        </dd>
+        <!-- Utilization -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelpDetail' | artemisTranslate }}"></fa-icon>
+        </dt>
+        <dd>
+            <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
+        </dd>
+        <!-- Average Attendance -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.averageAttendanceDetail' | artemisTranslate }}</span>
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail' | artemisTranslate }}"
+            ></fa-icon>
+        </dt>
+        <dd>
+            <ng-container *ngIf="tutorialGroup.averageAttendance !== undefined; else noAverageAttendance">
+                <span>{{ Math.round(tutorialGroup.averageAttendance) }}</span>
+            </ng-container>
+            <ng-template #noAverageAttendance>
+                <span>{{ '' }}</span>
             </ng-template>
         </dd>
         <!-- Capacity -->
@@ -76,8 +121,8 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <span *ngIf="tutorialGroup.language">
-                {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
+            <span>
+                {{ tutorialGroup.language ? tutorialGroup.language : '' }}
             </span>
         </dd>
         <!-- Campus -->
@@ -107,9 +152,9 @@
                 <span>{{
                     (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
                         ' ' +
-                        tutorialGroup.tutorialGroupSchedule?.startTime +
+                        (tutorialGroup.tutorialGroupSchedule?.startTime | removeSeconds) +
                         '-' +
-                        tutorialGroup.tutorialGroupSchedule?.endTime
+                        (tutorialGroup.tutorialGroupSchedule?.endTime | removeSeconds)
                 }}</span>
                 <br />
                 <span *ngIf="tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
@@ -137,7 +182,7 @@
         <dd>
             <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
                 <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
-                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false">
+                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true">
                     </jhi-tutorial-group-sessions-table>
                 </div>
             </ng-container>

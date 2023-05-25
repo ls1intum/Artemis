@@ -26,7 +26,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
-    question: DragAndDropQuestion;
+    declare question: DragAndDropQuestion;
 
     // Icons
     faSync = faSync;
@@ -94,6 +94,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
 
         // set data based on the dropLocations for each dropLocation
         this.question.dropLocations!.forEach((dropLocation) => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const dropLocationCounter = (this.questionStatistic as DragAndDropQuestionStatistic).dropLocationCounters?.find(
                 (dlCounter) => dropLocation.id === dlCounter.dropLocation!.id,
             )!;

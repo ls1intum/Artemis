@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security.lti;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,9 +48,11 @@ class Lti13TokenRetrieverTest {
 
     private ClientRegistration clientRegistration;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         lti13TokenRetriever = new Lti13TokenRetriever(oAuth2JWKSService, restTemplate);
 
@@ -58,6 +62,14 @@ class Lti13TokenRetrieverTest {
                 .authorizationUri("authUri") //
                 .tokenUri("tokenUri").clientId("clientId") //
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(oAuth2JWKSService, restTemplate);
     }
 
     @Test
@@ -96,7 +108,7 @@ class Lti13TokenRetrieverTest {
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
-        assertNull(token);
+        assertThat(token).isNull();
         verifyNoInteractions(restTemplate);
     }
 
@@ -112,7 +124,7 @@ class Lti13TokenRetrieverTest {
         verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
         verify(restTemplate, times(1)).exchange(any(), eq(String.class));
 
-        assertNull(token);
+        assertThat(token).isNull();
     }
 
     @Test
@@ -128,7 +140,7 @@ class Lti13TokenRetrieverTest {
         verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
         verify(restTemplate, times(1)).exchange(any(), eq(String.class));
 
-        assertNull(token);
+        assertThat(token).isNull();
     }
 
     @Test
@@ -146,7 +158,7 @@ class Lti13TokenRetrieverTest {
         verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
         verify(restTemplate, times(1)).exchange(any(), eq(String.class));
 
-        assertEquals("result", token);
+        assertThat(token).isEqualTo("result");
     }
 
     private JWK generateKey() throws NoSuchAlgorithmException {

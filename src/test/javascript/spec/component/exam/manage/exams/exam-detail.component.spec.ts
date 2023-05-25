@@ -3,10 +3,9 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -16,6 +15,7 @@ import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-com
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -41,6 +41,7 @@ describe('ExamDetailComponent', () => {
     let examDetailComponentFixture: ComponentFixture<ExamDetailComponent>;
     let examDetailComponent: ExamDetailComponent;
     let service: ExamManagementService;
+    let router: Router;
 
     const exampleHTML = '<h1>Sample Markdown</h1>';
     const exam = new Exam();
@@ -72,10 +73,10 @@ describe('ExamDetailComponent', () => {
                 ExamChecklistCheckComponent,
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
-                MockDirective(NgbTooltip),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
+                MockDirective(FeatureToggleLinkDirective),
             ],
             providers: [
                 {
@@ -105,9 +106,11 @@ describe('ExamDetailComponent', () => {
                 examDetailComponent = examDetailComponentFixture.componentInstance;
                 service = TestBed.inject(ExamManagementService);
             });
+
+        router = TestBed.inject(Router);
     });
 
-    beforeEach(function () {
+    beforeEach(() => {
         // reset exam
         exam.id = 1;
         exam.course = new Course();
@@ -115,8 +118,8 @@ describe('ExamDetailComponent', () => {
         exam.course.isAtLeastEditor = true;
         exam.course.id = 1;
         exam.title = 'Example Exam';
-        exam.numberOfRegisteredUsers = 3;
-        exam.maxPoints = 100;
+        exam.numberOfExamUsers = 3;
+        exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
         examDetailComponent.exam = exam;
     });
@@ -213,7 +216,7 @@ describe('ExamDetailComponent', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN
-        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
+        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
@@ -236,11 +239,13 @@ describe('ExamDetailComponent', () => {
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
         jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
         jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+        jest.spyOn(router, 'navigate');
 
         // WHEN
         examDetailComponent.deleteExam(exam.id!);
 
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledOnce();
     });
 });

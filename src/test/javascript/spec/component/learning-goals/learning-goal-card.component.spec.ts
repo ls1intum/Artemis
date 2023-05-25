@@ -1,41 +1,27 @@
-import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoalCardComponent } from 'app/course/learning-goals/learning-goal-card/learning-goal-card.component';
-import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
-import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
-import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-
-@Component({ selector: 'jhi-circular-progress-bar', template: '' })
-class CircularProgressBarStubComponent {
-    @Input()
-    progressInPercent = 0;
-    @Input()
-    progressText = 'Completed';
-}
+import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
     let learningGoalCardComponent: LearningGoalCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [LearningGoalCardComponent, MockPipe(ArtemisTranslatePipe), CircularProgressBarStubComponent],
-            providers: [MockProvider(LectureUnitService), MockProvider(TranslateService), MockProvider(NgbModal)],
+            imports: [NgbTooltipMocksModule],
+            declarations: [LearningGoalCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(LearningGoalRingsComponent)],
+            providers: [MockProvider(TranslateService)],
             schemas: [],
         })
             .compileComponents()
             .then(() => {
                 learningGoalCardComponentFixture = TestBed.createComponent(LearningGoalCardComponent);
                 learningGoalCardComponent = learningGoalCardComponentFixture.componentInstance;
-                learningGoalCardComponent.DetailModalComponent = MockComponent(LearningGoalDetailModalComponent);
-                learningGoalCardComponent.CourseDetailModalComponent = MockComponent(LearningGoalCourseDetailModalComponent);
             });
     });
 
@@ -43,48 +29,43 @@ describe('LearningGoalCardComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display progress bar when progress is available', () => {
-        const learningGoal = new LearningGoal();
-        learningGoal.id = 1;
-        const learningGoalProgress = new IndividualLearningGoalProgress();
-        learningGoalProgress.studentId = 1;
-        learningGoalProgress.learningGoalId = 1;
-        learningGoalProgress.pointsAchievedByStudentInLearningGoal = 5;
-        learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
-
-        learningGoalCardComponent.learningGoal = learningGoal;
-        learningGoalCardComponent.learningGoalProgress = learningGoalProgress;
+    it('should calculate correct progress, confidence and mastery', () => {
+        learningGoalCardComponent.learningGoal = {
+            id: 1,
+            masteryThreshold: 80,
+            userProgress: [
+                {
+                    progress: 45,
+                    confidence: 60,
+                } as LearningGoalProgress,
+            ],
+        } as LearningGoal;
 
         learningGoalCardComponentFixture.detectChanges();
 
-        expect(learningGoalCardComponent.isProgressAvailable).toBeTrue();
-        const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent)).componentInstance;
-        expect(circularProgress).toBeDefined();
-        expect(circularProgress.progressInPercent).toBe(50);
+        expect(learningGoalCardComponent.progress).toBe(45);
+        expect(learningGoalCardComponent.confidence).toBe(75);
+        expect(learningGoalCardComponent.mastery).toBe(65);
+        expect(learningGoalCardComponent.isMastered).toBeFalse();
     });
 
-    it('should not display progress bar when progress is not available', () => {
-        const learningGoal = new LearningGoal();
-        learningGoal.id = 1;
-        learningGoalCardComponent.learningGoal = learningGoal;
+    it('should display learning goal as mastered', () => {
+        learningGoalCardComponent.learningGoal = {
+            id: 1,
+            masteryThreshold: 40,
+            userProgress: [
+                {
+                    progress: 100,
+                    confidence: 60,
+                } as LearningGoalProgress,
+            ],
+        } as LearningGoal;
 
         learningGoalCardComponentFixture.detectChanges();
 
-        expect(learningGoalCardComponent.isProgressAvailable).toBeFalse();
-        const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent));
-        expect(circularProgress).toBeNull();
-    });
-
-    it('should open learning details modal when card is clicked', () => {
-        const learningGoal = new LearningGoal();
-        learningGoal.id = 1;
-        learningGoalCardComponent.learningGoal = learningGoal;
-        learningGoalCardComponentFixture.detectChanges();
-
-        const card = learningGoalCardComponentFixture.debugElement.nativeElement.querySelector('.course-goal-card');
-        const modalService = TestBed.inject(NgbModal);
-        const openSpy = jest.spyOn(modalService, 'open');
-        card.click();
-        expect(openSpy).toHaveBeenCalledOnce();
+        expect(learningGoalCardComponent.progress).toBe(100);
+        expect(learningGoalCardComponent.confidence).toBe(100);
+        expect(learningGoalCardComponent.mastery).toBe(100);
+        expect(learningGoalCardComponent.isMastered).toBeTrue();
     });
 });

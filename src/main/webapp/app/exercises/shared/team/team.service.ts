@@ -82,6 +82,7 @@ export interface ITeamService {
      * Import the teams of an existing source exercise
      * @param {Exercise} exercise - Exercise the teams should be imported into
      * @param {Team[]} teams - Teams that should be imported into the exercise
+     * @param {TeamImportStrategyType} importStrategyType - How the teams should be imported
      */
     importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 
@@ -114,7 +115,7 @@ export class TeamService implements ITeamService, OnDestroy {
     }
 
     static resourceUrl(exerciseId: number) {
-        return `${SERVER_API_URL}api/exercises/${exerciseId}/teams`;
+        return `api/exercises/${exerciseId}/teams`;
     }
 
     /**
@@ -182,7 +183,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {string} shortName - Short name to search for
      */
     existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${SERVER_API_URL}api/courses/${course.id}/teams/exists?shortName=${shortName}`, { observe: 'response' });
+        return this.http.get<boolean>(`api/courses/${course.id}/teams/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     /**
@@ -192,7 +193,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {string} loginOrName - Login/Name to search for
      */
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
-        const url = `${SERVER_API_URL}api/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
+        const url = `api/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
         return this.http.get<TeamSearchUser[]>(url, { observe: 'response' });
     }
 
@@ -230,7 +231,7 @@ export class TeamService implements ITeamService, OnDestroy {
     // TODO: Move this method to the CourseManagementService and delete the only here used duplicated setAccessRightsCourseEntityResponseType() helper method
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http
-            .get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
+            .get<Course>(`api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)));
     }
 

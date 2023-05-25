@@ -17,6 +17,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { CourseScores } from 'app/course/course-scores/course-scores';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -38,6 +39,8 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
+
 export interface ValidationReason {
     translateKey: string;
     translateValues: any;
@@ -50,22 +53,6 @@ export enum IncludedInOverallScore {
     INCLUDED_COMPLETELY = 'INCLUDED_COMPLETELY',
     INCLUDED_AS_BONUS = 'INCLUDED_AS_BONUS',
     NOT_INCLUDED = 'NOT_INCLUDED',
-}
-
-export enum ParticipationStatus {
-    QUIZ_UNINITIALIZED = 'quiz-uninitialized',
-    QUIZ_ACTIVE = 'quiz-active',
-    QUIZ_SUBMITTED = 'quiz-submitted',
-    QUIZ_NOT_STARTED = 'quiz-not-started',
-    QUIZ_NOT_PARTICIPATED = 'quiz-not-participated',
-    QUIZ_FINISHED = 'quiz-finished',
-    NO_TEAM_ASSIGNED = 'no-team-assigned',
-    UNINITIALIZED = 'uninitialized',
-    INITIALIZED = 'initialized',
-    INACTIVE = 'inactive',
-    EXERCISE_ACTIVE = 'exercise-active',
-    EXERCISE_SUBMITTED = 'exercise-submitted',
-    EXERCISE_MISSED = 'exercise-missed',
 }
 
 export abstract class Exercise implements BaseEntity {
@@ -95,7 +82,6 @@ export abstract class Exercise implements BaseEntity {
     public studentParticipations?: StudentParticipation[];
     public tutorParticipations?: TutorParticipation[];
     public course?: Course;
-    public participationStatus?: ParticipationStatus;
     public exampleSubmissions?: ExampleSubmission[];
     public attachments?: Attachment[];
     public posts?: Post[];
@@ -136,6 +122,7 @@ export abstract class Exercise implements BaseEntity {
     public presentationScoreEnabled?: boolean;
     public gradingInstructionFeedbackUsed?: boolean;
     public exampleSolutionPublished?: boolean;
+    public zipFileForImport?: File;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

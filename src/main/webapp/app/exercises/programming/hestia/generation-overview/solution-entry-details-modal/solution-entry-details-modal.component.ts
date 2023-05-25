@@ -27,6 +27,7 @@ export class SolutionEntryDetailsModalComponent implements OnDestroy {
     }
 
     saveSolutionEntry() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.solutionEntryService.updateSolutionEntry(this.exerciseId, this.solutionEntry.testCase?.id!, this.solutionEntry.id!, this.solutionEntry).subscribe({
             next: (updatedEntry) => {
                 this.solutionEntry = updatedEntry;

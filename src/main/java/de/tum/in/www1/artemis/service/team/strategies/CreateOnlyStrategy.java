@@ -39,7 +39,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      * 1. No clash in team short name
      * 2. No overlapping students
      *
-     * @param sourceExercise Exercise from which to take the teams for the import
+     * @param sourceExercise      Exercise from which to take the teams for the import
      * @param destinationExercise Exercise in which to import the teams into
      * @return an unmodifiable list of those source teams that have no conflicts
      */
@@ -59,7 +59,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      * 2. No overlapping students
      *
      * @param exercise Exercise from which to take the teams for the import
-     * @param teams Teams which will be added into exercise
+     * @param teams    Teams which will be added into exercise
      * @return an unmodifiable list of those source teams that have no conflicts
      */
     private List<Team> getExerciseTeamsAndFindConflictFreeSourceTeams(Exercise exercise, List<Team> teams) {
@@ -77,7 +77,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      * 2. No overlapping students
      *
      * @param existingTeams Teams that are already in the exercise
-     * @param newTeams Teams which will be added into exercise
+     * @param newTeams      Teams which will be added into exercise
      * @return an unmodifiable list of those source teams that have no conflicts
      */
     private List<Team> getConflictFreeTeams(List<Team> existingTeams, List<Team> newTeams) {

@@ -73,7 +73,7 @@ describe('Exercise Detail Submission Chart Component', () => {
         expect(comp.ngxData).toEqual([]);
 
         // WHEN
-        comp.exam.numberOfRegisteredUsers = 1;
+        comp.exam.numberOfExamUsers = 1;
         comp.ngOnInit();
 
         // THEN
@@ -88,7 +88,7 @@ describe('Exercise Detail Submission Chart Component', () => {
         ${[1, 1, 1]} | ${[1, 2, 3]} | ${[0, 3]}
     `('should call initData on init with actions', (param: { input: number[]; activity: number[]; expect: number[] }) => {
         // GIVEN
-        comp.exam.numberOfRegisteredUsers = 3;
+        comp.exam.numberOfExamUsers = 3;
 
         const submissionsPerStudent = new Map();
         const action1 = new SavedExerciseAction(true, param.input[0], param.input[0], false, false);

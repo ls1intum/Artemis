@@ -1,9 +1,9 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
@@ -55,10 +55,11 @@ export class AssessmentLayoutComponent {
     }
 
     @Output() save = new EventEmitter<void>();
+    // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
-    @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
+    @Output() updateAssessmentAfterComplaint = new EventEmitter<AssessmentAfterComplaint>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
     @Output() useAsExampleSubmission = new EventEmitter<void>();
 }

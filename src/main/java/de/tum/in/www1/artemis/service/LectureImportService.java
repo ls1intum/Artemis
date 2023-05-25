@@ -91,7 +91,7 @@ public class LectureImportService {
      * This helper function clones the {@code importedLectureUnit} and returns it
      *
      * @param importedLectureUnit The original lecture unit to be copied
-     * @param newLecture The new lecture to which the lecture units are appended
+     * @param newLecture          The new lecture to which the lecture units are appended
      * @return The cloned lecture unit
      */
     private LectureUnit cloneLectureUnit(final LectureUnit importedLectureUnit, final Lecture newLecture) {

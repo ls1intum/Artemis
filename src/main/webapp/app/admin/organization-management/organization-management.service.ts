@@ -8,8 +8,8 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
-    public resourceUrl = SERVER_API_URL + 'api/organizations';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/organizations';
+    public resourceUrl = 'api/organizations';
+    public adminResourceUrl = 'api/admin/organizations';
 
     constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
 
@@ -90,7 +90,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove the user from
      * @param userLogin the user to remove
      */
-    removeUserFromOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
+    removeUserFromOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
     }
 
@@ -99,7 +99,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to add the user to
      * @param userLogin the user to add
      */
-    addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
+    addUserToOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
     }
 

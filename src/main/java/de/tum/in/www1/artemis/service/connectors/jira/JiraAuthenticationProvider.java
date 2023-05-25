@@ -283,7 +283,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public void removeUserFromGroup(User user, String group) {
         // then we also make sure to remove it in JIRA so that the synchronization during the next login does not add the group again
-        log.debug("Remove user {} from group {}", user.getLogin(), group);
+        log.debug("Remove user {} from JIRA group {}", user.getLogin(), group);
         try {
             final var path = UriComponentsBuilder.fromUri(jiraUrl.toURI()).path("/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", user.getLogin())
                     .build().toUri();

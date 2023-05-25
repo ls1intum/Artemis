@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.security.Role;
@@ -42,7 +41,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -75,6 +74,7 @@ public class ModelFactory {
             attachment.setUploadDate(date);
         }
         attachment.setName("TestAttachment");
+        attachment.setVersion(1);
         return attachment;
     }
 
@@ -93,7 +93,8 @@ public class ModelFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString());
+        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
+        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
         return attachment;
     }
 
@@ -538,12 +539,13 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true, 7);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
+                true, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean postsEnabled, int requestMoreFeedbackTimeDays) {
+            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID());
@@ -555,7 +557,19 @@ public class ModelFactory {
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setMaxComplaintTextLimit(maxComplaintTextLimit);
         course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-        course.setPostsEnabled(postsEnabled);
+        if (communicationEnabled && messagingEnabled) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        }
+        else if (communicationEnabled && !messagingEnabled) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        }
+        else if (!communicationEnabled && messagingEnabled) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+        }
+        else {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+
+        }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
@@ -677,7 +691,37 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a test eam (test exams have no student review dates)
+     * Generates an exam
+     *
+     * @param course      the associated course
+     * @param visibleDate the visible date of the exam
+     * @param startDate   the start date of the exam
+     * @param endDate     the end date of the exam
+     * @param testExam    if the exam is a test exam
+     * @return the created exam
+     */
+    public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
+        Exam exam = new Exam();
+        exam.setTitle((testExam ? "Test" : "Real") + " exam 1");
+        exam.setTestExam(testExam);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setWorkingTime(3000);
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setExamMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
+        exam.setCourse(course);
+        return exam;
+    }
+
+    /**
+     * Generates a test exam (test exams have no student review dates)
      *
      * @param course the associated course
      * @return the created exam
@@ -695,23 +739,7 @@ public class ModelFactory {
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
         ZonedDateTime currentTime = now();
-        Exam exam = new Exam();
-        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
-        exam.setTestExam(testExam);
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(testExam ? 80 : 60));
-        exam.setWorkingTime(3000);
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setRandomizeExerciseOrder(false);
-        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
-        exam.setCourse(course);
-        return exam;
+        return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam);
     }
 
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
@@ -1013,13 +1041,6 @@ public class ModelFactory {
         return apollonDiagram;
     }
 
-    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
-        LockRepositoryPolicy policy = new LockRepositoryPolicy();
-        policy.setSubmissionLimit(submissionLimit);
-        policy.setActive(active);
-        return policy;
-    }
-
     /**
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
@@ -1056,11 +1077,11 @@ public class ModelFactory {
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
-     * This Testsuite has four {@link de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO TestCaseDTOs}:
+     * This Testsuite has four {@link TestCaseDTO TestCaseDTOs}:
      * <ul>
-     *     <li>CustomSuccessMessage: successful test with a message</li>
-     *     <li>CustomSuccessNoMessage: successful test without message</li>
-     *     <li>CustomFailedMessage: failed test with a message</li>
+     * <li>CustomSuccessMessage: successful test with a message</li>
+     * <li>CustomSuccessNoMessage: successful test without message</li>
+     * <li>CustomFailedMessage: failed test with a message</li>
      * </ul>
      *
      * @param repoName                    name of the repository
@@ -1335,7 +1356,7 @@ public class ModelFactory {
      * @param campus                of tutorial group
      * @return example tutorial gorup
      */
-    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, Language language, String campus) {
+    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, String language, String campus) {
         TutorialGroup tutorialGroup = new TutorialGroup();
         tutorialGroup.setTitle(title);
         tutorialGroup.setAdditionalInformation(additionalInformation);
@@ -1357,14 +1378,16 @@ public class ModelFactory {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
+        tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
     }
 
     /**
      * Generates a Bonus instance with given arguments.
      *
-     * @param bonusStrategy       of bonus
-     * @param weight              of bonus
+     * @param bonusStrategy         of bonus
+     * @param weight                of bonus
      * @param sourceGradingScaleId  of sourceGradingScale of bonus
      * @param bonusToGradingScaleId of bonusToGradingScale bonus
      * @return a new Bonus instance associated with the gradins scales corresonding to ids bonusToGradingScaleId and bonusToGradingScaleId.

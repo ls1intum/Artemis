@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -18,12 +21,14 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -33,6 +38,8 @@ public class ProgrammingExerciseImportService {
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -53,9 +60,10 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
         this.fileService = fileService;
@@ -137,8 +145,8 @@ public class ProgrammingExerciseImportService {
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         try {
-            continuousIntegrationService.get().triggerBuild(templateParticipation);
-            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+            continuousIntegrationTriggerService.get().triggerBuild(templateParticipation);
+            continuousIntegrationTriggerService.get().triggerBuild(solutionParticipation);
         }
         catch (ContinuousIntegrationException e) {
             log.error("Unable to trigger imported build plans", e);
@@ -153,19 +161,19 @@ public class ProgrammingExerciseImportService {
 
         // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, newExerciseBranch, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
+                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, newExerciseBranch, List.of(ASSIGNMENT_REPO_NAME));
 
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, Optional.empty());
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, List.of());
 
         updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
                 targetExerciseProjectKey, newExercise);
 
         // update 2 repositories for the SOLUTION build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, newExerciseBranch, Optional.empty());
+                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, newExerciseBranch, List.of());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, Optional.empty());
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, List.of());
 
         updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
                 targetExerciseProjectKey, newExercise);
@@ -178,7 +186,7 @@ public class ProgrammingExerciseImportService {
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
             String auxiliaryBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
             continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
-                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch, Optional.empty());
+                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch, List.of());
         }
     }
 
@@ -203,12 +211,12 @@ public class ProgrammingExerciseImportService {
 
     /**
      * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
-     * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
      *
      * @param templateExercise the exercise from which the values that should be replaced are extracted
      * @param newExercise      the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
@@ -236,14 +244,14 @@ public class ProgrammingExerciseImportService {
 
     /**
      * Adjust project names in imported exercise for specific repository.
-     * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
      *
      * @param replacements   the replacements that should be applied
      * @param projectKey     the project key of the new exercise
      * @param repositoryName the name of the repository that should be adjusted
      * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
@@ -259,9 +267,9 @@ public class ProgrammingExerciseImportService {
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
-     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate if the template files should be updated
-     * @param recreateBuildPlans if the build plans should be recreated
+     * @param newExercise                 The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param updateTemplate              if the template files should be updated
+     * @param recreateBuildPlans          if the build plans should be recreated
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,
@@ -292,4 +300,5 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
         return importedProgrammingExercise;
     }
+
 }

@@ -30,10 +30,9 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
-    @Input() short = false;
+    @Input() short = true;
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
-    @Input() showTestNames = false;
     @Input() showIcon = true;
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)

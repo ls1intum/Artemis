@@ -1,5 +1,6 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,21 +10,34 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCheckDouble,
+    faDownload,
+    faFileSignature,
+    faLightbulb,
+    faListAlt,
+    faPencilAlt,
+    faPlus,
+    faSort,
+    faTable,
+    faTimes,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -56,6 +70,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faUsers = faUsers;
     faTable = faTable;
     faListAlt = faListAlt;
+    faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
 
@@ -146,17 +161,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         });
     }
 
-    /**
-     * Resets programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     */
-    resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe({
-            next: () => this.dialogErrorSource.next(''),
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
     }
@@ -167,13 +171,20 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     openImportModal() {
-        const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: ProgrammingExercise) => {
+        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        modalRef.result.then((result: ProgrammingExercise) => {
+            //when the file is uploaded we set the id to undefined.
+            if (result.id === undefined) {
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file'], {
+                    state: {
+                        programmingExerciseForImportFromFile: result,
+                    },
+                });
+            } else {
                 this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
-            },
-            () => {},
-        );
+            }
+        });
     }
 
     toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {
@@ -206,14 +217,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.closed.subscribe(() => {
             location.reload();
         });
-    }
-
-    openRepoExportModal() {
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, {
-            size: 'lg',
-            backdrop: 'static',
-        });
-        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
     }
 
     /**

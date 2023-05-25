@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import {
+    areManualResultsAllowed,
     getExerciseDueDate,
     hasExerciseDueDatePassed,
     isResumeExerciseAvailable,
@@ -10,6 +11,8 @@ import {
 } from 'app/exercises/shared/exercise/exercise.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ExerciseUtils', () => {
     const exerciseWithDueDate = (dueDate?: dayjs.Dayjs) => {
@@ -90,10 +93,12 @@ describe('ExerciseUtils', () => {
     });
 
     it.each([
-        { dueDate: dayjs().subtract(1, 'day'), startPracticeAvailable: true },
-        { dueDate: dayjs().add(1, 'day'), startPracticeAvailable: false },
-        { dueDate: undefined, startPracticeAvailable: false },
-    ])('should determine correctly if the student can practice a programming exercise', ({ dueDate, startPracticeAvailable }) => {
+        { dueDate: dayjs().subtract(1, 'day'), participation: undefined, startPracticeAvailable: true },
+        { dueDate: dayjs().add(1, 'day'), participation: undefined, startPracticeAvailable: false },
+        { dueDate: undefined, participation: undefined, startPracticeAvailable: false },
+        { dueDate: dayjs().subtract(1, 'day'), participation: { initializationState: InitializationState.INITIALIZED }, startPracticeAvailable: false },
+        { dueDate: dayjs().subtract(1, 'day'), participation: { initializationState: InitializationState.REPO_COPIED }, startPracticeAvailable: true },
+    ])('should determine correctly if the student can practice a programming exercise', ({ dueDate, participation, startPracticeAvailable }) => {
         const exercise: ProgrammingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -102,7 +107,7 @@ describe('ExerciseUtils', () => {
             dueDate,
         };
 
-        expect(isStartPracticeAvailable(exercise)).toBe(startPracticeAvailable);
+        expect(isStartPracticeAvailable(exercise, participation)).toBe(startPracticeAvailable);
     });
 
     it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {
@@ -116,58 +121,53 @@ describe('ExerciseUtils', () => {
         expect(isStartPracticeAvailable(exercise)).toBeFalse();
     });
 
-    it('should allow students to start the exercise if there is no due date', () => {
-        const exercise = exerciseWithDueDate(undefined);
-        expect(isStartExerciseAvailable(exercise)).toBeTrue();
+    it.each([
+        [{ dueDate: undefined } as Exercise, undefined, true],
+        [{ dueDate: dayjs().add(1, 'hour') } as Exercise, undefined, true],
+        [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, undefined, true],
+        [{ dueDate: undefined, type: ExerciseType.PROGRAMMING } as Exercise, undefined, true],
+        [{ dueDate: dayjs().add(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, undefined, true],
+        [{ dueDate: dayjs().subtract(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, undefined, false],
+        [{ dueDate: dayjs().add(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, { initializationState: InitializationState.INITIALIZED }, false],
+        [{ dueDate: dayjs().add(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, { initializationState: InitializationState.REPO_COPIED }, true],
+        [{ dueDate: dayjs().subtract(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, { initializationState: InitializationState.REPO_COPIED }, false],
+    ])('should correctly determine if starting an exercise is available', (exercise: Exercise, participation: StudentParticipation | undefined, expected: boolean) => {
+        expect(isStartExerciseAvailable(exercise, participation)).toBe(expected);
     });
 
-    it('should allow students to start the exercise if the due date is in the future', () => {
-        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
-        expect(isStartExerciseAvailable(exercise)).toBeTrue();
+    it.each([
+        [{ dueDate: undefined } as Exercise, {}, true],
+        [{ dueDate: dayjs().add(1, 'hour') } as Exercise, {}, true],
+        [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, {}, false],
+        [{ dueDate: undefined } as Exercise, { testRun: true }, false],
+        [{ dueDate: dayjs().add(1, 'hour') } as Exercise, { testRun: true }, false],
+        [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, { testRun: true }, true],
+    ])('should correctly determine if resuming an exercise is available', (exercise: Exercise, participation: StudentParticipation | undefined, expected: boolean) => {
+        expect(isResumeExerciseAvailable(exercise, participation)).toBe(expected);
     });
 
-    it('should not allow students to start the exercise if the due date is in the past', () => {
-        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'day'));
-        expect(isStartExerciseAvailable(exercise)).toBeFalse();
-    });
-
-    it('should allow students to resume the exercise if there is no due date', () => {
-        const exercise = exerciseWithDueDate(undefined);
-        expect(isResumeExerciseAvailable(exercise, undefined)).toBeTrue();
-    });
-
-    it('should allow students to resume the exercise if the exercise due date is in the future', () => {
-        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
-        const participation = participationWithDueDate(undefined);
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
-    });
-
-    it('should not allow students to resume the exercise if the exercise due date is in the past', () => {
-        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
-        const participation = participationWithDueDate(undefined);
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
-    });
-
-    it('should allow students to resume the exercise if the individual due date is in the future', () => {
-        const exercise = exerciseWithDueDate(undefined);
-        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
-    });
-
-    it('should allow students to resume the exercise between regular and individual due date', () => {
-        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
-        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
-    });
-
-    it('should not allow students to resume the exercise if the individual due date is in the past', () => {
-        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
-        const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
-
-        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
+    it.each([
+        [{ type: ExerciseType.MODELING } as Exercise, true],
+        [{ type: ExerciseType.MODELING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
+        [{ type: ExerciseType.MODELING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
+        [{ type: ExerciseType.PROGRAMMING } as Exercise, true],
+        [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
+        [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour'), assessmentType: AssessmentType.AUTOMATIC } as Exercise, false],
+        [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
+        [
+            {
+                type: ExerciseType.PROGRAMMING,
+                dueDate: dayjs().subtract(2, 'hours'),
+                buildAndTestStudentSubmissionsAfterDueDate: dayjs().subtract(1, 'hour'),
+            } as ProgrammingExercise,
+            true,
+        ],
+        [
+            { type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(2, 'hours'), buildAndTestStudentSubmissionsAfterDueDate: dayjs().add(1, 'hour') } as ProgrammingExercise,
+            false,
+        ],
+        [{ type: ExerciseType.QUIZ, dueDate: dayjs().subtract(1, 'hour') } as Exercise, false],
+    ])('should correctly determine if manual results are allowed', (exercise: Exercise, expected: boolean) => {
+        expect(areManualResultsAllowed(exercise)).toBe(expected);
     });
 });

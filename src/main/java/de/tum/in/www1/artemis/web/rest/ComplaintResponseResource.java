@@ -105,7 +105,7 @@ public class ComplaintResponseResource {
     /**
      * PUT /complaint-responses/complaint/:complaintId/resolve: resolve a complaint by updating the complaint and the associated empty complaint response
      *
-     * @param complaintId - id of the complaint to resolve
+     * @param complaintId       - id of the complaint to resolve
      * @param complaintResponse the complaint response used for resolving the complaint
      * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
@@ -124,7 +124,7 @@ public class ComplaintResponseResource {
      * Get /complaint-responses/complaint/:id get a complaint response associated with the complaint "id"
      *
      * @param complaintId the id of the complaint for which we want to find a linked response
-     * @param principal the user who called the method
+     * @param principal   the user who called the method
      * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
      */
     // TODO: change URL to /complaint-responses?complaintId={complaintId}

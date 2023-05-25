@@ -3,9 +3,9 @@
         "textExercise": {
             "home": {
                 "title": "Text Exercises",
-                "createLabel": "Create new Text Exercise",
+                "createLabel": "Create Text Exercise",
                 "editLabel": "Edit Text Exercise",
-                "importLabel": "Import a Text Exercise"
+                "importLabel": "Import Text Exercise"
             },
             "submitButton": {
                 "create": "Create",
@@ -24,6 +24,8 @@
             "exampleSubmissions": "Example submissions",
             "assessedSubmission": "Your assessed submission",
             "assessedSubmissionInstructor": "The assessed submission",
+            "submission": "Submission",
+            "assessmentPending": "Assessment pending",
             "createExampleSubmissions": "Create example submission",
             "automaticAssessmentEnabled": "Automatic assessment suggestions enabled",
             "checkPlagiarism": "Check Plagiarism",

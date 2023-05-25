@@ -10,12 +10,12 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -28,13 +28,12 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule],
+            imports: [RouterTestingModule, MockDirective(NgbTooltip)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(NgbTooltip),
                 MockComponent(PostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
@@ -164,5 +163,14 @@ describe('PostComponent', () => {
         component.ngOnInit();
         expect(component.content).toBe(metisPostExerciseUser1.content);
         expect(component.posting.title).toBe(metisPostExerciseUser1.title);
+    });
+
+    it('should open create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
+        component.openCreateAnswerPostModal();
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 });

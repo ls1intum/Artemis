@@ -41,7 +41,7 @@
             #editor
             id="ace-code-editor"
             [mode]="editorMode ? editorMode : 'java'"
-            [readOnly]="isLoading"
+            [readOnly]="isLoading || disableActions"
             [hidden]="!selectedFile || isLoading"
             [autoUpdateContent]="true"
             [durationBeforeCallback]="200"

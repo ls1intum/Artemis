@@ -2,14 +2,13 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -22,19 +21,16 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LearningGoalRepository learningGoalRepository;
-
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
-        this.learningGoalRepository = learningGoalRepository;
     }
 
     /**
-     * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
+     * For tutors, admins and instructors returns lecture with all attachments, for students lecture with only active attachments
      *
      * @param lectureWithAttachments lecture that has attachments
-     * @param user the user for which this call should filter
+     * @param user                   the user for which this call should filter
      * @return lecture with filtered attachments
      */
     public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
@@ -54,10 +50,29 @@ public class LectureService {
     }
 
     /**
+     * Lecture with only active attachment units
+     *
+     * @param lectureWithAttachmentUnits lecture that has attachment units
+     * @return lecture with filtered attachments
+     */
+    public Lecture filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
+
+        List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
+        for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
+            if (unit instanceof AttachmentUnit && (((AttachmentUnit) unit).getAttachment().getReleaseDate() == null
+                    || ((AttachmentUnit) unit).getAttachment().getReleaseDate().isBefore(ZonedDateTime.now()))) {
+                filteredAttachmentUnits.add(unit);
+            }
+        }
+        lectureWithAttachmentUnits.setLectureUnits(filteredAttachmentUnits);
+        return lectureWithAttachmentUnits;
+    }
+
+    /**
      * Filter active attachments for a set of lectures.
      *
      * @param lecturesWithAttachments lectures that have attachments
-     * @param user the user for which this call should filter
+     * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
     public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
@@ -70,6 +85,7 @@ public class LectureService {
 
     /**
      * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
+     *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found lectures and the total number of pages
@@ -88,26 +104,12 @@ public class LectureService {
     }
 
     /**
-     * Deletes the given lecture.
-     * Attachments and Lecture Units are not explicitly deleted, as the delete operation is cascaded by the database.
+     * Deletes the given lecture (with its lecture units).
+     *
      * @param lecture the lecture to be deleted
      */
-    @Transactional // ok because of delete
     public void delete(Lecture lecture) {
-        Lecture lectureToDelete = lectureRepository.findByIdElseThrow(lecture.getId());
-
-        // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
-        var lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
-
-        // Remove the lecture units from their connected learning goals
-        var learningGoals = lectureUnits.stream().flatMap(lectureUnit -> lectureUnit.getLearningGoals().stream()).collect(Collectors.toSet());
-        learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
-            learningGoal = learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
-            lectureUnits.forEach(learningGoal.getLectureUnits()::remove);
-            return learningGoal;
-        }).toList());
-
-        lectureRepository.deleteById(lectureToDelete.getId());
+        lectureRepository.deleteById(lecture.getId());
     }
 
 }

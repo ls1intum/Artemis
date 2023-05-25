@@ -4,12 +4,12 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
-export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `${SERVER_API_URL}/api/courses/${courseId}/exams/${examId}/statistics`;
+export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `api/courses/${courseId}/exams/${examId}/statistics`;
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
@@ -104,6 +104,7 @@ export class ExamMonitoringService {
      * Updates the current state of the exam monitoring.
      */
     updateMonitoring(exam: Exam, monitoring: boolean): Observable<HttpResponse<boolean>> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         return this.http.put<boolean>(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!), monitoring, { observe: 'response' });
     }
 }

@@ -106,6 +106,7 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.subscribeToComplaintResponse(complaintResponse);
         this.courseManagementService.find(this.courseId).subscribe((response) => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course = response?.body!;
         });
     }
@@ -143,7 +144,7 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
         this.correctionRound = this.correctionRound || 0;
-        if (complaint.accepted) {
+        if (this.complaintType == ComplaintType.COMPLAINT && complaint.accepted) {
             this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(
@@ -152,8 +153,8 @@ export class ListOfComplaintsComponent implements OnInit {
             exercise.id!,
             studentParticipation.id,
             submissionId,
-            0, // even if the list of complaints are part of an exam, the assessment of non-exam exercises gets executed
-            0,
+            undefined, // even if the list of complaints are part of an exam, the assessment of non-exam exercises gets executed
+            undefined,
             complaint.result.id,
         );
         this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
@@ -187,8 +188,7 @@ export class ListOfComplaintsComponent implements OnInit {
      */
     triggerShowAllComplaints() {
         this.isLoadingAllComplaints = true;
-        let complaintResponse: Observable<HttpResponse<Complaint[]>>;
-        complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
+        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
         this.subscribeToComplaintResponse(complaintResponse);
         this.isLoadingAllComplaints = false;
         this.allComplaintsForTutorLoaded = true;

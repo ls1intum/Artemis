@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faCogs, faHandshake, faHandshakeSlash, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
@@ -24,10 +24,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faCogs = faCogs;
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
-    faHandshake = faHandshake;
-    faHandshakeSlash = faHandshakeSlash;
 
-    constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
+    constructor(private translateService: TranslateService, private exerciseService: ExerciseService) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
@@ -69,9 +67,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
         if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
+            this.exercise.allowComplaintsForAutomaticAssessments = false;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
+            this.exercise.allowManualFeedbackRequests = false;
         }
     }
 
@@ -80,6 +80,13 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      */
     toggleComplaintsType() {
         this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;
+    }
+
+    /**
+     * Toggles the value for allowing complaints for automatic assessment between true and false
+     */
+    toggleReleaseTests() {
+        this.exercise.releaseTestsWithExampleSolution = !this.exercise.releaseTestsWithExampleSolution;
     }
 
     /**
@@ -129,14 +136,14 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      * @param dueDate the new dueDate
      */
     private updateDueDate(dueDate: dayjs.Dayjs) {
-        alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
+        alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
         const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
         if (afterDue && dueDate.isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
-            alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
+            alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }
     }
 
@@ -153,8 +160,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
                 newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
                     ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
                     : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
-            alert(this.translator.instant(message));
+            alert(this.translateService.instant(message));
             this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
+            if (!newReleaseOrDueDate) {
+                this.exercise.releaseTestsWithExampleSolution = false;
+            }
         }
     }
 }

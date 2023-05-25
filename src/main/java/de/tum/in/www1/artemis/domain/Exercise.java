@@ -9,7 +9,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -37,15 +36,20 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
-        @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-        @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"),
+    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
+    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
+    @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
+    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise implements Completable {
+public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -58,14 +62,15 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
-    @Lob
     private String problemStatement;
 
     @Column(name = "grading_instructions")
-    @Lob
     private String gradingInstructions;
 
-    @ManyToMany(mappedBy = "exercises")
+    @ManyToMany
+    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties({ "exercises", "course" })
+    @JsonView(QuizView.Before.class)
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -432,17 +437,16 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
-     * @return the found participation, or null, if none exist
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
-    @Nullable
-    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
-                    return participation;
+                    return List.of(participation);
                 }
                 else if (participation.getInitializationState() == InitializationState.INACTIVE) {
                     // InitializationState INACTIVE is also ok
@@ -453,11 +457,11 @@ public abstract class Exercise extends BaseExercise implements Completable {
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
                         || participation.getExercise() instanceof FileUploadExercise
                         || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    return participation;
+                    return List.of(participation);
                 }
             }
         }
-        return relevantParticipation;
+        return relevantParticipation != null ? List.of(relevantParticipation) : Collections.emptyList();
     }
 
     /**
@@ -469,7 +473,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Submission latestSubmission = null;
         // we get the results over the submissions
@@ -486,9 +490,11 @@ public abstract class Exercise extends BaseExercise implements Completable {
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
-            if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
-                    // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic()))) {
+            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isTestRun();
+            boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
+            // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
+            boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
+            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomatic)) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -677,8 +683,8 @@ public abstract class Exercise extends BaseExercise implements Completable {
      *
      * @return boolean
      */
+    @JsonIgnore
     public boolean isReleased() {
-        // Exam
         ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
@@ -799,6 +805,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
 
     /**
      * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises this must get fetched
+     *
      * @return the number of correctionRounds
      */
     @JsonIgnore
@@ -811,11 +818,11 @@ public abstract class Exercise extends BaseExercise implements Completable {
         }
     }
 
-    /** Helper method which does a hard copy of the Grading Criteria
+    /**
+     * Helper method which does a hard copy of the Grading Criteria
      * Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     *
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading criteria list
      */
     public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -830,12 +837,13 @@ public abstract class Exercise extends BaseExercise implements Completable {
         return newGradingCriteria;
     }
 
-    /** Helper method which does a hard copy of the Grading Instructions
+    /**
+     * Helper method which does a hard copy of the Grading Instructions
      * Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param originalGradingCriterion The original grading criterion which contains the grading instructions
-     * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
-     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param originalGradingCriterion      The original grading criterion which contains the grading instructions
+     * @param newGradingCriterion           The cloned grading criterion in which we insert the grading instructions
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
     private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
@@ -854,6 +862,17 @@ public abstract class Exercise extends BaseExercise implements Completable {
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    public boolean isExampleSolutionPublished() {
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
+                : this.getExampleSolutionPublicationDate();
+        return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
     /**
@@ -890,7 +909,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * Validates score settings
      * 1. The maxScore needs to be greater than 0
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
-     *
      */
     public void validateScoreSettings() {
         // Check if max score is set
@@ -916,6 +934,13 @@ public abstract class Exercise extends BaseExercise implements Completable {
     public void validateGeneralSettings() {
         validateScoreSettings();
         validateDates();
+        validateExamExerciseIncludedInScoreCompletely();
+    }
+
+    private void validateExamExerciseIncludedInScoreCompletely() {
+        if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
+            throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
+        }
     }
 
     /**
@@ -924,7 +949,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
 
         private final String mappedColumnName;
 

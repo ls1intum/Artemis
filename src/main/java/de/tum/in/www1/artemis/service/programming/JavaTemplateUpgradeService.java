@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
@@ -44,7 +45,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final GitService gitService;
 
@@ -56,9 +57,9 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final FileService fileService;
 
-    public JavaTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
+    public JavaTemplateUpgradeService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, GitService gitService, ResourceLoaderService resourceLoaderService,
             UserRepository userRepository, RepositoryService repositoryService, FileService fileService) {
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
@@ -83,7 +84,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * reference. The method updates the project object models (pom) in the target repository with the pom of the latest
      * Artemis template.
      *
-     * @param exercise The exercise for the template files should be updated
+     * @param exercise       The exercise for the template files should be updated
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
@@ -109,19 +110,19 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 // Overwrite old test classes with new templates if they are present in the repository
                 Resource[] testFileTemplates = getTemplateResources(exercise, "test/testFiles/**/*");
                 overwriteFilesIfPresent(repository, testFileTemplates);
-                programmingExerciseService.replacePlaceholders(exercise, repository);
+                programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
 
                 // Add the latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
                     Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*.*");
-                    fileService.copyResources(staticCodeAnalysisResources, "java/test", repository.getLocalPath().toAbsolutePath().toString(), true);
+                    fileService.copyResources(staticCodeAnalysisResources, Path.of("java", "test"), repository.getLocalPath().toAbsolutePath(), true);
                 }
                 else {
                     deleteFileIfPresent(repository, SCA_CONFIG_FOLDER);
                 }
             }
             // TODO: double check that this still works correctly
-            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", false, userRepository.getUser());
+            programmingExerciseRepositoryService.commitAndPushRepository(repository, "Template upgraded by Artemis", false, userRepository.getUser());
         }
         catch (IOException | GitAPIException | XmlPullParserException exception) {
             log.error("Updating of template files of repository {} for exercise {} failed with error: {}", repositoryType.name(), exercise.getId(), exception.getMessage());
@@ -132,17 +133,15 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private Resource[] getTemplateResources(ProgrammingExercise exercise, String filePattern) {
         // Get general template resources
-        String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
-        String templatePomPath = programmingLanguageTemplate + "/" + filePattern;
+        final Path programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
 
-        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
+        Resource[] templatePoms = resourceLoaderService.getResources(programmingLanguageTemplate, filePattern);
 
         // Get project type specific template resources
         if (exercise.getProjectType() != null) {
-            String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
-            String projectTypePomPath = projectTypeTemplate + "/" + filePattern;
+            final Path projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
 
-            Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
+            final Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypeTemplate, filePattern);
 
             // Prefer project type specific resources
             templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;
@@ -204,7 +203,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * Updates dependencies in the target model with dependency versions found in the templateModel. This operation
      * does not introduce new dependencies to the target model.
      *
-     * @param targetModel Project object model which dependencies should be updated
+     * @param targetModel   Project object model which dependencies should be updated
      * @param templateModel Template project object model which might contain the latest dependency versions
      */
     private void updateDependencies(Model targetModel, Model templateModel) {
@@ -248,12 +247,12 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         oldPlugin.ifPresent(plugin -> targetModel.getBuild().removePlugin(plugin));
     }
 
-    private Optional<Dependency> findDependency(Model model, String artifactId, String groupId) {
-        return model.getDependencies().stream().filter(isDependency(artifactId, groupId)).findFirst();
+    private Optional<Dependency> findDependency(Model model, String groupId, String artifactId) {
+        return model.getDependencies().stream().filter(isDependency(groupId, artifactId)).findFirst();
     }
 
-    private Optional<Plugin> findPlugin(Model model, String artifactId, String groupId) {
-        return model.getBuild().getPlugins().stream().filter(isPlugin(artifactId, groupId)).findFirst();
+    private Optional<Plugin> findPlugin(Model model, String groupId, String artifactId) {
+        return model.getBuild().getPlugins().stream().filter(isPlugin(groupId, artifactId)).findFirst();
     }
 
     private Predicate<Dependency> isDependency(String groupId, String artifactId) {

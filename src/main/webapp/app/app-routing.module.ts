@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ProfileAccessService } from 'app/shared/profile-toggle/profile-access.service';
+import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
 import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
@@ -22,13 +22,17 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
                 },
                 {
+                    path: 'privacy',
+                    loadChildren: () => import('./core/legal/privacy.module').then((m) => m.ArtemisPrivacyModule),
+                },
+                {
                     path: 'about',
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
                 {
                     path: 'courses/:courseId/lectures/:lectureId',
                     loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
-                    canLoad: [ProfileAccessService],
+                    canLoad: [ProfileToggleGuard],
                     data: {
                         profile: ProfileToggle.LECTURE,
                     },
@@ -37,6 +41,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     // TODO: check that the LTI integration still works correctly (if not, we should implement it differently)
                     path: 'courses/:courseId/exercises/:exerciseId',
                     loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+                },
+                {
+                    path: 'courses/:courseId/competencies/:competencyId',
+                    loadChildren: () => import('./overview/course-learning-goals/course-learning-goals-details.module').then((m) => m.ArtemisCourseLearningGoalsDetailsModule),
                 },
                 {
                     path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',

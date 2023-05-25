@@ -10,7 +10,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
@@ -18,7 +17,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
-    private resourceUrl = SERVER_API_URL + `api/courses`;
+    private resourceUrl = `api/courses`;
 
     constructor(
         private http: HttpClient,
@@ -90,7 +89,7 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the exercise
      */
     startExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, {}).pipe(
+        return this.http.post<StudentParticipation>(`api/exercises/${exerciseId}/participations`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -103,13 +102,11 @@ export class CourseExerciseService {
      * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
      */
     startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
-        return this.http
-            .post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {})
-            .pipe(
-                map((participation: StudentParticipation) => {
-                    return this.handleParticipation(participation);
-                }),
-            );
+        return this.http.post<StudentParticipation>(`api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {}).pipe(
+            map((participation: StudentParticipation) => {
+                return this.handleParticipation(participation);
+            }),
+        );
     }
 
     /**
@@ -118,7 +115,7 @@ export class CourseExerciseService {
      * @param participationId - the unique identifier of the participation to continue
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
+        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -126,9 +123,7 @@ export class CourseExerciseService {
     }
 
     requestFeedback(exerciseId: number): Observable<StudentParticipation> {
-        return this.http
-            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/request-feedback`, {})
-            .pipe(map((participation: StudentParticipation) => participation));
+        return this.http.put<StudentParticipation>(`api/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
     }
 
     /**
@@ -138,7 +133,7 @@ export class CourseExerciseService {
     handleParticipation(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             // convert date
-            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+            participation.initializationDate = convertDateFromServer(participation.initializationDate);
             if (participation.exercise) {
                 const exercise = participation.exercise;
                 this.convertExerciseDatesFromServer(exercise);

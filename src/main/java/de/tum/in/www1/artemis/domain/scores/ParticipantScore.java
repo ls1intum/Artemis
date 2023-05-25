@@ -6,7 +6,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -18,14 +17,19 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 
 /**
  * Participant scores store the last (rated) result for each student/team and exercise combination.
  * They are eventually consistent within a few seconds.
- * <p><b>Background:</b>
+ * <p>
+ * <b>Background:</b>
  * Normally, getting the last result means going through the chain Exercise -> Participation -> Submission -> Result.
- * This is inefficient for certain scenarios, e.g., when calculating the course average score for an exercise.</p>
- * @see de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService
+ * This is inefficient for certain scenarios, e.g., when calculating the course average score for an exercise.
+ * </p>
+ *
+ * @see ParticipantScoreScheduleService
  */
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -34,7 +38,6 @@ import de.tum.in.www1.artemis.domain.Result;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("PS")
-@DiscriminatorOptions(force = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of ParticipantScore when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = StudentScore.class, name = "studentScore"), @JsonSubTypes.Type(value = TeamScore.class, name = "teamScore") })
@@ -75,6 +78,8 @@ public abstract class ParticipantScore extends DomainObject {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
+
+    public abstract Participant getParticipant();
 
     public Exercise getExercise() {
         return exercise;

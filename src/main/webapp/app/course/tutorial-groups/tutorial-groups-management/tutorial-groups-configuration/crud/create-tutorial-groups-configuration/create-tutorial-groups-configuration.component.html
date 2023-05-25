@@ -3,5 +3,6 @@
     <div class="alert alert-info" role="alert">
         {{ 'artemisApp.pages.createTutorialGroupsConfiguration.explanation' | artemisTranslate }}
     </div>
-    <jhi-tutorial-groups-configuration-form [isEditMode]="false" (formSubmitted)="createTutorialsGroupConfiguration($event)"> </jhi-tutorial-groups-configuration-form>
+    <jhi-tutorial-groups-configuration-form [isEditMode]="false" (formSubmitted)="createTutorialsGroupConfiguration($event)" [course]="course">
+    </jhi-tutorial-groups-configuration-form>
 </jhi-loading-indicator-container>

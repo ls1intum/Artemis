@@ -8,6 +8,10 @@ import { ExamActivity } from 'app/entities/exam-user-activity.model';
 
 export class StudentExam implements BaseEntity {
     public id?: number;
+    /**
+     * The individual working time per student in seconds
+     * The default working time of an exam is stored in exam.workingTime
+     */
     public workingTime?: number;
     public submitted?: boolean;
     public started?: boolean;
@@ -22,6 +26,7 @@ export class StudentExam implements BaseEntity {
 
     // helper attribute
     public ended?: boolean;
+    public numberOfExamSessions = 0; // default value
 
     constructor() {
         // helper attribute (calculated by the server at the time of the last request)

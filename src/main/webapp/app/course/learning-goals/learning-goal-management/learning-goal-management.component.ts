@@ -2,19 +2,18 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningGoal, LearningGoalRelation } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, LearningGoalRelationError, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, forkJoin } from 'rxjs';
-import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import { captureException } from '@sentry/browser';
-import { isEqual } from 'lodash-es';
 import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -26,10 +25,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
-    learningGoalIdToLearningGoalCourseProgress = new Map<number, CourseLearningGoalProgress>();
-    // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
-    // we calculate it here to find out if the participant scores table is robust enough to replace the classic way of finding the last result
-    learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables = new Map<number, CourseLearningGoalProgress>();
 
     showRelations = false;
     tailLearningGoal?: number;
@@ -38,9 +33,16 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     nodes: Node[] = [];
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
+    learningGoalRelationError = LearningGoalRelationError;
+    relationError: LearningGoalRelationError = LearningGoalRelationError.NONE;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    documentationType = DocumentationType.Competencies;
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
 
     // Icons
     faPlus = faPlus;
@@ -70,6 +72,39 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    validate(): void {
+        if (this.headLearningGoal && this.tailLearningGoal && this.relationType && this.headLearningGoal === this.tailLearningGoal) {
+            this.relationError = LearningGoalRelationError.SELF;
+            return;
+        }
+        if (this.doesRelationAlreadyExist()) {
+            this.relationError = LearningGoalRelationError.EXISTING;
+            return;
+        }
+        if (this.containsCircularRelation()) {
+            this.relationError = LearningGoalRelationError.CIRCULAR;
+            return;
+        }
+        this.relationError = LearningGoalRelationError.NONE;
+    }
+
+    getErrorMessage(error: LearningGoalRelationError): string {
+        switch (error) {
+            case LearningGoalRelationError.CIRCULAR: {
+                return 'artemisApp.learningGoal.relation.createsCircularRelation';
+            }
+            case LearningGoalRelationError.EXISTING: {
+                return 'artemisApp.learningGoal.relation.relationAlreadyExists';
+            }
+            case LearningGoalRelationError.SELF: {
+                return 'artemisApp.learningGoal.relation.selfRelation';
+            }
+            case LearningGoalRelationError.NONE: {
+                throw new TypeError('There is no error message if there is no error.');
+            }
+        }
+    }
+
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;
     }
@@ -92,10 +127,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
-    }
-
-    getLearningGoalCourseProgress(learningGoal: LearningGoal) {
-        return this.learningGoalIdToLearningGoalCourseProgress.get(learningGoal.id!);
     }
 
     loadData() {
@@ -127,14 +158,10 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     });
 
                     const progressObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, false);
+                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId);
                     });
 
-                    const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, true);
-                    });
-
-                    return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
+                    return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable)]);
                 }),
             )
             .pipe(
@@ -143,7 +170,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe({
-                next: ([learningGoalRelations, learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
+                next: ([learningGoalRelations, learningGoalProgressResponses]) => {
                     const relations = [
                         ...learningGoalRelations
                             .flatMap((response) => response.body!)
@@ -178,42 +205,72 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                         );
 
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
-                        const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
+                        const courseLearningGoalProgress: CourseLearningGoalProgress = learningGoalProgressResponse.body!;
+                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.learningGoalId)!.courseProgress = courseLearningGoalProgress;
                     }
-                    for (const learningGoalProgressResponse of learningGoalProgressResponsesUsingParticipantScores) {
-                        const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
-                    }
-                    this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 
-    openImportModal() {
+    /**
+     * Opens a modal for adding a prerequisite to the current course.
+     */
+    openPrerequisiteSelectionModal() {
         const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
-        modalRef.result.then(
-            (result: LearningGoal) => {
-                this.learningGoalService
-                    .addPrerequisite(result.id!, this.courseId)
-                    .pipe(
-                        filter((res: HttpResponse<LearningGoal>) => res.ok),
-                        map((res: HttpResponse<LearningGoal>) => res.body),
-                    )
-                    .subscribe({
-                        next: (res: LearningGoal) => {
-                            this.prerequisites.push(res);
-                        },
-                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                    });
-            },
-            () => {},
-        );
+        modalRef.result.then((result: LearningGoal) => {
+            this.learningGoalService
+                .addPrerequisite(result.id!, this.courseId)
+                .pipe(
+                    filter((res: HttpResponse<LearningGoal>) => res.ok),
+                    map((res: HttpResponse<LearningGoal>) => res.body),
+                )
+                .subscribe({
+                    next: (res: LearningGoal) => {
+                        this.prerequisites.push(res);
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
+        });
+    }
+
+    /**
+     * Opens a modal for selecting a competency to import to the current course.
+     */
+    openImportModal() {
+        const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
+        modalRef.result.then((selectedLearningGoal: LearningGoal) => {
+            this.learningGoalService
+                .import(selectedLearningGoal, this.courseId)
+                .pipe(
+                    filter((res: HttpResponse<LearningGoal>) => res.ok),
+                    map((res: HttpResponse<LearningGoal>) => res.body),
+                )
+                .subscribe({
+                    next: (res: LearningGoal) => {
+                        this.learningGoals.push(res);
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
+        });
     }
 
     createRelation() {
+        if (this.relationError !== LearningGoalRelationError.NONE) {
+            switch (this.relationError) {
+                case LearningGoalRelationError.CIRCULAR: {
+                    throw new TypeError('Creation of circular relations is not allowed.');
+                }
+                case LearningGoalRelationError.EXISTING: {
+                    throw new TypeError('Creation of an already existing relation is not allowed.');
+                }
+                case LearningGoalRelationError.SELF: {
+                    throw new TypeError('Creation of a self relation is not allowed.');
+                }
+            }
+        }
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
@@ -237,24 +294,200 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    private containsCircularRelation(): boolean {
+        if (this.headLearningGoal !== this.tailLearningGoal) {
+            return !!(
+                this.tailLearningGoal &&
+                this.headLearningGoal &&
+                this.relationType &&
+                this.doesCreateCircularRelation(this.nodes, this.edges, {
+                    source: this.tailLearningGoal! + '',
+                    target: this.headLearningGoal! + '',
+                    label: this.relationType!,
+                } as Edge)
+            );
+        } else {
+            return false;
+        }
+    }
+
+    private doesRelationAlreadyExist(): boolean {
+        return this.edges.find((edge) => edge.source === this.tailLearningGoal?.toString() && edge.target === this.headLearningGoal?.toString()) !== undefined;
+    }
+
     /**
-     * Using this test we want to find out if the progress calculation using the participant scores table leads to the same
-     * result as going through participation -> submission -> result
+     * Checks if adding an edge would create a circular relation
+     * @param   {Node[]} nodes an array of all existing nodes of a graph
+     * @param   {Edge[]} edges an array of all existing edges of a graph
+     * @param   {Edge} edgeToAdd the edge that you try to add to the graph
+     *
+     * @returns {boolean} whether or not adding the provided edge would result in a circle in the graph
      */
-    private testIfScoreUsingParticipantScoresTableDiffers() {
-        this.learningGoalIdToLearningGoalCourseProgress.forEach((learningGoalProgress, learningGoalId) => {
-            const learningGoalProgressParticipantScoresTable = this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.get(learningGoalId);
-            if (
-                !isEqual(
-                    learningGoalProgress.averagePointsAchievedByStudentInLearningGoal,
-                    learningGoalProgressParticipantScoresTable!.averagePointsAchievedByStudentInLearningGoal,
-                )
-            ) {
-                const message = `Warning: Learning Goal(id=${learningGoalProgress.learningGoalId}) Course Progress different using participant scores for course ${
-                    this.courseId
-                }! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(learningGoalProgressParticipantScoresTable)}!`;
-                captureException(new Error(message));
+    private doesCreateCircularRelation(nodes: Node[], edges: Edge[], edgeToAdd: Edge): boolean {
+        const edgesWithNewEdge = JSON.parse(JSON.stringify(edges));
+        edgesWithNewEdge.push(edgeToAdd);
+        const graph = new Graph();
+        for (const node of nodes) {
+            graph.addVertex(new Vertex(node.id));
+        }
+        for (const edge of edgesWithNewEdge) {
+            const headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+            const tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+            if (headVertex === undefined || tailVertex === undefined) {
+                throw new TypeError('Every edge needs a source or a target.');
             }
-        });
+            // only extends and assumes relations are considered when checking for circles because only they don't make sense
+            // MATCHES relations are considered in the next step by merging the edges and combining the adjacencyLists
+            switch (edge.label) {
+                case 'EXTENDS':
+                case 'ASSUMES': {
+                    graph.addEdge(tailVertex, headVertex);
+                    break;
+                }
+            }
+        }
+        // combine vertices that are connected through MATCHES
+        for (const edge of edgesWithNewEdge) {
+            if (edge.label === 'MATCHES') {
+                const headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+                const tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+                if (headVertex === undefined || tailVertex === undefined) {
+                    throw new TypeError('Every edge needs a source or a target.');
+                }
+                if (headVertex.getAdjacencyList().includes(tailVertex) || tailVertex.getAdjacencyList().includes(headVertex)) {
+                    return true;
+                }
+                // create a merged vertex
+                const mergedVertex = new Vertex(tailVertex.getLabel() + ', ' + headVertex.getLabel());
+                // add all neighbours to merged vertex
+                mergedVertex.getAdjacencyList().push(...headVertex.getAdjacencyList());
+                mergedVertex.getAdjacencyList().push(...tailVertex.getAdjacencyList());
+                // update every vertex that initially had one of the two merged vertices as neighbours to now reference the merged vertex
+                for (const vertex of graph.vertices) {
+                    for (const adjacentVertex of vertex.getAdjacencyList()) {
+                        if (adjacentVertex.getLabel() === headVertex.getLabel() || adjacentVertex.getLabel() === tailVertex.getLabel()) {
+                            const index = vertex.getAdjacencyList().indexOf(adjacentVertex, 0);
+                            if (index > -1) {
+                                vertex.getAdjacencyList().splice(index, 1);
+                            }
+                            vertex.getAdjacencyList().push(mergedVertex);
+                        }
+                    }
+                }
+            }
+        }
+        return graph.hasCycle();
+    }
+}
+
+/**
+ * A class that represents a vertex in a graph
+ * @class
+ *
+ * @constructor
+ *
+ * @property label          a label to identify the vertex (we use the node id)
+ * @property beingVisited   is the vertex the one that is currently being visited during the graph traversal
+ * @property visited        has this vertex been visited before
+ * @property adjacencyList  an array that contains all adjacent vertices
+ */
+export class Vertex {
+    private readonly label: string;
+    private beingVisited: boolean;
+    private visited: boolean;
+    private readonly adjacencyList: Vertex[];
+
+    constructor(label: string) {
+        this.label = label;
+        this.adjacencyList = [];
+    }
+
+    getLabel(): string {
+        return this.label;
+    }
+
+    addNeighbor(adjacent: Vertex): void {
+        this.adjacencyList.push(adjacent);
+    }
+
+    getAdjacencyList(): Vertex[] {
+        return this.adjacencyList;
+    }
+
+    isBeingVisited(): boolean {
+        return this.beingVisited;
+    }
+
+    setBeingVisited(beingVisited: boolean): void {
+        this.beingVisited = beingVisited;
+    }
+
+    isVisited(): boolean {
+        return this.visited;
+    }
+
+    setVisited(visited: boolean) {
+        this.visited = visited;
+    }
+}
+
+/**
+ * A class that represents a graph
+ * @class
+ *
+ * @constructor
+ *
+ * @property vertices   an array of all vertices in the graph (edges are represented by the adjacent vertices property of each vertex)
+ */
+export class Graph {
+    vertices: Vertex[];
+
+    constructor() {
+        this.vertices = [];
+    }
+
+    public addVertex(vertex: Vertex): void {
+        this.vertices.push(vertex);
+    }
+
+    public addEdge(from: Vertex, to: Vertex): void {
+        from.addNeighbor(to);
+    }
+
+    /**
+     * Checks if the graph contains a circle
+     *
+     * @returns {boolean} whether or not the graph contains a circle
+     */
+    public hasCycle(): boolean {
+        // we have to check for every vertex if it is part of a cycle in case the graph is not connected
+        for (const vertex of this.vertices) {
+            if (!vertex.isVisited() && this.vertexHasCycle(vertex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a vertex is part of a circle
+     *
+     * @returns {boolean} whether or not the vertex is part of a circle
+     */
+    private vertexHasCycle(sourceVertex: Vertex): boolean {
+        sourceVertex.setBeingVisited(true);
+
+        for (const neighbor of sourceVertex.getAdjacencyList()) {
+            if (neighbor.isBeingVisited()) {
+                // backward edge exists
+                return true;
+            } else if (!neighbor.isVisited() && this.vertexHasCycle(neighbor)) {
+                return true;
+            }
+        }
+
+        sourceVertex.setBeingVisited(false);
+        sourceVertex.setVisited(true);
+        return false;
     }
 }

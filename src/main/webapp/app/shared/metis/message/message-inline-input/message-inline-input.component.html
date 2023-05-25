@@ -1,0 +1,37 @@
+<form [formGroup]="formGroup" (ngSubmit)="confirm()">
+    <div class="message-inline-input-form__wrapper">
+        <jhi-posting-markdown-editor
+            formControlName="content"
+            [editorHeight]="editorHeight"
+            [maxContentLength]="maxContentLength"
+            [isInputLengthDisplayed]="false"
+            (keydown.enter)="confirm()"
+        >
+        </jhi-posting-markdown-editor>
+        <div class="col text-end">
+            <div class="alert alert-warning alert-dismissible text-start fade show" role="alert" *ngIf="!warningDismissed">
+                <button type="button" class="btn-close" (click)="closeAlert()" aria-label="Close"></button>
+                <h4 class="alert-heading">{{ 'artemisApp.messageWarning.headerText' | artemisTranslate }}</h4>
+                <p>{{ 'artemisApp.messageWarning.mainParagraph' | artemisTranslate }}</p>
+                <hr />
+                <p class="mb-0">{{ 'artemisApp.messageWarning.lastParagraph' | artemisTranslate }}</p>
+            </div>
+            <button
+                *ngIf="editType == EditType.UPDATE"
+                jhi-posting-button
+                [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="isModalOpen.emit()"
+            ></button>
+            <button
+                jhi-posting-button
+                [buttonLoading]="isLoading"
+                [disabled]="!formGroup.valid"
+                [buttonLabel]="'artemisApp.conversationsLayout.sendMessage' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                id="save"
+                type="submit"
+            ></button>
+        </div>
+    </div>
+</form>

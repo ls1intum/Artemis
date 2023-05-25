@@ -12,7 +12,7 @@ import com.thoughtworks.qdox.model.*;
  */
 class JavaClassDiffSerializer {
 
-    private JavaClassDiff javaClassDiff;
+    private final JavaClassDiff javaClassDiff;
 
     JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
         this.javaClassDiff = javaClassDiff;

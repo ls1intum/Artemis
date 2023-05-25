@@ -32,12 +32,19 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+export type ProgrammingExerciseResetOptions = {
+    deleteBuildPlans: boolean;
+    deleteRepositories: boolean;
+    deleteParticipationsSubmissionsAndResults: boolean;
+    recreateBuildPlans: boolean;
+};
+
 // TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -63,11 +70,18 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Recreates the BASE and SOLUTION build plan for this exercise
-     * @param exerciseId of the programming exercise for which the build plans should be recreated
+     * Resets a programming exercise with the given exerciseId by performing a set of operations
+     * as specified in the ProgrammingExerciseResetOptions. The available operations include:
+     * 1. Recreating the BASE and SOLUTION build plans for the exercise.
+     * 2. Deleting all student participations associated with the exercise.
+     * 3. Deleting student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     *
+     * @param { number } exerciseId - Id of the programming exercise that should be reset.
+     * @param { ProgrammingExerciseResetOptions } options - Configuration options specifying which operations to perform during the exercise reset.
+     * @returns { Observable<string> } - An Observable that returns a string response.
      */
-    recreateBuildPlans(exerciseId: number): Observable<string> {
-        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/recreate-build-plans`, { responseType: 'text' });
+    reset(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
     }
 
     /**
@@ -282,7 +296,7 @@ export class ProgrammingExerciseService {
      * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
      * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<{}>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
         let params = new HttpParams();
         params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
         params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
@@ -330,7 +344,7 @@ export class ProgrammingExerciseService {
      * Unlock all the student repositories of the given exercise so that student can perform commits
      * @param exerciseId of the particular programming exercise
      */
-    unlockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
+    unlockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
     }
 
@@ -338,7 +352,7 @@ export class ProgrammingExerciseService {
      * Lock all the student repositories of the given exercise so that student can perform commits
      * @param exerciseId of the particular programming exercise
      */
-    lockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
+    lockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
@@ -376,9 +390,13 @@ export class ProgrammingExerciseService {
     /**
      * Exports the example solution repository for a given exercise, suitable for distributing to students.
      * @param exerciseId
+     * @param includeTests flag that indicates whether the tests should also be exported
      */
-    exportSolutionRepository(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+    exportStudentRequestedRepository(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+        let params = new HttpParams();
+        params = params.set('includeTests', includeTests.toString());
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository`, {
+            params,
             observe: 'response',
             responseType: 'blob',
         });
@@ -504,5 +522,20 @@ export class ProgrammingExerciseService {
 
     getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
         return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
+    }
+
+    /** Imports a programming exercise from a given zip file **/
+    importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
+        let copy = this.convertDataFromClient(exercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const formData = new FormData();
+        formData.append('file', exercise.zipFileForImport!);
+        const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
+        formData.append('programmingExercise', exerciseBlob);
+        const url = `api/courses/${courseId}/programming-exercises/import-from-file`;
+        return this.http
+            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 }

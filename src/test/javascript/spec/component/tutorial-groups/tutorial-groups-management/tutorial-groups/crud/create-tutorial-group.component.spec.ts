@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+// eslint-disable-next-line max-len
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -35,6 +35,7 @@ describe('CreateTutorialGroupComponent', () => {
                 fixture = TestBed.createComponent(CreateTutorialGroupComponent);
                 component = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
+                fixture.detectChanges();
             });
     });
 
@@ -43,12 +44,10 @@ describe('CreateTutorialGroupComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should send POST request upon form submission and navigate', () => {
-        fixture.detectChanges();
         const exampleTutorialGroup = generateExampleTutorialGroup({});
         delete exampleTutorialGroup.id;
         delete exampleTutorialGroup.isUserRegistered;

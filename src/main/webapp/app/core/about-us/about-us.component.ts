@@ -21,31 +21,32 @@ export class AboutUsComponent implements OnInit {
 
     email: string;
     data: AboutUsModel;
+    gitCommitId: string;
+    gitBranchName: string;
 
     // Array of tuple containing translation keys and translation values
     readonly sections: [string, { [key: string]: string }][] = [
-        ['exercises.programming', { programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/' }],
-        ['exercises.quiz', { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
-        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
-        ['exercises.text', { textUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
-        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/' }],
-        ['exam', { examModeUrl: 'https://docs.artemis.ase.in.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
-        ['grading', { gradingUrl: 'https://docs.artemis.ase.in.tum.de/user/grading/' }],
-        ['assessment', { assessmentUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/assessment/' }],
-        ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
-        ['notifications', { notificationsURL: 'https://docs.artemis.ase.in.tum.de/user/notifications' }],
-        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/' }],
-        ['lectures', { lecturesUrl: 'https://docs.artemis.ase.in.tum.de/user/lectures/' }],
-        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.ase.in.tum.de/user/markdown-support/' }],
-        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.ase.in.tum.de/user/plagiarism-check/' }],
-        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.ase.in.tum.de/user/learning-analytics/' }],
-        ['scalable', { scalingUrl: 'https://docs.artemis.ase.in.tum.de/user/scaling/' }],
-        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.ase.in.tum.de/user/user-experience/' }],
-        ['customizable', { customizableUrl: 'https://docs.artemis.ase.in.tum.de/user/courses/customizable' }],
-        ['openSource', { openSourceUrl: 'https://docs.artemis.ase.in.tum.de/dev/open-source/' }],
+        ['exercises.programming', { programmingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/programming/' }],
+        ['exercises.quiz', { quizUrl: 'https://docs.artemis.cit.tum.de/user/exercises/quiz/' }],
+        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.cit.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.cit.tum.de/user/exercises/file-upload/' }],
+        ['exam', { examModeUrl: 'https://docs.artemis.cit.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
+        ['grading', { gradingUrl: 'https://docs.artemis.cit.tum.de/user/grading/' }],
+        ['assessment', { assessmentUrl: 'https://docs.artemis.cit.tum.de/user/exercises/assessment/' }],
+        ['communication', { communicationUrl: 'https://docs.artemis.cit.tum.de/user/communication/' }],
+        ['notifications', { notificationsURL: 'https://docs.artemis.cit.tum.de/user/notifications' }],
+        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.cit.tum.de/user/exercises/team-exercises/' }],
+        ['lectures', { lecturesUrl: 'https://docs.artemis.cit.tum.de/user/lectures/' }],
+        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.cit.tum.de/user/markdown-support/' }],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.cit.tum.de/user/plagiarism-check/' }],
+        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.cit.tum.de/user/learning-analytics/' }],
+        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.cit.tum.de/user/tutorialgroups/' }],
+        ['scalable', { scalingUrl: 'https://docs.artemis.cit.tum.de/user/scaling/' }],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.cit.tum.de/user/user-experience/' }],
+        ['customizable', { customizableUrl: 'https://docs.artemis.cit.tum.de/user/courses/customizable' }],
+        ['openSource', { openSourceUrl: 'https://docs.artemis.cit.tum.de/dev/open-source/' }],
     ];
-
-    readonly SERVER_API_URL = SERVER_API_URL;
 
     constructor(private route: ActivatedRoute, private profileService: ProfileService, private staticContentService: StaticContentService) {}
 
@@ -71,7 +72,12 @@ export class AboutUsComponent implements OnInit {
                     this.contact = info.contact;
                 }),
             )
-            .subscribe();
+            .subscribe((profileInfo) => {
+                if (profileInfo.git) {
+                    this.gitCommitId = profileInfo.git.commit.id.abbrev;
+                    this.gitBranchName = profileInfo.git.branch;
+                }
+            });
     }
 
     /**

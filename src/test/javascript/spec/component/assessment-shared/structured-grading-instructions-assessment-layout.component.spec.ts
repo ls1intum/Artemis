@@ -18,15 +18,13 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
             declarations: [
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })

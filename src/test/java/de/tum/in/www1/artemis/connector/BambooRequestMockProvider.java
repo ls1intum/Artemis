@@ -185,8 +185,12 @@ public class BambooRequestMockProvider {
     }
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, JsonProcessingException {
+        mockCopyBuildPlanForParticipation(exercise, username, false);
+    }
+
+    public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws URISyntaxException, JsonProcessingException {
         final var projectKey = exercise.getProjectKey();
-        final var targetPlanName = username.toUpperCase();
+        final var targetPlanName = (practiceMode ? "practice" : "") + username.toUpperCase();
         mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName, true);
     }
 
@@ -351,20 +355,6 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
     }
 
-    /**
-     * This method mocks that the build log of a given plan has failed
-     *
-     * @param planKey the build plan id
-     */
-    public void mockGetBuildLogs(String planKey, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> buildLogs) throws URISyntaxException, JsonProcessingException {
-        var response = new BambooBuildResultDTO(new BambooBuildResultDTO.BambooBuildLogEntriesDTO(buildLogs));
-        final var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
-                .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
-
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
-    }
-
     private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws MalformedURLException {
         final var buildResult = new QueriedBambooBuildResultDTO();
         final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
@@ -493,9 +483,10 @@ public class BambooRequestMockProvider {
 
     /**
      * Mocks the Rest calls for granting read access to the build plan
+     *
      * @param buildPlanId the Bamboo build plan ID
-     * @param projectKey the Bamboo project key
-     * @param user the user that should get read access
+     * @param projectKey  the Bamboo project key
+     * @param user        the user that should get read access
      * @throws URISyntaxException exception for wrong URLs
      */
     public void mockGrantReadAccess(String buildPlanId, String projectKey, User user) throws URISyntaxException {

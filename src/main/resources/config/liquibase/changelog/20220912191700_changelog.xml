@@ -1,8 +1,0 @@
-<?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet author="krusche" id="20220912191700">
-        <modifyDataType tableName="plagiarism_case" columnName="verdict_by_id" newDataType="bigint"/>
-        <addForeignKeyConstraint baseTableName="plagiarism_case" baseColumnNames="verdict_by_id" constraintName="fk_plagiarism_case_verdict_by_id" referencedTableName="jhi_user"
-                                 referencedColumnNames="id"/>
-    </changeSet>
-</databaseChangeLog>

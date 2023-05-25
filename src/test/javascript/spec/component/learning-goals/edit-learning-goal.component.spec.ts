@@ -1,4 +1,3 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -7,30 +6,22 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
-import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal } from 'app/entities/learningGoal.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-@Component({ selector: 'jhi-learning-goal-form', template: '' })
-class LearningGoalFormStubComponent {
-    @Input() formData: LearningGoalFormData;
-    @Input() courseId: number;
-    @Input() isEditMode = false;
-    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
-    @Output() formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
-}
+import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('EditLearningGoalComponent', () => {
     let editLearningGoalComponentFixture: ComponentFixture<EditLearningGoalComponent>;
     let editLearningGoalComponent: EditLearningGoalComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule],
             declarations: [LearningGoalFormStubComponent, EditLearningGoalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(LectureService),
@@ -82,7 +73,7 @@ describe('EditLearningGoalComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        // mocking learning goal service
+        // mocking competency service
         const learningGoalService = TestBed.inject(LearningGoalService);
         const lectureUnit = new TextUnit();
         lectureUnit.id = 1;
@@ -97,8 +88,13 @@ describe('EditLearningGoalComponent', () => {
             body: learningGoalOfResponse,
             status: 200,
         });
+        const learningGoalCourseProgressResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
+            body: { learningGoalId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress,
+            status: 200,
+        });
 
         const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(learningGoalResponse));
+        const getCourseProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(of(learningGoalCourseProgressResponse));
 
         // mocking lecture service
         const lectureService = TestBed.inject(LectureService);
@@ -118,6 +114,7 @@ describe('EditLearningGoalComponent', () => {
             By.directive(LearningGoalFormStubComponent),
         ).componentInstance;
         expect(findByIdSpy).toHaveBeenCalledOnce();
+        expect(getCourseProgressSpy).toHaveBeenCalledOnce();
         expect(findAllByCourseSpy).toHaveBeenCalledOnce();
 
         expect(editLearningGoalComponent.formData.title).toEqual(learningGoalOfResponse.title);
@@ -145,6 +142,14 @@ describe('EditLearningGoalComponent', () => {
             status: 200,
         });
         const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
+        jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    status: 200,
+                }),
+            ),
+        );
         jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(
             of(
                 new HttpResponse({

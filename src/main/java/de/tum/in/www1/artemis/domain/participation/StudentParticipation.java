@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class StudentParticipation extends Participation {
 
     @Column(name = "presentation_score")
-    private Integer presentationScore;
+    private Double presentationScore;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -30,11 +30,11 @@ public class StudentParticipation extends Participation {
     @JsonView(QuizView.Before.class)
     private Team team;
 
-    public Integer getPresentationScore() {
+    public Double getPresentationScore() {
         return presentationScore;
     }
 
-    public void setPresentationScore(Integer presentationScore) {
+    public void setPresentationScore(Double presentationScore) {
         this.presentationScore = presentationScore;
     }
 
@@ -58,6 +58,7 @@ public class StudentParticipation extends Participation {
 
     /**
      * allows to set the participant independent whether it is a team or user
+     *
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
@@ -132,7 +133,8 @@ public class StudentParticipation extends Participation {
     }
 
     /**
-     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO, Long)}}
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.ExampleSubmissionService#getSubmissionsOnPageWithSize(PageableSearchDTO,
+     * Long)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum StudentParticipationSearchColumn {

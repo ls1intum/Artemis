@@ -37,7 +37,7 @@ public class ModelClusterFactory {
      * Finds the similar elements among submissions and puts them in a cluster
      *
      * @param modelingSubmissions the submissions to build the clusters from
-     * @param exercise the exercise that submissions belong to
+     * @param exercise            the exercise that submissions belong to
      * @return an unmodifiable list of clusters that have more than one element in them
      */
     public List<ModelCluster> buildClusters(List<ModelingSubmission> modelingSubmissions, ModelingExercise exercise) {
@@ -111,11 +111,11 @@ public class ModelClusterFactory {
     /**
      * Builds and returns the elements of the modeling submission
      *
-     * @param element the element to compare for other elements
+     * @param element             the element to compare for other elements
      * @param uniqueModelElements the elements that have no similar elements or the first of their kind
-     * @param clusters map of clusters and similarity ids to assign the element
-     * @param exercise the exercise that submission of element belongs to
-     * @param submission the submission that element belongs to
+     * @param clusters            map of clusters and similarity ids to assign the element
+     * @param exercise            the exercise that submission of element belongs to
+     * @param submission          the submission that element belongs to
      */
     private void selectCluster(UMLElement element, Set<UMLElement> uniqueModelElements, Map<Integer, ModelCluster> clusters, ModelingExercise exercise,
             ModelingSubmission submission) {
@@ -153,8 +153,6 @@ public class ModelClusterFactory {
         modelElement.setModelElementId(element.getJSONElementID());
         modelElement.setModelElementType(element.getType());
         modelElement.setSubmission(submission);
-        // set knowledge to model element
-        modelElement.setKnowledge(exercise.getKnowledge());
         cluster.addModelElement(modelElement);
     }
 }

@@ -4,13 +4,13 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
@@ -19,11 +19,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     styleUrls: ['./course-exercise-row.scss'],
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
@@ -42,6 +37,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     dueDate?: dayjs.Dayjs;
     gradedStudentParticipation?: StudentParticipation;
 
+    routerLink: string[];
+
     participationUpdateListener: Subscription;
 
     constructor(
@@ -53,16 +50,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     ) {}
 
     ngOnInit() {
-        if (this.exercise.id) {
-            this.exerciseService.getExerciseDetails(this.exercise.id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                if (exerciseResponse.body) {
-                    this.exercise = exerciseResponse.body!;
-                    this.exercise.participationStatus = participationStatus(this.exercise);
-                    if (this.exercise.studentParticipations?.length) {
-                        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
-                    }
-                }
-            });
+        if (this.exercise?.studentParticipations?.length) {
+            this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
         }
 
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
@@ -72,28 +61,28 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
                           return el.id === changedParticipation.id ? changedParticipation : el;
                       })
                     : [changedParticipation];
-                this.exercise.participationStatus = participationStatus(this.exercise);
                 this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
                 this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
         });
+
+        this.routerLink = ['/courses', this.course.id!.toString(), 'exercises', this.exercise.id!.toString()];
     }
 
     ngOnChanges(): void {
         const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exercise.id!);
-        if (cachedParticipations) {
+        if (cachedParticipations?.length) {
             this.exercise.studentParticipations = cachedParticipations;
             this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
         }
         this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
-        this.exercise.participationStatus = participationStatus(this.exercise, false);
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
+            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
             quizExercise.isPracticeModeAvailable = quizExercise.isOpenForPractice && quizExercise.quizEnded;
             this.exercise = quizExercise;
         }

@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
@@ -32,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
@@ -39,12 +43,15 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -81,11 +88,18 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ExamAccessService examAccessService;
+
+    private final CourseRepository courseRepository;
+
+    private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -96,6 +110,9 @@ public class ProgrammingExerciseExportImportResource {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.examAccessService = examAccessService;
+        this.courseRepository = courseRepository;
+        this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
     }
 
     /**
@@ -122,7 +139,7 @@ public class ProgrammingExerciseExportImportResource {
      * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
      * @param updateTemplate     Option determining whether the template files should be updated with the most recent template version
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
-     * (403) if the user is not at least an instructor in the target course.
+     *         (403) if the user is not at least an instructor in the target course.
      * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)
      */
     @PostMapping(IMPORT)
@@ -194,6 +211,38 @@ public class ProgrammingExerciseExportImportResource {
             return ResponseEntity.internalServerError()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to import programming exercise")).build();
         }
+    }
+
+    /**
+     * POST /programming-exercises/import-from-file: Imports an existing programming exercise from an uploaded zip file into an existing course
+     * <p>
+     * This will create the whole exercise, including all base build plans (template, solution) and repositories (template, solution, test) and copy
+     * the content from the repositories of the zip file into the newly created repositories.
+     *
+     * @param programmingExercise The exercise that should be imported
+     * @param zipFile             The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
+     * @param courseId            The id of the course the exercise should be imported into
+     * @return The imported exercise (200)
+     *         (403) if the user is not at least an editor in the target course.
+     */
+    @PostMapping(IMPORT_FROM_FILE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@PathVariable long courseId,
+            @RequestPart("programmingExercise") ProgrammingExercise programmingExercise, @RequestPart("file") MultipartFile zipFile) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Valid exercises have set either a course or an exerciseGroup
+        programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        final var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        try {
+            return ResponseEntity.ok(programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course));
+        }
+        catch (IOException | URISyntaxException | GitAPIException e) {
+            log.error(e.getMessage(), e);
+            throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
+        }
+
     }
 
     /**
@@ -374,7 +423,6 @@ public class ProgrammingExerciseExportImportResource {
 
     private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
             ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-
         long start = System.nanoTime();
 
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
@@ -399,21 +447,28 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository as a zip file without .git directory.
+     * GET /programming-exercises/:exerciseId/export-student-requested-repository : sends a solution repository as a zip file without .git directory.
      *
-     * @param exerciseId The id of the programming exercise
+     * @param exerciseId   The id of the programming exercise
+     * @param includeTests flag that indicates whether the tests should also be exported
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(EXPORT_SOLUTION_REPOSITORY)
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
-    public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId) throws IOException {
+    public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (programmingExercise.isExamExercise()) {
+            examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(programmingExercise);
+        }
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
+        if (includeTests && !programmingExercise.isReleaseTestsWithExampleSolution()) {
+            throw new AccessForbiddenException(RepositoryType.SOLUTION.getName(), programmingExercise.getId());
+        }
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportSolutionRepositoryForExercise(programmingExercise.getId(), new ArrayList<>());
+        Optional<File> zipFile = programmingExerciseExportService.exportStudentRequestedRepository(programmingExercise.getId(), includeTests, new ArrayList<>());
 
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }

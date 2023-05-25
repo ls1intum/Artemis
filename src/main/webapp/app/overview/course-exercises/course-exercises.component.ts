@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,16 +11,16 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { isOrion } from 'app/shared/orion/orion';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faFilter, faMagnifyingGlass, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -64,7 +63,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     private currentUser?: User;
     public course?: Course;
     public weeklyIndexKeys: string[];
-    public weeklyExercisesGrouped: object;
+    public weeklyExercisesGrouped: object; // TODO: convert into map
     public upcomingExercises: ExerciseWithDueDate[] = [];
     public exerciseCountMap: Map<string, number>;
 
@@ -89,19 +88,17 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     faAngleDown = faAngleDown;
     faSortNumericUp = faSortNumericUp;
     faSortNumericDown = faSortNumericDown;
+    faMagnifyingGlass = faMagnifyingGlass;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
     constructor(
-        private courseService: CourseManagementService,
-        private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private accountService: AccountService,
@@ -129,12 +126,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseCalculationService.updateCourse(course);
-            this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.course = course;
             this.onCourseLoad();
         });
 

@@ -14,14 +14,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 
-export enum GradingInstructionTableColumn {
-    CREDITS = 'CREDITS',
-    SCALE = 'SCALE',
-    DESCRIPTION = 'DESCRIPTION',
-    FEEDBACK = 'FEEDBACK',
-    LIMIT = 'LIMIT',
-}
-
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -50,7 +42,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     usageCountCommand = new UsageCountCommand();
 
     showEditMode: boolean;
-    readonly gradingInstructionTableColumn = GradingInstructionTableColumn;
 
     domainCommands: DomainCommand[] = [
         this.creditsCommand,
@@ -369,7 +360,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      * @param {GradingInstruction} instruction
-     * @param {GradingCriterion} criteria
      */
     onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
         this.instructions = [instruction];
@@ -522,40 +512,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /**
      * Updates given grading instruction in exercise
      *
-     * @param gradingInstruction needs to be updated
+     * @param instruction needs to be updated
      * @param criterion includes instruction needs to be updated
      */
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
         this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = instruction;
-    }
-
-    /**
-     * Updates changed properties of the GradingInstruction.
-     *
-     * @param gradingInstruction that needs to be updated
-     * @param criterion that includes the instruction needs to be updated
-     * @param column that is updated
-     */
-    updateGradingInstructionProperty($event: any, instruction: GradingInstruction, criterion: GradingCriterion, column: GradingInstructionTableColumn) {
-        switch (column) {
-            case GradingInstructionTableColumn.CREDITS:
-                instruction.credits = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.SCALE:
-                instruction.gradingScale = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.DESCRIPTION:
-                instruction.instructionDescription = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.FEEDBACK:
-                instruction.feedback = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.LIMIT:
-                instruction.usageCount = $event.target.value;
-                break;
-        }
-        this.updateGradingInstruction(instruction, criterion);
     }
 }

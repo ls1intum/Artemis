@@ -30,7 +30,9 @@ export class ProfileInfo {
     public allowedCourseRegistrationUsernamePattern?: string;
     public accountName?: string;
     public versionControlUrl?: string;
+    public versionControlName?: string;
     public versionControlAccessToken?: boolean;
+    public continuousIntegrationName?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;
@@ -38,4 +40,16 @@ export class ProfileInfo {
     public useExternal: boolean;
     public externalCredentialProvider: string;
     public externalPasswordResetLinkMap: Map<string, string>;
+    public git: {
+        branch: string;
+        commit: {
+            id: {
+                abbrev: string;
+            };
+            time: string;
+            user: {
+                name: string;
+            };
+        };
+    };
 }

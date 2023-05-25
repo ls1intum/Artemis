@@ -13,13 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -62,8 +60,10 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final AttachmentRepository attachmentRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -71,6 +71,7 @@ public class LectureResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -139,7 +140,7 @@ public class LectureResource {
      * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping("/lectures/course/{courseId}")
+    @GetMapping("/courses/{courseId}/lectures")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
@@ -155,6 +156,27 @@ public class LectureResource {
             lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
 
+        return ResponseEntity.ok().body(lectures);
+    }
+
+    /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course with their lecture units and slides
+     *
+     * @param courseId the courseId of the course for which all lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures-with-slides")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Set<Lecture>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
+        lectures.forEach(lectureService::filterActiveAttachmentUnits);
+        lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -181,7 +203,7 @@ public class LectureResource {
      * @param sourceLectureId The ID of the original lecture which should get imported
      * @param courseId        The ID of the course to import the lecture to
      * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
-     * or a forbidden error (403) if the user is not at least an editor in the source or target course.
+     *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("/lectures/import/{sourceLectureId}")
@@ -208,7 +230,7 @@ public class LectureResource {
      * GET /lectures/:lectureId/details : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{lectureId}/details")
     @PreAuthorize("hasRole('USER')")
@@ -227,16 +249,52 @@ public class LectureResource {
     }
 
     /**
+     * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
+     *
+     * @param lectureId the lectureId of the lecture to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     */
+    @GetMapping("lectures/{lectureId}/details-with-slides")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {} with details with slides ", lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
+        Course course = lecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        lectureService.filterActiveAttachmentUnits(lecture);
+        lectureService.filterActiveAttachments(lecture, user);
+        return ResponseEntity.ok(lecture);
+    }
+
+    /**
      * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
      *
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
-    @GetMapping(value = "/lectures/{lectureId}/title")
+    @GetMapping("/lectures/{lectureId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
+     *
+     * @param lectureId the id of the lecture
+     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
+     */
+    @GetMapping(value = "/lectures/{lectureId}/attachments")
+    @PreAuthorize("hasRole('TA')")
+    public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
+        log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
+        return attachmentRepository.findAllByLectureId(lectureId);
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
@@ -272,7 +330,7 @@ public class LectureResource {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
-                // re-add the learning goals already loaded with the exercise unit
+                // re-add the competencies already loaded with the exercise unit
                 ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
         }).collect(Collectors.toCollection(ArrayList::new));
@@ -282,15 +340,15 @@ public class LectureResource {
     }
 
     /**
-     * DELETE /lectures/:id : delete the "id" lecture.
+     * DELETE /lectures/:lectureId : delete the "id" lecture.
      *
-     * @param id the id of the lecture to delete
+     * @param lectureId the id of the lecture to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{id}")
+    @DeleteMapping("/lectures/{lectureId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(id);
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
 
         Course course = lecture.getCourse();
         if (course == null) {
@@ -299,8 +357,8 @@ public class LectureResource {
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        log.debug("REST request to delete Lecture : {}", id);
+        log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 }

@@ -30,10 +30,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
@@ -64,9 +65,11 @@ public abstract class RepositoryResource {
 
     protected final Optional<VersionControlService> versionControlService;
 
+    protected final RepositoryAccessService repositoryAccessService;
+
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -74,6 +77,7 @@ public abstract class RepositoryResource {
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.versionControlService = versionControlService;
+        this.repositoryAccessService = repositoryAccessService;
     }
 
     /**
@@ -81,12 +85,10 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repository if available.
-     * @throws IOException            if the repository folder can't be accessed.
-     * @throws IllegalAccessException if the user is not allowed to access the repository.
-     * @throws GitAPIException        if the repository can't be checked out.
+     * @throws IOException     if the repository folder can't be accessed.
+     * @throws GitAPIException if the repository can't be checked out.
      */
-    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout)
-            throws IOException, IllegalAccessException, IllegalArgumentException, GitAPIException;
+    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout) throws IOException, IllegalArgumentException, GitAPIException;
 
     /**
      * Get the url for a repository.
@@ -106,6 +108,7 @@ public abstract class RepositoryResource {
 
     /**
      * Gets or retrieves the default branch from the domain object
+     *
      * @param domainID the id of the domain object
      * @return the name of the default branch of that domain object
      */
@@ -318,9 +321,6 @@ public abstract class RepositoryResource {
         }
         catch (IllegalArgumentException | FileAlreadyExistsException ex) {
             throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
-        }
-        catch (IllegalAccessException ex) {
-            throw new AccessForbiddenException();
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);

@@ -7,6 +7,7 @@ import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ActivatedRoute } from '@angular/router';
@@ -41,7 +42,7 @@ describe('ExerciseHint Management Update Component', () => {
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorComponent)],
+            declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorComponent), MockComponent(HelpIconComponent)],
             providers: [
                 FormBuilder,
                 MockProvider(ProgrammingExerciseService),

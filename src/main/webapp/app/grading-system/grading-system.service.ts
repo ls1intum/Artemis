@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { map } from 'rxjs/operators';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
-import { captureException } from '@sentry/angular';
+import { captureException } from '@sentry/angular-ivy';
 import { Course } from 'app/entities/course.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
@@ -13,7 +13,7 @@ export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingSystemService {
-    public resourceUrl = SERVER_API_URL + 'api/courses';
+    public resourceUrl = 'api/courses';
 
     constructor(private http: HttpClient) {}
 
@@ -152,7 +152,7 @@ export class GradingSystemService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
 
-        return this.http.get<SearchResult<GradingScale>>(`${SERVER_API_URL}api/grading-scales`, {
+        return this.http.get<SearchResult<GradingScale>>('api/grading-scales', {
             params,
             observe: 'response',
         });
@@ -328,7 +328,7 @@ export class GradingSystemService {
      * @param gradingScale a grading scale belonging to a course or an exam
      */
     getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
-        return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
+        return (gradingScale?.exam?.examMaxPoints ?? gradingScale?.course?.maxPoints) || 0;
     }
 
     /**

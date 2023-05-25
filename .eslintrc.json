@@ -1,71 +1,99 @@
 {
-    "plugins": [
-//        "@angular-eslint/eslint-plugin",
-        "@typescript-eslint",
-        "@typescript-eslint/tslint",
-        "deprecation"
+    "root": true,
+    "ignorePatterns": [
+        "projects/**/*"
     ],
-    "extends": [
-//        "eslint:recommended",
-//        "plugin:@typescript-eslint/recommended",
-//        "plugin:@typescript-eslint/recommended-requiring-type-checking",
-//        "plugin:@angular-eslint/recommended",
-        "plugin:prettier/recommended",
-        "prettier"
-//        "eslint-config-prettier"
-    ],
-    "env": {
-        "browser": true,
-        "es6": true,
-        "commonjs": true,
-        "jest": true
-    },
-    "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 2020,
-        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "src/test/cypress/tsconfig.json"],
-        "sourceType": "module",
-        "ecmaFeatures": {
-            "modules": true
-        }
+        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "src/test/cypress/tsconfig.json"]
     },
-    "rules": {
-        "@typescript-eslint/tslint/config": [
-            "error",
-            {
-                "lintFile": "./tslint.json"
-            }
-        ],
-        "@typescript-eslint/no-unused-vars": [
-            "warn",
-            {
-                "vars": "all",
-                "args": "after-used",
-                "ignoreRestSiblings": false
-            }
-        ],
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-unsafe-return": "off",
-        "@typescript-eslint/no-unsafe-member-access": "off",
-        "@typescript-eslint/restrict-plus-operands": "off",
-        "@typescript-eslint/no-unsafe-call": "off",
-        "@typescript-eslint/no-floating-promises": "off",
-        "@typescript-eslint/no-unsafe-assignment": "off",
-        "@angular-eslint/no-output-on-prefix": "off",
-        "sort-imports": ["error",  {
-            "ignoreDeclarationSort": true
-        }],
-        "deprecation/deprecation": "warn" // or "error" to have stricter rule
-    },
+    "extends": [
+        "plugin:prettier/recommended"
+    ],
     "overrides": [
         {
-            "files": ["mock-*.ts"],
-            "rules": { "@typescript-eslint/no-unused-vars": "off" }
-        }, {
-            "files": ["src/test/javascript/**"],
-            "plugins": ["jest", "jest-extended"],
-            "extends": ["plugin:jest/recommended", "plugin:jest/style", "plugin:jest-extended/all"],
-            "rules": { "jest/expect-expect": "off", "jest/no-conditional-expect": "off" }
+            "files": [
+                "*.ts"
+            ],
+            "extends": [
+                "eslint:recommended",
+                "plugin:@typescript-eslint/recommended",
+                "plugin:@angular-eslint/recommended",
+                "plugin:@angular-eslint/template/process-inline-templates"
+            ],
+            "rules": {
+                "@angular-eslint/directive-selector": [
+                    "warn",
+                    {
+                        "type": "attribute",
+                        "prefix": "jhi",
+                        "style": "camelCase"
+                    }
+                ],
+                "@angular-eslint/component-selector": [
+                    "warn",
+                    {
+                        "type": "element",
+                        "prefix": "jhi",
+                        "style": "kebab-case"
+                    }
+                ],
+                "@typescript-eslint/no-non-null-assertion": "off",
+                "@typescript-eslint/no-unsafe-return": "off",
+                "@typescript-eslint/no-unsafe-member-access": "off",
+                "@typescript-eslint/no-unsafe-call": "off",
+                "@typescript-eslint/no-floating-promises": "off",
+                "@typescript-eslint/no-unsafe-assignment": "off",
+                "@angular-eslint/no-output-on-prefix": "off",
+                "@typescript-eslint/ban-ts-comment": "warn",
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/no-non-null-asserted-optional-chain": "warn",
+                "@typescript-eslint/no-explicit-any": "off",
+                "no-case-declarations": "off",
+                "prefer-const": "warn",
+                "prefer-spread": "warn",
+                "sort-imports": [
+                    "error",
+                    {
+                        "ignoreDeclarationSort": true
+                    }
+                ]
+            }
+        },
+        {
+            "files": [
+                "*.html"
+            ],
+            "extends": [
+                "plugin:@angular-eslint/template/recommended"
+            ]
+        },
+        {
+            "files": [
+                "mock-*.ts"
+            ],
+            "rules": {
+                "@typescript-eslint/no-unused-vars": "off"
+            }
+        },
+        {
+            "files": [
+                "src/test/javascript/**"
+            ],
+            "plugins": [
+                "jest",
+                "jest-extended"
+            ],
+            "extends": [
+                "plugin:jest/recommended",
+                "plugin:jest/style",
+                "plugin:jest-extended/all"
+            ],
+            "rules": {
+                "jest/expect-expect": "off",
+                "jest/no-conditional-expect": "off",
+                "@typescript-eslint/ban-ts-comment": "off",
+                "@typescript-eslint/no-var-requires": "off"
+            }
         }
     ]
 }

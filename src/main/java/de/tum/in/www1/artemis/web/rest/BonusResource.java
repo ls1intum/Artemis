@@ -65,8 +65,8 @@ public class BonusResource {
      * GET /courses/{courseId}/exams/{examId}/bonus : Find bonus model for exam (where Bonus.bonusToGradingScale corresponds to the exam)
      * Sets Bonus.bonusStrategy from the bonus strategy set on the exam's grading scale.
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId   the exam to which the bonus belongs
+     * @param courseId                the course to which the exam belongs
+     * @param examId                  the exam to which the bonus belongs
      * @param includeSourceGradeSteps flag to determine if the GradeSteps for the source grading scale should be included in the response. Default is false.
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
@@ -125,7 +125,7 @@ public class BonusResource {
      * @param examId   the exam to which the bonus belongs
      * @param bonus    the bonus which will be created
      * @return ResponseEntity with status 201 (Created) with body the new bonus if no such exists for the course
-     * and if it is correctly formatted and 400 (Bad request) otherwise
+     *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -186,10 +186,10 @@ public class BonusResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update updatedBonus applying to exam
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId   the exam to which the updatedBonus belongs
-     * @param updatedBonus    the updatedBonus which will be updated
-     * @param bonusId  the id of the updatedBonus to update
+     * @param courseId     the course to which the exam belongs
+     * @param examId       the exam to which the updatedBonus belongs
+     * @param updatedBonus the updatedBonus which will be updated
+     * @param bonusId      the id of the updatedBonus to update
      * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")

@@ -48,8 +48,8 @@ public abstract class AbstractSubmissionResource {
      * Get all the submissions for an exercise. It is possible to filter, to receive only the ones that have already been submitted, or only the ones assessed by the tutor who is
      * doing the call. In case of exam exercise, it filters out all test run submissions.
      *
-     * @param exerciseId the id of the exercise
-     * @param submittedOnly if only submitted submissions should be returned
+     * @param exerciseId      the id of the exercise
+     * @param submittedOnly   if only submitted submissions should be returned
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */

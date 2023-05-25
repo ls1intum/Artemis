@@ -11,6 +11,7 @@ import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
 import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
+import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -35,6 +36,14 @@ export const lectureUnitRoute: Routes = [
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.exerciseUnit.createExerciseUnit.title',
+                },
+            },
+            {
+                path: 'attachment-units/process',
+                component: AttachmentUnitsComponent,
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
                 },
             },
             {

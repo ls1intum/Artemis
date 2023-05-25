@@ -40,8 +40,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -89,8 +89,9 @@ public class JenkinsBuildPlanService {
 
     /**
      * Creates a build plan for the programming exercise
-     * @param exercise the programming exercise
-     * @param planKey the name of the plan
+     *
+     * @param exercise      the programming exercise
+     * @param planKey       the name of the plan
      * @param repositoryURL the url of the vcs repository
      */
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
@@ -164,8 +165,8 @@ public class JenkinsBuildPlanService {
      * Updates the repositories that are configured within the build plan with the specified new values.
      *
      * @param buildProjectKey the project key of the programming exercise
-     * @param buildPlanKey the build plan id of the participation
-     * @param newRepoUrl the repository url that will replace the old url
+     * @param buildPlanKey    the build plan id of the participation
+     * @param newRepoUrl      the repository url that will replace the old url
      * @param existingRepoUrl the old repository url that will be replaced
      */
     public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUrl, String existingRepoUrl) {
@@ -226,9 +227,9 @@ public class JenkinsBuildPlanService {
      * Copies a build plan to another and replaces the old reference to the master and main branch with a reference to the default branch
      *
      * @param sourceProjectKey the source project key
-     * @param sourcePlanName the source plan name
+     * @param sourcePlanName   the source plan name
      * @param targetProjectKey the target project key
-     * @param targetPlanName the target plan name
+     * @param targetPlanName   the target plan name
      * @return the key of the created build plan
      */
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
@@ -247,8 +248,9 @@ public class JenkinsBuildPlanService {
 
     /**
      * Triggers the build for the plan
+     *
      * @param projectKey the project key of the plan
-     * @param planKey the plan key
+     * @param planKey    the plan key
      */
     public void triggerBuild(String projectKey, String planKey) {
         try {
@@ -262,8 +264,9 @@ public class JenkinsBuildPlanService {
 
     /**
      * Deletes the build plan
+     *
      * @param projectKey the project key of the plan
-     * @param planKey the plan key
+     * @param planKey    the plan key
      */
     public void deleteBuildPlan(String projectKey, String planKey) {
         try {
@@ -287,8 +290,9 @@ public class JenkinsBuildPlanService {
 
     /**
      * Retrieves the build status of the plan
+     *
      * @param projectKey the project key of the plan
-     * @param planKey the plan key
+     * @param planKey    the plan key
      * @return the build status
      * @throws JenkinsException thrown in case of errors
      */
@@ -333,7 +337,8 @@ public class JenkinsBuildPlanService {
 
     /**
      * Returns true if the build plan exists.
-     * @param projectKey the project key
+     *
+     * @param projectKey  the project key
      * @param buildPlanId the build plan id
      * @return whether the plan exists
      */
@@ -353,7 +358,7 @@ public class JenkinsBuildPlanService {
      * the exercise' course and adding permissions to the Jenkins job.
      *
      * @param programmingExercise the programming exercise
-     * @param planName the name of the build plan
+     * @param planName            the name of the build plan
      */
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
         try {
@@ -375,8 +380,9 @@ public class JenkinsBuildPlanService {
 
     /**
      * Enables the build plan
+     *
      * @param projectKey the project key of the plan
-     * @param planKey the plan key
+     * @param planKey    the plan key
      */
     public void enablePlan(String projectKey, String planKey) {
         try {

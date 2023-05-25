@@ -153,8 +153,8 @@ public class ExerciseService {
     }
 
     /**
-     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
-     * stats for assessment dashboard and for instructor dashboard
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are
+     * used by both stats for assessment dashboard and for instructor dashboard
      * TODO: refactor and improve this method
      *
      * @param exercise - the exercise we are interested in
@@ -253,14 +253,14 @@ public class ExerciseService {
         if (exerciseIds.isEmpty()) {
             return new HashSet<>();
         }
-        Set<Exercise> exercises = exerciseRepository.findByExerciseIdWithCategories(exerciseIds);
+        Set<Exercise> exercises = exerciseRepository.findByExerciseIdsWithCategories(exerciseIds);
         // Set is needed here to remove duplicates
         Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
         if (courses.size() != 1) {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
         Course course = courses.stream().findFirst().get();
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
@@ -275,52 +275,55 @@ public class ExerciseService {
     }
 
     /**
-     * Finds all Exercises for a given Course
+     * Filter all exercises for a given course based on the user role and course settings
+     * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course
+     * @param course corresponding course: exercises
      * @param user   the user entity
-     * @return a List of all Exercises for the given course
+     * @return a set of all Exercises for the given course
      */
-    public Set<Exercise> findAllForCourse(Course course, User user) {
-        Set<Exercise> exercises = null;
+    public Set<Exercise> filterExercisesForCourse(Course course, User user) {
+        Set<Exercise> exercises = course.getExercises();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // tutors/instructors/admins can see all exercises of the course
-            exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-        }
-        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
-
-            if (course.isOnlineCourse()) {
-                // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
-            }
-            else {
-                exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-            }
-
-            // students for this course might not have the right to see it, so we have to
-            // filter out exercises that are not released (or explicitly made visible to students) yet
-            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+            // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
+            return exercises;
         }
 
-        if (exercises != null) {
-            for (Exercise exercise : exercises) {
-                setAssignedTeamIdForExerciseAndUser(exercise, user);
+        if (course.isOnlineCourse()) {
+            // this case happens rarely, so we can reload the relevant exercises from the database
+            // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+            exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+        }
 
-                // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-                if (exercise instanceof QuizExercise quizExercise) {
-                    quizExercise.filterSensitiveInformation();
+        // students for this course might not have the right to see it, so we have to
+        // filter out exercises that are not released (or explicitly made visible to students) yet
+        return exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+    }
 
-                    // if the quiz is not active the batches do not matter and there is no point in loading them
-                    if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
-                        // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                        quizExercise.setQuizBatches(null);
-                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
-                    }
+    /**
+     * Loads additional details for team exercises and for active quiz exercises
+     * Assumes that the exercises are already been loaded (i.e. no proxy)
+     *
+     * @param course corresponding course: exercises
+     * @param user   the user entity
+     */
+    public void loadExerciseDetailsIfNecessary(Course course, User user) {
+        for (Exercise exercise : course.getExercises()) {
+            // only necessary for team exercises
+            setAssignedTeamIdForExerciseAndUser(exercise, user);
+
+            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            if (exercise instanceof QuizExercise quizExercise) {
+                quizExercise.filterSensitiveInformation();
+
+                // if the quiz is not active the batches do not matter and there is no point in loading them
+                if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                    // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                    quizExercise.setQuizBatches(null);
+                    quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
             }
         }
-
-        return exercises;
     }
 
     /**
@@ -366,6 +369,7 @@ public class ExerciseService {
 
     /**
      * checks the example submissions of the exercise and removes unnecessary associations to other objects
+     *
      * @param exercise the exercise for which example submissions should be checked
      */
     public void checkExampleSubmissions(Exercise exercise) {
@@ -413,20 +417,21 @@ public class ExerciseService {
         }
 
         // get user's participation for the exercise
-        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+        List<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : new ArrayList<>();
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
-        if (participation == null && exercise instanceof QuizExercise) {
+        if (relevantParticipations.isEmpty() && exercise instanceof QuizExercise) {
             QuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
             if (submission.getSubmissionDate() != null) {
-                participation = new StudentParticipation().exercise(exercise);
-                participation.setInitializationState(InitializationState.INITIALIZED);
+                StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
+                quizParticipation.setInitializationState(InitializationState.INITIALIZED);
+                relevantParticipations.add(quizParticipation);
             }
         }
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        if (participation != null) {
+        relevantParticipations.forEach(participation -> {
             // find the latest submission with a rated result, otherwise the latest submission with
             // an unrated result or alternatively the latest submission without a result
             Set<Submission> submissions = participation.getSubmissions();
@@ -460,10 +465,9 @@ public class ExerciseService {
 
             // remove inner exercise from participation
             participation.setExercise(null);
+        });
 
-            // add participation into an array
-            exercise.setStudentParticipations(Set.of(participation));
-        }
+        exercise.setStudentParticipations(new HashSet<>(relevantParticipations));
     }
 
     /**
@@ -498,7 +502,7 @@ public class ExerciseService {
      * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      * Exercises with an assessment due date (or due date if there is no assessment due date) in the past are limited to the five most recent
      *
-     * @param courseId the id of the course
+     * @param courseId                 the id of the course
      * @param amountOfStudentsInCourse the amount of students in the course
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
@@ -533,8 +537,8 @@ public class ExerciseService {
      * Generates a <code>CourseManagementOverviewExerciseStatisticsDTO</code> for each given exercise
      *
      * @param exercisesForManagementOverview a set of exercises to generate the statistics for
-     * @param amountOfStudentsInCourse the amount of students in the course
-     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @param amountOfStudentsInCourse       the amount of students in the course
+     * @param averageScoreById               the average score for each exercise indexed by exerciseId
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(Set<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
@@ -559,9 +563,9 @@ public class ExerciseService {
      * Sets the amount of students, participations and teams for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      * Only the amount of students in the course is set if the exercise has ended, the rest is set to zero
      *
-     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param exerciseStatisticsDTO    the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
      * @param amountOfStudentsInCourse the amount of students in the course
-     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * @param exercise                 the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setStudentsAndParticipationsAmountForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Integer amountOfStudentsInCourse,
             Exercise exercise) {
@@ -596,7 +600,7 @@ public class ExerciseService {
      * The amounts are set to zero if the assessment due date has passed
      *
      * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
         if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
@@ -618,7 +622,7 @@ public class ExerciseService {
      * then, sets the corresponding exercise field
      *
      * @param gradingCriteria grading criteria list of exercise
-     * @param exercise exercise to update     *
+     * @param exercise        exercise to update *
      */
     public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
@@ -633,8 +637,8 @@ public class ExerciseService {
      * 1. The feedback associated with the exercise grading instruction needs to be updated
      * 2. After updating feedback, result needs to be re-calculated
      *
-     * @param exercise exercise to re-evaluate
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not     *
+     * @param exercise                                    exercise to re-evaluate
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
         List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
@@ -700,9 +704,9 @@ public class ExerciseService {
     /**
      * Gets the list of feedback that is associated with deleted grading instructions
      *
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     * @param gradingInstructions grading instruction list to update
-     * @param exercise exercise for which the grading instructions have to be updated
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param gradingInstructions                         grading instruction list to update
+     * @param exercise                                    exercise for which the grading instructions have to be updated
      * @return list including Feedback entries that have to be deleted due to updated grading instructions
      */
     public List<Feedback> getFeedbackToBeDeletedAfterGradingInstructionUpdate(boolean deleteFeedbackAfterGradingInstructionUpdate, List<GradingInstruction> gradingInstructions,

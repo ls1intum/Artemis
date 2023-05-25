@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
@@ -43,6 +44,7 @@ describe('Course Exam Archive Button Component', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
+                MockDirective(FeatureToggleDirective),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },

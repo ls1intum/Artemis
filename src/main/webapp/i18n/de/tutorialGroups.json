@@ -5,6 +5,7 @@
             "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
         },
         "generic": {
+            "unknown": "Nicht bekannt",
             "more": "Mehr...",
             "offline": "Offline",
             "online": "Online",
@@ -19,11 +20,16 @@
                 "saturday": "Samstag",
                 "sunday": "Sonntag"
             },
+            "repetitions": {
+                "everyWeek": "Jede Woche",
+                "everyNWeeks": "Alle {{ n }} Wochen"
+            },
             "timeZone": "Zeitzone: {{ timeZone }}",
             "betaWarning": "Diese Funktion befindet sich derzeit im Beta-Stadium. Es können Bugs und Änderungen auftreten. Bitte melde Fehler unter: https://github.com/ls1intum/Artemis/issues "
         },
         "entities": {
             "tutorialGroup": {
+                "locationTime": "Ort/Zeit",
                 "plural": "Übungsgruppen",
                 "course": "Kurs",
                 "title": "Titel",
@@ -34,9 +40,19 @@
                 "language": "Sprache",
                 "teachingAssistant": "Tutor:in",
                 "registrations": "Registrierungen",
+                "capacityWithRegistrations": "Kapazität / Registrierungen",
                 "schedule": "Sitzungsplan",
                 "sessions": "Sitzungen",
-                "nextSession": "Nächste Sitzung"
+                "nextSession": "Nächste Sitzung",
+                "channel": "Chat",
+                "channelWithName": "Kanal: {{ channel }}",
+                "channelReverse": "Kanal der Übungsgruppe {{ title }}",
+                "utilization": "Auslastung",
+                "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
+                "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
+                "averageAttendance": "Duchschnittliche Anwesenheit: {{ averageAttendance }}",
+                "averageAttendanceDetail": "Durchschnittliche Anwesenheit",
+                "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt."
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",
@@ -55,7 +71,8 @@
                 "start": "Anfang",
                 "end": "Ende",
                 "status": "Status",
-                "location": "Ort"
+                "location": "Ort",
+                "attendance": "# Teilnehmer:innen"
             },
             "tutorialFreePeriod": {
                 "date": "Datum",
@@ -70,6 +87,10 @@
                     "requiredValidationError": "Titel ist erforderlich!",
                     "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!",
                     "regexValidationError": "Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten."
+                },
+                "updateChannelNameInput": {
+                    "label": "Kanalnamen aktualisieren",
+                    "explanation": "Wenn mit dieser Übungsgruppe ein Nachrichtenkanal verbunden ist, wird der Name des Kanals mit dem Titel der Übungsgruppe aktualisiert, falls du diese Option aktivierst."
                 },
                 "teachingAssistantInput": {
                     "label": "Tutor:in",
@@ -99,7 +120,12 @@
                 },
                 "languageInput": {
                     "label": "Sprache",
-                    "placeholder": "Wähle eine Sprache"
+                    "placeholder": "Wähle eine Sprache",
+                    "loadingText": "Sprachen laden ...",
+                    "notFoundText": "Keine Sprachen gefunden.",
+                    "languageHelp": "In das Feld tippen um nach einer Sprache zu suchen.",
+                    "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!",
+                    "requiredValidationError": "Eine Sprache ist erforderlich!"
                 },
                 "isOnlineInput": {
                     "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
@@ -192,6 +218,11 @@
                     "requiredValidationError": "Ein Zeitraum muss angegeben werden!",
                     "parseError": "Der Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
                     "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
+                },
+                "useTutorialGroupChannelsInput": {
+                    "label": "Artemis verwaltete Übungsgruppen-Nachrichtenkanäle verwenden",
+                    "channelDeletionWarning": "Wenn diese Option deaktiviert wird, werden alle Übungsgruppen-Nachrichtenkanäle gelöscht. Soll das wirklich gemacht werden?",
+                    "explanation": "Wenn diese Option aktiviert ist, erstellt Artemis für jede Übungsgruppe einen eigenen Kanal im Abschnitt 'Nachrichten' des Kurses. Der Kanal kann immer noch manuell verwaltet werden, aber Artemis führt einige allgemeine Verwaltungsaufgaben automatisch aus. Artemis fügt automatisch Studierende zum Kanal hinzu oder entfernt sie aus diesem, wenn sie sich für die Übungsgruppe an- oder abmelden. Der / Die zugewiesene Tutor:in der Übungsgruppe wird zum / zur Moderator:in des Kanals. Der Kanal wird gelöscht, wenn die Übungsgruppe gelöscht wird. Er kann nicht manuell gelöscht werden. Diese Option kann später noch geändert werden."
                 }
             }
         },

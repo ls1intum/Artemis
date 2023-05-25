@@ -30,10 +30,17 @@ on:
     types:
     - created
 
-# Keep in sync with codeql-analysis.yml and build-deploy.yml
+# Limit the number of concurrent runs to one per PR
+# If a run is already in progress, cancel it
+# If the run is not for a PR, then this limit does not apply
+concurrency:
+  group: test-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 16.x
+  node: 18
   java: 17
 
 jobs:
@@ -50,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -58,7 +65,7 @@ jobs:
         coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
       if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
     - name: Annotate Server Test Results
-      uses: ashley-taylor/junit-report-annotations-action@562e0277515cae408f30ad1ea2d6dea44fc1df87
+      uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
       if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
       with:
         access-token: ${{ secrets.GITHUB_TOKEN }}
@@ -70,6 +77,95 @@ jobs:
         files: build/reports/jacoco/test/jacocoTestReport.xml
         name: artemis-server
         flags: server
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: H2 Tests
+        path: build/test-results/test/*.xml
+        reporter: java-junit
+
+  server-tests-mysql:
+      needs: [ server-tests ]
+      runs-on: ubuntu-latest
+      timeout-minutes: 120
+      # Limit the number of concurrent mysql tests to one in total
+      concurrency:
+          group: server-tests-mysql
+      steps:
+          - uses: actions/checkout@v3
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+                distribution: 'temurin'
+                java-version: '${{ env.java }}'
+                cache: 'gradle'
+          - name: Java Tests
+            id: tests
+            run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+          - name: Print failed tests
+            if: success() || failure()
+            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+          - name: Count failed tests
+            id: failedTestCounter
+            if: success() || failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+          - name: Report action
+            uses: Sibz/github-status-action@v1
+            with:
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - MySQL'
+                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                state: 'success'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
+          - name: Test Report
+            uses: dorny/test-reporter@v1
+            if: success() || failure()    # run this step even if previous step failed
+            with:
+                name: MySQL Tests
+                path: build/test-results/test/*.xml
+                reporter: java-junit
+
+  server-tests-postgres:
+      needs: [ server-tests ]
+      runs-on: ubuntu-latest
+      timeout-minutes: 150
+      # Limit the number of concurrent postgres tests to one in total
+      concurrency:
+          group: server-tests-postgres
+      steps:
+          - uses: actions/checkout@v3
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+                distribution: 'temurin'
+                java-version: '${{ env.java }}'
+                cache: 'gradle'
+          - name: Java Tests
+            id: tests
+            run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+          - name: Print failed tests
+            if: success() || failure()
+            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+          - name: Count failed tests
+            id: failedTestCounter
+            if: success() || failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+          - name: Report action
+            uses: Sibz/github-status-action@v1
+            with:
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - PostgreSQL'
+                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                state: 'success'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
+          - name: Test Report
+            uses: dorny/test-reporter@v1
+            if: success() || failure()    # run this step even if previous step failed
+            with:
+                name: PostgreSQL Tests
+                path: build/test-results/test/*.xml
+                reporter: java-junit
 
   server-style:
     runs-on: ubuntu-latest
@@ -93,6 +189,10 @@ jobs:
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v3
+        # It seems like there is some memory issue with these tests with the project-wide default node option
+        # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
+        - name: remove project-wide node options set in .npmrc just for this test
+          run: rm .npmrc || true
         - name: Setup Node.js
           uses: actions/setup-node@v3
           with:
@@ -104,13 +204,6 @@ jobs:
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
-        - name: Annotate Client Test Results
-          uses: ashley-taylor/junit-report-annotations-action@562e0277515cae408f30ad1ea2d6dea44fc1df87
-          if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
-          with:
-              access-token: ${{ secrets.GITHUB_TOKEN }}
-              path: junit.xml
-              numFailures: 99
         - name: Upload Code Coverage
           uses: codecov/codecov-action@v3
           with:
@@ -140,8 +233,6 @@ jobs:
   client-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-        NODE_OPTIONS: '--max_old_space_size=3072'
     steps:
     - uses: actions/checkout@v3
     - name: Setup Node.js

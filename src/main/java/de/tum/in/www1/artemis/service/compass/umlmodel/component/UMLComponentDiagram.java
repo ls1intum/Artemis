@@ -59,7 +59,7 @@ public class UMLComponentDiagram extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(componentList);
         modelElements.addAll(componentInterfaceList);

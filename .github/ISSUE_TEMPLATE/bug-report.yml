@@ -18,8 +18,8 @@ body:
     description: "Steps to reproduce the behavior:"
     value: |
       1. Go to '...'
-      2. Click on '....'
-      3. Scroll down to '....'
+      2. Click on '...'
+      3. Scroll down to '...'
       4. See error
   validations:
     required: true
@@ -33,6 +33,12 @@ body:
   attributes:
     label: Screenshots
     description: If applicable, add screenshots to help explain your problem.
+- type: input
+  attributes:
+    label: Which version of Artemis are you seeing the problem on?
+    description: The version is shown in the top-left in the title bar next to the logo.
+  validations:
+    required: true
 - type: dropdown
   attributes:
     label: What browsers are you seeing the problem on?

@@ -6,6 +6,8 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
@@ -26,6 +28,23 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
     Optional<QuizBatch> findByQuizExerciseAndPassword(QuizExercise quizExercise, String password);
 
     Optional<QuizBatch> findFirstByQuizExercise(QuizExercise quizExercise);
+
+    /**
+     * Retrieve QuizBatch for given quiz exercise and studentLogin
+     *
+     * @param quizExercise the quiz exercise for which QuizBatch is to be retrieved
+     * @param studentLogin the login of the student for which QuizBatch is to be retrieved
+     * @return QuizBatch for given quiz exercise and studentLogin
+     */
+    @Query("""
+            SELECT quizBatch
+            FROM QuizBatch quizBatch
+                JOIN QuizSubmission submission ON quizBatch.id = submission.quizBatch
+                JOIN TREAT(submission.participation AS StudentParticipation) participation
+            WHERE participation.exercise = :quizExercise
+                AND participation.student.login = :studentLogin
+            """)
+    Set<QuizBatch> findAllByQuizExerciseAndStudentLogin(@Param("quizExercise") QuizExercise quizExercise, @Param("studentLogin") String studentLogin);
 
     @NotNull
     default QuizBatch findByIdElseThrow(Long quizBatchId) throws EntityNotFoundException {

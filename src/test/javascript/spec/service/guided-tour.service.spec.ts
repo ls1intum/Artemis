@@ -34,7 +34,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-has-any-authority.directive';
-import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -123,7 +122,7 @@ describe('GuidedTourService', () => {
             service.guidedTourSettings = [];
             service['updateGuidedTourSettings']('guided_tour_key', 1, GuidedTourState.STARTED).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
+            const resourceUrl = 'api/guided-tour-settings';
             expect(req.request.url).toBe(`${resourceUrl}`);
             expect(service.guidedTourSettings).toEqual([expected]);
         });
@@ -132,7 +131,7 @@ describe('GuidedTourService', () => {
             service.guidedTourSettings = [new GuidedTourSetting('guided_tour_key', 1, GuidedTourState.STARTED)];
             service['deleteGuidedTourSetting']('guided_tour_key').subscribe();
             const req = httpMock.expectOne({ method: 'DELETE' });
-            const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
+            const resourceUrl = 'api/guided-tour-settings';
             expect(req.request.url).toBe(`${resourceUrl}/guided_tour_key`);
             expect(service.guidedTourSettings).toEqual([]);
         });
@@ -161,10 +160,8 @@ describe('GuidedTourService', () => {
                     MockPipe(SafeResourceUrlPipe),
                     MockComponent(LoadingNotificationComponent),
                     MockComponent(NotificationSidebarComponent),
-                    MockDirective(NgbCollapse),
                     MockHasAnyAuthorityDirective,
                     MockDirective(ActiveMenuDirective),
-                    MockDirective(NgbDropdown),
                     MockPipe(FindLanguageFromKeyPipe),
                 ],
                 providers: [

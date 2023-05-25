@@ -37,8 +37,8 @@ public class ParticipationLifecycleService {
      * You can use the {@code PostConstruct} annotation to call one service method on startup.
      *
      * @param participation for which a task should be scheduled.
-     * @param lifecycle at which the task should be scheduled.
-     * @param task the action that should be performed at the date of the given lifecycle.
+     * @param lifecycle     at which the task should be scheduled.
+     * @param task          the action that should be performed at the date of the given lifecycle.
      * @return a scheduled task that performs the given action at the appropriate time.
      *         Returns nothing if the given participation does not have date at which the given lifecycle task could be run.
      *         E.g. {@link ParticipationLifecycle#BUILD_AND_TEST_AFTER_DUE_DATE} for non-programming exercises will return nothing.

@@ -15,7 +15,7 @@ type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(
         private httpClient: HttpClient,
@@ -25,6 +25,10 @@ export class TutorialGroupsService {
 
     getUniqueCampusValues(courseId: number): Observable<HttpResponse<string[]>> {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
+    }
+
+    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/language-values`, { observe: 'response' });
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -46,7 +50,13 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup, notificationText?: string): Observable<EntityResponseType> {
+    update(
+        courseId: number,
+        tutorialGroupId: number,
+        tutorialGroup: TutorialGroup,
+        notificationText?: string,
+        updateTutorialGroupChannelName?: boolean,
+    ): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupDatesFromClient(tutorialGroup);
         return this.httpClient
             .put<TutorialGroup>(
@@ -54,6 +64,7 @@ export class TutorialGroupsService {
                 {
                     tutorialGroup: copy,
                     notificationText,
+                    updateTutorialGroupChannelName: updateTutorialGroupChannelName ?? false,
                 },
                 { observe: 'response' },
             )

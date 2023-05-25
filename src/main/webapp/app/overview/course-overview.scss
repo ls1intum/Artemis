@@ -2,41 +2,13 @@
 Course Info Bar
 ========================================================================== */
 .tab-bar-exercise-details {
-    jhi-submission-result-status {
-        width: auto;
-        flex-basis: auto;
-        flex-grow: 0;
-    }
+    flex-wrap: wrap;
 
-    // switch from two column to one column layout for small devices
-    // 2 buttons have to fit in one row e.g. for programming exercises
-    @media (max-width: 640px) {
-        flex-direction: column;
-
-        jhi-submission-result-status {
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 1rem;
-        }
-    }
-
-    @media (max-width: 1000px) {
-        flex-wrap: wrap;
-
-        // prevent result status from breaking due to flex wrap
-        jhi-submission-result-status {
-            flex-basis: auto; // needed for Safari and JavaFX
-            flex-grow: 1;
-        }
-
-        // move instructor actions onto their own line for small/medium devices
-        .instructor-actions {
-            width: 100%;
-            flex-basis: 100%;
-            justify-content: flex-end;
-            margin-top: 10px;
-        }
+    // move instructor actions onto their own line for small/medium devices
+    .instructor-actions {
+        width: 100%;
+        flex-basis: 100%;
+        justify-content: flex-end;
     }
 }
 
@@ -194,6 +166,25 @@ canvas#complete-chart {
     }
 }
 
-.course-exercises-search {
-    width: 100%;
+.fadeInIcon {
+    /* Start the shake animation and make the animation last for 0.3 seconds */
+    animation: fadeIn 0.3s;
+
+    /* Animation only once */
+    animation-iteration-count: initial;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
 }

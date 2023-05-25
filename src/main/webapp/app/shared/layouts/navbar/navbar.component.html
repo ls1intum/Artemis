@@ -74,9 +74,19 @@
 <nav class="navbar navbar-dark jh-navbar" [class.expanded]="!isCollapsed">
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
-            <img [src]="SERVER_API_URL + 'public/images/logo.png'" height="30" alt="" />
+            <img [src]="'public/images/logo.png'" height="30" alt="" />
             <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
-            <div class="navbar-version">{{ version }}</div>
+            <ng-template #gitInfo>
+                <div>
+                    {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
+                    {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
+                    {{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
+                    {{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitUsername }}
+                </div>
+            </ng-template>
+            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" tooltipClass="git-info" [disableTooltip]="inProduction && !testServer">
+                {{ version }}
+            </div>
         </a>
         <div class="indicators">
             <jhi-connection-warning class="align-self-center"></jhi-connection-warning>
@@ -180,6 +190,12 @@
                         <a class="dropdown-item" routerLink="admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.privacyStatement">Privacy statement</span>
                         </a>
                     </li>
                     <li>

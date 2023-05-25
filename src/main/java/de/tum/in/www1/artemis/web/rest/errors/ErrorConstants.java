@@ -46,6 +46,8 @@ public final class ErrorConstants {
 
     public static final URI SESSION_OVERLAPS_WITH_SESSION = URI.create(PROBLEM_BASE_URL + "/session-overlaps-with-session");
 
+    public static final URI CHANNEL_NAME_DUPLICATE = URI.create(PROBLEM_BASE_URL + "/channel-name-duplicate");
+
     private ErrorConstants() {
     }
 }

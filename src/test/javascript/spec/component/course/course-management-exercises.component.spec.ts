@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -18,6 +17,7 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { of } from 'rxjs';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -35,7 +35,6 @@ describe('Course Management Exercises Component', () => {
                 CourseManagementExercisesComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CourseExerciseCardComponent),
-                MockDirective(NgbCollapse),
                 MockDirective(TranslateDirective),
                 MockDirective(ExtensionPointDirective),
                 MockComponent(ProgrammingExerciseComponent),
@@ -45,6 +44,7 @@ describe('Course Management Exercises Component', () => {
                 MockComponent(FileUploadExerciseComponent),
                 MockComponent(TextExerciseComponent),
                 MockComponent(CourseManagementExercisesSearchComponent),
+                MockComponent(DocumentationButtonComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),

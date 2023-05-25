@@ -3,7 +3,7 @@
         "textExercise": {
             "home": {
                 "title": "Textaufgaben",
-                "createLabel": "Neue Textaufgabe erstellen",
+                "createLabel": "Textaufgabe erstellen",
                 "editLabel": "Textaufgabe bearbeiten",
                 "importLabel": "Textaufgabe importieren"
             },
@@ -24,6 +24,8 @@
             "exampleSubmissions": "Beispielabgabe",
             "assessedSubmission": "Deine bewertete Abgabe",
             "assessedSubmissionInstructor": "Die bewertete Abgabe",
+            "submission": "Abgabe",
+            "assessmentPending": "Bewertung ausstehend",
             "createExampleSubmissions": "Beispielabgabe erstellen",
             "automaticAssessmentEnabled": "Automatische Bewertungsvorschläge aktiviert",
             "checkPlagiarism": "Auf Plagiate prüfen",

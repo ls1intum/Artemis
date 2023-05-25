@@ -3,7 +3,6 @@
     flex-flow: column nowrap;
     flex: 1 1 auto;
     height: inherit;
-    background-color: var(--md-wrapper-body-bg);
     color: var(--md-wrapper-color);
 
     // This is a fix for using the fullscreen mode on Safari.
@@ -32,7 +31,6 @@
         flex-flow: column nowrap;
         flex: 1 1 auto;
         touch-action: none;
-        min-height: 200px;
 
         // Fix for full screen mode, otherwise the color is black.
         background-color: var(--md-editor-background);
@@ -108,7 +106,6 @@
 }
 
 .background-editor-high {
-    min-height: 150px;
     overflow: scroll;
 }
 
@@ -123,4 +120,7 @@
 
 .nested {
     padding-left: 30px;
+}
+.nested-slide {
+    padding-left: 50px;
 }

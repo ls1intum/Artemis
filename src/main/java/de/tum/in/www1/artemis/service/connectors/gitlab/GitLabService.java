@@ -41,10 +41,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
@@ -90,10 +90,9 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("The user was not created in GitLab and has to be manually added.");
             }
 
-            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
-                // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
-                // NOTE: null values are interpreted as offline IDE is allowed
-                addMemberToRepository(participation.getVcsRepositoryUrl(), user);
+            if (allowAccess) {
+                final RepositoryPermissions permissions = determineRepositoryPermissions(exercise);
+                addMemberToRepository(participation.getVcsRepositoryUrl(), user, permissions);
             }
 
             // Validate that the access token exist, if it is required
@@ -106,19 +105,20 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-        final var userId = gitLabUserManagementService.getUserId(user.getLogin());
+    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+        final Long userId = gitLabUserManagementService.getUserId(user.getLogin());
+        final AccessLevel repositoryPermissions = permissionsToAccessLevel(permissions);
 
         try {
             log.info("repositoryPath: {}, userId: {}", repositoryPath, userId);
-            gitlab.getProjectApi().addMember(repositoryPath, userId, DEVELOPER);
+            gitlab.getProjectApi().addMember(repositoryPath, userId, repositoryPermissions);
         }
         catch (GitLabApiException e) {
             // A resource conflict status code is returned if the member
             // already exists in the repository
             if (e.getHttpStatus() == 409) {
-                updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
+                updateMemberPermissionInRepository(repositoryUrl, user, permissions);
             }
             else if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("access_level")
                     && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
@@ -128,6 +128,13 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
             }
         }
+    }
+
+    private static AccessLevel permissionsToAccessLevel(final RepositoryPermissions permissions) {
+        return switch (permissions) {
+            case READ_ONLY -> REPORTER;
+            case READ_WRITE -> DEVELOPER;
+        };
     }
 
     @Override
@@ -170,9 +177,9 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Protects a branch from the repository, so that developers cannot change the history
      *
-     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to protect (e.g "main")
-     * @throws VersionControlException      If the communication with the VCS fails.
+     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch        The name of the branch to protect (e.g "main")
+     * @throws VersionControlException If the communication with the VCS fails.
      */
     private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
@@ -465,24 +472,31 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), REPORTER));
+        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, RepositoryPermissions.READ_ONLY));
     }
 
     /**
      * Updates the access level of the user if it's a member of the repository.
      *
      * @param repositoryUrl The url of the repository
-     * @param username      the username of the gitlab user
-     * @param accessLevel   the new access level for the user
+     * @param user          The GitLab user
+     * @param permissions   The new access level for the user
      */
-    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
-        final var userId = gitLabUserManagementService.getUserId(username);
+    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+        final var userId = gitLabUserManagementService.getUserId(user.getLogin());
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         try {
-            gitlab.getProjectApi().updateMember(repositoryPath, userId, accessLevel);
+            final Optional<Member> member = gitlab.getProjectApi().getOptionalMember(repositoryPath, userId);
+            if (member.isPresent()) {
+                final AccessLevel accessLevel = permissionsToAccessLevel(permissions);
+                gitlab.getProjectApi().updateMember(repositoryPath, userId, accessLevel);
+            }
+            else {
+                addMemberToRepository(repositoryUrl, user, permissions);
+            }
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel, e);
+            throw new GitLabException("Unable to set permissions for user " + user.getLogin() + ". Trying to set permission " + permissions, e);
         }
     }
 

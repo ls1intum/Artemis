@@ -25,4 +25,8 @@ export class GradeStepsDTO {
     public gradeType: GradeType;
     public gradeSteps: GradeStep[];
     public maxPoints?: number;
+    public plagiarismGrade: string;
+    public noParticipationGrade: string;
+    public presentationsNumber?: number;
+    public presentationsWeight?: number;
 }

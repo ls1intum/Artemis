@@ -8,7 +8,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -20,7 +19,9 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeStepsDTO } from 'app/entities/grade-step.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -39,17 +40,20 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
-    readonly dayjs = dayjs;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
+    participationsChangedPresentation: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    newManualResultAllowed: boolean;
     hasLoadedPendingSubmissions = false;
-    presentationScoreEnabled = false;
+    basicPresentationEnabled = false;
+    gradedPresentationEnabled = false;
+
+    gradeStepsDTO?: GradeStepsDTO;
+    gradeStepsDTOSub: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -66,7 +70,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     isSaving: boolean;
 
+    afterDueDate = false;
+
     // Icons
+    faTable = faTable;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
@@ -81,6 +88,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
         private profileService: ProfileService,
+        private gradingSystemService: GradingSystemService,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -106,6 +114,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        if (this.gradeStepsDTOSub) {
+            this.gradeStepsDTOSub.unsubscribe();
+        }
     }
 
     private loadExercise(exerciseId: number) {
@@ -113,13 +124,25 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.hasLoadedPendingSubmissions = false;
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             this.exercise = exerciseResponse.body!;
+            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+            this.loadGradingScale(this.exercise.course?.id);
             this.loadParticipations(exerciseId);
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);
             }
-            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
-            this.presentationScoreEnabled = this.checkPresentationScoreConfig();
+            this.basicPresentationEnabled = this.checkBasicPresentationConfig();
         });
+    }
+
+    private loadGradingScale(courseId?: number) {
+        if (courseId) {
+            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
+                if (gradeStepsDTO.body) {
+                    this.gradeStepsDTO = gradeStepsDTO.body;
+                }
+                this.gradedPresentationEnabled = this.checkGradedPresentationConfig();
+            });
+        }
     }
 
     private loadParticipations(exerciseId: number) {
@@ -187,15 +210,19 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadExercise(this.exercise.id!));
     }
 
-    checkPresentationScoreConfig(): boolean {
+    checkBasicPresentationConfig(): boolean {
         if (!this.exercise.course) {
             return false;
         }
         return this.exercise.isAtLeastTutor === true && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled === true;
     }
 
-    addPresentation(participation: StudentParticipation) {
-        if (!this.presentationScoreEnabled) {
+    checkGradedPresentationConfig(): boolean {
+        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0 && this.exercise.presentationScoreEnabled === true);
+    }
+
+    addBasicPresentation(participation: StudentParticipation) {
+        if (!this.basicPresentationEnabled) {
             return;
         }
         participation.presentationScore = 1;
@@ -204,11 +231,31 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    removePresentation(participation: StudentParticipation) {
-        if (!this.presentationScoreEnabled) {
+    addGradedPresentation(participation: StudentParticipation) {
+        if (!this.gradedPresentationEnabled || (participation.presentationScore ?? 0) > 100 || (participation.presentationScore ?? 0) < 0) {
             return;
         }
-        participation.presentationScore = 0;
+        this.participationService.update(this.exercise, participation).subscribe({
+            error: () => this.alertService.error('artemisApp.participation.savePresentation.error'),
+            complete: () => {
+                this.participationsChangedPresentation.delete(participation.id!);
+            },
+        });
+    }
+
+    hasGradedPresentationChanged(participation: StudentParticipation) {
+        return this.participationsChangedPresentation.has(participation.id!);
+    }
+
+    changeGradedPresentation(participation: StudentParticipation) {
+        this.participationsChangedPresentation.set(participation.id!, participation);
+    }
+
+    removePresentation(participation: StudentParticipation) {
+        if (!this.basicPresentationEnabled && !this.gradedPresentationEnabled) {
+            return;
+        }
+        participation.presentationScore = undefined;
         this.participationService.update(this.exercise, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
         });
@@ -283,6 +330,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 });
                 this.dialogErrorSource.next('');
                 this.participationsChangedDueDate.delete(participationId);
+                this.participationsChangedPresentation.delete(participationId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -351,4 +399,21 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         return repoUrl;
     };
+
+    /**
+     * Get the route for the exercise's scores page.
+     *
+     * @param exercise the exercise for which the scores route should be extracted
+     */
+    getScoresRoute(exercise: Exercise): any[] {
+        let route: any[] = ['/course-management'];
+        const exam = exercise.exerciseGroup?.exam;
+        if (exam) {
+            route = [...route, exam.course!.id, 'exams', exam.id, 'exercise-groups', exercise.exerciseGroup!.id];
+        } else {
+            route = [...route, exercise.course!.id];
+        }
+        route = [...route, exercise.type + '-exercises', exercise.id, 'scores'];
+        return route;
+    }
 }

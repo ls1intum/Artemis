@@ -67,7 +67,7 @@ export class ExerciseDetailSubmissionChartComponent extends ChartComponent imple
         }
         this.reached = submissions;
         this.ngxData.push({ name: 'Submissions', value: submissions } as NgxChartsSingleSeriesDataEntry);
-        this.ngxData.push({ name: 'Missing', value: (this.exam.numberOfRegisteredUsers ?? 0) - submissions } as NgxChartsSingleSeriesDataEntry);
+        this.ngxData.push({ name: 'Missing', value: (this.exam.numberOfExamUsers ?? 0) - submissions } as NgxChartsSingleSeriesDataEntry);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
     }

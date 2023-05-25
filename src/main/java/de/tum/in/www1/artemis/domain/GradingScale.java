@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -23,6 +27,15 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
+    /**
+     * "U" stands for "Unterschleif"
+     */
+    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // This should be the same as the corresponding constant in grading-scale.model.ts
+
+    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the corresponding constant in grading-scale.model.ts
+
+    private static final int MAX_SPECIAL_GRADE_SIZE = 100;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
@@ -31,6 +44,14 @@ public class GradingScale extends DomainObject {
     @Column(name = "bonus_strategy")
     private BonusStrategy bonusStrategy;
 
+    @Size(max = MAX_SPECIAL_GRADE_SIZE)
+    @Column(name = "plagiarism_grade")
+    private String plagiarismGrade;
+
+    @Size(max = MAX_SPECIAL_GRADE_SIZE)
+    @Column(name = "no_participation_grade")
+    private String noParticipationGrade;
+
     @OneToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -38,6 +59,14 @@ public class GradingScale extends DomainObject {
     @OneToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
+
+    @Nullable
+    @Column(name = "presentations_number")
+    private Integer presentationsNumber;
+
+    @Nullable
+    @Column(name = "presentations_weight")
+    private Double presentationsWeight;
 
     /**
      * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
@@ -85,6 +114,22 @@ public class GradingScale extends DomainObject {
         this.exam = exam;
     }
 
+    public Integer getPresentationsNumber() {
+        return presentationsNumber;
+    }
+
+    public void setPresentationsNumber(Integer presentationsNumber) {
+        this.presentationsNumber = presentationsNumber;
+    }
+
+    public Double getPresentationsWeight() {
+        return presentationsWeight;
+    }
+
+    public void setPresentationsWeight(Double presentationsWeight) {
+        this.presentationsWeight = presentationsWeight;
+    }
+
     public Set<GradeStep> getGradeSteps() {
         return gradeSteps;
     }
@@ -118,7 +163,7 @@ public class GradingScale extends DomainObject {
             return maxPoints != null ? maxPoints : 0;
         }
         else {
-            return this.getExam().getMaxPoints();
+            return this.getExam().getExamMaxPoints();
         }
     }
 
@@ -149,10 +194,39 @@ public class GradingScale extends DomainObject {
 
     /**
      * Returns the max grade from grade step set of the grading scale
+     *
      * @return the max grade step
      */
     GradeStep maxGrade() {
         return getGradeSteps().stream().filter(gradeStep -> gradeStep.isUpperBoundInclusive() && gradeStep.getUpperBoundPercentage() == 100.0).findAny().orElse(null);
+    }
+
+    public String getPlagiarismGrade() {
+        return plagiarismGrade;
+    }
+
+    public void setPlagiarismGrade(String plagiarismGrade) {
+        this.plagiarismGrade = plagiarismGrade;
+    }
+
+    @JsonIgnore
+    @Nonnull
+    public String getPlagiarismGradeOrDefault() {
+        return Objects.requireNonNullElse(plagiarismGrade, DEFAULT_PLAGIARISM_GRADE);
+    }
+
+    public String getNoParticipationGrade() {
+        return noParticipationGrade;
+    }
+
+    public void setNoParticipationGrade(String noParticipationGrade) {
+        this.noParticipationGrade = noParticipationGrade;
+    }
+
+    @JsonIgnore
+    @Nonnull
+    public String getNoParticipationGradeOrDefault() {
+        return Objects.requireNonNullElse(noParticipationGrade, DEFAULT_NO_PARTICIPATION_GRADE);
     }
 
     /**

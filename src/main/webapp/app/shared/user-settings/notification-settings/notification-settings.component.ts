@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
@@ -26,7 +25,6 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     faInfoCircle = faInfoCircle;
 
     constructor(
-        notificationService: NotificationService,
         userSettingsService: UserSettingsService,
         changeDetector: ChangeDetectorRef,
         alertService: AlertService,
@@ -35,8 +33,8 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         super(userSettingsService, alertService, changeDetector);
     }
 
-    userSettings: UserSettingsStructure<NotificationSetting>;
-    settings: Array<NotificationSetting>;
+    declare userSettings: UserSettingsStructure<NotificationSetting>;
+    declare settings: Array<NotificationSetting>;
 
     // needed for HTML access
     readonly communicationChannel = NotificationSettingsCommunicationChannel;

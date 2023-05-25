@@ -24,7 +24,7 @@ export interface ICodeEditorRepositoryFileService {
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<any>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
@@ -129,7 +129,6 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     fileUpdateSubject = new Subject<FileSubmission>();
-    private fileUpdateUrl: string;
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -164,7 +163,6 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-        this.fileUpdateUrl = `${this.restResourceUrl}/files`;
     }
 
     getRepositoryContent = (domain?: DomainChange) => {
@@ -224,13 +222,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * @param thenCommit indicates the server to also commit the saved changes
      */
     updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false) {
-        const currentFileUpdateUrl: string = this.fileUpdateUrl;
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
         return this.http
-            .put<FileSubmission>(currentFileUpdateUrl, fileUpdates, {
+            .put<FileSubmission>(`${this.restResourceUrl}/files`, fileUpdates, {
                 params: { commit: thenCommit ? 'yes' : 'no' },
             })
             .pipe(

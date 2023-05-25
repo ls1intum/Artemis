@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -13,7 +14,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
@@ -23,6 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { By } from '@angular/platform-browser';
 import { metisCourse, metisUser1, post } from '../../../../../helpers/sample/metis-sample-data';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -34,8 +35,8 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
-            declarations: [AnswerPostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
+            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockModule(NgbTooltipModule)],
+            declarations: [AnswerPostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), MockComponent(EmojiComponent)],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },

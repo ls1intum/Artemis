@@ -82,7 +82,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
-        // TODO: we actually would like to have the lecture with all units! Posts and learning goals are not required here
+        // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
             .findWithDetails(this.lectureId!)
@@ -137,6 +137,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.question';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.question';
             default:
                 return '';
         }
@@ -152,6 +154,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.typeNameToConfirm';
             default:
                 return '';
         }

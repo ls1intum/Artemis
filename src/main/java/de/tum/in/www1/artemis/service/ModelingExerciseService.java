@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -25,21 +27,21 @@ public class ModelingExerciseService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final ModelClusterRepository modelClusterRepository;
 
     private final ModelElementRepository modelElementRepository;
 
-    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService,
-            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelElementRepository modelElementRepository) {
+    private final ExerciseSpecificationService exerciseSpecificationService;
+
+    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, InstanceMessageSendService instanceMessageSendService,
+            ModelClusterRepository modelClusterRepository, ModelElementRepository modelElementRepository, ExerciseSpecificationService exerciseSpecificationService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.authCheckService = authCheckService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.modelClusterRepository = modelClusterRepository;
         this.modelElementRepository = modelElementRepository;
+        this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
     /**
@@ -53,33 +55,15 @@ public class ModelingExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ModelingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+    public SearchResultPageDTO<ModelingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+        }
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        Page<ModelingExercise> exercisePage = Page.empty();
-        if (authCheckService.isAdmin(user)) {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
-            }
-        }
-        else {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-        }
+        Specification<ModelingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        Page<ModelingExercise> exercisePage = modelingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
@@ -103,7 +87,5 @@ public class ModelingExerciseService {
             modelElementRepository.deleteAll(cluster.getModelElements());
             modelClusterRepository.deleteById(cluster.getId());
         }
-
     }
-
 }

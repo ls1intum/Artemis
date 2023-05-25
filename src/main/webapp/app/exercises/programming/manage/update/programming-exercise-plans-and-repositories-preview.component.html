@@ -25,7 +25,7 @@
                         </code>
                         <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
                     </li>
-                    <div *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0">
+                    <div *ngIf="programmingExercise.auxiliaryRepositories?.length">
                         <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <li>
                                 <code class="text-white badge bg-success label-preview">

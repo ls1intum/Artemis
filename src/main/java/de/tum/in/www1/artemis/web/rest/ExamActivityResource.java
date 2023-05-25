@@ -45,8 +45,8 @@ public class ExamActivityResource {
     /**
      * Adds the performed actions by the user into the cache. This method does not perform any authorization and validation checks.
      *
-     * @param examId    the exam to which the student exams belong to
-     * @param action    action performed by the user
+     * @param examId the exam to which the student exams belong to
+     * @param action action performed by the user
      */
     @MessageMapping("/topic/exam-monitoring/{examId}/actions")
     @FeatureToggle(Feature.ExamLiveStatistics)
@@ -69,8 +69,8 @@ public class ExamActivityResource {
     /**
      * PUT api/courses/{courseId}/exams/{examId}/statistics: disable or enable the monitoring
      *
-     * @param courseId the course to which the exam belongs to
-     * @param examId the exam to which the student exams belong to
+     * @param courseId   the course to which the exam belongs to
+     * @param examId     the exam to which the student exams belong to
      * @param monitoring new status of the monitoring
      * @return all exam actions of the exam
      */

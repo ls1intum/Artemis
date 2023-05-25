@@ -16,8 +16,8 @@ describe('JvmThreadsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [JvmThreadsComponent, MockComponent(NgbProgressbar)],
+            imports: [ArtemisTestModule, MockComponent(NgbProgressbar)],
+            declarations: [JvmThreadsComponent],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()

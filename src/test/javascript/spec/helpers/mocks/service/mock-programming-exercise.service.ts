@@ -9,6 +9,7 @@ export class MockProgrammingExerciseService {
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });
     exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
+    exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
     getTasksAndTestsExtractedFromProblemStatement = (exerciseId: number) => of();
     deleteTasksWithSolutionEntries = (exerciseId: number) => of();
     getDiffReport = (exerciseId: number) => of({});

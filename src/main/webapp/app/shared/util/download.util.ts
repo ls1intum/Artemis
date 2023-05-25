@@ -13,7 +13,7 @@ export function downloadZipFileFromResponse(response: HttpResponse<Blob>): void 
  * @param filename suggested to the browser.
  */
 export function downloadFile(blob: Blob, filename: string) {
-    // Create a url and attach file to it,
+    // Create an url and attach file to it,
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;

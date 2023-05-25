@@ -12,7 +12,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
@@ -23,7 +22,7 @@ describe('TutorLeaderboardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(RouterModule)],
-            declarations: [TutorLeaderboardComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
+            declarations: [TutorLeaderboardComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AccountService),
                 {

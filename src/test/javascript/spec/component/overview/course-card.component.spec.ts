@@ -8,16 +8,19 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { Exercise } from 'app/entities/exercise.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseScores } from 'app/course/course-scores/course-scores';
+import { ProfileToggleHideDirective } from 'app/shared/profile-toggle/profile-toggle-hide.directive';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
     let component: CourseCardComponent;
+    let scoresStorageService: ScoresStorageService;
     const submission: ProgrammingSubmission = {
         submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
         id: 3,
@@ -38,14 +41,15 @@ describe('CourseCardComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockRouterLinkDirective,
                 MockComponent(SecuredImageComponent),
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
+                MockDirective(ProfileToggleHideDirective),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseCardComponent);
                 component = fixture.componentInstance;
+                scoresStorageService = TestBed.inject(ScoresStorageService);
                 component.course = course;
             });
     });
@@ -59,5 +63,17 @@ describe('CourseCardComponent', () => {
         fixture.detectChanges();
         component.ngOnChanges();
         expect(component.nextRelevantExercise).toEqual(secondNextExercise);
+    });
+
+    it('should display the total course scores returned from the scores storage service', () => {
+        const mockCourseScores: CourseScores = new CourseScores(0, 20, { absoluteScore: 4, relativeScore: 0.3, currentRelativeScore: 0.2, presentationScore: 0 });
+        jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(mockCourseScores);
+
+        fixture.detectChanges();
+        component.ngOnChanges();
+
+        expect(component.totalRelativeScore).toBe(0.2);
+        expect(component.totalAbsoluteScore).toBe(4);
+        expect(component.totalReachableScore).toBe(20);
     });
 });

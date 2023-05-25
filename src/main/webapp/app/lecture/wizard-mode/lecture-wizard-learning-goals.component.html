@@ -1,8 +1,8 @@
 <div class="form-group">
-    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.learningGoalsStepTitle">Learning Goals</span></h1>
+    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.competenciesStepTitle">Competencies</span></h1>
     <p>
         <span jhiTranslate="artemisApp.lecture.wizardMode.steps.learningGoalsStepMessage"
-            >Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</span
+            >Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies.</span
         >
     </p>
     <div class="row">
@@ -37,6 +37,10 @@
                                         <fa-icon [icon]="faPencilAlt"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </button>
+                                    <button type="submit" (click)="startConnectingLearningGoal(learningGoal)" class="btn btn-primary btn-sm me-1">
+                                        <fa-icon [icon]="faLink"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.connect">Connect</span>
+                                    </button>
                                     <button
                                         *ngIf="lecture.isAtLeastInstructor"
                                         jhiDeleteButton
@@ -69,8 +73,9 @@
         </div>
     </div>
     <jhi-learning-goal-form
-        *ngIf="(isAddingLearningGoal || isEditingLearningGoal) && !isLoadingLearningGoalForm"
+        *ngIf="(isAddingLearningGoal || isEditingLearningGoal || isConnectingLearningGoal) && !isLoadingLearningGoalForm"
         [isEditMode]="isEditingLearningGoal"
+        [isInConnectMode]="isConnectingLearningGoal"
         [formData]="learningGoalFormData"
         (formSubmitted)="onLearningGoalFormSubmitted($event)"
         [hasCancelButton]="true"

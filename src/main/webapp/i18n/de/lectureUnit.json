@@ -114,6 +114,42 @@
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "createAttachmentUnits": {
+                "informativeText": {
+                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
+                    "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
+                    "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die angehängten Einheiten übermittelt werden."
+                },
+                "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jede Einheit hinzu!",
+                "pageTitle": "Einheiten",
+                "addUnit": "Einheit hinzufügen",
+                "processUnits": "Einheiten festlegen",
+                "processAutomatically": "Automatische Einheitenverarbeitung",
+                "removeBreakSlide": "Entferne Pausenfolien",
+                "removeBreakSlideTooltip": "Folien, die 'Break' enthalten, werden entfernt.",
+                "validation": {
+                    "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
+                    "empty": {
+                        "unitName": "Name darf nicht leer sein.",
+                        "startPage": "Die Startseite muss definiert sein.",
+                        "endPage": "Die letzte Seite muss definiert sein."
+                    },
+                    "endPageLower": "Letzte Seite darf nicht kleiner als 1 sein.",
+                    "startPageBigger": "Die Startseite darf nicht größer als {{ max }} sein.",
+                    "startPage": "Startseite muss größer oder gleich 1 sein.",
+                    "endPage": "Letzte Seite darf nicht größer als {{ max }} sein."
+                },
+                "split": {
+                    "empty": "",
+                    "unit": "Vortragseinheiten",
+                    "unitName": "Einheitenname",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "startPage": "Startseite",
+                    "endPage": "Letzte Seite"
+                },
+                "lectureFileToolTip": "Bitte auswählen, um die automatischen Trennung von Vorlesungseinheiten zu aktivieren.",
+                "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Bitte haben Sie etwas Geduld."
+            },
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",
@@ -130,7 +166,8 @@
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
-                "fileLimitation": "Max. Dateigröße 10 MB",
+                "fileTooBig": "Die Datei ist zu groß!",
+                "fileLimitation": "Max. Dateigröße 20 MB",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
             "editAttachmentUnit": {

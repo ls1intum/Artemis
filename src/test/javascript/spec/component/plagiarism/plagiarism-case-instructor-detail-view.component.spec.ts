@@ -18,6 +18,9 @@ import { Post } from 'app/entities/metis/post.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -51,6 +54,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
             ],
         }).compileComponents();
@@ -72,6 +76,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.courseId).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
         expect(component.plagiarismCase).toEqual(plagiarismCase);
+        expect(component.currentAccount?.id).toBe(99);
     }));
 
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
@@ -135,17 +140,18 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         component.plagiarismCase = plagiarismCase;
-        component.ngOnInit();
+        component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
-        expect(translateServiceSpy).toHaveBeenCalledTimes(6);
+        expect(translateServiceSpy).toHaveBeenCalledTimes(3);
         expect(translateServiceSpy).toHaveBeenCalledWith(
             'artemisApp.plagiarism.plagiarismCases.notification.body',
             expect.objectContaining({
                 student: plagiarismCase.student!.name,
+                instructor: 'user',
                 exercise: plagiarismCase.exercise!.title,
                 inCourseOrExam: 'artemisApp.plagiarism.plagiarismCases.notification.inCourse',
                 courseOrExam: exercise.course!.title,
@@ -163,6 +169,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
             exercise: { ...exercise, course: undefined, exerciseGroup: { exam: { id: 3, title: examTitle } } },
         };
         component.plagiarismCase = examPlagiarismCase;
+        component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
@@ -173,6 +180,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
             'artemisApp.plagiarism.plagiarismCases.notification.body',
             expect.objectContaining({
                 student: examPlagiarismCase.student!.name,
+                instructor: 'user',
                 exercise: examPlagiarismCase.exercise!.title,
                 inCourseOrExam: 'artemisApp.plagiarism.plagiarismCases.notification.inExam',
                 courseOrExam: examTitle,
@@ -189,6 +197,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
             student: undefined,
             exercise: undefined,
         } as PlagiarismCase;
+        component.currentAccount = { id: 99, name: 'user' } as User;
 
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
@@ -200,6 +209,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
             'artemisApp.plagiarism.plagiarismCases.notification.body',
             expect.objectContaining({
                 student: '',
+                instructor: 'user',
                 exercise: '',
                 courseOrExam: '',
             }),

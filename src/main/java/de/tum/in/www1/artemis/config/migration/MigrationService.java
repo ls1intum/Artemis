@@ -6,13 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +16,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.MigrationChangelog;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
@@ -120,7 +116,7 @@ public class MigrationService {
         log.info("Starting migration integrity check");
         boolean passed = true;
         Map<Integer, MigrationEntry> brokenInstances = entryMap.entrySet().stream()
-                .filter(entry -> StringUtils.isEmpty(entry.getValue().date()) || StringUtils.isEmpty(entry.getValue().author()))
+                .filter(entry -> !StringUtils.hasLength(entry.getValue().date()) || !StringUtils.hasLength(entry.getValue().author()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!brokenInstances.isEmpty()) {
             passed = false;
@@ -133,14 +129,14 @@ public class MigrationService {
             int startIndex = 1;
             MigrationEntry baseEntry = entryList.get(0);
             // Make sure the base date is not null. If it is, it was already caught and logged above.
-            while (StringUtils.isEmpty(baseEntry.date()) && startIndex < entryList.size()) {
+            while (!StringUtils.hasLength(baseEntry.date()) && startIndex < entryList.size()) {
                 baseEntry = entryList.get(startIndex);
                 startIndex++;
             }
             // Go through the list of registered entries and make sure that every date is smaller than the date of its successor.
             for (int i = startIndex; i < entryList.size(); i++) {
                 MigrationEntry entry = entryList.get(i);
-                if (!StringUtils.isEmpty(entry.date()) && baseEntry.date().compareTo(entry.date()) >= 0) {
+                if (StringUtils.hasLength(entry.date()) && baseEntry.date().compareTo(entry.date()) >= 0) {
                     log.error("{} corrupted. Invalid date order detected. {} ({}) should come before {} ({})", getClass().getSimpleName(), entry.date(),
                             entry.getClass().getSimpleName(), baseEntry.date(), baseEntry.getClass().getSimpleName());
                     passed = false;
@@ -153,6 +149,6 @@ public class MigrationService {
     }
 
     private String toMD5(String string) {
-        return Hex.encodeHexString(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
+        return HexFormat.of().formatHex(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
     }
 }

@@ -12,6 +12,7 @@ import javax.validation.constraints.Size;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -23,17 +24,21 @@ import de.tum.in.www1.artemis.domain.Submission;
  */
 @Entity
 @DiscriminatorValue(value = "M")
+@JsonTypeName("modeling")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingSubmission extends Submission {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getSubmissionExerciseType() {
+        return "modeling";
+    }
+
     @Column(name = "model")
     @Size(max = MAX_SUBMISSION_MODEL_LENGTH, message = "The modeling submission is too large.")
-    @Lob
     private String model;
 
     @Column(name = "explanation_text")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The explanation of the modeling submission is too large.")
-    @Lob
     private String explanationText;
 
     @Transient
@@ -83,7 +88,6 @@ public class ModelingSubmission extends Submission {
      * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
      *
      * @param jacksonObjectMapper a predefined jackson object mapper
-     *
      * @return true if the submission is empty, false otherwise
      */
     public boolean isEmpty(ObjectMapper jacksonObjectMapper) {

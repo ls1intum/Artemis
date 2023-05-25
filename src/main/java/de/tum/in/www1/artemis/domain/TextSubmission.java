@@ -11,6 +11,7 @@ import javax.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
@@ -19,14 +20,19 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@JsonTypeName("text")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextSubmission extends Submission {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getSubmissionExerciseType() {
+        return "text";
+    }
 
     private static final int MAX_EXCERPT_LENGTH = 100;
 
     @Column(name = "text")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The text submission is too large.")
-    @Lob
     private String text;
 
     @Enumerated(EnumType.STRING)
@@ -58,6 +64,7 @@ public class TextSubmission extends Submission {
 
     /**
      * Excerpt of Text, used for toString() so log messages do not get too long.
+     *
      * @return excerpt of text, maximum String length of 104 characters
      */
     @JsonIgnore()
@@ -107,6 +114,7 @@ public class TextSubmission extends Submission {
 
     /**
      * counts the number of words in the text of the text submission in case
+     *
      * @return the number of words
      */
     public int countWords() {

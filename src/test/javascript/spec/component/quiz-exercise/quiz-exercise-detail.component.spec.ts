@@ -14,7 +14,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -76,6 +76,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
+        quizExercise.dueDate = undefined;
         quizExercise.quizMode = QuizMode.SYNCHRONIZED;
     };
 
@@ -292,8 +293,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isImport = true;
                 quizExercise.testRunParticipationsExist = true;
 
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).not.toHaveBeenCalled();
@@ -305,8 +305,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isImport = false;
                 quizExercise.testRunParticipationsExist = true;
 
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).toHaveBeenCalledOnce();
@@ -388,6 +387,66 @@ describe('QuizExercise Management Detail Component', () => {
                     // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
                     expect(comp.hasErrorInQuizBatches()).toBeTrue();
                 }
+            });
+        });
+
+        describe('set isEditable', () => {
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
+            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(configureFixtureAndServices);
+            beforeEach(() => {
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.id = 1;
+                comp.quizExercise.title = 'test';
+                comp.quizExercise.duration = 600;
+                const { question } = createValidMCQuestion();
+                comp.quizExercise.quizQuestions = [question];
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.quizExercise.status = QuizStatus.VISIBLE;
+                comp.quizExercise.isAtLeastEditor = true;
+                comp.quizExercise.quizEnded = false;
+            });
+
+            it('should set isEditable to true if new quiz', () => {
+                comp.init();
+                comp.quizExercise.id = undefined;
+                expect(comp.quizExercise.isEditable).toBeTrue();
+            });
+
+            it('should set isEditable to true if existing quiz is synchronized, not active and not over', () => {
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeTrue();
+            });
+
+            it('should set isEditable to true if existing quiz is batched, no batch exists, not active and not over', () => {
+                comp.quizExercise.quizMode = QuizMode.BATCHED;
+                comp.quizExercise.quizBatches = undefined;
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeTrue();
+            });
+
+            it('should set isEditable to false if existing quiz is batched, batch exists, not active and not over', () => {
+                comp.quizExercise.quizMode = QuizMode.BATCHED;
+                comp.quizExercise.quizBatches = [new QuizBatch()];
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeFalse();
+            });
+
+            it('should set isEditable to false if existing quiz is synchronized, active, and not over', () => {
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.quizExercise.status = QuizStatus.ACTIVE;
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeFalse();
+            });
+
+            it('should set isEditable to false if existing quiz is synchronized, not active, and over', () => {
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.quizExercise.quizEnded = true;
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeFalse();
             });
         });
     });
@@ -791,8 +850,7 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should call alert service if fails', () => {
                     quizExerciseServiceFindForCourseStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
-                    let alertServiceStub: jest.SpyInstance;
-                    alertServiceStub = jest.spyOn(alertService, 'error');
+                    const alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onCourseSelect();
                     expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
@@ -838,8 +896,7 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should call alert service if fails', () => {
                     quizExerciseServiceFindForExamStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
-                    let alertServiceStub: jest.SpyInstance;
-                    alertServiceStub = jest.spyOn(alertService, 'error');
+                    const alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onExamSelect();
                     expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
@@ -1213,6 +1270,55 @@ describe('QuizExercise Management Detail Component', () => {
                 const { question } = createValidSAQuestion();
                 removeCorrectMappingsAndExpectInvalidQuiz(question);
             });
+
+            it('should be valid for synchronized mode when dueDate is less than releaseDate', () => {
+                const now = dayjs();
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.scheduleQuizStart = true;
+                comp.quizExercise.quizBatches = [new QuizBatch()];
+                comp.quizExercise.releaseDate = now;
+                comp.quizExercise.startDate = now.add(1, 'day');
+                comp.quizExercise.dueDate = now.add(-1, 'day');
+                comp.cacheValidation();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
+                expect(comp.quizExercise.dueDate).toBeUndefined();
+            });
+
+            it('should not be valid if question point is not in valid range', () => {
+                let { question } = createValidMCQuestion();
+                question.points = 10000;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+                question = createValidDnDQuestion().question;
+                question.points = 0;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+                question = createValidSAQuestion().question;
+                question.points = -1;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+            });
+
+            it('should not be valid if question point is in valid range', () => {
+                let { question } = createValidMCQuestion();
+                question.points = 9999;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+                question = createValidDnDQuestion().question;
+                question.points = 100;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+                question = createValidSAQuestion().question;
+                question.points = 1;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+            });
         });
 
         describe('saving', () => {
@@ -1227,8 +1333,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             const saveAndExpectAlertService = () => {
                 console.error = jest.fn();
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'error');
+                const alertServiceStub = jest.spyOn(alertService, 'error');
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
@@ -1663,9 +1768,19 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.quizExercise.quizQuestions = [question];
                 });
 
+                it('should put reason for undefined score', () => {
+                    question.points = undefined;
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
+                });
+
                 it('should put reason for negative score', () => {
                     question.points = -1;
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScoreInvalid');
+                });
+
+                it('should put reason for score in invalid range', () => {
+                    question.points = 99999999999;
+                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScoreInvalid');
                 });
 
                 it('should put reason for no title', () => {

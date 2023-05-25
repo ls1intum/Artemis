@@ -171,7 +171,7 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
      * @override
      */
     parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
                 skipEmptyLines: true,
@@ -180,5 +180,10 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
                 error: (error) => reject(error),
             });
         });
+    }
+
+    shouldShowGradingStepsAboveMaxPointsWarning(): boolean {
+        const steps = [...this.gradingScale.gradeSteps].slice(0, this.gradingScale.gradeSteps.length - 1);
+        return this.isAnyGradingStepAboveMaxPoints(steps);
     }
 }

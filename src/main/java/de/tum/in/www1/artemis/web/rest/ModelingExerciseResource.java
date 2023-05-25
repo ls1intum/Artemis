@@ -37,7 +37,9 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
-/** REST controller for managing ModelingExercise. */
+/**
+ * REST controller for managing ModelingExercise.
+ */
 @RestController
 @RequestMapping("api/")
 public class ModelingExerciseResource {
@@ -79,14 +81,12 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
-    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -102,7 +102,6 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
-        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -135,8 +134,6 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create new knowledge instance
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
@@ -156,7 +153,7 @@ public class ModelingExerciseResource {
     @GetMapping("modeling-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -211,7 +208,7 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/modeling-exercises : get all the exercises.
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
@@ -241,7 +238,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsByIdElseThrow(exerciseId);
+        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndLearningGoalsByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
@@ -282,10 +279,9 @@ public class ModelingExerciseResource {
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @throws URISyntaxException When the URI of the response entity is invalid
-     *
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
+     * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("modeling-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
@@ -311,7 +307,7 @@ public class ModelingExerciseResource {
     /**
      * POST modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
+     * @param exerciseId              the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
@@ -337,10 +333,9 @@ public class ModelingExerciseResource {
      * <p>
      * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise yet.
      *
-     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be
-     *                   returned
+     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
-     * parameters are invalid
+     *         parameters are invalid
      */
     @GetMapping("modeling-exercises/{exerciseId}/plagiarism-result")
     @PreAuthorize("hasRole('EDITOR')")
@@ -360,10 +355,8 @@ public class ModelingExerciseResource {
      *
      * @param exerciseId          for which all submission should be checked
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this
-     *                            value
-     * @param minimumSize         consider only submissions whose size is greater or equal to this
-     *                            value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
@@ -391,14 +384,13 @@ public class ModelingExerciseResource {
     /**
      * PUT modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing modelingExercise.
      *
-     * @param exerciseId                                   of the exercise
-     * @param modelingExercise                             the modelingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     *
+     * @param exerciseId                                  of the exercise
+     * @param modelingExercise                            the modelingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
-     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
-     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
-     * Server Error) if the modelingExercise couldn't be updated
+     *         with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     *         Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")

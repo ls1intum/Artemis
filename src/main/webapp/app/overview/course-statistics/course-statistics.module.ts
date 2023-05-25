@@ -8,6 +8,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const routes: Routes = [
     {
@@ -31,7 +32,15 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisExerciseScoresChartModule, ArtemisSharedModule, FontAwesomeModule, RouterModule.forChild(routes), BarChartModule, PieChartModule],
+    imports: [
+        ArtemisExerciseScoresChartModule,
+        ArtemisSharedModule,
+        FontAwesomeModule,
+        RouterModule.forChild(routes),
+        BarChartModule,
+        PieChartModule,
+        ArtemisSharedComponentModule,
+    ],
     declarations: [CourseStatisticsComponent],
 })
 export class CourseStatisticsModule {}

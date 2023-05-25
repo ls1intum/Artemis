@@ -10,19 +10,21 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -39,23 +41,25 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
-import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooTriggerService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
-        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
+@SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureTestDatabase
+@ExtendWith(SpringExtension.class)
+@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
@@ -73,6 +77,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
     protected BambooService continuousIntegrationService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
+    @SpyBean
+    protected BambooResultService continuousIntegrationResultService;
+
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
+    @SpyBean
+    protected BambooTriggerService continuousIntegrationTriggerService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bitbucket using the corresponding RestTemplate.
     @SpyBean
@@ -94,7 +106,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     protected PasswordService passwordService;
 
     @AfterEach
-    public void resetSpyBeans() {
+    protected void resetSpyBeans() {
         Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
         super.resetSpyBeans();
     }
@@ -105,7 +117,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
         // Step 1a)
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
@@ -116,6 +128,24 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         // Step 2b)
         // Note: no need to mock empty commit (Step 2c) because this is done on a git repository
         mockUpdatePlanRepositoryForParticipation(exercise, username);
+        // Step 1c)
+        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
+
+        // Mock Default Branch
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
+    }
+
+    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+            throws IOException, URISyntaxException {
+        // Step 1a)
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, true);
+        // Step 1b)
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists, true);
+        // Step 2a)
+        bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username, true);
+        // Step 2b)
+        // Note: no need to mock empty commit (Step 2c) because this is done on a git repository
+        mockUpdatePlanRepositoryForParticipation(exercise, username, true);
         // Step 1c)
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
 
@@ -135,8 +165,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+        mockUpdatePlanRepositoryForParticipation(exercise, username, false);
+    }
+
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
+        final var bitbucketRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
         bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username, true, false);
     }
@@ -217,6 +251,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         else {
             doThrow(BambooSpecsPublishingException.class).when(bambooServer).publish(any());
         }
+    }
+
+    @Override
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
+        mockConnectorRequestsForSetup(exerciseForImport, false);
+
     }
 
     @Override
@@ -332,12 +372,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
-            throws URISyntaxException, JsonProcessingException {
-        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), logs);
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, repositorySlug, hash);
     }
@@ -354,7 +388,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final var buildPlanId = participation.getBuildPlanId();
         final var repositoryUrl = participation.getVcsRepositoryUrl();
-        final var projectKey = buildPlanId.split("-")[0];
         final var planKey = participation.getBuildPlanId();
         final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repoProjectName, defaultBranch);
@@ -439,7 +472,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
         // Not needed here
     }
 
@@ -459,7 +492,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
+            boolean failToAddUsers, boolean failToRemoveUsers) {
         // Not needed here
     }
 
@@ -474,8 +507,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName, shouldFail);
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repositoryName, shouldFail);
     }
 
     @Override
@@ -494,7 +527,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
         jiraRequestMockProvider.mockAddUserToGroup(group, failInCi);
     }
 
@@ -588,11 +621,46 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    /**
-     * Verify that the mocked REST-calls were called
-     */
     public void verifyMocks() {
         bitbucketRequestMockProvider.verifyMocks();
         bambooRequestMockProvider.verifyMocks();
+    }
+
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        bitbucketRequestMockProvider.mockUserExists(username);
+    }
+
+    /**
+     * Configures the mock requests needed to delete a programming exercise in an exam.
+     *
+     * @param programmingExercise the programming exercise to delete
+     * @param registeredUsers     the users registered to the exam (users with repos)
+     * @throws Exception exception
+     */
+    public void mockDeleteProgrammingExercise(ProgrammingExercise programmingExercise, Set<User> registeredUsers) throws Exception {
+        final String projectKey = programmingExercise.getProjectKey();
+
+        List<String> studentLogins = new ArrayList<>();
+        for (final User user : registeredUsers) {
+            studentLogins.add(user.getLogin());
+        }
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
+        List<String> planNames = new ArrayList<>(studentLogins);
+        planNames.add(TEMPLATE.getName());
+        planNames.add(SOLUTION.getName());
+        for (final String planName : planNames) {
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase(), false);
+        }
+        List<String> repoNames = new ArrayList<>(studentLogins);
+
+        for (final var repoType : RepositoryType.values()) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType), false);
+        }
+
+        for (final var repoName : repoNames) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
+        }
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
     }
 }

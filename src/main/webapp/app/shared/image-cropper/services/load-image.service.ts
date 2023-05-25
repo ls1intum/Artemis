@@ -26,7 +26,7 @@ export class LoadImageService {
 
     private loadImage(imageBase64: string, imageType: string, cropperSettings: CropperSettings): Promise<LoadedImage> {
         if (!LoadImageService.isValidImageType(imageType)) {
-            return Promise.reject(new Error('Invalid image type'));
+            return Promise.reject(new Error('Invalid image type: ' + imageType + ' is not supported'));
         }
         return this.loadBase64Image(imageBase64, cropperSettings);
     }

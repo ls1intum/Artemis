@@ -1,0 +1,36 @@
+<div *ngIf="activeConversation && course" class="container-fluid conversation-settings">
+    <div class="row settings-container">
+        <div class="col-12 settings-section text-center">
+            <button *ngIf="canLeaveConversation(activeConversation)" type="button" class="btn btn-danger leave-conversation" (click)="leaveConversation($event)">
+                {{ 'artemisApp.dialogs.conversationSettings.actions.leave' | artemisTranslate }}
+            </button>
+        </div>
+        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="col-12 settings-section text-center" *ngIf="!channel.isArchived && canChangeArchivalState(channel)">
+                <button type="button" class="btn btn-danger archive" (click)="openArchivalModal($event)">
+                    {{ 'artemisApp.dialogs.conversationSettings.actions.archiveChannel' | artemisTranslate }}
+                </button>
+            </div>
+            <div class="col-12 settings-section text-center" *ngIf="channel.isArchived && canChangeArchivalState(channel)">
+                <button type="button" class="btn btn-danger unarchive" (click)="openUnArchivalModal($event)">
+                    {{ 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel' | artemisTranslate }}
+                </button>
+            </div>
+            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel(course, channel)">
+                <button
+                    class="btn btn-danger delete"
+                    [id]="'delete-' + channel.id"
+                    jhiDeleteButton
+                    [renderButtonStyle]="false"
+                    [entityTitle]="channel.name || ''"
+                    deleteQuestion="artemisApp.dialogs.deleteChannel.question"
+                    deleteConfirmationText="artemisApp.dialogs.deleteChannel.confirm"
+                    (delete)="deleteChannel()"
+                    [dialogError]="dialogError$"
+                >
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+            </div>
+        </ng-container>
+    </div>
+</div>

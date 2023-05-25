@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -124,29 +123,16 @@ public class AttachmentResource {
     }
 
     /**
-     * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
+     * DELETE /attachments/:attachmentId : delete the "id" attachment.
      *
-     * @param lectureId the id of the lecture
-     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
-     */
-    @GetMapping(value = "/lectures/{lectureId}/attachments")
-    @PreAuthorize("hasRole('TA')")
-    public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
-        log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return attachmentRepository.findAllByLectureId(lectureId);
-    }
-
-    /**
-     * DELETE /attachments/:id : delete the "id" attachment.
-     *
-     * @param id the id of the attachment to delete
+     * @param attachmentId the id of the attachment to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/attachments/{id}")
+    @DeleteMapping("/attachments/{attachmentId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
+        Optional<Attachment> optionalAttachment = attachmentRepository.findById(attachmentId);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -172,8 +158,8 @@ public class AttachmentResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
-        attachmentRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        log.info("{} deleted attachment with id {} for {}", user.getLogin(), attachmentId, relatedEntity);
+        attachmentRepository.deleteById(attachmentId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
 }

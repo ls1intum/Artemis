@@ -18,6 +18,7 @@ public class Lti13AgsClaim {
 
     /**
      * Returns an Ags-Claim representation if the provided idToken contains any.
+     *
      * @param idToken to be parsed
      * @return an Ags-Claim if one was present in idToken.
      */

@@ -25,9 +25,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 
 @Service
 @Profile("gitlab")
@@ -88,8 +88,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     /**
      * Updates the basic information of the Gitlab user based on the passed Artemis user.
      *
-     * @param userLogin the username of the user
-     * @param user the Artemis user to update
+     * @param userLogin   the username of the user
+     * @param user        the Artemis user to update
      * @param newPassword if provided the Gitlab password should be updated to the new value
      * @return the updated Gitlab user
      * @throws GitLabApiException if the user cannot be retrieved or cannot update the user
@@ -115,8 +115,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * Updates the activation state of the Gitlab account based on the Artemis account.
-     * We
-     * @param user The Artemis user
+     *
+     * @param user         The Artemis user
      * @param gitlabUserId the id of the GitLab user that is mapped to the Artemis user
      */
     private void updateUserActivationState(User user, Long gitlabUserId) throws GitLabApiException {
@@ -168,9 +168,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * Sets the permission for users that have not been in a group before.
      * The permissions are updated for all programming exercises of a course, according to the user groups the user is part of.
      *
-     * @param programmingExercises  all programming exercises of the passed updatedCourse
-     * @param newUsers              users of the passed course that have not been in a group before
-     * @param updatedCourse         course with updated groups
+     * @param programmingExercises all programming exercises of the passed updatedCourse
+     * @param newUsers             users of the passed course that have not been in a group before
+     * @param updatedCourse        course with updated groups
      */
     private void setPermissionsForNewGroupMembers(List<ProgrammingExercise> programmingExercises, Set<User> newUsers, Course updatedCourse) {
         final var userApi = gitlabApi.getUserApi();
@@ -201,9 +201,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * Updates the permission for users that have been in a group before.
      * The permissions are updated for all programming exercises of a course, according to the user groups the user is part of.
      *
-     * @param programmingExercises  programming exercises of the passed updatedCourse
-     * @param oldUsers              users of the passed course that have been in a group before
-     * @param updatedCourse         course with updated groups
+     * @param programmingExercises programming exercises of the passed updatedCourse
+     * @param oldUsers             users of the passed course that have been in a group before
+     * @param updatedCourse        course with updated groups
      */
     private void updateOldGroupMembers(List<ProgrammingExercise> programmingExercises, Set<User> oldUsers, Course updatedCourse) {
         final var userApi = gitlabApi.getUserApi();
@@ -239,9 +239,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     /**
      * Updates the permissions for the passed user to the passed accessLevel
      *
-     * @param programmingExercises  all exercises for which the permissions shall be updated
-     * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
-     * @param accessLevel           access level that shall be set for a user
+     * @param programmingExercises all exercises for which the permissions shall be updated
+     * @param gitlabUserId         gitlabUserId for which the permissions shall be updated
+     * @param accessLevel          access level that shall be set for a user
      */
     private void updateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, Long gitlabUserId, AccessLevel accessLevel) {
         programmingExercises.forEach(exercise -> {
@@ -258,8 +258,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     /**
      * Removes a member from an exercise, e.g. when a group is removed and the user is not part of another group that has permissions.
      *
-     * @param programmingExercises  all exercises for which the permissions shall be updated
-     * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
+     * @param programmingExercises all exercises for which the permissions shall be updated
+     * @param gitlabUserId         gitlabUserId for which the permissions shall be updated
      */
     private void removeMemberFromExercises(List<ProgrammingExercise> programmingExercises, Long gitlabUserId) {
         programmingExercises.forEach(exercise -> {
@@ -317,7 +317,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * a new Gitlab user if it doesn't exist and returns the
      * generated id.
      *
-     * @param user the Artemis user
+     * @param user     the Artemis user
      * @param password the user's password
      * @return the Gitlab user id
      */
@@ -340,7 +340,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * assistants REPORTED).
      *
      * @param gitlabUserId the user id of the Gitlab user
-     * @param groups the new groups
+     * @param groups       the new groups
      */
     private void addUserToGroups(Long gitlabUserId, Set<String> groups) {
         if (groups == null || groups.isEmpty()) {
@@ -373,9 +373,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     /**
      * Adds a Gitlab user to a Gitlab group with the given access level.
      *
-     * @param groupName The name of the Gitlab group
+     * @param groupName    The name of the Gitlab group
      * @param gitlabUserId the id of the Gitlab user
-     * @param accessLevel the access level to grant to the user
+     * @param accessLevel  the access level to grant to the user
      * @throws GitLabException if the user cannot be added to the group
      */
     private void addUserToGroup(String groupName, Long gitlabUserId, AccessLevel accessLevel) throws GitLabException {
@@ -399,8 +399,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     /**
      * Removes or updates the user to or from the groups.
      *
-     * @param gitlabUserId the Gitlab user id
-     * @param userGroups groups that the user belongs to
+     * @param gitlabUserId   the Gitlab user id
+     * @param userGroups     groups that the user belongs to
      * @param groupsToRemove groups where the user should be removed from
      */
     private void removeOrUpdateUserFromGroups(Long gitlabUserId, Set<String> userGroups, Set<String> groupsToRemove) throws GitLabApiException {
@@ -431,7 +431,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * by checking if the user belongs to any of the course's group.
      *
      * @param userGroups The groups that the user belongs to
-     * @param course the course to get the access level from
+     * @param course     the course to get the access level from
      * @return the access level
      */
     public Optional<AccessLevel> getAccessLevelFromUserGroups(Set<String> userGroups, Course course) {
@@ -458,7 +458,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * an error if the user isn't member of the group.
      *
      * @param gitlabUserId the user id of the Gitlab user
-     * @param group the group to remove the user from
+     * @param group        the group to remove the user from
      */
     private void removeUserFromGroup(Long gitlabUserId, String group) throws GitLabApiException {
         try {
@@ -477,7 +477,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * Creates a Gitlab user account based on the passed Artemis
      * user account with the same email, login, name and password
      *
-     * @param user The artemis user
+     * @param user     The artemis user
      * @param password The user's password
      * @return a Gitlab user
      */
@@ -527,8 +527,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * It is needed if
      * 1. the config option is enabled, and
      * 2. the user does not yet have an access token
+     *
      * @param gitlabUser the Gitlab user (for which the token will be created)
-     * @param user the Artemis user (where the token will be stored)
+     * @param user       the Artemis user (where the token will be stored)
      */
     private void generateVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user) {
         if (versionControlAccessToken && user.getVcsAccessToken() == null) {

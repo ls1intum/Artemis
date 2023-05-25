@@ -22,6 +22,7 @@ import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exe
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -49,6 +50,8 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
+
+    documentationType = DocumentationType.Text;
 
     // Icons
     faSave = faSave;
@@ -178,7 +181,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.textExercise, this.notificationText)
+            .save(this.textExercise, this.isExamMode, this.notificationText)
             .subscribe({
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),

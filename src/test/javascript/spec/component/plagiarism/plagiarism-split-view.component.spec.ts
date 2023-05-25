@@ -119,7 +119,6 @@ describe('Plagiarism Split View Component', () => {
 
         comp.ngOnInit();
 
-        // eslint-disable-next-line deprecation/deprecation
         expect(comp.splitControlSubject.subscribe).toHaveBeenCalledOnce();
     });
 

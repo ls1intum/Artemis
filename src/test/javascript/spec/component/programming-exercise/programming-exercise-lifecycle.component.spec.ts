@@ -11,6 +11,8 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
+import { Course } from 'app/entities/course.model';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -123,7 +125,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
     });
 
-    it('should change feedback Request allowed after toggling', () => {
+    it('should change feedback request allowed after toggling', () => {
         comp.exercise = { ...exercise, allowManualFeedbackRequests: false };
         expect(comp.exercise.allowManualFeedbackRequests).toBeFalse();
 
@@ -148,6 +150,13 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
         expect(comp.exercise.assessmentDueDate).toBeUndefined();
+    });
+
+    it('should change publication of tests for programming exercise with published solution', () => {
+        comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
+        comp.toggleReleaseTests();
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
@@ -235,5 +244,40 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
         expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
+    });
+
+    it('should enable checkbox for complaints on automatic assessments for automatically assessed exam exercises', () => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        comp.isExamMode = true;
+        exercise.dueDate = undefined;
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
+        expectElementToBeEnabled(checkbox);
+    });
+
+    it.each([true, false])('should disable checkbox for complaints on automatic assessments for exercises without automatic assessment', (examMode: boolean) => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        comp.isExamMode = examMode;
+        if (!examMode) {
+            exercise.course = new Course();
+            exercise.course.complaintsEnabled = true;
+        }
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
+        expectElementToBeDisabled(checkbox);
+    });
+
+    it('should disable checkbox for complaints on automatic assessments for automatically assessed course exercises without due date', () => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        comp.isExamMode = false;
+        exercise.dueDate = undefined;
+        exercise.course = new Course();
+        exercise.course.complaintsEnabled = true;
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
+        expectElementToBeDisabled(checkbox);
     });
 });

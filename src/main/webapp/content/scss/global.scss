@@ -6,8 +6,8 @@
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
-@import '~katex/dist/katex.css';
-@import '~@flaviosantoro92/ngx-datatable/themes/bootstrap.css';
+@import 'node_modules/katex/dist/katex.min.css';
+@import 'node_modules/@flaviosantoro92/ngx-datatable/themes/bootstrap';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
@@ -25,7 +25,7 @@ h1,
 h2,
 h3,
 h4 {
-    font-weight: 300;
+    font-weight: 400;
 }
 
 /* like fw-bold or fw-normal, but with weight 500 */
@@ -468,13 +468,19 @@ a.result-late:hover {
 }
 
 span.result {
-    text-decoration: underline;
     font-weight: normal;
 }
 
 span.result:hover {
-    text-decoration: underline;
     font-weight: normal;
+}
+
+span.clickable-result {
+    text-decoration: underline;
+}
+
+span.clickable-result:hover {
+    text-decoration: underline;
     cursor: pointer;
 }
 
@@ -484,6 +490,10 @@ span.score {
 
 span.bold {
     font-weight: bold;
+}
+
+bold {
+    font-weight: 500;
 }
 
 .negative,
@@ -739,6 +749,13 @@ Course Info Bar
     }
 }
 
+.git-info {
+    --bs-tooltip-max-width: 500px;
+    .tooltip-inner {
+        text-align: left;
+    }
+}
+
 .warning-modal-window .modal-dialog {
     width: 50%;
 }
@@ -955,4 +972,8 @@ Course Info Bar
     .connection-warning-popover .popover-body .ng-fa-icon {
         display: none;
     }
+}
+
+body.transparent-background {
+    background: transparent;
 }

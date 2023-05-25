@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -9,19 +7,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -35,6 +35,8 @@ public class ExamRegistrationService {
     private final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
 
     private final UserRepository userRepository;
+
+    private final ExamUserRepository examUserRepository;
 
     private final UserService userService;
 
@@ -52,8 +54,8 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
+    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
         this.examRepository = examRepository;
         this.userService = userService;
@@ -64,6 +66,7 @@ public class ExamRegistrationService {
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.examUserRepository = examUserRepository;
     }
 
     /**
@@ -74,29 +77,56 @@ public class ExamRegistrationService {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId    the id of the course
-     * @param examId      the id of the exam
-     * @param studentDTOs the list of students (with at least registration number) who should get access to the exam
+     * @param courseId     the id of the course
+     * @param examId       the id of the exam
+     * @param examUserDTOs the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
+    public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
-        for (var studentDto : studentDTOs) {
-            var registrationNumber = studentDto.getRegistrationNumber();
-            var login = studentDto.getLogin();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login);
+        List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        for (var examUserDto : examUserDTOs) {
+            var registrationNumber = examUserDto.registrationNumber();
+            var login = examUserDto.login();
+            var email = examUserDto.email();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login, email);
             if (optionalStudent.isEmpty()) {
-                notFoundStudentsDTOs.add(studentDto);
+                notFoundStudentsDTOs.add(examUserDto);
             }
             else {
-                exam.addRegisteredUser(optionalStudent.get());
+                User student = optionalStudent.get();
+                Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+
+                if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !authorizationCheckService.isInstructorInCourse(course, student)
+                        && !authorizationCheckService.isAdmin(student)) {
+                    ExamUser registeredExamUser = new ExamUser();
+                    registeredExamUser.setUser(optionalStudent.get());
+                    registeredExamUser.setExam(exam);
+
+                    if (StringUtils.hasText(examUserDto.room())) {
+                        registeredExamUser.setPlannedRoom(examUserDto.room());
+                    }
+                    if (StringUtils.hasText(examUserDto.seat())) {
+                        registeredExamUser.setPlannedSeat(examUserDto.seat());
+                    }
+                    registeredExamUser = examUserRepository.save(registeredExamUser);
+                    exam.addExamUser(registeredExamUser);
+                }
+
+                if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
+                    ExamUser examUser = examUserOptional.get();
+                    examUser.setPlannedRoom(examUserDto.room());
+                    examUser.setPlannedSeat(examUserDto.seat());
+                    examUser = examUserRepository.save(examUser);
+                    exam.addExamUser(examUser);
+                }
+
             }
         }
         examRepository.save(exam);
@@ -105,13 +135,13 @@ public class ExamRegistrationService {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
-            for (var i = 0; i < studentDTOs.size(); i++) {
-                var studentDTO = studentDTOs.get(i);
-                userData.put("student" + i, studentDTO.toDatabaseString());
+            for (var i = 0; i < examUserDTOs.size(); i++) {
+                var studentDTO = examUserDTOs.get(i);
+                userData.put("student" + i, studentDTO.login() + " (" + studentDTO.registrationNumber() + ")");
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), studentDTOs, exam.getTitle(), exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), examUserDTOs, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
@@ -142,7 +172,8 @@ public class ExamRegistrationService {
     }
 
     /**
-     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
+     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has
+     * access to the course of the exam.
      * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
      *
      * @param course  the course containing the exam
@@ -154,12 +185,24 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        exam.addRegisteredUser(student);
-
         if (!student.getGroups().contains(course.getStudentGroupName())) {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }
-        examRepository.save(exam);
+
+        Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+
+        if (registeredExamUserOptional.isEmpty() || !exam.getExamUsers().contains(registeredExamUserOptional.get())) {
+            ExamUser registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(student);
+            registeredExamUser.setExam(exam);
+            registeredExamUser = examUserRepository.save(registeredExamUser);
+            exam.addExamUser(registeredExamUser);
+            examRepository.save(exam);
+        }
+        else {
+            log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
+            return;
+        }
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
@@ -176,17 +219,22 @@ public class ExamRegistrationService {
      * @param currentUser the user to be registered in the exam
      */
     public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
-        Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
             throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
+        Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
+        ExamUser registeredExamUser = null;
+        if (registeredExamUserOptional.isEmpty()) {
+            registeredExamUser = createExamUser(exam, currentUser);
+        }
 
-        // We only need to update the registered users, if the user is not yet registered for the test exam
-        if (!exam.getRegisteredUsers().contains(currentUser)) {
-            exam.addRegisteredUser(currentUser);
+        // We only need to update the registered exam users, if the user is not yet registered for the test exam
+        if (registeredExamUser != null && !exam.getExamUsers().contains(registeredExamUser)) {
+            exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
 
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "TestExam=" + exam.getTitle());
@@ -196,16 +244,19 @@ public class ExamRegistrationService {
     }
 
     /**
-     * @param exam                             the exam with eagerly loaded registered users for which a student should be unregistered
+     * @param exam                              the exam with eagerly loaded registered users for which a student should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      * @param student                           the user object that should be unregistered
      */
     public void unregisterStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission, User student) {
-        exam.removeRegisteredUser(student);
+        ExamUser registeredExamUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId())
+                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + student.getLogin() + "\" is not registered to the exam with id: \"" + exam.getId() + "\""));
+        exam.removeExamUser(registeredExamUser);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
         // still have access to the course.
         examRepository.save(exam);
+        examUserRepository.delete(registeredExamUser);
 
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
@@ -235,17 +286,16 @@ public class ExamRegistrationService {
     /**
      * Unregisters all students from the exam
      *
-     * @param exam                             the exam with eagerly loaded registered users for which all students should be unregistered
+     * @param exam                              the exam with eagerly loaded registered users for which all students should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      */
     public void unregisterAllStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission) {
 
         // remove all registered students
-        List<Long> userIds = new ArrayList<>();
-        exam.getRegisteredUsers().forEach(user -> userIds.add(user.getId()));
-        List<User> registeredStudentsList = userRepository.findAllById(userIds);
-        registeredStudentsList.forEach(exam::removeRegisteredUser);
+        List<ExamUser> registeredExamUsers = examUserRepository.findAllByExamId(exam.getId());
+        registeredExamUsers.forEach(exam::removeExamUser);
         examRepository.save(exam);
+        examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
@@ -262,7 +312,7 @@ public class ExamRegistrationService {
      * Adds all students registered in the course to the given exam
      *
      * @param courseId Id of the course
-     * @param exam   the exam with eagerly loaded registered users to which the course students should be added
+     * @param exam     the exam with eagerly loaded registered users to which the course students should be added
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -272,9 +322,10 @@ public class ExamRegistrationService {
         userData.put("exam", exam.getTitle());
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
-                    && !student.getGroups().contains(course.getInstructorGroupName())) {
-                exam.addRegisteredUser(student);
+            Optional<ExamUser> registeredExamUserCheckOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+            if (registeredExamUserCheckOptional.isEmpty() && !authorizationCheckService.isInstructorInCourse(course, student) && !authorizationCheckService.isAdmin(student)) {
+                ExamUser registeredExamUser = createExamUser(exam, student);
+                exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
         }
@@ -282,5 +333,12 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
         auditEventRepository.add(auditEvent);
+    }
+
+    private ExamUser createExamUser(Exam exam, User user) {
+        ExamUser examUser = new ExamUser();
+        examUser.setExam(exam);
+        examUser.setUser(user);
+        return examUserRepository.save(examUser);
     }
 }

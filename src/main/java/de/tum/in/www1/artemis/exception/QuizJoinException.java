@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.exception;
 
 public class QuizJoinException extends Throwable {
 
-    private String error;
+    private final String error;
 
     public QuizJoinException(String error, String message) {
         super(message);

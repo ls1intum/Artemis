@@ -46,7 +46,12 @@
               "js-video-url-parser",
               "dompurify",
               "interactjs",
-              "mobile-drag-drop"
+              "mobile-drag-drop",
+              "dagre",
+              "webcola",
+              "rfdc",
+              "jszip",
+              "react-dom/client"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -76,10 +81,20 @@
                 "glob": "*.{js,css,html,png}",
                 "input": "./node_modules/swagger-ui-dist",
                 "output": "swagger-ui",
-                "ignore": ["**/index.html"]
+                "ignore": [
+                  "**/index.html"
+                ]
               },
-              { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
-              { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
+              {
+                "glob": "axios.min.js",
+                "input": "./node_modules/axios/dist",
+                "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/main/webapp/swagger-ui/",
+                "output": "swagger-ui"
+              }
             ],
             "styles": [
               "src/main/webapp/content/scss/themes/theme-default.scss",
@@ -102,19 +117,24 @@
                 "fonts": true
               },
               "outputHashing": "all",
-              "sourceMap": true,
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": false,
+                "vendor": false
+              },
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true,
-              "ngswConfigPath": "ngsw-config.json",
+              "ngswConfigPath": "src/main/webapp/ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "2.33mb"
+                  "maximumWarning": "2.5mb",
+                  "maximumError": "2.6mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -155,6 +175,15 @@
           "options": {
             "configPath": "jest.config.js"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/main/webapp/**/*.ts",
+              "src/main/webapp/**/*.html"
+            ]
+          }
         }
       }
     }
@@ -166,6 +195,9 @@
       "enabled": true,
       "path": ".cache",
       "environment": "all"
-    }
+    },
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

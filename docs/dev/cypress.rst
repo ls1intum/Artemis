@@ -22,7 +22,7 @@ Artemis Deployment on Bamboo Build Agent
 ----------------------------------------
 Every execution of the Cypress test suite requires its own deployment of Artemis.
 The easiest way to accomplish this is to deploy Artemis locally on the build agent, which executes the Cypress tests.
-Using docker-compose we can start a MySQL database and the Artemis server locally on the build agent and
+Using ``docker compose`` we can start a MySQL database and the Artemis server locally on the build agent and
 connect it to the prelive system in the university data center.
 
 .. figure:: cypress/cypress_bamboo_deployment_diagram.svg
@@ -39,20 +39,20 @@ In total there are three Docker containers started in the Bamboo build agent:
    The container automatically creates a new database 'Artemis' and configures it
    with the recommended settings for Artemis.
    The Cypress setup reuses the already existing
-   `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/mysql.yml>`__
+   `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml>`__
    from the standard Artemis Docker setup.
 
 2. Artemis
 
    The Docker image for the Artemis container is created from the already existing
-   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__.
+   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
    When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
    from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
    Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
    for the Artemis server.
 
    The main configuration of the Artemis server is contained in the
-   `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/application.yml>`__.
+   `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
    However, this file does not contain any security relevant information.
    Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
    the Docker container via environment variables.
@@ -124,7 +124,7 @@ This build plan is automatically executed every 8 hours and verifies that test s
 The difference of this setup is that the Artemis server is deployed on a separate environment which already contains
 the necessary configuration files for the Artemis server to connect to the prelive system.
 The Docker image for the Cypress container should be exactly the same as the Cypress image used in
-the docker-compose file for the deployment on a Bamboo build agent.
+the *docker compose* file for the deployment on a Bamboo build agent.
 
 Maintenance
 -----------
@@ -135,7 +135,7 @@ Since the Cypress test suite simulates a real user, it makes sense to execute th
 the latest Chrome browser.
 The Cypress Docker image we use always has a specific Chrome version installed.
 Therefore, the
-`docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__
+`docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/docker-compose.yml>`__
 as well as the
 `build plan configuration for the Cypress tests on test server 3 <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__
 should be updated every month to make sure that the latest Cypress image for the Chrome browser is used.

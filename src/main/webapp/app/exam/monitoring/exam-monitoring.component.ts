@@ -96,7 +96,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         const title = new TableContent('title', this.exam.title);
         const start = new TableContent('start', this.artemisDataPipe.transform(this.exam.startDate));
         const end = new TableContent('end', this.artemisDataPipe.transform(this.exam.endDate));
-        const students = new TableContent('students', this.exam.numberOfRegisteredUsers);
+        const students = new TableContent('students', this.exam.numberOfExamUsers);
 
         let amountOfExercises = 0;
         this.exam.exerciseGroups?.forEach((group) => (amountOfExercises += group.exercises?.length ?? 0));

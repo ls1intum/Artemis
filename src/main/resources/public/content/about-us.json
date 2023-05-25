@@ -4,18 +4,43 @@
             "fullName": "Prof. Dr. Stephan Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
             "role": "projectManager",
-            "website": "https://ase.in.tum.de/krusche"
+            "website": "https://ase.cit.tum.de/people/krusche"
         },
         {
-            "fullName": "Jan Philip Bernius",
-            "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
+            "fullName": "Matthias Linhuber",
+            "photoDirectory": "public/images/about/Matthias_Linhuber.jpg",
             "role": "projectManager",
-            "website": "https://ase.in.tum.de/bernius"
+            "website": "https://ase.cit.tum.de/people/linhuber"
+        },
+        {
+            "fullName": "Maximilian Sölch",
+            "photoDirectory": "public/images/about/Maximilian_Soelch.jpg",
+            "role": "projectManager",
+            "website": "https://ase.cit.tum.de/people/soelch"
+        },
+        {
+            "fullName": "Patrick Bassner",
+            "photoDirectory": "public/images/about/Patrick_Bassner.png",
+            "role": "projectManager",
+            "website": "https://ase.cit.tum.de/people/bassner"
         }
     ],
     "contributors": [
         {
-            "fullName": "Nadine von Frankenberg",
+            "fullName": "Dr. Stephan Krusche",
+            "sortBy": "Krusche",
+            "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
+            "website": "https://ase.cit.tum.de/people/people/krusche"
+        },
+        {
+            "fullName": "Dr. Jan Philip Bernius",
+            "sortBy": "Bernius",
+            "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
+            "website": "https://ase.cit.tum.de/people/people/bernius"
+        },
+        {
+            "fullName": "Dr. Nadine von Frankenberg",
+            "sortBy": "Frankenberg",
             "photoDirectory": "public/images/about/Nadine_von_Frankenberg.jpg"
         },
         {
@@ -278,7 +303,7 @@
         },
         {
             "fullName": "Patrick Bassner",
-            "photoDirectory": "public/images/about/Patrick_Bassner.jpg"
+            "photoDirectory": "public/images/about/Patrick_Bassner.png"
         },
         {
             "fullName": "Ali Canberk Anar",

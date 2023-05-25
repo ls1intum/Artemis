@@ -1,0 +1,31 @@
+<div *ngIf="feedbackItem" class="alert feedback-item" [ngClass]="'alert-' + feedbackItem.color">
+    <div class="feedback-item__header">
+        <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '· ' + feedbackItem.title }}</h4>
+        <span class="fw-bold feedback-item__credits" *ngIf="feedbackItem.credits">
+            {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
+            <fa-icon
+                *ngIf="feedbackItem.type === 'Subsequent'"
+                [icon]="faExclamationTriangle"
+                [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+            ></fa-icon>
+        </span>
+    </div>
+
+    <jhi-feedback-collapse *ngIf="feedbackItem.text" class="d-block mt-3" [feedback]="feedbackItem"></jhi-feedback-collapse>
+    <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
+</div>
+
+<div *ngIf="feedbackItemGroup" class="feedback-item-group">
+    <div class="feedback-group" [ngClass]="'bg-' + feedbackItemGroup.color" (click)="feedbackItemGroup.open = !feedbackItemGroup.open">
+        <div class="feedback-group__left">
+            <fa-icon class="me-2" [icon]="feedbackItemGroup.open ? faAngleUp : faAngleDown"></fa-icon>
+            <h4 class="feedback-item__category">{{ 'artemisApp.feedback.group.' + feedbackItemGroup.name | artemisTranslate }} ({{ feedbackItemGroup.members.length }})</h4>
+        </div>
+
+        <span *ngIf="feedbackItemGroup.credits !== 0" class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
+    </div>
+
+    <div *ngIf="feedbackItemGroup.open" class="mx-3">
+        <jhi-feedback-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackItemNode]="feedbackItem" [course]="course"></jhi-feedback-node>
+    </div>
+</div>

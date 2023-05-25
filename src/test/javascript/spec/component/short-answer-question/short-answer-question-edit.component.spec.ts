@@ -3,7 +3,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
@@ -18,6 +17,7 @@ import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
+import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -49,13 +49,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MatchPercentageInfoModalComponent),
-                MockDirective(NgbCollapse),
             ],
             providers: [MockProvider(NgbModal)],
         }).compileComponents();
@@ -282,6 +281,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.detectChanges();
 
         component.setupQuestionEditor();
+        component.setQuestionEditorValue('[-spot 1] [-spot 2]');
         expect(component.numberOfSpot).toBe(3);
         expect(component.optionsWithID).toEqual(['[-option 0]', '[-option 1]']);
     });
@@ -330,13 +330,15 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         const node = {} as Node;
 
-        const returnValue = {
+        const questionElement = {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             contains(other: Node | null): boolean {
                 return true;
             },
         } as unknown as HTMLElement;
-        jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
+        component.questionElement = {
+            nativeElement: questionElement,
+        };
 
         const range = {
             cloneRange(): Range {
@@ -498,5 +500,18 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
         expect(questionUpdated).toHaveBeenCalledOnce();
+    });
+
+    it('should return highest spot number', () => {
+        expect(component.getHighestSpotNumbers(`[-spot 1]`)).toBe(1);
+        expect(component.getHighestSpotNumbers(`hello [-spot 1] [-spot 3] [-spot 2]`)).toBe(3);
+        expect(
+            component.getHighestSpotNumbers(`hello
+        [-spot 1] [-spot 3]
+        [-spot 2]`),
+        ).toBe(3);
+        expect(component.getHighestSpotNumbers(`hello`)).toBe(0);
+        expect(component.getHighestSpotNumbers(`[-spot ]]`)).toBe(0);
+        expect(component.getHighestSpotNumbers(`[-spot x]]`)).toBe(0);
     });
 });

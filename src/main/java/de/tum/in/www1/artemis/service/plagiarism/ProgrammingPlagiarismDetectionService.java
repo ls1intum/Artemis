@@ -101,7 +101,7 @@ public class ProgrammingPlagiarismDetectionService {
         long start = System.nanoTime();
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
 
-        final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
+        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
 
         // Only one plagiarism check per course allowed
         var courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -151,7 +151,7 @@ public class ProgrammingPlagiarismDetectionService {
     public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) {
         long start = System.nanoTime();
 
-        final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
+        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
         JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
 
         log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
@@ -169,12 +169,9 @@ public class ProgrammingPlagiarismDetectionService {
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
-
-        final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
-        log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, numberOfParticipations);
-
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
+        log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
         if (participations.size() < 2) {
             throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
@@ -329,12 +326,11 @@ public class ProgrammingPlagiarismDetectionService {
      * @return an unmodifiable list containing the latest text submission for every participation
      */
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
-        // TODO: when no minimum score is specified, filtering participations with empty submissions could be done directly in the database to improve performance
-        var studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
+        var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
-        return studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
-                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
-                .filter(participation -> {
+        return studentParticipations.parallelStream().filter(participation -> !participation.isTestRun())
+                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
+                .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
                     Submission submission = participation.findLatestSubmission().orElse(null);
                     // filter empty submissions
                     if (submission == null) {
@@ -349,10 +345,11 @@ public class ProgrammingPlagiarismDetectionService {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
+        int maxRepositories = participations.size() + 1;
         List<Repository> downloadedRepositories = new ArrayList<>();
         participations.parallelStream().forEach(participation -> {
             try {
-                var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + participations.size();
+                var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + maxRepositories;
                 plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
@@ -367,6 +364,9 @@ public class ProgrammingPlagiarismDetectionService {
 
         // clone the template repo
         try {
+            var progressMessage = "Downloading repositories: " + maxRepositories + "/" + maxRepositories;
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
             gitService.resetToOriginHead(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);

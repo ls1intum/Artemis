@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tum.in.www1.artemis.domain.User;
 
 /**
@@ -21,19 +23,25 @@ public class LectureUnitCompletion {
      * The primary key of the association, composited through {@link LectureUnitUserId}.
      */
     @EmbeddedId
-    @SuppressWarnings("unused")
+    @JsonIgnore
     private LectureUnitUserId id = new LectureUnitUserId();
 
     @ManyToOne
     @MapsId("userId")
+    @JsonIgnore
     private User user;
 
     @ManyToOne
     @MapsId("lectureUnitId")
+    @JsonIgnore
     private LectureUnit lectureUnit;
 
     @Column(name = "completed_date")
     private ZonedDateTime completedAt;
+
+    public LectureUnitUserId getId() {
+        return id;
+    }
 
     public User getUser() {
         return user;
@@ -57,6 +65,23 @@ public class LectureUnitCompletion {
 
     public void setCompletedAt(ZonedDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        LectureUnitCompletion that = (LectureUnitCompletion) obj;
+        return getId().equals(that.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 
     /**

@@ -1,27 +1,15 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-
+/**
+ * Contains the scores that enable the client to show statistics for a calling student.
+ * This includes the percentage of points reached for a course in the course-card.component and the statistics shown in the course-statistics.component.
+ *
+ * @param maxPoints       the max points achievable (points for all exercises summed up that are included into the score calculation).
+ * @param reachablePoints the max points reachable (points for all exercises summed up that are included into the score calculation and whose assessment is done).
+ * @param studentScores   the scores of the currently logged in student (including total absolute and relative scores).
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer presentationScoreThreshold, List<StudentScore> studentScores) {
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StudentScore(Long studentId, double absolutePoints, double relativeScore, double currentRelativeScore, int achievedPresentationScore,
-            boolean presentationScorePassed, PlagiarismVerdict mostSeverePlagiarismVerdict) {
-
-        public double getAbsolutePointsEligibleForBonus() {
-            return presentationScorePassed ? absolutePoints : 0.0;
-        }
-    }
-
-    public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
-        return studentScores.stream().collect(Collectors.toMap(StudentScore::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
-                studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
-    }
+public record CourseScoresDTO(double maxPoints, double reachablePoints, StudentScoresDTO studentScores) {
 }

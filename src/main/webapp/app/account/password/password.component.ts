@@ -4,7 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasswordService } from './password.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
@@ -19,11 +19,7 @@ export class PasswordComponent implements OnInit {
     error = false;
     success = false;
     user?: User;
-    passwordForm = this.fb.nonNullable.group({
-        currentPassword: ['', [Validators.required]],
-        newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-    });
+    passwordForm: FormGroup;
     passwordResetEnabled = false;
 
     constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService, private fb: FormBuilder) {}
@@ -32,6 +28,18 @@ export class PasswordComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.user = user;
             this.passwordResetEnabled = user?.internal || false;
+        });
+        this.initializeForm();
+    }
+
+    private initializeForm() {
+        if (this.passwordForm) {
+            return;
+        }
+        this.passwordForm = this.fb.nonNullable.group({
+            currentPassword: ['', [Validators.required]],
+            newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
         });
     }
 

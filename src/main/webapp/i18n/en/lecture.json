@@ -51,7 +51,7 @@
                 "notificationPlaceholder": "Optional: Notification about changes",
                 "chooseFile": "Choose File",
                 "error": "The file {{ fileName }} is too large. The maximum file size is 10MB.",
-                "fileLimitation": "Max. file size 10 MB",
+                "fileLimitation": "Max. file size 20 MB",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },
             "import": {
@@ -74,8 +74,8 @@
                     "attachmentsStepMessage": "Upload attachments to this lecture.",
                     "unitsStepTitle": "Units",
                     "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units.",
-                    "learningGoalsStepTitle": "Learning Goals",
-                    "learningGoalsStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals."
+                    "competenciesStepTitle": "Competencies",
+                    "learningGoalsStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies."
                 },
                 "newLectureUnit": "New Lecture Unit",
                 "editLectureUnit": "Edit Lecture Unit",

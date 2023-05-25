@@ -27,7 +27,7 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
-    public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
+    public resourceUrl = 'api/guided-tour-settings';
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour?: GuidedTour;
 
@@ -850,7 +850,7 @@ export class GuidedTourService {
         });
 
         // Keep loading icon until the page is being refreshed
-        window.onload = function () {
+        window.onload = () => {
             this['restartIsLoading'] = false;
         };
     }

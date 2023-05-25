@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+// eslint-disable-next-line max-len
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,12 +17,14 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
     let component: CreateTutorialGroupsConfigurationComponent;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let courseManagementService: CourseManagementService;
+    let courseStorageService: CourseStorageService;
     const course = { id: 1, title: 'Example' };
     const router = new MockRouter();
     let getCourseSpy: jest.SpyInstance;
@@ -50,12 +52,14 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
                 component = fixture.componentInstance;
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 courseManagementService = TestBed.inject(CourseManagementService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 const response: HttpResponse<Course> = new HttpResponse({
                     body: course,
                     status: 201,
                 });
 
                 getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
+                fixture.detectChanges();
             });
     });
 
@@ -64,14 +68,12 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(getCourseSpy).toHaveBeenCalledWith(course.id!);
         expect(getCourseSpy).toHaveBeenCalledOnce();
     });
 
     it('should send POST request upon form submission and navigate', () => {
-        fixture.detectChanges();
         const exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
         delete exampleConfiguration.id;
 
@@ -82,7 +84,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
         const createStub = jest.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(createResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const updateCourseSpy = jest.spyOn(courseManagementService, 'courseWasUpdated');
+        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
 
         const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormStubComponent)).componentInstance;
 

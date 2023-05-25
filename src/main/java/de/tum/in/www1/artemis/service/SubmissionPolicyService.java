@@ -47,7 +47,7 @@ public class SubmissionPolicyService {
      * Currently, the client always sends inactive policies to prevent unwanted effects
      * on participations.
      *
-     * @param submissionPolicy that should be added to the programming exercise
+     * @param submissionPolicy    that should be added to the programming exercise
      * @param programmingExercise that the submission policy is added to
      * @return the persisted submission policy object that is associated with the programming exercise
      */
@@ -61,7 +61,7 @@ public class SubmissionPolicyService {
     /**
      * Validates the submission policy of a newly created exercise if it exists.
      * This is only called, when the client posts a new programming exercise either to
-     * the regular programming exercise creation endpoint or the programming exercise simulation creation endpoint.
+     * the regular programming exercise creation endpoint.
      * In this case, the submission policy is activated by default.
      *
      * @param programmingExercise that contains the submission policy that is to be checked
@@ -83,8 +83,8 @@ public class SubmissionPolicyService {
      * either active or inactive and has a positive submission limit. Depending on the
      * type of submission policy, individual checks are applied:
      * <ol>
-     *     <li>Lock Repository Policy: No additional checks</li>
-     *     <li>Submission Penalty Policy: Ensures that the penalty is greater than 0.</li>
+     * <li>Lock Repository Policy: No additional checks</li>
+     * <li>Submission Penalty Policy: Ensures that the penalty is greater than 0.</li>
      * </ol>
      *
      * @param submissionPolicy that should be validated
@@ -196,7 +196,7 @@ public class SubmissionPolicyService {
      * every participation repository with 5 submissions is unlocked.
      *
      * @param programmingExercise for which the submission policy should be changed
-     * @param newPolicy with updates attribute values
+     * @param newPolicy           with updates attribute values
      * @return the updated submission policy
      */
     public SubmissionPolicy updateSubmissionPolicy(ProgrammingExercise programmingExercise, SubmissionPolicy newPolicy) {
@@ -259,7 +259,7 @@ public class SubmissionPolicyService {
     /**
      * Calculates the deduction for one programming exercise participation.
      *
-     * @param participation for which the deduction should be determined
+     * @param participation           for which the deduction should be determined
      * @param submissionPenaltyPolicy that contains the policy configuration of the programming exercise
      * @return total deduction in absolute points
      */
@@ -281,8 +281,8 @@ public class SubmissionPolicyService {
      * greater than the allowed submissions, the result will not be included in the participation
      * score.
      *
-     * @param result that is coming in from a build result
-     * @param participation that the result will belong to
+     * @param result               that is coming in from a build result
+     * @param participation        that the result will belong to
      * @param lockRepositoryPolicy defining the number of allowed submissions for this exercise
      */
     public void handleLockRepositoryPolicy(Result result, Participation participation, LockRepositoryPolicy lockRepositoryPolicy) {
@@ -319,6 +319,11 @@ public class SubmissionPolicyService {
         if (submissions != null && !submissions.isEmpty()) {
             submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
         }
+        // Note: The way the participation submissions are counted here (filtering out submissions without results), leads to unexpected behavior when the user submits to their
+        // repository in rapid succession.
+        // When the user submits while the result for the previous submission is not yet available, the previous submission will not be counted.
+        // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
+        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behaviour is acceptable.
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count() + submissionCompensation;
@@ -334,7 +339,7 @@ public class SubmissionPolicyService {
      * The added feedback is negative and has negative credits depending on the number of
      * submissions exceeding the submission limit.
      *
-     * @param result to which the feedback item should be added
+     * @param result        to which the feedback item should be added
      * @param penaltyPolicy that specifies the submission limit and penalty
      */
     public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
@@ -356,7 +361,7 @@ public class SubmissionPolicyService {
      * Determines whether a participation repository is locked, depending on the active policy
      * of a programming exercise. This method does NOT take any other factors into account.
      *
-     * @param policy that determines the submission limit for the programming exercise
+     * @param policy                   that determines the submission limit for the programming exercise
      * @param programmingParticipation that is either locked or unlocked
      * @return true when the repository should be locked, false if not
      */

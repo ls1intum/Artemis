@@ -6,6 +6,27 @@
 
 html {
     @include generate-css-vars.generate('dark-variables');
+
+    .mat-mdc-menu-item:hover:not([disabled]),
+    .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
+    .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]),
+    .mat-mdc-menu-item-highlighted:not([disabled]) {
+        background-color: $neutral-dark-l-10;
+    }
+
+    .mat-mdc-menu-panel {
+        background-color: $neutral-dark-l-5;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    }
+
+    .mat-mdc-button:disabled {
+        color: $secondary;
+    }
+
+    .mat-mdc-menu-trigger.mat-mdc-button:hover {
+        background-color: $neutral-dark-l-5;
+    }
 }
 
 @import '../global';
@@ -167,13 +188,17 @@ html {
         color: white !important;
     }
 }
-
 .bg-light {
     background: transparentize(white, 0.95) !important;
 }
 
 .form-select option {
-    background-color: $neutral-dark !important;
+    color: $white;
+    background-color: $gray-800;
+
+    &:checked {
+        background-color: mix($neutral-dark, $white, 70%) !important;
+    }
 }
 
 .cdk-overlay-container .tag-option {

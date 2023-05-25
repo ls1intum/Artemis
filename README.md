@@ -1,15 +1,15 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-[![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml)
+[![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build.yml)
 [![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
-[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.ase.in.tum.de)
+[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.cit.tum.de)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
 ## Main features
 
-1. **[Programming exercises](https://docs.artemis.ase.in.tum.de/user/exercises/programming/)** with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration). 
+1. **[Programming exercises](https://docs.artemis.cit.tum.de/user/exercises/programming/)** with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration). 
    * **Instant**: Students receive immediate and individual feedback on submissions. Instructors can customize feedback messages easily, hide feedback during the working time (e.g., with hidden tests)
    * **Interactive:** Instructors integrate interactive instructions based on tasks and UML diagrams directly into the dynamic problem statements. They can define hints for difficult exercise parts.
    * **Independent**: Instructors can customize programming exercises to support any programming language. To simplify the setup, Artemis includes sophisticated templates for the most common languages (e.g., Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...)
@@ -18,31 +18,32 @@
    * **Policies**: Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.
    * **Grading**: Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results
    * **Secure**: Test cases and student code run in Docker environments on build agents. Test frameworks such as [Ares](https://github.com/ls1intum/Ares) simplify the creation of structural and dynamic tests and prevent that students can cheat. 
-2. **[Quiz exercises](https://docs.artemis.ase.in.tum.de/user/exercises/quiz/)** with multiple choice, drag and drop, and short answer questions
+2. **[Quiz exercises](https://docs.artemis.cit.tum.de/user/exercises/quiz/)** with multiple choice, drag and drop, and short answer questions
     * **Modeling quizzes**: Instructors can easily create drag and drop quizzes based on UML models
     * **Different modes**: Quizzes support a live mode (rated) during lectures, a practice mode for students to repeat the quiz as often as they want, and an exam mode (see below)
-3. **[Modeling exercises](https://docs.artemis.ase.in.tum.de/user/exercises/modeling/)** based on the easy-to-use online modeling editor [Apollon](https://apollon.ase.in.tum.de) with semi-automatic assessment using machine learning concepts
+3. **[Modeling exercises](https://docs.artemis.cit.tum.de/user/exercises/modeling/)** based on the easy-to-use online modeling editor [Apollon](https://apollon.ase.in.tum.de) with semi-automatic assessment using machine learning concepts
    * **Multiple diagram types**: Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts)
    * **Easy to use**: Students can create models easily using drag and drop, they can explain the models using additional text.
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the model elements.
-4. **[Text exercises](https://docs.artemis.ase.in.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/Athena)
+4. **[Text exercises](https://docs.artemis.cit.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/Athena)
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
-5. **[File upload exercises](https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/)** with manual assessment
-6. **[Exam mode](https://docs.artemis.ase.in.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/features/instructors).
-7. **[Grading](https://docs.artemis.ase.in.tum.de/user/grading/)**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online)
-8. **[Assessment](https://docs.artemis.ase.in.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
-9. **[Communication](https://docs.artemis.ase.in.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
-10. **[Notifications](https://docs.artemis.ase.in.tum.de/user/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
-11. **[Team Exercises](https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/)**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
-12. **[Lectures](https://docs.artemis.ase.in.tum.de/user/lectures/)**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
-13. **[Integrated Markdown Editor](https://docs.artemis.ase.in.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
-14. **[Plagiarism checks](https://docs.artemis.ase.in.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation. 
-15. **[Learning analytics](https://docs.artemis.ase.in.tum.de/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.
-16. **[Scalable](https://docs.artemis.ase.in.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-17. **[High user satisfaction](https://docs.artemis.ase.in.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
-18. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-19. **[Open-source](https://docs.artemis.ase.in.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
+5. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** with manual assessment
+6. **[Exam mode](https://docs.artemis.cit.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.cit.tum.de/features/students) and on [Exam mode instructor features](https://artemis.cit.tum.de/features/instructors).
+7. **[Grading](https://docs.artemis.cit.tum.de/user/grading/)**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online). Instructors can optionally define bonus configurations for final exams to improve student grades according to their grades from a midterm exam or course exercises.
+8. **[Assessment](https://docs.artemis.cit.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
+9. **[Communication](https://docs.artemis.cit.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
+10. **[Notifications](https://docs.artemis.cit.tum.de/user/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
+11. **[Team Exercises](https://docs.artemis.cit.tum.de/user/exercises/team-exercises/)**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
+12. **[Lectures](https://docs.artemis.cit.tum.de/user/lectures/)**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define competencies.
+13. **[Integrated Markdown Editor](https://docs.artemis.cit.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
+14. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
+15. **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
+16. **[Tutorial Groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis support the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+17. **[Scalable](https://docs.artemis.cit.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+18. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+19. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
+20. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
@@ -64,28 +65,58 @@ The Artemis development team prioritizes the following issues in the future. We 
 
 ### Development setup, coding, and design guidelines
 
-* [How to set up your local development environment](https://docs.artemis.ase.in.tum.de/dev/setup/)
-* [Server coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/)
-* [Client coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client/)
-* [Code Review Guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/development-process/#review)
+* [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
+* [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
+* [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
+* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/development-process/#review)
 
 ### Documentation
 
-The Artemis documentation is available [here](https://docs.artemis.ase.in.tum.de/).
+The Artemis documentation is available [here](https://docs.artemis.cit.tum.de/).
 You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.ase.in.tum.de/dev/setup/#jenkins-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.ase.in.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
+You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup), [`GitLab and GitLab CI (experimental)`](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
 
-If needed, you can configure self service [user registration](https://docs.artemis.ase.in.tum.de/admin/registration).
+If needed, you can configure self service [user registration](https://docs.artemis.cit.tum.de/admin/registration).
 
 ### Contributing 
 
 Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
+
+Once the PR is ready to merge, notifiy the responsible feature maintainer:
+
+<details>
+  <summary>Feature Maintainers</summary>
+  
+| Feature                        | Maintainer                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Programming exercises          | [@mtze](https://github.com/mtze)                                                                |
+| Ares                           | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
+| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
+| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Communication                  | [@bassner](https://github.com/bassner)                                                          |
+| Notifications                  | [@mtze](https://github.com/mtze) [@bassner](https://github.com/bassner)                         |
+| Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
+| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
+| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
+| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Learning analytics             | [@bassner](https://github.com/bassner)                                                          |
+| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Usability + Performance        | [@bassner](https://github.com/bassner)                                                          |
+| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
+| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
+    
+</details>
 
 ### Building for production
 
@@ -101,7 +132,7 @@ This will create a Artemis-<version>.war file in the folder `build/libs`. The bu
 java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
 ```
 
-(You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.ase.in.tum.de/dev/setup/))
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.cit.tum.de/dev/setup/))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -160,49 +191,47 @@ There is a growing community of university instructors who are using Artemis.
 
 We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
 
-#### Universities with Artemis in Use
+#### Universities / Schools with Artemis in Use
 
 The following universities are actively using Artemis or are currently evaluating Artemis.
 
-##### Technical University of Munich
-
-* https://artemis.ase.in.tum.de 
-* Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
-
-##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien
-
-* https://artemis.codeability.uibk.ac.at
-* [codeAbility project](https://codeability.uibk.ac.at)
-* Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)
-
-##### University of Stuttgart
-
-* https://artemis.sqa.ddnss.org
-* Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)
-
-##### Universität Passau
-
-* https://artemis.fim.uni-passau.de
-* Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)
-
-##### Karlsruhe Institute of Technology
-
-* https://artemis.praktomat.cs.kit.edu
-* Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)
-
-##### Hochschule München
-
-* https://artemis.cs.hm.edu
-* Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)
-
-##### TU Dresden
-
-* Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)
-
-##### Hochschule Heilbronn
-
-* Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)
+* **Technical University of Munich**  
+  https://artemis.cit.tum.de  
+  Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)  
+  
+* **LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien**  
+  https://artemis.codeability.uibk.ac.at  
+  [codeAbility project](https://codeability.uibk.ac.at)  
+  Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)  
+  
+* **University of Stuttgart**  
+  https://artemis.sqa.ddnss.org  
+  Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)  
+  
+* **Universität Passau**  
+  https://artemis.fim.uni-passau.de (only accessible via the university network/VPN)  
+  Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
+  
+* **Karlsruhe Institute of Technology**  
+  https://artemis.praktomat.cs.kit.edu  
+  Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)  
+  
+* **Hochschule München**  
+  https://artemis.cs.hm.edu  
+  Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)  
+  
+* **Technische Universität Dresden**  
+  Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)  
+  
+* **Hochschule Heilbronn**  
+  Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)  
+  
+* **Maria-Theresia-Gymnasium München**  
+  
 
 ##### Interested universities
 
 * HU Berlin
+* Westsächsische Hochschule Zwickau  
+  Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum/)
+* Technische Universität Chemnitz

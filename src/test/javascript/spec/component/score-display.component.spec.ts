@@ -21,7 +21,7 @@ describe('ScoreDisplayComponent', () => {
                 fixture = TestBed.createComponent(ScoreDisplayComponent);
                 component = fixture.componentInstance;
 
-                component.ngOnInit();
+                fixture.detectChanges();
                 component.course = course;
             });
     });

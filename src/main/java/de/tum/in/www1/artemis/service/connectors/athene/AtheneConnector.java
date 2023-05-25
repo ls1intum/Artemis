@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
  * This class allows for an easy implementation of Connectors to Remote Artemis Services (e.g. the Text Clustering System).
  * As parameters, this class required DTO classes to serialize and deserialize POJOs to JSON and back.
  *
- * @param <RequestType> DTO class, describing the body of the network request.
+ * @param <RequestType>  DTO class, describing the body of the network request.
  * @param <ResponseType> DTO class, describing the body of the network response.
  */
 class AtheneConnector<RequestType, ResponseType> {
@@ -32,7 +32,7 @@ class AtheneConnector<RequestType, ResponseType> {
     /**
      * Invoke the remote service with a network call.
      *
-     * @param url remote service api endpoint
+     * @param url           remote service api endpoint
      * @param requestObject request body as POJO
      * @return response body from remote service
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
@@ -62,9 +62,9 @@ class AtheneConnector<RequestType, ResponseType> {
     /**
      * Invoke the remote service with a network call, but retry the request n times in case of an unsuccessful request.
      *
-     * @param url remote service api endpoint
+     * @param url           remote service api endpoint
      * @param requestObject request body as POJO
-     * @param maxRetries how many times to retry in case of an unsuccessful request.
+     * @param maxRetries    how many times to retry in case of an unsuccessful request.
      * @return response body from remote service
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
      */

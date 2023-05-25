@@ -58,6 +58,7 @@ public class GitUtilService {
 
     /**
      * Initializes the repository with three dummy files
+     *
      * @param defaultBranch The default branch name of the repository
      */
     public void initRepo(String defaultBranch) {
@@ -79,7 +80,7 @@ public class GitUtilService {
             reinitializeRemoteRepository();
         }
         catch (IOException | GitAPIException ex) {
-            System.out.println(ex);
+            ex.printStackTrace();
         }
     }
 
@@ -189,7 +190,8 @@ public class GitUtilService {
 
     /**
      * Checks out a branch of the repository. If the branch doesn't exist yet, it gets created
-     * @param repo The repository on which the action should be operated
+     *
+     * @param repo   The repository on which the action should be operated
      * @param branch The branch that should be checked out
      */
     public void checkoutBranch(REPOS repo, String branch) {
@@ -197,8 +199,8 @@ public class GitUtilService {
     }
 
     /**
-     * @param repo The repository on which the action should be operated
-     * @param branch The branch that should be checked out
+     * @param repo         The repository on which the action should be operated
+     * @param branch       The branch that should be checked out
      * @param createBranch indicator if a non-existing branch should get created
      */
     public void checkoutBranch(REPOS repo, String branch, boolean createBranch) {

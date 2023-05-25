@@ -4,7 +4,8 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
 /**
- * The type of learning goal according to Bloom's revised taxonomy.
+ * The type of competency according to Bloom's revised taxonomy.
+ *
  * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
  */
 public enum LearningGoalTaxonomy {

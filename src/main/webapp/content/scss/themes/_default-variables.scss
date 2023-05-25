@@ -33,7 +33,9 @@ $danger: $red;
 $light: $gray-100;
 $dark: $gray-900;
 
-$body-bg: #e4e5e6;
+$body-color: $gray-900;
+$text-muted: $gray-600;
+$body-bg: $gray-200;
 
 $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
@@ -52,7 +54,7 @@ $footer-bg: #fff;
 $navbar-foreground: #ccc;
 $navbar-bg: $artemis-dark;
 $navbar-item-active-hover-bg: $artemis-dark;
-$navbar-breadcrumb-background: #e4e5e6;
+$navbar-breadcrumb-background: $body-bg;
 $navbar-breadcrumb-color: #0065bd;
 
 // === END BOOTSTRAP ===
@@ -152,6 +154,10 @@ $md-file-input-border-color: $border-color;
 $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 
 // Metis
+$metis-conversation-sidebar: $gray-600;
+$metis-conversation-sidebar-active: $gray-900;
+$metis-conversation-sidebar-button-background-hover: $gray-400;
+
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
 $metis-blue: $link-color;
@@ -247,6 +253,13 @@ $quiz-scoring-info-student-modal-question-wrong: $warning;
 $quiz-question-background: #fefefe;
 $quiz-question-border-color: lightgrey;
 
+$quiz-visual-question-border-color: $quiz-question-border-color;
+$quiz-visual-answer-correct-container-color: $success;
+$quiz-visual-answer-correct-container-hover-color: lighten($success, 40%);
+$quiz-visual-answer-wrong-container-hover-color: lighten($danger, 40%);
+$quiz-visual-answer-add-container-color: $primary;
+$quiz-visual-answer-add-container-hover-color: lighten($primary, 20%);
+
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
 $dnd-question-drop-location-results-border-color: $success;
@@ -269,8 +282,9 @@ $sa-question-input-wrong-backgroud: red;
 $sa-question-input-correct-backgroud: orange;
 $sa-question-input-completely-correct-backgroud: lightgreen;
 
-$mc-question-answer-option-border: lightgrey;
-$mc-question-answer-option-hover-background: #fafafa;
+$mc-question-answer-option-border: $gray-300;
+$mc-question-answer-option-hover-background: $gray-200;
+$mc-question-answer-option-selected-background: transparentize($primary, 0.7);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
@@ -358,8 +372,6 @@ $exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
 $exam-students-datatable-row-newly-registered-background-color: #c4e7cc;
 
 // Data table
-$data-table-icon-right: black;
-$data-table-icon-down: black;
 $data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
@@ -492,3 +504,11 @@ $graph-black: rgba(53, 61, 71, 1);
 // User-Management
 $user-management-background-color: rgba($black, 0.02);
 $user-management-border-color: rgba($black, 0.15);
+
+// Competency Rings
+$learning-goal-rings-red: $red;
+$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
+$learning-goal-rings-green: $green;
+$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
+$learning-goal-rings-blue: $blue;
+$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);

@@ -21,7 +21,9 @@ import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
-/** REST controller for managing SystemNotification. */
+/**
+ * REST controller for managing SystemNotification.
+ */
 @RestController
 @RequestMapping("api/")
 public class SystemNotificationResource {
@@ -53,16 +55,16 @@ public class SystemNotificationResource {
     }
 
     /**
-     * GET /system-notifications/:id : get the "id" system notification.
+     * GET /system-notifications/:notificationId : get the "id" system notification.
      *
-     * @param id the id of the system notification to retrieve
+     * @param notificationId the id of the system notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("system-notifications/{id}")
+    @GetMapping("system-notifications/{notificationId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long id) {
-        log.debug("REST request to get SystemNotification : {}", id);
-        Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(id);
+    public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long notificationId) {
+        log.debug("REST request to get SystemNotification : {}", notificationId);
+        Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(notificationId);
         return ResponseUtil.wrapOrNotFound(systemNotification);
     }
 

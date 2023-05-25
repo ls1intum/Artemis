@@ -23,6 +23,15 @@
                     </div>
                 </div>
             </div>
+            <div class="form-check" [hidden]="!showUpdateChannelNameCheckbox" *ngIf="updateTutorialGroupChannelNameControl">
+                <input class="form-check-input" type="checkbox" formControlName="updateTutorialGroupChannelName" id="updateTutorialGroupChannelNameControl" />
+                <label class="form-check-label" for="updateTutorialGroupChannelNameControl">
+                    {{ 'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.label' | artemisTranslate }}
+                </label>
+                <small id="updateChannelNameHelp" class="form-text text-muted d-block">{{
+                    'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.explanation' | artemisTranslate
+                }}</small>
+            </div>
             <!--Online / Offline -->
             <div class="form-group">
                 <label class="d-block">{{ 'artemisApp.forms.tutorialGroupForm.isOnlineInput.label' | artemisTranslate }}</label>
@@ -92,22 +101,38 @@
                     </div>
                 </div>
             </div>
-            <!--Language -->
+            <!-- Language -->
             <div class="form-group">
-                <label class="d-block">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
-                <div class="btn-group" role="group">
-                    <input formControlName="language" type="radio" class="btn-check" id="german" autocomplete="off" checked [value]="GERMAN" />
-                    <label class="btn btn-secondary" for="german">{{ 'artemisApp.generic.german' | artemisTranslate }}</label>
-
-                    <input formControlName="language" type="radio" class="btn-check" id="english" autocomplete="off" [value]="ENGLISH" />
-                    <label class="btn btn-secondary" for="english">{{ 'artemisApp.generic.english' | artemisTranslate }}</label>
-                </div>
+                <label for="language">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
+                <input
+                    id="language"
+                    type="text"
+                    class="form-control"
+                    formControlName="language"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.languageInput.placeholder' | artemisTranslate"
+                    [inputFormatter]="languageFormatter"
+                    [resultFormatter]="languageFormatter"
+                    [ngbTypeahead]="languageSearch"
+                    [editable]="true"
+                    #languageInput="ngbTypeahead"
+                    (focus)="languageFocus$.next($any($event).target.value)"
+                    (click)="languageClick$.next($any($event).target.value)"
+                />
+                <small id="languageHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.languageHelp' | artemisTranslate }}</small>
             </div>
             <!-- Validation Errors for the smaller input from above-->
             <div class="form-group">
                 <div *ngIf="capacityControl?.invalid && (capacityControl?.dirty || capacityControl?.touched)" class="alert alert-danger">
                     <div *ngIf="capacityControl?.errors?.min">
                         {{ 'artemisApp.forms.tutorialGroupForm.capacityInput.minValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+                <div *ngIf="languageControl?.invalid && (languageControl?.dirty || languageControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="languageControl?.errors?.max">
+                        {{ 'artemisApp.forms.tutorialGroupForm.languageInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
+                    </div>
+                    <div *ngIf="languageControl?.errors?.required">
+                        {{ 'artemisApp.forms.tutorialGroupForm.languageInput.requiredValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
@@ -137,8 +162,8 @@
                 {{ 'artemisApp.forms.scheduleForm.scheduleChangeWarning' | artemisTranslate }}
             </div>
             <hr />
-            <jhi-schedule-form *ngIf="configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
-            <hr *ngIf="configureSchedule" />
+            <jhi-schedule-form [hidden]="!configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
+            <hr [hidden]="!configureSchedule" />
             <!-- Optional Notification Message -->
             <div class="form-group border border-info rounded p-3" *ngIf="notificationControl">
                 <label for="notificationText">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.label' | artemisTranslate }}</label>

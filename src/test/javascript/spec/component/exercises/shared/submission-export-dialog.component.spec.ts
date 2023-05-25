@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -35,7 +34,7 @@ describe('Submission Export Dialog Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SubmissionExportDialogComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [
                 { provide: SubmissionExportService, useValue: MockProvider(SubmissionExportService) },
                 { provide: ExerciseService, useClass: MockExerciseService },

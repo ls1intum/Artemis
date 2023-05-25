@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -31,11 +31,12 @@ export interface IProgrammingExerciseGradingService {
     updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]>;
     resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
     getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics>;
+    importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
@@ -105,9 +106,10 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
     }
 
     /**
-     * Use with care: Set all test case weights to 1, all bonus multipliers to 1 and all bonus points to 0.
+     * Use with care: Resets all test cases of an exercise to their initial configuration
+     * Set all test case weights to 1, all bonus multipliers to 1, all bonus points to 0 and visibility to always.
      *
-     * @param exerciseId
+     * @param exerciseId the id of the exercise to reset the test case weights of.
      */
     public resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases/reset`, {});
@@ -177,5 +179,17 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     public resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
         return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories/reset`, {});
+    }
+
+    /**
+     * Imports an existing SCA configuration (defined in the sourceExercise) into the targetExercise
+     * by comping all categories.
+     * @param targetExerciseId The exercise to copy the categories in
+     * @param sourceExerciseId The exercise from where to copy the categories
+     * @return The new categories
+     */
+    public importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        const params = new HttpParams().set('sourceExerciseId', sourceExerciseId);
+        return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${targetExerciseId}/static-code-analysis-categories/import`, {}, { params });
     }
 }

@@ -1,6 +1,7 @@
 import { CourseExercisesComponent, ExerciseFilter } from 'app/overview/course-exercises/course-exercises.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -20,7 +21,8 @@ import { CourseOverviewComponent } from 'app/overview/course-overview.component'
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { NgModel } from '@angular/forms';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CourseOverviewExerciseListControls', () => {
     let parentFixture: ComponentFixture<CourseOverviewComponent>;
@@ -28,12 +30,12 @@ describe('CourseOverviewExerciseListControls', () => {
     let childFixture: ComponentFixture<CourseExercisesComponent>;
     let childComponent: CourseExercisesComponent;
 
-    let courseCalculation: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
 
     let course: Course;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
-    const route = { parent: parentRoute, params: of({ courseId: '123' }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: of({ courseId: '123' }), snapshot: { firstChild: { routeConfig: { path: 'courses/1/exercises' } } } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -42,7 +44,9 @@ describe('CourseOverviewExerciseListControls', () => {
                 CourseOverviewComponent,
                 CourseExercisesComponent,
                 MockDirective(OrionFilterDirective),
+                MockDirective(NgModel),
                 MockComponent(SidePanelComponent),
+                MockComponent(HeaderCourseComponent),
                 TranslatePipeMock,
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
@@ -63,7 +67,7 @@ describe('CourseOverviewExerciseListControls', () => {
                 childFixture = TestBed.createComponent(CourseExercisesComponent);
                 childComponent = childFixture.componentInstance;
 
-                courseCalculation = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
 
                 course = new Course();
                 course.id = 123;
@@ -72,7 +76,7 @@ describe('CourseOverviewExerciseListControls', () => {
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
 
-                jest.spyOn(courseCalculation, 'getCourse').mockReturnValue(course);
+                jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
             });
     });
 

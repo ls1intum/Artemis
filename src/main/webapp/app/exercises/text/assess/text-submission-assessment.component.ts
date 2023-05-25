@@ -10,7 +10,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -34,6 +33,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -180,6 +180,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId > 0) {
             this.result = getSubmissionResultById(this.submission, this.resultId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
@@ -350,20 +351,31 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *
-     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
      */
-    updateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+    updateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid) {
             this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            assessmentAfterComplaint.onError();
             return;
         }
 
         this.assessmentsService
-            .updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!, this.participation?.id!)
+            .updateAssessmentAfterComplaint(
+                this.assessments,
+                this.textBlocksWithFeedback,
+                assessmentAfterComplaint.complaintResponse,
+                this.submission?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
+                this.participation?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
+            )
             .subscribe({
-                next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
+                next: (response) => {
+                    assessmentAfterComplaint.onSuccess();
+                    this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful');
+                },
                 error: (httpErrorResponse: HttpErrorResponse) => {
+                    assessmentAfterComplaint.onError();
                     this.alertService.closeAll();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {

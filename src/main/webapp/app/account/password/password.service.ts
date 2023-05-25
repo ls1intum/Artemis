@@ -12,7 +12,7 @@ export class PasswordService {
      * @param newPassword The new password
      * @param currentPassword The old password
      */
-    save(newPassword: string, currentPassword: string): Observable<{}> {
-        return this.http.post(SERVER_API_URL + 'api/account/change-password', { currentPassword, newPassword });
+    save(newPassword: string, currentPassword: string): Observable<any> {
+        return this.http.post('api/account/change-password', { currentPassword, newPassword });
     }
 }

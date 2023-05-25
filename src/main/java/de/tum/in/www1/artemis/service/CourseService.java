@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -29,32 +33,34 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -88,7 +94,7 @@ public class CourseService {
 
     private final CourseExamExportService courseExamExportService;
 
-    private final ExamService examService;
+    private final ExamDeletionService examDeletionService;
 
     private final ExamRepository examRepository;
 
@@ -136,16 +142,21 @@ public class CourseService {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
+    private final ConversationRepository conversationRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
+            UserService userService, ExamDeletionService examDeletionService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
             ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -158,9 +169,9 @@ public class CourseService {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
+        this.examDeletionService = examDeletionService;
         this.learningGoalRepository = learningGoalRepository;
         this.groupNotificationService = groupNotificationService;
-        this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
         this.learningGoalService = learningGoalService;
@@ -180,18 +191,20 @@ public class CourseService {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
      * Note: The number of courses should not change
      *
-     * @param courses           the courses for which the participations should be fetched
-     * @param user              the user for which the participations should be fetched
-     * @param startTimeInMillis start time for logging purposes
+     * @param courses         the courses for which the participations should be fetched
+     * @param user            the user for which the participations should be fetched
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
@@ -206,28 +219,42 @@ public class CourseService {
                 }
             }
         }
-        Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
-        int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-        log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
-                System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
 
     /**
-     * Get one course with exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * Add plagiarism cases to each exercise.
+     *
+     * @param exercises the course exercises for which the plagiarism cases should be fetched.
+     * @param userId    the user for which the plagiarism cases should be fetched.
+     */
+    public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
+        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
+        for (Exercise exercise : exercises) {
+            // Add plagiarism cases to each exercise.
+            Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
+                    .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
+            exercise.setPlagiarismCases(plagiarismCasesForExercise);
+        }
+    }
+
+    /**
+     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
-     * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * @param refresh  if the user requested an explicit refresh
+     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException();
-        }
-        course.setExercises(exerciseService.findAllForCourse(course, user));
+    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
+        Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
+        // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
+        course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user);
+        course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-        course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
+        course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
@@ -241,31 +268,49 @@ public class CourseService {
      * Get all courses for the given user
      *
      * @param user the user entity
-     * @return an unmodifiable list of all courses for the user
+     * @return an unmodifiable set of all courses for the user
      */
-    public List<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).toList();
+    public Set<Course> findAllActiveForUser(User user) {
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
     }
 
     /**
-     * Get all courses with exercises, lectures  and exams (filtered for given user)
+     * Get all courses with exercises, lectures and exams (filtered for given user)
      *
      * @param user the user entity
      * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
-        return courseRepository.findAllActiveWithLecturesAndExams().stream()
-                // filter old courses and courses the user should not be able to see
-                // skip old courses that have already finished
-                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isCourseVisibleForUser(user, course))
-                .peek(course -> {
-                    course.setExercises(exerciseService.findAllForCourse(course, user));
-                    course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-                    if (authCheckService.isOnlyStudentInCourse(course, user)) {
-                        course.setExams(examRepository.filterVisibleExams(course.getExams()));
-                    }
-                }).toList();
+        long start = System.nanoTime();
+        var userVisibleCourses = courseRepository.findAllActiveWithLectures().stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
+        long startFindAllExercises = System.nanoTime();
+        var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
+        Set<Exam> allExams = examRepository.findByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
+        if (log.isDebugEnabled()) {
+            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
+                    TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        }
+
+        long startFilterAll = System.nanoTime();
+        var courses = userVisibleCourses.stream().peek(course -> {
+            // connect the exercises with the course
+            course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
+            course.setExercises(exerciseService.filterExercisesForCourse(course, user));
+            exerciseService.loadExerciseDetailsIfNecessary(course, user);
+            course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
+            course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        }).toList();
+
+        if (log.isDebugEnabled()) {
+            log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
+            log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
+        return courses;
     }
 
     private boolean isCourseVisibleForUser(User user, Course course) {
@@ -284,14 +329,14 @@ public class CourseService {
     /**
      * Deletes all elements associated with the course including:
      * <ul>
-     *     <li>The Course</li>
-     *     <li>All Exercises including:
-     *      submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
-     *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
-     *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
-     *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
-     *     <li>All Exams, see {@link ExamService#delete}</li>
-     *     <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
+     * <li>The Course</li>
+     * <li>All Exercises including:
+     * submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
+     * <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
+     * <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
+     * <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
+     * <li>All Exams, see {@link ExamDeletionService#delete}</li>
+     * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * </ul>
      *
      * @param course the course to be deleted
@@ -299,9 +344,10 @@ public class CourseService {
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
 
-        deleteLearningGoalsOfCourse(course);
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
+        deleteLearningGoalsOfCourse(course);
+        deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
@@ -311,7 +357,19 @@ public class CourseService {
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
-        this.tutorialGroupRepository.deleteAllByCourse(course);
+        var tutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> {
+            if (tutorialGroup.getTutorialGroupChannel() != null) {
+                tutorialGroup.setTutorialGroupChannel(null);
+            }
+        });
+        tutorialGroupRepository.saveAll(tutorialGroups);
+        tutorialGroupRepository.deleteAllByCourse(course);
+    }
+
+    private void deleteConversationsOfCourse(Course course) {
+        // Posts and Conversation Participants should be automatically deleted due to cascade
+        conversationRepository.deleteAllByCourseId(course.getId());
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
@@ -324,7 +382,7 @@ public class CourseService {
         // delete the Exams
         List<Exam> exams = examRepository.findByCourseId(course.getId());
         for (Exam exam : exams) {
-            examService.delete(exam.getId());
+            examDeletionService.delete(exam.getId());
         }
     }
 
@@ -389,12 +447,13 @@ public class CourseService {
     }
 
     /**
-     * Registers a user in a course by adding him to the student group of the course
+     * Registers a user in a course by adding them to the student group of the course
      *
      * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
-    public void registerUserForCourse(User user, Course course) {
+    public void registerUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -404,14 +463,14 @@ public class CourseService {
     /**
      * Add multiple users to the course so that they can access it
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * Note: registration based on other user attributes (e.g. name) is currently NOT supported
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId      the id of the course
-     * @param studentDTOs   the list of students (with at least registration number)
-     * @param courseGroup   the group the students should be added to
+     * @param courseId    the id of the course
+     * @param studentDTOs the list of students (with at least registration number)
+     * @param courseGroup the group the students should be added to
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
@@ -422,7 +481,8 @@ public class CourseService {
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
             var login = studentDto.getLogin();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login);
+            var email = studentDto.getEmail();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
@@ -449,8 +509,8 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
-     * @param date the date for which the active students' calculation should end (e.g. now)
+     * @param length      the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
+     * @param date        the date for which the active students' calculation should end (e.g. now)
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
@@ -482,7 +542,7 @@ public class CourseService {
      * This method compares the values and returns a List<StatisticsEntry> without duplicated entries.
      *
      * @param activeUserRows a list of entries
-     * @param startDate the startDate of the period
+     * @param startDate      the startDate of the period
      * @return a List<StatisticsEntry> containing date and amount of active users in this period
      */
 
@@ -730,8 +790,8 @@ public class CourseService {
     /**
      * Search for users of all user groups by login or name in course
      *
-     * @param course        Course in which to search students
-     * @param nameOfUser    Login or name by which to search students
+     * @param course     Course in which to search students
+     * @param nameOfUser Login or name by which to search students
      * @return users whose login matched
      */
     public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
@@ -755,12 +815,13 @@ public class CourseService {
         userService.addUserToGroup(user, group, role);
     }
 
-    public void removeUserFromGroup(User user, String group, Role role) {
-        userService.removeUserFromGroup(user, group, role);
+    public void removeUserFromGroup(User user, String group) {
+        userService.removeUserFromGroup(user, group);
     }
 
     /**
      * checks if the given group exists in the authentication provider, only on production systems
+     *
      * @param group the group that should be available
      */
     public void checkIfGroupsExists(String group) {
@@ -776,6 +837,7 @@ public class CourseService {
     /**
      * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
      * If the group is defined, it will check that the group exists
+     *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
     public void createOrValidateGroups(Course course) {
@@ -830,6 +892,7 @@ public class CourseService {
 
     /**
      * Special case for editors: checks if the default editor group needs to be created when old courses are edited
+     *
      * @param course the course for which the default editor group will be created if it does not exist
      */
     public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
@@ -860,6 +923,7 @@ public class CourseService {
     /**
      * Determines end date for the displayed time span of active student charts
      * If the course end date is passed, only information until this date are collected and sent
+     *
      * @param course the corresponding course the active students should be collected
      * @return end date of the time span
      */
@@ -875,8 +939,9 @@ public class CourseService {
      * Determines the allowed time span for active student charts
      * The span time can be restricted if the temporal distance between the course start date
      * and the priorly determined end date is smaller than the intended time frame
-     * @param course the corresponding course the time frame should be computed
-     * @param endDate the priorly determined end date of the time span
+     *
+     * @param course      the corresponding course the time frame should be computed
+     * @param endDate     the priorly determined end date of the time span
      * @param maximalSize the normal time span size
      * @return the allowed time span size
      */
@@ -892,8 +957,9 @@ public class CourseService {
     /**
      * Auxiliary method that returns the number of weeks between two dates
      * Note: The calculation includes the week of the end date. This is needed for the active students line charts
+     *
      * @param startDate the start date of the period to calculate
-     * @param endDate the end date of the period to calculate
+     * @param endDate   the end date of the period to calculate
      * @return the number of weeks the period contains + one week
      */
     public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
@@ -905,7 +971,7 @@ public class CourseService {
     /**
      * Helper method which removes some values from the user entity which are not needed in the client
      *
-     * @param usersInGroup  user whose variables are removed
+     * @param usersInGroup user whose variables are removed
      */
     private void removeUserVariables(List<User> usersInGroup) {
         usersInGroup.forEach(user -> {

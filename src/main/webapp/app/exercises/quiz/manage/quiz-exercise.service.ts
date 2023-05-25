@@ -13,7 +13,7 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
-    private resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
+    private resourceUrl = 'api/quiz-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -99,7 +99,7 @@ export class QuizExerciseService {
      */
     findForExam(examId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<QuizExercise[]>(`api/${examId}/quiz-exercises`, { observe: 'response' })
+            .get<QuizExercise[]>(`api/exams/${examId}/quiz-exercises`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
@@ -182,7 +182,7 @@ export class QuizExerciseService {
      * Delete a quiz exercise
      * @param quizExerciseId the id of the quiz exercise that should be deleted
      */
-    delete(quizExerciseId: number): Observable<HttpResponse<{}>> {
+    delete(quizExerciseId: number): Observable<HttpResponse<any>> {
         return this.http.delete(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
     }
 

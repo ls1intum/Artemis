@@ -34,11 +34,12 @@ import {
     faEraser,
     faExclamationTriangle,
     faEye,
+    faFileSignature,
+    faLightbulb,
     faListAlt,
     faPencilAlt,
     faTable,
     faTimes,
-    faUserCheck,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -48,6 +49,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -64,6 +66,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
+
+    documentationType = DocumentationType.Programming;
+
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -92,12 +97,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faTable = faTable;
+    faEraser = faEraser;
     faExclamationTriangle = faExclamationTriangle;
-    faUserCheck = faUserCheck;
+    faFileSignature = faFileSignature;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
+    faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
-    faEraser = faEraser;
     faUsers = faUsers;
     faEye = faEye;
 
@@ -266,41 +272,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     disableTranslation: true,
                 });
             },
-        });
-    }
-
-    /**
-     * Deletes the template and solution build plans and recreates them from scratch.
-     */
-    recreateBuildPlans() {
-        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: res,
-                    disableTranslation: true,
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Cleans up programming exercise
-     * @param event contains additional checks from the dialog
-     */
-    cleanupProgrammingExercise(event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe({
-            next: () => {
-                if (event.deleteRepositories) {
-                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
-                } else {
-                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
-                }
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 

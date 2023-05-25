@@ -1,4 +1,4 @@
-<div class="card" id="course-card-{{ course.shortName }}">
+<div class="card mb-4" id="course-card-{{ course.shortName }}">
     <div id="course-card-header" class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
@@ -221,7 +221,7 @@
             <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastTutor && course.postsEnabled"
+            *ngIf="course.isAtLeastTutor && isCommunicationEnabled(course)"
             [routerLink]="['/courses', course.id, 'discussion']"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'artemisApp.metis.communication.label' | artemisTranslate"
@@ -232,7 +232,7 @@
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'goal-management']"
+            [routerLink]="['/course-management', course.id, 'competency-management']"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
             id="course-card-open-learning-goals"

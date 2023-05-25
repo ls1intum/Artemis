@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<AttachmentUnit>;
     providedIn: 'root',
 })
 export class AttachmentUnitService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
@@ -36,5 +36,13 @@ export class AttachmentUnitService {
                 { observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+    }
+
+    getSplitUnitsData(lectureId: number, formData: FormData) {
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units`, formData, { observe: 'response' });
+    }
+
+    createUnits(lectureId: number, formData: FormData) {
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-units/split`, formData, { observe: 'response' });
     }
 }

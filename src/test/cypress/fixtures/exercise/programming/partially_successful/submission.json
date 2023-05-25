@@ -1,0 +1,17 @@
+{
+    "files": [
+        {
+            "name": "BubbleSort.java",
+            "path": "exercise/programming/all_successful/BubbleSort.txt"
+        },
+        {
+            "name": "MergeSort.java",
+            "path": "exercise/programming/all_successful/MergeSort.txt"
+        },
+        {
+            "name": "SortStrategy.java",
+            "path": "exercise/programming/all_successful/SortStrategy.txt"
+        }
+    ],
+    "expectedResult": "46.2%"
+}

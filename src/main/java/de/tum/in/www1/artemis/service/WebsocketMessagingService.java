@@ -42,7 +42,8 @@ public class WebsocketMessagingService {
 
     /**
      * Wrapper method to send a message over websocket to the given topic
-     * @param topic the destination to which subscription the message should be sent
+     *
+     * @param topic   the destination to which subscription the message should be sent
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
      */
     public void sendMessage(String topic, Object message) {
@@ -51,9 +52,10 @@ public class WebsocketMessagingService {
 
     /**
      * Wrapper method to send a message over websocket to the given topic to a specific user
-     * @param user the user that should receive the message.
+     *
+     * @param user        the user that should receive the message.
      * @param destination the destination to send the message to
-     * @param payload the payload to send
+     * @param payload     the payload to send
      */
     public void sendMessageToUser(String user, String destination, Object payload) {
         messagingTemplate.convertAndSendToUser(user, destination, payload);
@@ -63,9 +65,9 @@ public class WebsocketMessagingService {
      * Broadcast a new result to the client.
      *
      * @param participation the id is used in the destination (so that only clients who have subscribed the specific participation will receive the result)
-     * @param result the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
-     *               As the participation is already known to the client, we do not need to send it. This also cuts of the exercise (including the potentially huge
-     *               problem statement and the course with all potential attributes
+     * @param result        the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
+     *                          As the participation is already known to the client, we do not need to send it. This also cuts of the exercise (including the potentially huge
+     *                          problem statement and the course with all potential attributes
      */
     public void broadcastNewResult(Participation participation, Result result) {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
@@ -78,26 +80,27 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
             final Exercise exercise = studentParticipation.getExercise();
-            final boolean isWorkingPeriodOver;
+            boolean isWorkingPeriodOver;
             if (exercise.isExamExercise()) {
-                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
+                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
             }
             else {
                 isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
             }
             // Don't send students results after the exam ended
-            boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise();
+            boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExamViaExerciseGroupOrCourseMember().isTestExam();
             // If the assessment due date is not over yet, do not send manual feedback to students!
-            boolean isReadyForRelease = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
+            boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
-            if (isReadyForRelease && !isAfterExamEnd) {
+            if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
                 result.filterSensitiveInformation();
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
 
                 result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
+
                 studentParticipation.getStudents().stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }

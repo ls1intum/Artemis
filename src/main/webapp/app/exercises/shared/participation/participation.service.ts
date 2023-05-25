@@ -11,6 +11,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import dayjs from 'dayjs/esm';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -22,21 +23,21 @@ export type BuildArtifact = {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
-    public resourceUrl = SERVER_API_URL + 'api/participations';
+    public resourceUrl = 'api/participations';
 
     constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);
         return this.http
-            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(`api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
         const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
         return this.http
-            .put<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .put<StudentParticipation[]>(`api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
@@ -57,14 +58,14 @@ export class ParticipationService {
      */
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
+            .get<StudentParticipation>(`api/exercises/${exerciseId}/participation`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
-        const options = createRequestOption({ withLatestResult });
+    findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
+        const options = createRequestOption({ withLatestResults });
         return this.http
-            .get<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, {
+            .get<StudentParticipation[]>(`api/exercises/${exerciseId}/participations`, {
                 params: options,
                 observe: 'response',
             })
@@ -96,6 +97,10 @@ export class ParticipationService {
                 return { fileName, fileContent: res.body } as BuildArtifact;
             }),
         );
+    }
+
+    shouldPreferPractice(exercise?: Exercise): boolean {
+        return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {

@@ -28,7 +28,7 @@ For macOS, it is recommended to install it using homebrew:
 ```bash
 brew install sphinx-doc
 brew link sphinx-doc --force
-pip3 install -r requirements.txtclient-tests.rst
+pip3 install -r requirements.txt
 ```
 
 ## Running Sphinx Locally
@@ -62,7 +62,7 @@ docker run --rm -v ${PWD}/docs:/docs $(docker build -q -t sphinx -f docs/Dockerf
 To auto-generate the documentation as HTML file and live-reload on changes,
 use the provided docker command from the project root:
 ```bash
-docker run --rm -v ${PWD}/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
+docker run --rm -it -v ${PWD}/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
 ```
 
 ## Tool support

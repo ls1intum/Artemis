@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEnca
 import { Subject } from 'rxjs';
 
 @Component({
-    // tslint:disable-next-line:component-selector
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'star-rating',
     template: `<div #starMain></div>`,
     styleUrls: ['./star-rating.component.scss'],
@@ -302,7 +302,7 @@ export class StarRatingComponent {
         }
         this.mainElement.nativeElement.title = this.value;
 
-        let hasDecimals: boolean = !!(Number.parseFloat(this.value.toString()) % 1).toString().substring(3, 2);
+        let hasDecimals = !!(Number.parseFloat(this.value.toString()) % 1).toString().substring(3, 2);
 
         this.stars.forEach((star: HTMLElement, i: number) => {
             star.className = '';

@@ -7,28 +7,25 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "emailsummaryservice";
 
     @Autowired
     private EmailSummaryService weeklyEmailSummaryService;
@@ -39,36 +36,31 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private CourseRepository courseRepository;
 
-    @Autowired
-    private ExerciseRepository exerciseRepository;
+    User userWithActivatedWeeklySummaries;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Captor
-    ArgumentCaptor<Set<Exercise>> exerciseSetCaptor;
+    User userWithDeactivatedWeeklySummaries;
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
-    private final static String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student1";
+    private static final String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student1";
 
-    private final static String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student2";
+    private static final String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student2";
 
     /**
      * Prepares the needed values and objects for testing
      */
     @BeforeEach
     void setUp() {
-        database.addUsers(2, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
-        User userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        this.userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
         NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
-        User userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        this.userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
         NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
@@ -105,23 +97,9 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         courseRepository.save(course);
 
         exerciseRepository.saveAll(allTestExercises);
-
         weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
 
-        // deactivate weekly email summary for currently available users to make testing easier (needed for verify())
-        List<User> currentUsers = userRepository.findAll();
-        currentUsers.remove(userWithActivatedWeeklySummaries);
-        currentUsers.remove(userWithDeactivatedWeeklySummaries);
-        if (!currentUsers.isEmpty()) {
-            currentUsers.forEach(user -> notificationSettingRepository.save(new NotificationSetting(user, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)));
-        }
-
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     /**
@@ -129,16 +107,21 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
+        var filteredUsers = weeklyEmailSummaryService.findRelevantUsersForSummary();
+        assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
+        assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
 
-        weeklyEmailSummaryService.prepareEmailSummaries();
+        when(exerciseRepository.findAllExercisesForSummary(any(), any())).thenReturn(Set.of(exerciseReleasedYesterdayAndNotYetDue));
 
-        verify(mailService, timeout(1000).times(1)).sendWeeklySummaryEmail(eq(database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN)), exerciseSetCaptor.capture());
-        Set<Exercise> capturedExerciseSet = exerciseSetCaptor.getValue();
+        weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
+
+        ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
+        verify(mailService, timeout(5000).times(1)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
+        verify(javaMailSender, timeout(5000).times(1)).send(any(MimeMessage.class));
+
+        Set<Exercise> capturedExerciseSet = captor.getValue();
         assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
                 .contains(exerciseReleasedYesterdayAndNotYetDue);
         assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
-
-        // check if email is created/send
-        verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
     }
 }

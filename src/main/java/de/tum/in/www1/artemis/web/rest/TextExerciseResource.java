@@ -93,7 +93,7 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+    private final TextClusterRepository textClusterRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
@@ -102,7 +102,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
+            TextClusterRepository textClusterRepository) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -124,7 +124,7 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
+        this.textClusterRepository = textClusterRepository;
     }
 
     /**
@@ -132,7 +132,7 @@ public class TextExerciseResource {
      *
      * @param textExercise the textExercise to create
      * @return the ResponseEntity with status 201 (Created) and with body the new textExercise, or
-     * with status 400 (Bad Request) if the textExercise has already an ID
+     *         with status 400 (Bad Request) if the textExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("text-exercises")
@@ -156,8 +156,6 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create new knowledge instance
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
@@ -169,10 +167,10 @@ public class TextExerciseResource {
      *
      * @param textExercise     the textExercise to update
      * @param notificationText about the text exercise update that should be displayed for the
-     *                         student group
+     *                             student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     * with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
-     * Server Error) if the textExercise couldn't be updated
+     *         with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
+     *         Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("text-exercises")
@@ -205,7 +203,6 @@ public class TextExerciseResource {
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
-
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
@@ -241,13 +238,13 @@ public class TextExerciseResource {
      *
      * @param exerciseId the id of the textExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
-     * status 404 (Not Found)
+     *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId)
+        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
@@ -270,7 +267,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * DELETE /text-exercises/:id : delete the "id" textExercise.
+     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise.
      *
      * @param exerciseId the id of the textExercise to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -282,8 +279,7 @@ public class TextExerciseResource {
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
-        instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
-        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
@@ -369,8 +365,8 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") Boolean isCourseFilter,
-            @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") boolean isCourseFilter,
+            @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -383,9 +379,9 @@ public class TextExerciseResource {
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                         imported exercise, s.a. the title or difficulty
+     *                             imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
-     * or a forbidden error (403) if the user is not at least an instructor in the target course.
+     *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("text-exercises/import/{sourceExerciseId}")
@@ -439,7 +435,7 @@ public class TextExerciseResource {
      *
      * @param exerciseId ID of the text exercise for which the plagiarism result should be returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
-     * parameters are invalid
+     *         parameters are invalid
      */
     @GetMapping("text-exercises/{exerciseId}/plagiarism-result")
     @PreAuthorize("hasRole('EDITOR')")
@@ -488,14 +484,13 @@ public class TextExerciseResource {
     /**
      * PUT /text-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing textExercise.
      *
-     * @param exerciseId                                   of the exercise
-     * @param textExercise                                 the textExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     *
+     * @param exerciseId                                  of the exercise
+     * @param textExercise                                the textExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     * with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
-     * if given exerciseId is not same as in the object of the request body, or with status 500
-     * (Internal Server Error) if the textExercise couldn't be updated
+     *         with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body, or with status 500
+     *         (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")

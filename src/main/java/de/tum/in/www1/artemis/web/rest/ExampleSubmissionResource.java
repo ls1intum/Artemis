@@ -101,7 +101,7 @@ public class ExampleSubmissionResource {
     /**
      * Prepare an example submission for assessment.
      * <p>
-     * Currently only used for  {@link TextExercise TextExercise} to create automatic text blocks.
+     * Currently only used for {@link TextExercise TextExercise} to create automatic text blocks.
      *
      * @param exerciseId          the id of the corresponding exercise
      * @param exampleSubmissionId the id of the exampleSubmission to prepare
@@ -184,8 +184,8 @@ public class ExampleSubmissionResource {
     /**
      * POST exercises/:exerciseId/example-submissions/import/:sourceSubmissionId : Imports an existing student submission as an example submission.
      *
-     * @param exerciseId                the id of the corresponding exercise
-     * @param sourceSubmissionId        the submission id to be imported as an example submission
+     * @param exerciseId         the id of the corresponding exercise
+     * @param sourceSubmissionId the submission id to be imported as an example submission
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")

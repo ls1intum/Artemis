@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -36,6 +37,8 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 @Service
 public class RequestUtilService {
@@ -120,6 +123,10 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public void postStringWithoutLocation(String path, String body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
+        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);
+    }
+
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
         final String jsonBody = mapper.writeValueAsString(body);
         postWithoutLocation(path, request -> request.content(jsonBody), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);
@@ -199,7 +206,7 @@ public class RequestUtilService {
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
-        if (res == null) {
+        if (res == null || res.isEmpty() || res.trim().isEmpty()) {
             return null;
         }
         return mapper.readValue(res, responseType);
@@ -207,13 +214,14 @@ public class RequestUtilService {
 
     /**
      * Mocks sending a request and returns response content as string
-     * @param path the url to send request to
-     * @param body the body of the request
-     * @param expectedStatus the status that the request will return
-     * @param httpHeaders headers of request
+     *
+     * @param path                    the url to send request to
+     * @param body                    the body of the request
+     * @param expectedStatus          the status that the request will return
+     * @param httpHeaders             headers of request
      * @param expectedResponseHeaders headers of response
-     * @param params parameters for multi value
-     * @param <T> Request type
+     * @param params                  parameters for multi value
+     * @param <T>                     Request type
      * @return Request content as string
      * @throws Exception
      */
@@ -336,8 +344,8 @@ public class RequestUtilService {
         if (responseType == String.class) {
             return (R) res.getResponse().getContentAsString();
         }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        // default encoding is iso-8859-1 since v5.2.0, but we want utf-8
+        return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
     }
 
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
@@ -360,6 +368,14 @@ public class RequestUtilService {
         final var stringResponse = patchWithResponseBody(path, body, String.class, expectedStatus);
 
         return mapper.readValue(stringResponse, responseType);
+    }
+
+    public <T, R> List<R> patchWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public void patch(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -450,7 +466,8 @@ public class RequestUtilService {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
-        final var contentAsString = res.getResponse().getContentAsString();
+        // default charset is iso-8859-1 since v5.2.0 but we want utf-8
+        final var contentAsString = res.getResponse().getContentAsString(StandardCharsets.UTF_8);
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")
                     && !res.getResponse().getContentType().equals("application/octet-stream")) {
@@ -484,6 +501,20 @@ public class RequestUtilService {
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {
         return getList(path, expectedStatus, listElementType, new LinkedMultiValueMap<>());
+    }
+
+    public <T> SearchResultPageDTO<T> getSearchResult(String path, HttpStatus expectedStatus, Class<T> searchElementType, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+
+        if (!expectedStatus.is2xxSuccessful()) {
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
+            return null;
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructParametricType(SearchResultPageDTO.class, searchElementType));
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, MultiValueMap<String, String> params) throws Exception {

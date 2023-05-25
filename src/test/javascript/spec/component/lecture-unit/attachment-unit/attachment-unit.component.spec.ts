@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -12,6 +11,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileService } from 'app/shared/http/file.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('AttachmentUnitComponent', () => {
     let attachmentUnit: AttachmentUnit;
@@ -22,15 +22,8 @@ describe('AttachmentUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                AttachmentUnitComponent,
-                MockDirective(NgbCollapse),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(NgbTooltip),
-            ],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+            declarations: [AttachmentUnitComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [MockProvider(FileService)],
             schemas: [],
         })

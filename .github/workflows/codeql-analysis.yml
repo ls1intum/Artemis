@@ -30,7 +30,7 @@ on:
 # Keep in sync with build.yml and test.yml
 env:
   CI: true
-  node: 16.x
+  node: 18
   java: 17
 
 
@@ -76,8 +76,6 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
       uses: github/codeql-action/autobuild@v2
-      env:
-        NODE_OPTIONS: --max_old_space_size=6144
 
     - run: rm -rf build/resources/main/static
 

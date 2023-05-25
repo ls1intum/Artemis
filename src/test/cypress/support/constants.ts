@@ -14,3 +14,20 @@ export const USER_ID_SELECTOR = 'USERID';
 
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
+
+// Exercise types
+export enum EXERCISE_TYPE {
+    Text = 'text',
+    Modeling = 'modeling',
+    Quiz = 'quiz',
+    Programming = 'programming',
+}
+
+// CourseWideContext
+// Copied from src\main\webapp\app\shared\metis\metis.util.ts
+export enum CourseWideContext {
+    TECH_SUPPORT = 'TECH_SUPPORT',
+    ORGANIZATION = 'ORGANIZATION',
+    RANDOM = 'RANDOM',
+    ANNOUNCEMENT = 'ANNOUNCEMENT',
+}

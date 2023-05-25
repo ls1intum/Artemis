@@ -4,6 +4,7 @@ import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model'
 import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course-management-statistics',
@@ -11,6 +12,7 @@ import { CourseManagementStatisticsDTO } from './course-management-statistics-dt
     styleUrls: ['./course-management-statistics.component.scss'],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
+    documentationType = DocumentationType.Statistics;
     // html properties
     SpanType = SpanType;
     graph = Graphs;

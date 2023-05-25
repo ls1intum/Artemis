@@ -41,7 +41,7 @@ export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number, personal: boolean) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
-    triggerBuild: (participationId: number) => Observable<Object>;
+    triggerBuild: (participationId: number) => Observable<any>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
@@ -50,8 +50,8 @@ export interface IProgrammingSubmissionService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
-    public SUBMISSION_RESOURCE_URL = SERVER_API_URL + 'api/programming-submissions/';
-    public PROGRAMMING_EXERCISE_RESOURCE_URL = SERVER_API_URL + 'api/programming-exercises/';
+    public SUBMISSION_RESOURCE_URL = 'api/programming-submissions/';
+    public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming-exercises/';
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmissions';
@@ -127,7 +127,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     private fetchLatestPendingSubmissionByParticipationId = (participationId: number): Observable<ProgrammingSubmission | undefined> => {
         return this.http
-            .get<ProgrammingSubmission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission')
+            .get<ProgrammingSubmission>('api/programming-exercise-participations/' + participationId + '/latest-pending-submission')
             .pipe(catchError(() => of(undefined)));
     };
 
@@ -142,7 +142,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     private fetchLatestPendingSubmissionsByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission }> => {
         return this.http
-            .get<{ [participationId: number]: ProgrammingSubmission }>(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`)
+            .get<{ [participationId: number]: ProgrammingSubmission }>(`api/programming-exercises/${exerciseId}/latest-pending-submissions`)
             .pipe(catchError(() => of([])));
     };
 

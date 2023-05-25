@@ -6,10 +6,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -27,8 +30,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -49,6 +54,8 @@ public class FileResource {
 
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
+    private static final int DAYS_TO_CACHE = 1;
+
     private final FileService fileService;
 
     private final ResourceLoaderService resourceLoaderService;
@@ -56,6 +63,8 @@ public class FileResource {
     private final LectureRepository lectureRepository;
 
     private final AttachmentUnitRepository attachmentUnitRepository;
+
+    private final SlideRepository slideRepository;
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
@@ -67,9 +76,14 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
-    public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository,
-            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+    private final ExamUserRepository examUserRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExamUserRepository examUserRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -79,6 +93,9 @@ public class FileResource {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.examUserRepository = examUserRepository;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -89,7 +106,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
-     * * {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
+     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
      */
     @Deprecated
     @PostMapping("fileUpload")
@@ -169,10 +186,10 @@ public class FileResource {
             String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
             String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-            Resource fileResource = resourceLoaderService.getResource("templates", languagePrefix, projectTypePrefix, filename);
+            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, filename));
             if (!fileResource.exists()) {
                 // Load without project type if not found with project type
-                fileResource = resourceLoaderService.getResource("templates", languagePrefix, filename);
+                fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, filename));
             }
 
             var fileContent = IOUtils.toByteArray(fileResource.getInputStream());
@@ -218,9 +235,9 @@ public class FileResource {
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
      *
-     * @param submissionId         id of the submission, the file belongs to
-     * @param exerciseId           id of the exercise, the file belongs to
-     * @param filename             the filename of the file
+     * @param submissionId id of the submission, the file belongs to
+     * @param exerciseId   id of the exercise, the file belongs to
+     * @param filename     the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
@@ -265,10 +282,42 @@ public class FileResource {
     }
 
     /**
+     * GET /files/exam-user/signatures/:examUserId/:filename : Get the exam user signature
+     *
+     * @param examUserId ID of the exam user, the image belongs to
+     * @param filename   the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/exam-user/signatures/{examUserId}/{filename:.+}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        return buildFileResponse(FilePathService.getExamUserSignatureFilePath(), filename);
+    }
+
+    /**
+     * GET /files/exam-user/:examUserId/:filename : Get the image of exam user
+     *
+     * @param examUserId ID of the exam user, the image belongs to
+     * @param filename   the filename of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/exam-user/{examUserId}/{filename:.+}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        return buildFileResponse(FilePathService.getStudentImageFilePath(), filename, true);
+    }
+
+    /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * @param lectureId            ID of the lecture, the attachment belongs to
-     * @param filename             the filename of the file
+     * @param lectureId ID of the lecture, the attachment belongs to
+     * @param filename  the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
@@ -296,7 +345,7 @@ public class FileResource {
      * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
      * PDF attachments merged
      *
-     * @param lectureId            ID of the lecture, the lecture units belongs to
+     * @param lectureId ID of the lecture, the lecture units belongs to
      * @return The merged PDF file, 403 if the logged-in user is not allowed to
      *         access it, or 404 if the files to be merged do not exist
      */
@@ -331,8 +380,8 @@ public class FileResource {
     /**
      * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
      *
-     * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
-     * @param filename             the filename of the file
+     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param filename         the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
@@ -354,13 +403,62 @@ public class FileResource {
     }
 
     /**
+     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/slide/:slideNumber : Get the lecture unit attachment slide by slide number
+     *
+     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param slideNumber      the slideNumber of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
+        log.debug("REST request to get the slide : {}", slideNumber);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        String directoryPath = slide.getSlideImagePath();
+
+        // Use regular expression to match and extract the file name with ".png" format
+        Pattern pattern = Pattern.compile(".*\\/([^/]+\\.png)$");
+        Matcher matcher = pattern.matcher(directoryPath);
+
+        if (matcher.matches()) {
+            String fileName = matcher.group(1);
+            return buildFileResponse(
+                    Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId()), "slide", String.valueOf(slide.getSlideNumber())).toString(),
+                    fileName, true);
+        }
+        else {
+            throw new EntityNotFoundException("Slide", slideNumber);
+        }
+    }
+
+    /**
      * Builds the response with headers, body and content type for specified path and file name
      *
-     * @param path to the file
+     * @param path     to the file
      * @param filename the name of the file
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
+        return buildFileResponse(path, filename, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path     to the file
+     * @param filename the name of the file
+     * @param cache    true if the response should contain a header that allows caching; false otherwise
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(String path, String filename, boolean cache) {
         try {
             var actualPath = Path.of(path, filename).toString();
             var file = fileService.getFileForPath(actualPath);
@@ -386,7 +484,12 @@ public class FileResource {
                 MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
                 mimeType = fileTypeMap.getContentType(filename);
             }
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
+            var response = ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename);
+            if (cache) {
+                var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
+                response = response.cacheControl(cacheControl);
+            }
+            return response.body(file);
         }
         catch (IOException ex) {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);

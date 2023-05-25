@@ -45,7 +45,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { omit } from 'lodash-es';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
@@ -64,6 +64,7 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -91,7 +92,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
@@ -99,7 +100,6 @@ describe('CodeEditorContainerIntegration', () => {
                 KeysPipe,
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleLinkDirective),
-                MockDirective(NgbDropdown),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
                 CodeEditorActionsComponent,
@@ -239,7 +239,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0].id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
     };
 
     const loadFile = (fileName: string, fileContent: string) => {
@@ -314,7 +314,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0].id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
 
         flush();
         discardPeriodicTasks();

@@ -61,6 +61,7 @@ public class TestwiseCoverageService {
      * Transforms the testwise coverage report DTOs to CoverageFileReports (without the test case attribute) mapped by the test case name.
      * This method maps the file reports to primitive test case names because the test case is not present in the database
      * on creating the entities from the DTOs.
+     *
      * @param coverageReports the coverage report DTOs
      * @return coverage file reports mapped by the test case name
      */
@@ -118,10 +119,11 @@ public class TestwiseCoverageService {
      * Test case names are resolved to a test case of the given programming exercise, adds this reference to the given
      * entries and saves the entries with the test case reference to the database.
      * In case, no test case could be found for the given name, the report for this test case will not be saved
+     *
      * @param fileReportByTestCaseName a map containing the test case name as a key and the file coverage reports without the
-     * reference to a test case as a value
-     * @param submission the solution programming submission for which the report is updated
-     * @param exercise the exercise for which the report should be updated
+     *                                     reference to a test case as a value
+     * @param submission               the solution programming submission for which the report is updated
+     * @param exercise                 the exercise for which the report should be updated
      */
     public void createTestwiseCoverageReport(Map<String, Set<CoverageFileReport>> fileReportByTestCaseName, ProgrammingExercise exercise, ProgrammingSubmission submission) {
         // If the report already exists, do not create a new report. This is the case if the build plan will be re-run
@@ -203,6 +205,7 @@ public class TestwiseCoverageService {
 
     /**
      * Returns the line count by file name for all files in the solution repository for the last submission.
+     *
      * @return line count by file name of files in the last submission's solution repository
      */
     private Map<String, Integer> getLineCountByFilePath(ProgrammingSubmission submission) {
@@ -231,7 +234,8 @@ public class TestwiseCoverageService {
 
     /**
      * Calculates the aggregated covered line ratio for all file reports.
-     * @param lineCountByFileName the general line count by file name
+     *
+     * @param lineCountByFileName        the general line count by file name
      * @param coveredLineCountByFileName the covered line count by file name
      * @return the covered line ratio for all files
      */
@@ -250,6 +254,7 @@ public class TestwiseCoverageService {
      * individual file reports. CoverageFileReports can contain multiple TestwiseCoverageReportEntries referencing
      * the same lines, but referencing a different test case. This mapping is still required, but simple summing may
      * count the same covered lines multiple times.
+     *
      * @param report the report for which the line counts of its file reports should be caluclated and saved
      * @return the number of covered lines by file path
      */
@@ -268,9 +273,10 @@ public class TestwiseCoverageService {
 
     /**
      * Return the testwise coverage report for the latest solution submission for a programming exercise without the file reports.
+     *
      * @param programmingExercise the exercise for which the latest coverage report should be retrieved
      * @return an Optional of the testwise coverage report for the latest solution submission without the file reports
-     * if a report exists for the latest submission, otherwise an empty Optional
+     *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
@@ -282,9 +288,10 @@ public class TestwiseCoverageService {
 
     /**
      * Return the full testwise coverage report for the latest solution submission for a programming exercise containing all file reports
+     *
      * @param programmingExercise the exercise for which the latest coverage report should be retrieved
      * @return an Optional of the full testwise coverage report for the latest solution submission with all file reports
-     * if a report exists for the latest submission, otherwise an empty Optional
+     *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         var optionalLazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);

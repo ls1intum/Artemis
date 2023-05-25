@@ -115,6 +115,41 @@
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "createAttachmentUnits": {
+                "informativeText": {
+                    "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
+                    "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
+                    "note": "Note: You will have the option to edit the information before finally submitting the attachment units."
+                },
+                "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
+                "pageTitle": "Process units",
+                "addUnit": "Add unit",
+                "lectureFileToolTip": "Please select to enable the automatic separation of lecture units.",
+                "processUnits": "Process units",
+                "processAutomatically": "Automatic unit processing",
+                "removeBreakSlide": "Remove Break slide",
+                "removeBreakSlideTooltip": "If the slide contains the word 'Break' it will remove the slide from the unit.",
+                "validation": {
+                    "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
+                    "empty": {
+                        "unitName": "Unit name can not be empty.",
+                        "startPage": "Start page can not be empty.",
+                        "endPage": "End page can not be empty."
+                    },
+                    "endPageLower": "End page can not be smaller than 1.",
+                    "startPageBigger": "Start page can not be bigger than {{ max }}.",
+                    "startPage": "Start page must be bigger or equal to 1.",
+                    "endPage": "End page must be less or equal to {{ max }}."
+                },
+                "split": {
+                    "unit": "Lecture Units",
+                    "unitName": "Unit Name",
+                    "releaseDate": "Release Date",
+                    "startPage": "Start Page",
+                    "endPage": "End Page"
+                },
+                "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
+            },
             "createAttachmentUnit": {
                 "title": "Create Attachment Unit",
                 "name": "Name",
@@ -131,7 +166,8 @@
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
                 "chooseFile": "Choose File",
-                "fileLimitation": "Max. file size 10 MB",
+                "fileTooBig": "File is too big!",
+                "fileLimitation": "Max. file size 20 MB",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },
             "editAttachmentUnit": {

@@ -24,7 +24,7 @@
         <h5>{{ cloneHeadline | artemisTranslate }}</h5>
         <div class="d-flex" style="margin: 0; max-width: 100%">
             <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
-                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
+                <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
                     {{ useSsh ? 'SSH' : 'HTTPS' }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
@@ -35,7 +35,7 @@
             <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side (due to dropdown to select ssh or https)
              || useSsh -> Remove round edges and edge on the right side (as ssh repo-links can't be open in the browser)-->
             <pre
-                style="flex: 1"
+                class="clone-url"
                 [ngClass]="
                     sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
                 "
@@ -63,10 +63,10 @@
         >
             {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
         </button>
-        <a class="btn btn-primary btn-sm me-2" style="min-width: 150px" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
-            >{{ 'artemisApp.exerciseActions.cloneSourceTree' | artemisTranslate }}
+        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
+            >{{ 'artemisApp.exerciseActions.cloneSourceTree.button' | artemisTranslate }}
         </a>
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
-        <div [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | artemisTranslate"></div>
+        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon"></jhi-help-icon>
     </ng-template>
 </ng-container>

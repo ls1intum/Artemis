@@ -25,7 +25,7 @@ Prerequisites
 
     - **Java IDE with JDK 17**
 
-        **Recommendation:** IntelliJ IDEA 2022.1.3 or Eclipse IDE 2022-06.
+        **Recommendation:** IntelliJ IDEA 2022.3.2 or Eclipse IDE 2022-12.
 
     - **Git Client**
 
@@ -329,6 +329,35 @@ Summary
 
    Complaining about the Assessment of a Text Exercise
 
+Example Solutions
+^^^^^^^^^^^^^^^^^
+- If the instructor sets the example solution publication date of the exam, the solutions will be available after that date.
+- Text, modeling, file upload and programming exercises can have example solutions.
+
+    .. warning::
+        You cannot see example solutions if you do not submit your exam!
+
+.. figure:: student/exam_example_solutions.png
+   :alt: Example Solutions
+   :align: center
+
+   Example Solutions
+
+- For programming exercises, clicking ``Download Example Solution`` button will download the solution repository.
+
+.. figure:: student/exam_example_solution_programming.png
+   :alt: Example Solution for a Programming Exercise
+   :align: center
+
+   Example Solution for a Programming Exercise
+
+- For other exercises, clicking the ``View Example Solution`` button will navigate you to the corresponding example solution page.
+
+.. figure:: student/exam_example_solution_modeling.png
+   :alt: Example Solution for a Modeling Exercise
+   :align: center
+
+   Example Solution for a Modeling Exercise
 
 .. _exam_grades:
 
@@ -346,6 +375,14 @@ Grades
 
     .. note::
         The grades below the ``First Passing Grade`` are shown in red, and the passing grades are shown in green.
+
+- If the instructor defined a bonus configuration for your exam, you will also see your final grade with the applied bonus below your raw exam grade before bonus.
+
+.. figure:: student/student_grade_with_bonus.png
+   :alt: Exam Grade with Bonus
+   :align: center
+
+   Exam Grade with Bonus
 
 - For more information about all the grading intervals, you can click the |view_grade_key| button to view all grade step boundaries with their bound inclusivity.
 - A square bracket ``[`` or ``]`` in the interval of a grade step means the bound is included in the current grade step, and a parenthesis ``(`` or ``)`` means it is excluded.

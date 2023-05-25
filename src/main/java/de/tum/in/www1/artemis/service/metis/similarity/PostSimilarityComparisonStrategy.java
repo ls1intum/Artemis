@@ -10,6 +10,7 @@ public interface PostSimilarityComparisonStrategy {
 
     /**
      * Method implemented by every strategy; compares two posts using any suitable algorithm to determine similarity
+     *
      * @param post1 first post object that is compared against
      * @param post2 second post object that is compared against
      * @return the calculated similarity score

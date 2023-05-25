@@ -12,9 +12,11 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -42,11 +44,12 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
+    // feedback.type = 3 == FeedbackType.AUTOMATIC
     @Query("""
             SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
                 textblock.cluster.id,
                 count(DISTINCT textblock.id),
-                SUM(case when feedback.type = 'AUTOMATIC' then 1 else 0 end)
+                SUM(case when feedback.type = 3 then 1 else 0 end)
             )
             FROM TextBlock textblock
             LEFT JOIN Submission submission ON textblock.submission.id = submission.id
@@ -57,6 +60,10 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             GROUP BY textblock.cluster.id HAVING textblock.cluster.id > 0
             """)
     List<TextClusterStatisticsDTO> getClusterStatistics(@Param("exerciseId") Long exerciseId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteByExercise_Id(Long exerciseId);
 
     interface TextClusterIdAndDisabled {
 

@@ -12,7 +12,7 @@ export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
-    private resourceUrl = SERVER_API_URL + 'api/file-upload-exercises';
+    private resourceUrl = 'api/file-upload-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -71,7 +71,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * Sends request to delete file upload exercise by its id
      * @param exerciseId id of the exercise
      */
-    delete(exerciseId: number): Observable<HttpResponse<{}>> {
+    delete(exerciseId: number): Observable<HttpResponse<any>> {
         return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
@@ -94,5 +94,21 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
         fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
+    }
+
+    /**
+     * Imports a file upload exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     * @param adaptedSourceFileUploadExercise The exercise that should be imported, including adapted values for the
+     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
+     * (like the old ID) will be handled by the server.
+     */
+    import(adaptedSourceFileUploadExercise: FileUploadExercise) {
+        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceFileUploadExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<FileUploadExercise>(`${this.resourceUrl}/import/${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

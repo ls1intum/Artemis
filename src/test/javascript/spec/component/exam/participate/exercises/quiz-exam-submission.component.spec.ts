@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -20,10 +19,11 @@ import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -48,10 +48,9 @@ describe('QuizExamSubmissionComponent', () => {
         shortAnswerQuestion.id = 3;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([])],
+            imports: [RouterTestingModule.withRoutes([]), NgbTooltipMocksModule],
             declarations: [
                 QuizExamSubmissionComponent,
-                MockDirective(NgbTooltip),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(MultipleChoiceQuestionComponent),

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -10,6 +10,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { PageType } from 'app/shared/metis/metis.util';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -18,6 +20,9 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
     providers: [MetisService],
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
+    @ViewChild('post') postComponent: PostComponent;
+    readonly ButtonType = ButtonType;
+
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
@@ -28,7 +33,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     getIcon = getIcon;
     faUser = faUser;
 
-    readonly pageType = PageType.PLAGIARISM_CASE;
+    readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
     private postsSubscription: Subscription;
     posts: Post[];
 

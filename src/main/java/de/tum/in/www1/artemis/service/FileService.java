@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -26,6 +29,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -35,6 +39,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
@@ -91,7 +96,7 @@ public class FileService implements DisposableBean {
     /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
+    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm");
 
     @Override
     public void destroy() {
@@ -140,7 +145,7 @@ public class FileService implements DisposableBean {
         }
 
         // sanitize the filename and replace all invalid characters with with an underscore
-        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
+        filename = filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
 
         // Check the allowed file extensions
         final String fileExtension = FilenameUtils.getExtension(filename);
@@ -171,11 +176,12 @@ public class FileService implements DisposableBean {
 
     /**
      * Creates a new file from given contents
-     * @param filePath the path to save the file to excluding the filename
-     * @param filename the filename of the file to save
+     *
+     * @param filePath         the path to save the file to excluding the filename
+     * @param filename         the filename of the file to save
      * @param fileNameAddition the addition to the filename to make sure it is unique
-     * @param fileExtension the extension of the file to save
-     * @param keepFileName specifies if original file name should be kept
+     * @param fileExtension    the extension of the file to save
+     * @param keepFileName     specifies if original file name should be kept
      * @return the created file
      */
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
@@ -192,7 +198,7 @@ public class FileService implements DisposableBean {
         do {
             if (!keepFileName) {
                 // append a timestamp and some randomness to the filename to avoid conflicts
-                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
 
@@ -241,7 +247,7 @@ public class FileService implements DisposableBean {
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
      * @param targetFolder the folder that a temporary file should be moved to
      * @param entityId     id of the entity this file belongs to (needed to generate
-     *                     public path). If this is null, a placeholder will be inserted where the id would be
+     *                         public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
@@ -324,13 +330,30 @@ public class FileService implements DisposableBean {
         if (publicPath.contains("files/course/icons")) {
             return Path.of(FilePathService.getCourseIconFilePath(), filename).toString();
         }
+        if (publicPath.contains("files/exam-user")) {
+            return Path.of(FilePathService.getStudentImageFilePath(), filename).toString();
+        }
+        if (publicPath.contains("files/exam-user/signatures")) {
+            return Path.of(FilePathService.getExamUserSignatureFilePath(), filename).toString();
+        }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
         if (publicPath.contains("files/attachments/attachment-unit")) {
-            String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-            return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+            if (!publicPath.contains("/slide")) {
+                String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
+                return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+            }
+            final var slideSubPath = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "").split("/");
+            final var shouldBeAttachmentUnitId = slideSubPath[0];
+            final var shouldBeSlideId = slideSubPath.length >= 3 ? slideSubPath[2] : null;
+            if (!NumberUtils.isCreatable(shouldBeAttachmentUnitId) || !NumberUtils.isCreatable(shouldBeSlideId)) {
+                throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath);
+            }
+            final var attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+            final var slideId = Long.parseLong(shouldBeSlideId);
+            return Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnitId), "slide", String.valueOf(slideId), filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -351,52 +374,69 @@ public class FileService implements DisposableBean {
     /**
      * Generate the public path for the file at the given path
      *
-     * @param actualPath the path to the file in the local filesystem
-     * @param entityId   the id of the entity associated with the file
+     * @param actualPathString the path to the file in the local filesystem
+     * @param entityId         the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside
      */
-    public String publicPathForActualPath(String actualPath, @Nullable Long entityId) {
+    public String publicPathForActualPath(String actualPathString, @Nullable Long entityId) {
         // first extract filename
-        String filename = Path.of(actualPath).getFileName().toString();
+        Path actualPath = Path.of(actualPathString);
+        String filename = actualPath.getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
-
         // check for known path to convert
-        if (actualPath.contains(FilePathService.getTempFilePath())) {
+        if (actualPathString.contains(FilePathService.getTempFilePath())) {
             return DEFAULT_FILE_SUBPATH + filename;
         }
-        if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
+        if (actualPathString.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getDragItemFilePath())) {
+        if (actualPathString.contains(FilePathService.getDragItemFilePath())) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getCourseIconFilePath())) {
+        if (actualPathString.contains(FilePathService.getCourseIconFilePath())) {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getLectureAttachmentFilePath())) {
+        if (actualPathString.contains(FilePathService.getExamUserSignatureFilePath())) {
+            return "/api/files/exam-user/signatures/" + id + "/" + filename;
+        }
+        if (actualPathString.contains(FilePathService.getStudentImageFilePath())) {
+            return "/api/files/exam-user/" + id + "/" + filename;
+        }
+        if (actualPathString.contains(FilePathService.getLectureAttachmentFilePath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
-        if (actualPath.contains(FilePathService.getAttachmentUnitFilePath())) {
-            return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
+        if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath())) {
+            if (!actualPathString.contains("/slide")) {
+                return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
+            }
+            try {
+                // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
+                // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
+                final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 4).toString();
+                final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                return "/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
+            }
+            catch (IllegalArgumentException e) {
+                throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + actualPathString);
+            }
         }
-        if (actualPath.contains(FilePathService.getFileUploadExercisesFilePath())) {
-            final var path = Path.of(actualPath);
+        if (actualPathString.contains(FilePathService.getFileUploadExercisesFilePath())) {
             final long exerciseId;
             try {
                 // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
-                final var shouldBeExerciseId = path.getName(path.getNameCount() - 3).toString();
+                final var shouldBeExerciseId = actualPath.getName(actualPath.getNameCount() - 3).toString();
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + actualPath);
+                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + actualPathString);
             }
             return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
         }
 
         // path is unknown => cannot convert
-        throw new FilePathParsingException("Unknown Filepath: " + actualPath);
+        throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
     }
 
     /**
@@ -419,11 +459,20 @@ public class FileService implements DisposableBean {
         if (targetFolder.equals(FilePathService.getCourseIconFilePath())) {
             filenameBase = "CourseIcon_";
         }
+        if (targetFolder.equals(FilePathService.getExamUserSignatureFilePath())) {
+            filenameBase = "ExamUserSignature_";
+        }
+        if (targetFolder.equals(FilePathService.getStudentImageFilePath())) {
+            filenameBase = "ExamUserImage_";
+        }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilePath())) {
             filenameBase = "LectureAttachment_";
         }
         if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath())) {
             filenameBase = "AttachmentUnit_";
+        }
+        if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath()) && targetFolder.contains("/slide")) {
+            filenameBase = "AttachmentUnitSlide_";
         }
 
         // extract the file extension
@@ -466,72 +515,126 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * This copies the directory at the old directory path to the new path, including all files and sub folders
+     * Copies the given resources to the target directory.
      *
-     * @param resources           the resources that should be copied
-     * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
-     * @param targetDirectoryPath the path of the folder where the copy should be located
-     * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
-     * @throws IOException if the copying operation fails.
+     * @param resources             The resources that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
      */
-    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-        for (Resource resource : resources) {
-            // Replace windows separator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
-            // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
-            int index = fileUrl.indexOf(prefix);
-
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            targetFilePath = applySpecialFilenameReplacements(targetFilePath);
-
-            if (isIgnoredDirectory(targetFilePath)) {
-                continue;
-            }
-
-            Path copyPath = Path.of(targetDirectoryPath + targetFilePath);
-            File parentFolder = copyPath.toFile().getParentFile();
-            if (!parentFolder.exists()) {
-                Files.createDirectories(parentFolder.toPath());
-            }
-
-            Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
-            // make gradlew executable
-            if (targetFilePath.endsWith("gradlew")) {
-                copyPath.toFile().setExecutable(true);
-            }
+    public void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        for (final Resource resource : resources) {
+            copyResource(resource, prefix, targetDirectory, keepParentDirectories);
         }
+    }
+
+    /**
+     * Copies the given resource to the target directory.
+     *
+     * @param resource              The resource that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
+     */
+    public void copyResource(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        final Path targetPath = getTargetPath(resource, prefix, targetDirectory, keepParentDirectories);
+
+        if (isIgnoredDirectory(targetPath)) {
+            return;
+        }
+
+        Files.createDirectories(targetPath.getParent());
+        Files.copy(resource.getInputStream(), targetPath, REPLACE_EXISTING);
+
+        if (targetPath.endsWith("gradlew")) {
+            targetPath.toFile().setExecutable(true);
+        }
+    }
+
+    private Path getTargetPath(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) throws IOException {
+        final Path filePath;
+        if (resource.isFile()) {
+            filePath = resource.getFile().toPath();
+        }
+        else {
+            final String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+            filePath = Path.of(url);
+        }
+
+        final Path targetPath = getTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
+        return applyFilenameReplacements(targetPath);
+    }
+
+    /**
+     * Determines the target file path which a resource should be copied to.
+     * <p>
+     * Searches for {@code prefix} in the {@code source} and removes all path elements including and up to the prefix.
+     * The target file path is then determined by resolving this trimmed path against the target directory.
+     *
+     * @param source              The path where the resource is copied from.
+     * @param prefix              The prefix that should be trimmed from the source path.
+     * @param targetDirectory     The base target directory.
+     * @param keepParentDirectory Keep directories in the path between prefix and filename.
+     * @return The target path where the resource should be copied to.
+     */
+    private Path getTargetPath(final Path source, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) {
+        if (!keepParentDirectory) {
+            return targetDirectory.resolve(source.getFileName());
+        }
+
+        final List<Path> sourcePathElements = getPathElements(source);
+        final List<Path> prefixPathElements = getPathElements(prefix);
+
+        final int prefixStartIdx = Collections.indexOfSubList(sourcePathElements, prefixPathElements);
+
+        if (prefixStartIdx >= 0) {
+            final int startIdx = prefixStartIdx + prefixPathElements.size();
+            final Path relativeSource = source.subpath(startIdx, sourcePathElements.size());
+            return targetDirectory.resolve(relativeSource);
+        }
+        else {
+            return targetDirectory.resolve(source);
+        }
+    }
+
+    private List<Path> getPathElements(final Path path) {
+        final List<Path> elements = new ArrayList<>();
+
+        for (final Path value : path) {
+            elements.add(value);
+        }
+
+        return elements;
     }
 
     /**
      * Replaces filenames where the template name differs from the name the file should have in the repository.
      *
-     * @param filePath The path to a file.
+     * @param originalTargetPath The path to a file.
      * @return The path with replacements applied where necessary.
      */
-    private String applySpecialFilenameReplacements(final String filePath) {
-        String resultFilePath = filePath;
+    private Path applyFilenameReplacements(final Path originalTargetPath) {
+        final Path filename = originalTargetPath.getFileName();
 
-        for (final Map.Entry<String, String> replacementDirective : FILENAME_REPLACEMENTS.entrySet()) {
-            String oldName = replacementDirective.getKey();
-            String newName = replacementDirective.getValue();
-
-            if (resultFilePath.endsWith(oldName)) {
-                resultFilePath = resultFilePath.replace(oldName, newName);
-                break;
-            }
-        }
-
-        return resultFilePath;
+        final String newFilename = FILENAME_REPLACEMENTS.getOrDefault(filename.toString(), filename.toString());
+        return originalTargetPath.getParent().resolve(newFilename);
     }
 
     /**
-     * Checks if the given path has been identified as a file but it actually points to a directory.
+     * Checks if the given path has been identified as a file, but it actually points to a directory.
      *
      * @param filePath The path to a file/directory.
      * @return True, if the path is assumed to be a file but actually points to a directory.
      */
-    private boolean isIgnoredDirectory(final String filePath) {
-        return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
+    private boolean isIgnoredDirectory(final Path filePath) {
+        final String filename = filePath.getFileName().toString();
+        return IGNORED_DIRECTORY_SUFFIXES.stream().anyMatch(filename::endsWith);
     }
 
     /**
@@ -567,7 +670,7 @@ public class FileService implements DisposableBean {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8));) {
+        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8))) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -937,14 +1040,14 @@ public class FileService implements DisposableBean {
 
     /**
      * Removes illegal characters for filenames from the string.
-     *
-     * See: https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#15075907
+     * <p>
+     * S<a href="ee:">https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#1507</a>5907
      *
      * @param string the string with the characters
      * @return stripped string
      */
     public String removeIllegalCharacters(String string) {
-        return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
     }
 
     /**
@@ -989,7 +1092,7 @@ public class FileService implements DisposableBean {
      */
     public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
         try {
-            objectMapper.writeValue(new File(path.toString()), object);
+            objectMapper.writeValue(path.toFile(), object);
         }
         catch (IOException e) {
             log.warn("Could not write given object in file {}", path);
@@ -1048,6 +1151,32 @@ public class FileService implements DisposableBean {
             catch (Exception ex) {
                 log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
             }
+        }
+    }
+
+    /**
+     * Convert byte[] to MultipartFile by using CommonsMultipartFile
+     *
+     * @param fileName        file name to set file name
+     * @param extension       extension of the file (e.g .pdf or .png)
+     * @param streamByteArray byte array to save to the temp file
+     * @return multipartFile wrapper for the file stored on disk
+     */
+    public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
+        try {
+            Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
+            Files.write(tempPath, streamByteArray);
+            File outputFile = tempPath.toFile();
+            FileItem fileItem = new DiskFileItem(fileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+
+            try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
+                IOUtils.copy(input, fileItemOutputStream);
+            }
+            return new CommonsMultipartFile(fileItem);
+        }
+        catch (IOException e) {
+            log.error("Could not convert file {}.", fileName, e);
+            throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
         }
     }
 }

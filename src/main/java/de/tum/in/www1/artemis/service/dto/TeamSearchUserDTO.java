@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import javax.persistence.Column;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -33,7 +32,6 @@ public class TeamSearchUserDTO {
     private String lastName;
 
     @Size(max = 100)
-    @Column(length = 100)
     private String email;
 
     private Long assignedTeamId;

@@ -9,11 +9,13 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
@@ -21,9 +23,11 @@ import { Course } from 'app/entities/course.model';
 })
 class MockCourseTutorialGroupsOverviewComponent {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     tutorialGroups: TutorialGroup[] = [];
+    @Input()
+    configuration?: TutorialGroupsConfiguration;
 }
 
 @Component({
@@ -34,7 +38,10 @@ class MockCourseTutorialGroupsRegisteredComponent {
     @Input()
     registeredTutorialGroups: TutorialGroup[] = [];
     @Input()
-    courseId: number;
+    course: Course;
+
+    @Input()
+    configuration?: TutorialGroupsConfiguration;
 }
 
 describe('CourseTutorialGroupsComponent', () => {
@@ -49,12 +56,14 @@ describe('CourseTutorialGroupsComponent', () => {
     let queryParamsSubject: BehaviorSubject<Params>;
 
     beforeEach(() => {
+        router.navigate.mockImplementation(() => Promise.resolve(true));
+
         queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             declarations: [CourseTutorialGroupsComponent, MockCourseTutorialGroupsOverviewComponent, MockCourseTutorialGroupsRegisteredComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
-                MockProvider(CourseScoreCalculationService),
+                MockProvider(CourseStorageService),
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
@@ -103,8 +112,8 @@ describe('CourseTutorialGroupsComponent', () => {
             ),
         );
         const mockCourse = { id: 1, title: 'Test Course' } as Course;
-        const getCourseSpy = jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse').mockReturnValue(mockCourse);
-        const updateCourseSpy = jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'updateCourse');
+        const getCourseSpy = jest.spyOn(TestBed.inject(CourseStorageService), 'getCourse').mockReturnValue(mockCourse);
+        const updateCourseSpy = jest.spyOn(TestBed.inject(CourseStorageService), 'updateCourse');
         fixture.detectChanges();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
@@ -122,9 +131,9 @@ describe('CourseTutorialGroupsComponent', () => {
         const tutorialGroupsService = TestBed.inject(TutorialGroupsService);
         const getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse');
         const getCourseSpy = jest
-            .spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse')
+            .spyOn(TestBed.inject(CourseStorageService), 'getCourse')
             .mockReturnValue({ id: 1, title: 'Test Course', tutorialGroups: [tutorialGroupOne, tutorialGroupTwo] } as Course);
-        const updateCourseSpy = jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'updateCourse');
+        const updateCourseSpy = jest.spyOn(TestBed.inject(CourseStorageService), 'updateCourse');
 
         fixture.detectChanges();
         expect(getCourseSpy).toHaveBeenCalledTimes(2);
@@ -139,7 +148,7 @@ describe('CourseTutorialGroupsComponent', () => {
         queryParamsSubject.next({ filter: 'all' });
         expect(component.selectedFilter).toBe('all');
         queryParamsSubject.next({ filter: 'registered' });
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.selectedFilter).toBe('registered');
     });
 

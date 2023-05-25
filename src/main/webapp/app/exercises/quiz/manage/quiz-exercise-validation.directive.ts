@@ -11,9 +11,10 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { CanBecomeInvalid, DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 
 type InvalidFlaggedQuestions = {
     [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
@@ -31,6 +32,7 @@ export abstract class QuizExerciseValidationDirective {
     readonly maxLengthThreshold = 250;
     readonly explanationLengthThreshold = 500;
     readonly hintLengthThreshold = 255;
+    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     warningQuizCache = false;
     quizIsValid: boolean;
@@ -75,7 +77,7 @@ export abstract class QuizExerciseValidationDirective {
             !!this.quizExercise.quizQuestions.length;
 
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined || question.points < 1) {
+            if (question.points == undefined || question.points < 1 || question.points > this.maxPoints) {
                 return false;
             }
             if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
@@ -95,6 +97,7 @@ export abstract class QuizExerciseValidationDirective {
                         question.title.length < this.maxLengthThreshold &&
                         mcQuestion.answerOptions!.every(
                             (answerOption) =>
+                                answerOption.isCorrect !== undefined &&
                                 (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
                                 (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
                         )
@@ -139,7 +142,6 @@ export abstract class QuizExerciseValidationDirective {
         return (
             isGenerallyValid &&
             areAllQuestionsValid === true &&
-            this.isEmpty(this.invalidFlaggedQuestions) &&
             maxPointsReachableInQuiz !== undefined &&
             maxPointsReachableInQuiz > 0 &&
             !this.testRunExistsAndShouldNotBeIgnored()
@@ -233,9 +235,14 @@ export abstract class QuizExerciseValidationDirective {
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.points == undefined || question.points < 1) {
+            if (question.points == undefined) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
+                    translateValues: { index: index + 1 },
+                });
+            } else if (question.points < 1 || question.points > this.maxPoints) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScoreInvalid',
                     translateValues: { index: index + 1 },
                 });
             }
@@ -269,6 +276,12 @@ export abstract class QuizExerciseValidationDirective {
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length > this.hintLengthThreshold)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.answerHintLength',
+                        translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
+                    });
+                }
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect === undefined)) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.multipleChoiceQuestionAnswerOptionInvalid',
                         translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
                     });
                 }
@@ -446,7 +459,7 @@ export abstract class QuizExerciseValidationDirective {
      * check if Dictionary is empty
      * @param obj the dictionary to be checked
      */
-    protected isEmpty(obj: {}) {
+    protected isEmpty(obj: any) {
         return Object.keys(obj).length === 0;
     }
 }

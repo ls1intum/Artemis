@@ -12,21 +12,28 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -63,38 +70,55 @@ public class UserTestService {
     protected RequestUtilService request;
 
     @Autowired
-    private LtiUserIdRepository ltiUserIdRepository;
-
-    @Autowired
     private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
 
+    @Autowired
+    private SingleUserNotificationRepository singleUserNotificationRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
+    private String TEST_PREFIX;
+
     private MockDelegate mockDelegate;
 
     public User student;
 
-    private final static int numberOfStudents = 50;
+    private static final int numberOfStudents = 2;
 
-    private final static int numberOfTutors = 1;
+    private static final int numberOfTutors = 1;
 
-    private final static int numberOfEditors = 1;
+    private static final int numberOfEditors = 1;
 
-    private final static int numberOfInstructors = 1;
+    private static final int numberOfInstructors = 1;
 
-    public void setup(MockDelegate mockDelegate) throws Exception {
+    public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
+        this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
-        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
-        student = users.get(0);
+        List<User> users = database.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userRepository.save(student);
+        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
 
     public void tearDown() throws IOException {
-        database.resetDatabase();
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 
     public User getStudent() {
@@ -106,11 +130,63 @@ public class UserTestService {
         student.setInternal(true);
         userRepository.save(student);
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
+        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text", false, null));
 
+        // Creating conversation-related objects
+        var post = new Post();
+        var post2 = new Post();
+        var oneToOneChatPost = new Post();
+        var conversationParticipant = new ConversationParticipant();
+        var conversationParticipant2 = new ConversationParticipant();
+        var conversationParticipant3 = new ConversationParticipant();
+        var conversation = new GroupChat();
+        var oneToOneChat = new OneToOneChat();
+
+        User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
+
+        conversationParticipant.setUser(student);
+        conversationParticipant2.setUser(student2);
+        conversationParticipant3.setUser(student);
+
+        conversation.setConversationParticipants(Collections.singleton(conversationParticipant));
+        conversation.setCreator(student);
+        oneToOneChat.setConversationParticipants(Set.of(conversationParticipant2, conversationParticipant3));
+        oneToOneChat.setCreator(student2);
+
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant2.setConversation(oneToOneChat);
+        conversationParticipant3.setConversation(oneToOneChat);
+
+        post.setAuthor(student);
+        post.setConversation(conversation);
+        post2.setAuthor(student2);
+        post2.setConversation(conversation);
+        oneToOneChatPost.setAuthor(student2);
+        oneToOneChatPost.setConversation(oneToOneChat);
+
+        conversationRepository.save(conversation);
+        oneToOneChatRepository.save(oneToOneChat);
+        postRepository.save(post);
+        postRepository.save(post2);
+        postRepository.save(oneToOneChatPost);
+        conversationParticipantRepository.save(conversationParticipant);
+        conversationParticipantRepository.save(conversationParticipant2);
+        conversationParticipantRepository.save(conversationParticipant3);
+
+        // Sending delete request
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
+        // Assertions
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
+        assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
+        assertThat(postRepository.findById(post2.getId())).isEmpty();
+        assertThat(conversationParticipantRepository.findById(conversationParticipant.getId())).isEmpty();
+        assertThat(conversationParticipantRepository.findById(conversationParticipant3.getId())).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
+        assertThat(conversationRepository.findById(conversation.getId())).isEmpty();
+        assertThat(oneToOneChatRepository.findById(oneToOneChat.getId())).isEmpty();
     }
 
     // Test
@@ -145,11 +221,18 @@ public class UserTestService {
 
     // Test
     public void deleteUsers() throws Exception {
-        userRepository.deleteAll();
-        var users = database.addUsers(1, 1, 1, 1);
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        var users = Set.of(database.getUserByLogin(TEST_PREFIX + "student1"), database.getUserByLogin(TEST_PREFIX + "tutor1"), database.getUserByLogin(TEST_PREFIX + "editor1"),
+                database.getUserByLogin(TEST_PREFIX + "instructor1"));
 
         for (var user : users) {
-            mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
+            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+            // not expecting to delete the admin user as current user
+            if (!"admin".equals(user.getLogin())) {
+                mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
+            }
         }
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -167,20 +250,27 @@ public class UserTestService {
 
     // Test
     public void deleteUsersException() throws Exception {
-        userRepository.deleteAll();
-        var users = database.addUsers(1, 1, 1, 1);
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        var users = Set.of(database.getUserByLogin(TEST_PREFIX + "student1"), database.getUserByLogin(TEST_PREFIX + "tutor1"), database.getUserByLogin(TEST_PREFIX + "editor1"),
+                database.getUserByLogin(TEST_PREFIX + "instructor1"));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
 
         for (var user : users) {
-            mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
+            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+            // not expecting to delete the admin user as current user
+            if (!"admin".equals(user.getLogin())) {
+                mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
+            }
         }
 
         request.delete("/api/admin/users", HttpStatus.OK, params);
         for (var user : users) {
             var receivedUser = userRepository.findById(user.getId());
-            assertThat(receivedUser.isPresent()).isTrue();
+            assertThat(receivedUser).isPresent();
         }
     }
 
@@ -228,7 +318,7 @@ public class UserTestService {
     // Test
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
-        final var oldPassword = userRepository.findById(student.getId()).get().getPassword();
+        final var oldPassword = userRepository.findById(student.getId()).orElseThrow().getPassword();
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student), HttpStatus.OK);
@@ -323,7 +413,7 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student, password), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
+        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
         assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
         student.setId(response.getId());
 
@@ -356,7 +446,7 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student, student.getPassword()), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
+        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
         userInDB.setPassword(password);
         student.setId(response.getId());
         response.setPassword(password);
@@ -367,10 +457,13 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_hasId() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         student.setId((long) 1337);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
+        student = userRepository.save(student);
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -445,7 +538,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true, false);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, false, true, false);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -458,7 +551,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, false, false, true);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -466,12 +559,14 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false, false);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, true, false, false);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -479,6 +574,8 @@ public class UserTestService {
 
     // Test
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         student.setId(null);
         student.setEmail("batman@invalid.tum");
         student.setLogin("batman");
@@ -488,13 +585,15 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
+        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
 
         assertThat(userInDB.getPassword()).isNotBlank();
     }
 
     // Test
     public void createUser_withExternalUserManagement() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         var newUser = student;
         newUser.setId(null);
         newUser.setLogin("batman");
@@ -519,6 +618,8 @@ public class UserTestService {
         course = database.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
+
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
 
         var newUser = student;
         newUser.setId(null);
@@ -545,7 +646,7 @@ public class UserTestService {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
-        params.add("searchTerm", "");
+        params.add("searchTerm", TEST_PREFIX);
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         params.add("authorities", "");
@@ -554,14 +655,14 @@ public class UserTestService {
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/admin/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
+        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors); // admin is not returned
     }
 
     // Test
     public void searchUsers_asInstructor_isSuccessful() throws Exception {
-        final String loginOrName = "student1";
+        final String loginOrName = TEST_PREFIX + "student1";
         List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
-        assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
+        assertThat(users).hasSize(1); // size([student1]) = 1
     }
 
     // Test
@@ -583,7 +684,7 @@ public class UserTestService {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
-        params.add("searchTerm", "student1@test.de");
+        params.add("searchTerm", student.getEmail());
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         params.add("authorities", "USER");
@@ -593,13 +694,13 @@ public class UserTestService {
         params.add("courseIds", "");
         List<User> users = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
-        assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");
+        assertThat(users.get(0).getEmail()).isEqualTo(student.getEmail());
     }
 
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/admin/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
     }
 
     // Test
@@ -624,7 +725,7 @@ public class UserTestService {
 
     // Test
     public void getUser_asAdmin_isSuccessful() throws Exception {
-        final String userLogin = "student1";
+        final String userLogin = TEST_PREFIX + "student1";
         UserDTO userDTO = request.get("/api/users/" + userLogin, HttpStatus.OK, UserDTO.class);
         assertThat(userDTO.getLogin()).isEqualTo(userLogin);
     }
@@ -632,21 +733,21 @@ public class UserTestService {
     // Test
     public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
-        User userInDB = userRepository.findOneByLogin("student1").get();
+        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
 
     // Test
     public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", true, HttpStatus.OK);
-        User userInDB = userRepository.findOneByLogin("student1").get();
+        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNull();
     }
 
     // Test
     public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", false, HttpStatus.OK);
-        User userInDB = userRepository.findOneByLogin("student1").get();
+        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
         assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
@@ -654,16 +755,12 @@ public class UserTestService {
     // Test
     public void initializeUser(boolean mock) throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User repoUser = userRepository.findOneByLogin("student1").get();
+        User repoUser = database.getUserByLogin(TEST_PREFIX + "student1");
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setGroups(new HashSet<>());
+        repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
         final User user = userRepository.save(repoUser);
-        LtiUserId ltiUserId = new LtiUserId();
-        ltiUserId.setLtiUserId("1234");
-        ltiUserId.setUser(repoUser);
-        ltiUserIdRepository.save(ltiUserId);
 
         if (mock) {
             // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
@@ -678,7 +775,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNotEmpty();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
@@ -689,21 +786,18 @@ public class UserTestService {
     // Test
     public void initializeUserWithoutFlag() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userRepository.findOneByLogin("student1").get();
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user = userRepository.save(user);
-        LtiUserId ltiUserId = new LtiUserId();
-        ltiUserId.setLtiUserId("1234");
-        ltiUserId.setUser(user);
-        ltiUserIdRepository.save(ltiUserId);
+        user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        userRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -713,7 +807,7 @@ public class UserTestService {
     // Test
     public void initializeUserNonLTI() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userRepository.findOneByLogin("student1").get();
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(false);
@@ -722,8 +816,7 @@ public class UserTestService {
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
-
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
@@ -732,21 +825,17 @@ public class UserTestService {
     // Test
     public void initializeUserExternal() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userRepository.findOneByLogin("student1").get();
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
         user = userRepository.save(user);
-        LtiUserId ltiUserId = new LtiUserId();
-        ltiUserId.setLtiUserId("1234");
-        ltiUserId.setUser(user);
-        ltiUserIdRepository.save(ltiUserId);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -759,17 +848,18 @@ public class UserTestService {
 
     /**
      * Helper method to create the params.
-     * @param authorities authorities of the users
-     * @param origins of the users
+     *
+     * @param authorities         authorities of the users
+     * @param origins             of the users
      * @param registrationNumbers of the users
-     * @param status of the users
-     * @param courseIds which the users are part
+     * @param status              of the users
+     * @param courseIds           which the users are part
      * @return params for request
      */
     private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status, String courseIds) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
-        params.add("pageSize", "100");
+        params.add("pageSize", "1000");
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
@@ -781,25 +871,45 @@ public class UserTestService {
         return params;
     }
 
+    /**
+     * Helper method to determine the user authority which is used most often in a user creation matrix
+     *
+     * @param userNumbers the user creation matrix
+     * @return String of the user authority with the most users
+     * @throws Exception
+     */
+    private String getMainUserAuthority(Integer[] userNumbers) throws Exception {
+        List<Integer> userNumbersList = Arrays.asList(userNumbers);
+        var authorityIndex = userNumbersList.indexOf(Collections.max(userNumbersList));
+        return switch (authorityIndex) {
+            case 0 -> "student";
+            case 1 -> "tutor";
+            case 2 -> "editor";
+            case 3 -> "instructor";
+            default -> throw new Exception("Couldn't match the input user array to an authority.");
+        };
+    }
+
     // Test
     public void testUserWithoutGroups() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "", "", "-1");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]);
-            users.get(0).setGroups(Collections.emptySet());
-            users.get(1).setGroups(Set.of("tumuser"));
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setGroups(Collections.emptySet());
+            user2.setGroups(Set.of("tumuser"));
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(0));
+            assertThat(result).contains(user1).doesNotContain(user2);
         }
     }
 
@@ -811,18 +921,19 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", FILTER_WITHOUT_REG_NO, "", Long.toString(course.getId()));
 
         List<User> result;
-        List<User> users;
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]);
-            users.get(0).setGroups(Collections.emptySet());
-            users.get(1).setGroups(Set.of("tumuser"));
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setGroups(Collections.emptySet());
+            user2.setGroups(Set.of("tumuser"));
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
@@ -831,18 +942,20 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED", "");
 
         List<User> result;
-        List<User> users;
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setActivated(true);
-            users.get(1).setActivated(false);
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User admin = userRepository.getUserByLoginElseThrow("admin");
+            user1.setActivated(true);
+            user2.setActivated(false);
+            userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2); // admin and user
-            assertThat(result.get(0)).isEqualTo(users.get(0));
+            assertThat(result).contains(user1, admin).doesNotContain(user2);
         }
     }
 
@@ -851,20 +964,21 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setActivated(true);
-            users.get(1).setActivated(false);
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setActivated(true);
+            user2.setActivated(false);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
@@ -873,20 +987,22 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setInternal(true);
-            users.get(1).setInternal(false);
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User admin = userRepository.getUserByLoginElseThrow("admin");
+            user1.setInternal(true);
+            user2.setInternal(false);
+            userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(0));
+            assertThat(result).contains(user1, admin).doesNotContain(user2);
         }
     }
 
@@ -895,20 +1011,21 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setInternal(true);
-            users.get(1).setInternal(false);
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setInternal(true);
+            user2.setInternal(false);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2); // user and admin
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
@@ -917,17 +1034,19 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setInternal(true);
-            users.get(1).setInternal(false);
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setInternal(true);
+            user2.setInternal(false);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
@@ -935,24 +1054,26 @@ public class UserTestService {
 
     /**
      * Test for the user search with the following parameters:
-     * @Param registrationNumbers
+     *
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setRegistrationNumber("");
-            users.get(1).setRegistrationNumber("");
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setRegistrationNumber(null);
+            user2.setRegistrationNumber(null);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
@@ -960,26 +1081,29 @@ public class UserTestService {
 
     /**
      * Test for the user search with the following parameters:
-     * @Param registrationNumbers
+     *
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithoutRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
-            userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setRegistrationNumber("5461351");
-            users.get(1).setRegistrationNumber("");
-            userRepository.saveAll(users);
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setRegistrationNumber("5461351");
+            user2.setRegistrationNumber("");
+            User admin = userRepository.getUserByLoginElseThrow("admin");
+            userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result.get(0)).isEqualTo(users.get(2));
+            assertThat(result).contains(admin).doesNotContain(user1, user2);
         }
     }
 }

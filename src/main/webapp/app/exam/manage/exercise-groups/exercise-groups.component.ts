@@ -9,12 +9,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -24,9 +18,8 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -172,62 +165,27 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`, 'import'];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
 
-        switch (exerciseType) {
-            case ExerciseType.PROGRAMMING:
-                const programmingImportModalRef = this.modalService.open(ProgrammingExerciseImportComponent, {
-                    size: 'lg',
-                    backdrop: 'static',
-                });
-                programmingImportModalRef.result.then(
-                    (result: ProgrammingExercise) => {
-                        importBaseRoute.push(result.id);
-                        this.router.navigate(importBaseRoute);
+        const importModalRef = this.modalService.open(ExerciseImportWrapperComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        importModalRef.componentInstance.exerciseType = exerciseType;
+        importModalRef.result.then((result: Exercise) => {
+            if (result.id) {
+                importBaseRoute.push('import', result.id);
+                this.router.navigate(importBaseRoute);
+            } else {
+                // we know it must be a programming exercise, because only programming exercises can be imported from a file
+                importBaseRoute.push('import-from-file');
+                this.router.navigate(importBaseRoute, {
+                    state: {
+                        programmingExerciseForImportFromFile: result,
                     },
-                    () => {},
-                );
-                break;
-            case ExerciseType.TEXT:
-                const textImportModalRef = this.modalService.open(TextExerciseImportComponent, {
-                    size: 'lg',
-                    backdrop: 'static',
                 });
-                textImportModalRef.result.then(
-                    (result: TextExercise) => {
-                        importBaseRoute.push(result.id);
-                        this.router.navigate(importBaseRoute);
-                    },
-                    () => {},
-                );
-                break;
-            case ExerciseType.QUIZ:
-                const quizImportModalRef = this.modalService.open(QuizExerciseImportComponent, {
-                    size: 'lg',
-                    backdrop: 'static',
-                });
-                quizImportModalRef.result.then(
-                    (result: QuizExercise) => {
-                        importBaseRoute.push(result.id);
-                        this.router.navigate(importBaseRoute);
-                    },
-                    () => {},
-                );
-                break;
-            case ExerciseType.MODELING:
-                const modelingImportModalRef = this.modalService.open(ModelingExerciseImportComponent, {
-                    size: 'lg',
-                    backdrop: 'static',
-                });
-                modelingImportModalRef.result.then(
-                    (result: ModelingExercise) => {
-                        importBaseRoute.push(result.id);
-                        this.router.navigate(importBaseRoute);
-                    },
-                    () => {},
-                );
-                break;
-        }
+            }
+        });
     }
 
     /**

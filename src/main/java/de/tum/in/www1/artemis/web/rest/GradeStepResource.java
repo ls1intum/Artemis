@@ -14,7 +14,9 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
@@ -42,14 +44,21 @@ public class GradeStepResource {
 
     private final UserRepository userRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
+            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -73,7 +82,7 @@ public class GradeStepResource {
      * GET /courses/{courseId}/exams/{examId}/grading-scale/grade-steps : Find all grade steps for the grading scale of an exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
@@ -89,7 +98,7 @@ public class GradeStepResource {
         if (!isInstructor && !exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints(), exam.getTitle());
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getExamMaxPoints(), exam.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
     }
 
@@ -98,13 +107,14 @@ public class GradeStepResource {
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints);
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
+                gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
     }
 
     /**
      * GET /courses/{courseId}/grading-scale/grade-steps/{gradeStepId} : Find a grade step for the grading scale of a course by ID
      *
-     * @param courseId the course to which the grading scale belongs
+     * @param courseId    the course to which the grading scale belongs
      * @param gradeStepId the grade step within the grading scale
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
@@ -122,8 +132,8 @@ public class GradeStepResource {
     /**
      * GET /courses/{courseId}/grading-scale/exams/{examId}/grade-steps/{gradeStepId} : Find a grade step for the grading scale of a course
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param courseId    the course to which the exam belongs
+     * @param examId      the exam to which the grading scale belongs
      * @param gradeStepId the grade step within the grading scale
      * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
      */
@@ -141,7 +151,7 @@ public class GradeStepResource {
     /**
      * GET /courses/{courseId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
      *
-     * @param courseId the course to which the grading scale belongs
+     * @param courseId        the course to which the grading scale belongs
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
@@ -150,21 +160,35 @@ public class GradeStepResource {
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        if (gradingScale.isEmpty()) {
+        Optional<GradingScale> optionalGradingScale = gradingScaleRepository.findByCourseId(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (optionalGradingScale.isEmpty()) {
             return ResponseEntity.ok(null);
         }
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
-        GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
+        GradingScale gradingScale = optionalGradingScale.get();
+        GradeStep gradeStep;
+        if (!studentParticipationRepository.existsByCourseIdAndStudentId(courseId, user.getId())) {
+            gradeStep = new GradeStep();
+            gradeStep.setGradeName(gradingScale.getNoParticipationGradeOrDefault());
+        }
+        else if (plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, user.getId()).stream()
+                .anyMatch(plagiarismCase -> PlagiarismVerdict.PLAGIARISM.equals(plagiarismCase.getVerdict()))) {
+            gradeStep = new GradeStep();
+            gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());
+        }
+        else {
+            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        }
+        GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradingScale.getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }
 
     /**
      * GET /courses/{courseId}/exams/{examId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param courseId        the course to which the exam belongs
+     * @param examId          the exam to which the grading scale belongs
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */

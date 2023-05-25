@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -14,10 +13,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
@@ -29,16 +28,10 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    private final UserRepository userRepository;
-
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+    public RepositoryService(GitService gitService) {
         this.gitService = gitService;
-        this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -79,6 +72,26 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    /**
+     * Deletes all content in the repository except the .git folder
+     *
+     * @param repository the repository the content should be deleted from
+     **/
+    public void deleteAllContentInRepository(Repository repository) throws IOException {
+        try (var content = Files.list(repository.getLocalPath())) {
+            content.filter(path -> !".git".equals(path.getFileName().toString())).forEach(path -> {
+                try {
+                    FileSystemUtils.deleteRecursively(path);
+                }
+                catch (IOException e) {
+                    log.error("Error while deleting file {}", path, e);
+                }
+            });
+        }
+        // invalidate cache
+        repository.setContent(null);
     }
 
     /**
@@ -125,7 +138,7 @@ public class RepositoryService {
      * Gets the files of the repository and checks whether they were changed during a student participation.
      * Compares the files from the students' repository with the files of the template repository.
      *
-     * @param repository the students' repository with possibly new files and changed files
+     * @param repository         the students' repository with possibly new files and changed files
      * @param templateRepository the template repository with default files on which the student started working on
      * @return a map of files with the information if they were changed/are new.
      */
@@ -164,8 +177,8 @@ public class RepositoryService {
     /**
      * Create a file in a repository.
      *
-     * @param repository in which the file should be created.
-     * @param filename of the file to be created.
+     * @param repository  in which the file should be created.
+     * @param filename    of the file to be created.
      * @param inputStream byte representation of the file to be created.
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
@@ -191,8 +204,8 @@ public class RepositoryService {
     /**
      * Create a folder in a repository.
      *
-     * @param repository in which the folder should be created.
-     * @param folderName of the folder to be created.
+     * @param repository  in which the folder should be created.
+     * @param folderName  of the folder to be created.
      * @param inputStream byte representation of the folder to be created.
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
@@ -210,10 +223,10 @@ public class RepositoryService {
      * Rename a file in a repository.
      *
      * @param repository in which the file is located.
-     * @param fileMove dto for describing the old and the new filename.
-     * @throws FileNotFoundException if the file to rename is not available.
+     * @param fileMove   dto for describing the old and the new filename.
+     * @throws FileNotFoundException      if the file to rename is not available.
      * @throws FileAlreadyExistsException if the new filename is already taken.
-     * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
+     * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Optional<File> existingFile = gitService.getFileByName(repository, fileMove.currentFilePath());
@@ -242,9 +255,9 @@ public class RepositoryService {
      * Delete a file in a repository.
      *
      * @param repository in which the file to delete is located.
-     * @param filename to delete.
-     * @throws IOException if the file can't be deleted.
-     * @throws FileNotFoundException if the file can't be found.
+     * @param filename   to delete.
+     * @throws IOException              if the file can't be deleted.
+     * @throws FileNotFoundException    if the file can't be found.
      * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
@@ -279,7 +292,7 @@ public class RepositoryService {
      * Commit all staged and un-staged changes in the given repository.
      *
      * @param repository for which to execute the commit.
-     * @param user the user who has committed the changes in the online editor
+     * @param user       the user who has committed the changes in the online editor
      * @throws GitAPIException if the staging/committing process fails.
      */
     public void commitChanges(Repository repository, User user) throws GitAPIException {
@@ -310,45 +323,5 @@ public class RepositoryService {
     public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
         return gitService.isClean(repository);
-    }
-
-    /**
-     * Retrieve a repository by its name.
-     *
-     * @param exercise to which the repository belongs.
-     * @param repoUrl of the repository on the server.
-     * @param pullOnCheckout if true pulls after checking out the git repository.
-     * @return the repository if available.
-     * @throws GitAPIException if the repository can't be checked out.
-     * @throws IllegalAccessException if the user does not have access to the repository.
-     */
-    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout) throws IllegalAccessException, GitAPIException {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        if (!hasPermissions) {
-            throw new IllegalAccessException();
-        }
-        return gitService.getOrCheckoutRepository(repoUrl, pullOnCheckout);
-    }
-
-    /**
-     * Retrieve a repository by its name.
-     *
-     * @param principal entity used for permission checking.
-     * @param exercise to which the repository belongs.
-     * @param repoUrl of the repository on the server.
-     * @return the repository if available.
-     * @throws GitAPIException if the repository can't be checked out.
-     * @throws IllegalAccessException if the user does not have access to the repository.
-     */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl) throws IllegalAccessException, GitAPIException {
-        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastEditorInCourse(course, user);
-        if (!hasPermissions) {
-            throw new IllegalAccessException();
-        }
-        return gitService.getOrCheckoutRepository(repoUrl, true);
     }
 }

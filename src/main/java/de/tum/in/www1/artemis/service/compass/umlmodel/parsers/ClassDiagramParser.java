@@ -23,8 +23,8 @@ public class ClassDiagramParser {
      * Create a UML class diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a class
      * diagram containing these UML model elements.
      *
-     * @param modelElements the model elements as JSON array
-     * @param relationships the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON array
+     * @param relationships     the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML class diagram containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
@@ -83,8 +83,8 @@ public class ClassDiagramParser {
     /**
      * Parses the given JSON representation of a UML class to a UMLClass Java object.
      *
-     * @param classType the type of the UML class
-     * @param classJson the JSON object containing the UML class
+     * @param classType     the type of the UML class
+     * @param classJson     the JSON object containing the UML class
      * @param modelElements a JSON array containing all the model elements of the corresponding UML class diagram as JSON objects
      * @param umlPackageMap a map containing all the packages of the corresponding UML class diagram
      * @return the UMLClass object parsed from the JSON object
@@ -116,8 +116,8 @@ public class ClassDiagramParser {
      * Parses the given JSON representation of a UML relationship to a UMLRelationship Java object.
      *
      * @param relationshipJson the JSON object containing the relationship
-     * @param classMap a map containing all classes of the corresponding class diagram, necessary for assigning source and target element of the relationships
-     * @param packageMap the package map contains all packages of the diagram
+     * @param classMap         a map containing all classes of the corresponding class diagram, necessary for assigning source and target element of the relationships
+     * @param packageMap       the package map contains all packages of the diagram
      * @return the UMLRelationship object parsed from the JSON object
      * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
      */
@@ -160,7 +160,7 @@ public class ClassDiagramParser {
     /**
      * Finds the ids of attributes in JSON representation of model and matches them to elements in map and returns the list of UMLAttribute Java objects
      *
-     * @param classJson the json representation of model
+     * @param classJson      the json representation of model
      * @param jsonElementMap map of element ids and elements in the model
      * @return the list of UMLAttribute java objects
      */
@@ -177,7 +177,7 @@ public class ClassDiagramParser {
     /**
      * Finds the ids of methods in JSON representation of model and matches them to elements in map and returns the list of UMLMethod Java objects
      *
-     * @param objectJson the json representation of model
+     * @param objectJson     the json representation of model
      * @param jsonElementMap map of element ids and elements in the model
      * @return the list of UMLMethod Java objects
      */

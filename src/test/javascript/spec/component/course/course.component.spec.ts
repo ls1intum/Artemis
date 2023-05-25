@@ -1,4 +1,5 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -7,14 +8,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -33,6 +33,8 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -64,7 +66,7 @@ const activeQuiz: QuizExercise = {
     id: 8,
     isActiveQuiz: true,
     quizMode: QuizMode.SYNCHRONIZED,
-    participationStatus: ParticipationStatus.QUIZ_ACTIVE,
+    studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: false,
     studentAssignedTeamIdComputed: false,
@@ -99,11 +101,12 @@ describe('CoursesComponent', () => {
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
     let courseService: CourseManagementService;
-    let courseScoreCalculationService: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
     let serverDateService: ArtemisServerDateService;
     let exerciseService: ExerciseService;
     let router: Router;
     let location: Location;
+    let httpMock: HttpTestingController;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
@@ -136,15 +139,16 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-                router = TestBed.inject(Router);
                 location = TestBed.inject(Location);
                 TestBed.inject(GuidedTourService);
-                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
                 TestBed.inject(AlertService);
                 exerciseService = TestBed.inject(ExerciseService);
+                httpMock = TestBed.inject(HttpTestingController);
                 fixture.detectChanges();
             });
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
@@ -163,7 +167,6 @@ describe('CoursesComponent', () => {
 
         it('should load courses on init', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
             const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
             const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
             findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
@@ -174,10 +177,22 @@ describe('CoursesComponent', () => {
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
             expect(component.courses).toEqual(courses);
-            expect(courseScoreCalculationServiceSpy).toHaveBeenCalledOnce();
             expect(component.exams).toEqual([exam1, exam2]);
             expect(component.nextRelevantExams).toHaveLength(1);
             expect(component.nextRelevantExams?.[0]).toEqual(exam1);
+        });
+
+        it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
+            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
+
+            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-dashboard` });
+            component.ngOnInit();
+
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            req.flush(null);
+            expect(component.courses).toBeUndefined();
+            expect(courseStorageServiceSpy).toHaveBeenCalledOnceWith(undefined);
         });
 
         it('should load exercises on init', () => {
@@ -271,7 +286,6 @@ describe('CoursesComponent', () => {
         const coursesWithTestExam = [course1, course2, course6];
 
         const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-        const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
         const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
         const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
         findAllForDashboardSpy.mockReturnValue(
@@ -290,7 +304,6 @@ describe('CoursesComponent', () => {
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
         expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
         expect(component.courses).toEqual(coursesWithTestExam);
-        expect(courseScoreCalculationServiceSpy).toHaveBeenCalledOnce();
         expect(component.exams).toEqual([exam1, exam2, testExam1]);
         expect(component.nextRelevantExams).toEqual([exam1]);
     }));

@@ -21,7 +21,7 @@
                         <span *ngIf="exerciseCount === 0">Exercises: {{ exerciseCount }}</span>
                         <a *ngIf="exerciseCount > 0" [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
 
-                        <span [jhiProfileToggleHide]="eProfileToggle.LECTURE">
+                        <span [jhiProfileToggleHide]="ProfileToggle.LECTURE">
                             <span *ngIf="lectureCount === 0">Lectures: {{ lectureCount }}</span>
                             <a *ngIf="lectureCount > 0" [routerLink]="['/courses', course.id!, 'lectures']">Lectures: {{ lectureCount }}</a>
                         </span>

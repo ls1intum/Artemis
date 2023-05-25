@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for stale PRs
-        uses: actions/stale@v6
+        uses: actions/stale@v8
         with:
           days-before-stale: 7
           days-before-close: 14
@@ -18,6 +18,7 @@ jobs:
           remove-stale-when-updated: true
           stale-pr-label: "stale"
           exempt-pr-labels: "no-stale"
+          labels-to-remove-when-stale: "ready for review, ready to merge"
           stale-pr-message: >
             There hasn't been any activity on this pull request recently. 
             Therefore, this pull request has been automatically marked as stale

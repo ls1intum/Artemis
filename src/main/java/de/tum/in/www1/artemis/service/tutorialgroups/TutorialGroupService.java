@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResour
 import static javax.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -52,9 +54,14 @@ public class TutorialGroupService {
 
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
+    private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
+    private final ConversationDTOService conversationDTOService;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
-            TutorialGroupSessionRepository tutorialGroupSessionRepository) {
+            TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            ConversationDTOService conversationDTOService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -62,6 +69,8 @@ public class TutorialGroupService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.courseRepository = courseRepository;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
+        this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.conversationDTOService = conversationDTOService;
     }
 
     /**
@@ -95,7 +104,45 @@ public class TutorialGroupService {
         else {
             tutorialGroup.setTeachingAssistantName(null);
         }
+
+        var channel = tutorialGroupChannelManagementService.getTutorialGroupChannel(tutorialGroup);
+        channel.ifPresent(value -> tutorialGroup.setChannel(conversationDTOService.convertChannelToDto(user, value)));
+
         this.setNextSession(tutorialGroup);
+        this.setAverageAttendance(tutorialGroup);
+    }
+
+    /**
+     * Sets the averageAttendance transient field of the given tutorial group
+     * <p>
+     * Calculation:
+     * <ul>
+     * <li>Get set of the last three completed sessions (or less than three if not more available)</li>
+     * <li>Remove sessions without attendance data (null) from the set</li>
+     * <li>If set is empty, set attendance average of tutorial group to null (meaning could not be determined)</li>
+     * <li>If set is non empty, set the attendance average of the tutorial group to the arithmetic mean (rounded to integer)</li>
+     * </ul>
+     *
+     * @param tutorialGroup the tutorial group to set the averageAttendance for
+     */
+    private void setAverageAttendance(TutorialGroup tutorialGroup) {
+        Collection<TutorialGroupSession> sessions;
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+            sessions = tutorialGroup.getTutorialGroupSessions();
+        }
+        else {
+            sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
+        }
+        sessions.stream()
+                .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
+                        && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
+                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
+                .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
+                .ifPresentOrElse(value -> {
+                    tutorialGroup.setAverageAttendance((int) Math.round(value));
+                }, () -> {
+                    tutorialGroup.setAverageAttendance(null);
+                });
     }
 
     /**
@@ -107,8 +154,10 @@ public class TutorialGroupService {
         Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
             // determine the next session
+            // we show currently running sessions and up to 30 minutes after the end of the session so that students can still join and tutors can easily update the attendance of
+            // the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
-                    .filter(session -> session.getStart().isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
+                    .filter(session -> session.getEnd().plus(30, ChronoUnit.MINUTES).isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
         }
         else {
             var nextSessions = tutorialGroupSessionRepository.findNextSessionsOfStatus(tutorialGroup.getId(), ZonedDateTime.now(), TutorialGroupSessionStatus.ACTIVE);
@@ -129,6 +178,8 @@ public class TutorialGroupService {
 
     /**
      * Deregister a student from a tutorial group.
+     * <p>
+     * In addition, also removes the students from the respective tutorial group channel if it exists.
      *
      * @param student          The student to deregister.
      * @param tutorialGroup    The tutorial group to deregister from.
@@ -139,21 +190,27 @@ public class TutorialGroupService {
         Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
                 student, registrationType);
         if (existingRegistration.isEmpty()) {
+            // we still need to make sure the user is also already removed from the channel
+            tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
             return; // No registration found, nothing to do.
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
         singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
-        if (!Objects.isNull(tutorialGroup.getTeachingAssistant()) && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
+        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
         }
+        tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
-    public void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
+    private void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
         tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
+        tutorialGroupChannelManagementService.removeUsersFromAllTutorialGroupChannelsInCourse(course, students);
     }
 
     /**
      * Register a student to a tutorial group.
+     * <p>
+     * In addition, also adds the student to the respective tutorial group channel if it exists.
      *
      * @param student          The student to register.
      * @param tutorialGroup    The tutorial group to register to.
@@ -164,14 +221,17 @@ public class TutorialGroupService {
         Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
                 student, registrationType);
         if (existingRegistration.isPresent()) {
+            // we still need to make sure the user is also already added to the channel
+            tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
             return; // Registration already exists, nothing to do.
         }
         TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
         tutorialGroupRegistrationRepository.save(newRegistration);
         singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-        if (!Objects.isNull(tutorialGroup.getTeachingAssistant()) && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
+        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
         }
+        tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
     private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser,
@@ -188,14 +248,17 @@ public class TutorialGroupService {
                 singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
             }
 
-            if (!Objects.isNull(tutorialGroup.getTeachingAssistant()) && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
+            if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
                 singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, studentsToRegister, responsibleUser);
             }
         }
+        tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, students);
     }
 
     /**
      * Register multiple students to a tutorial group.
+     * <p>
+     * In addition, also adds the students to the respective tutorial group channel if it exists.
      *
      * @param tutorialGroup    the tutorial group to register the students for
      * @param studentDTOs      The students to register.
@@ -231,12 +294,17 @@ public class TutorialGroupService {
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
      *
      * <ul>
-     *     <li> Only title -> Create Tutorial Group with the given title if it not exists
-     *     <li> Title and student -> Create Tutorial Group with given title if not exists AND register student.
-     *     <ul>
-     *         <li> If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
-     *     </ul>
+     * <li>Only title -> Create Tutorial Group with the given title if it not exists
+     * <li>Title and student -> Create Tutorial Group with given title if not exists AND register student.
+     * <ul>
+     * <li>If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
      * </ul>
+     * </ul>
+     *
+     * <p>
+     *
+     * In addition, the students will be added to the tutorial group channel if it exists.
+     *
      *
      * @param course        The course to import the registrations for.
      * @param registrations The registrations to import.
@@ -332,7 +400,7 @@ public class TutorialGroupService {
                     tutorialGroup.setTitle(title);
                     tutorialGroup.setCourse(course);
                     // default values for the tutorial group
-                    tutorialGroup.setLanguage(Language.GERMAN);
+                    tutorialGroup.setLanguage(Language.GERMAN.name());
                     tutorialGroup.setCapacity(1);
                     tutorialGroup.setTeachingAssistant(requestingUser);
                     tutorialGroup.setIsOnline(false);
@@ -342,6 +410,11 @@ public class TutorialGroupService {
 
         var tutorialGroupsMentionedInRegistrations = new HashSet<>(foundTutorialGroups);
         tutorialGroupsMentionedInRegistrations.addAll(tutorialGroupRepository.saveAll(tutorialGroupsToCreate));
+
+        tutorialGroupsMentionedInRegistrations.forEach(tutorialGroup -> {
+            tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+        });
+
         return tutorialGroupsMentionedInRegistrations;
     }
 

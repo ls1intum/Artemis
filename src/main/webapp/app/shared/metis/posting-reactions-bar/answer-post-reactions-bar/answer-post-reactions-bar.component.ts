@@ -11,6 +11,9 @@ import { MetisService } from 'app/shared/metis/metis.service';
     styleUrls: ['../posting-reactions-bar.component.scss'],
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
+    @Input()
+    isReadOnlyMode = false;
+
     @Input() isLastAnswer = false;
     // Icons
     farSmile = faSmile;

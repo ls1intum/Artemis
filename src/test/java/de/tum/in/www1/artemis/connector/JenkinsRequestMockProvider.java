@@ -5,15 +5,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
@@ -28,20 +26,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
@@ -78,6 +73,8 @@ public class JenkinsRequestMockProvider {
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private AutoCloseable closeable;
+
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -94,12 +91,19 @@ public class JenkinsRequestMockProvider {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
         shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
         this.jenkinsServer = jenkinsServer;
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    public void reset() {
-        mockServer.reset();
-        shortTimeoutMockServer.reset();
+    public void reset() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        if (mockServer != null) {
+            mockServer.reset();
+        }
+        if (shortTimeoutMockServer != null) {
+            shortTimeoutMockServer.reset();
+        }
     }
 
     /**
@@ -115,16 +119,15 @@ public class JenkinsRequestMockProvider {
             doThrow(IOException.class).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
         }
         else {
-            doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+            doReturn(null).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
         }
     }
 
     public void mockCreateBuildPlan(String projectKey, String planKey, boolean jobAlreadyExists) throws IOException {
-        var jobFolder = projectKey;
-        var job = jobFolder + "-" + planKey;
-        mockCreateJobInFolder(jobFolder, job, jobAlreadyExists);
-        mockGivePlanPermissions(jobFolder, job);
-        mockTriggerBuild(jobFolder, job, false);
+        var job = projectKey + "-" + planKey;
+        mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
+        mockGivePlanPermissions(projectKey, job);
+        mockTriggerBuild(projectKey, job, false);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
@@ -136,7 +139,7 @@ public class JenkinsRequestMockProvider {
         }
         else {
             doReturn(null).when(jenkinsServer).getJob(any(FolderJob.class), eq(job));
-            doNothing().when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
         }
     }
 
@@ -144,7 +147,7 @@ public class JenkinsRequestMockProvider {
         mockGetJobConfig(jobFolder, job);
         mockUpdateJob(jobFolder, job);
         mockGetFolderConfig(jobFolder);
-        doNothing().when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
+        doReturn(null).when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
     }
 
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
@@ -165,17 +168,17 @@ public class JenkinsRequestMockProvider {
         if (folderName != null && !folderName.isEmpty()) {
             doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
             mockGetFolderJob(folderName, new FolderJob());
-            doNothing().when(jenkinsServer).updateJob(any(FolderJob.class), eq(jobName), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).updateJob(any(FolderJob.class), eq(jobName), anyString(), eq(useCrumb));
         }
         else {
-            doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
         }
     }
 
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
         var jobOrNull = exists ? mock(JobWithDetails.class) : null;
         if (jobOrNull != null) {
-            doReturn("http://some-job-url.com/").when(jobOrNull).getUrl();
+            doReturn("https://some-job-url.com").when(jobOrNull).getUrl();
         }
 
         if (shouldFail) {
@@ -205,7 +208,7 @@ public class JenkinsRequestMockProvider {
         mockGetFolderJob(targetProjectKey, new FolderJob());
         // copyBuildPlan uses #createJobInFolder()
         doReturn(null).when(jenkinsServer).getJob(any(), anyString());
-        doNothing().when(jenkinsServer).createJob(any(), anyString(), anyString(), eq(useCrumb));
+        doReturn(null).when(jenkinsServer).createJob(any(), anyString(), anyString(), eq(useCrumb));
     }
 
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
@@ -264,10 +267,10 @@ public class JenkinsRequestMockProvider {
         mockCopyBuildPlan(projectKey, projectKey);
     }
 
-    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
+    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean shouldFail) throws IOException {
         final var folder = new FolderJob();
         mockGetFolderJob(projectKey, folder);
-        if (!getJobFails) {
+        if (!shouldFail) {
             doReturn(jobToReturn).when(jenkinsServer).getJob(folder, jobName);
         }
         else {
@@ -278,54 +281,7 @@ public class JenkinsRequestMockProvider {
     public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
-        doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
-    }
-
-    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation, boolean useLegacyLogs) throws IOException {
-        String projectKey = participation.getProgrammingExercise().getProjectKey();
-        String buildPlanId = participation.getBuildPlanId();
-
-        final var job = mock(JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, job, false);
-
-        final var build = mock(Build.class);
-        doReturn(build).when(job).getLastBuild();
-
-        final var buildWithDetails = mock(BuildWithDetails.class);
-        doReturn(buildWithDetails).when(build).details();
-
-        if (useLegacyLogs) {
-            doReturn(null).when(buildWithDetails).getConsoleOutputText();
-            String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
-            doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
-        }
-        else {
-            File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
-            try (var lines = Files.lines(file.toPath())) {
-                String result = lines.collect(Collectors.joining("\n"));
-                doReturn(result).when(buildWithDetails).getConsoleOutputText();
-            }
-        }
-        return buildWithDetails;
-
-    }
-
-    public void mockGetLegacyBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
-        String projectKey = participation.getProgrammingExercise().getProjectKey();
-        String buildPlanId = participation.getBuildPlanId();
-
-        final var job = mock(JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, job, false);
-
-        final var build = mock(Build.class);
-        doReturn(build).when(job).getLastBuild();
-
-        final var buildWithDetails = mock(BuildWithDetails.class);
-        doReturn(buildWithDetails).when(build).details();
-
-        String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
-        doReturn(htmlString).when(buildWithDetails).getConsoleOutputText();
-        doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
+        doReturn(Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
     }
 
     public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins)
@@ -427,7 +383,7 @@ public class JenkinsRequestMockProvider {
                     doThrow(IOException.class).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
                 }
                 else {
-                    doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                    doReturn(null).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
                 }
             }
         }
@@ -474,7 +430,7 @@ public class JenkinsRequestMockProvider {
             doThrow(IOException.class).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
         }
         else {
-            doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
         }
     }
 
@@ -484,7 +440,7 @@ public class JenkinsRequestMockProvider {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
         else {
-            doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+            doReturn(null).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
     }
 
@@ -503,7 +459,7 @@ public class JenkinsRequestMockProvider {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
         }
         else {
-            doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
+            doReturn(null).when(jenkinsServer).deleteJob(projectKey, useCrumb);
         }
     }
 
@@ -538,9 +494,9 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldfail) throws IOException {
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) throws IOException {
         var toReturn = buildPlanExists ? new JobWithDetails() : null;
-        mockGetJob(projectKey, buildPlanId, toReturn, shouldfail);
+        mockGetJob(projectKey, buildPlanId, toReturn, shouldFail);
     }
 
     public void mockTriggerBuild(String projectKey, String buildPlanId, boolean triggerBuildFails) throws IOException {

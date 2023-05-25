@@ -24,8 +24,8 @@ public class ComponentDiagramParser {
      * Create a UML component diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
      * component diagram containing these UML model elements.
      *
-     * @param modelElements the model elements as JSON array
-     * @param relationships the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON array
+     * @param relationships     the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML component diagram containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
@@ -76,7 +76,7 @@ public class ComponentDiagramParser {
     /**
      * Parses the given JSON representation of a UML component interface to a UMLComponentInterface Java object.
      *
-     * @param relationshipJson the JSON object containing the component interface
+     * @param relationshipJson  the JSON object containing the component interface
      * @param allUmlElementsMap the JSON object containing the component interface
      * @return the UMLComponentInterface object parsed from the JSON object
      */
@@ -127,7 +127,7 @@ public class ComponentDiagramParser {
     /**
      * Finds the owner element of relationship and sets parent of relationship to that element
      *
-     * @param allUmlElementsMap map of uml elements and ids to find owner element
+     * @param allUmlElementsMap  map of uml elements and ids to find owner element
      * @param ownerRelationships map of uml elements and ids of their owners
      * @return the UMLComponent object parsed from the JSON object
      */
@@ -144,8 +144,8 @@ public class ComponentDiagramParser {
      * Gets the owner id from element's json object and puts it into a relationship map
      *
      * @param ownerRelationships map of uml relationship elements and their ids
-     * @param jsonObject json representation of element
-     * @param umlElement uml element
+     * @param jsonObject         json representation of element
+     * @param umlElement         uml element
      * @return the UMLComponent object parsed from the JSON object
      */
     protected static void findOwner(Map<UMLElement, String> ownerRelationships, JsonObject jsonObject, UMLElement umlElement) {

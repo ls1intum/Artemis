@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +16,7 @@ class ShortAnswerSubmittedTextTest {
     private ShortAnswerQuestion shortAnswerQuestion;
 
     /**
-     * @func init
-     * @desc initialize attributes for test cases
+     * initialize attributes for test cases
      */
     @BeforeEach
     void init() {
@@ -29,8 +28,8 @@ class ShortAnswerSubmittedTextTest {
     }
 
     /**
-     * @func testSubmissionWithMatchingLetterCaseAndExactMatching
-     * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and letter case matching
+     * testSubmissionWithMatchingLetterCaseAndExactMatching
+     * tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and letter case matching
      */
     @Test
     void testSubmissionWithMatchingLetterCaseAndExactMatching() {
@@ -38,22 +37,13 @@ class ShortAnswerSubmittedTextTest {
         shortAnswerQuestion.setSimilarityValue(100);
 
         String solution = "Example solution";
-
-        boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution);
-
-        assertTrue(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution)).isTrue();
 
         solution = "Exampl slution";
-
-        observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution);
-
-        assertFalse(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution)).isFalse();
 
         solution = "example solution";
-
-        observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution);
-
-        assertFalse(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution)).isFalse();
     }
 
     /**
@@ -66,22 +56,13 @@ class ShortAnswerSubmittedTextTest {
         shortAnswerQuestion.setSimilarityValue(100);
 
         String solution = "Example solution";
-
-        boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution);
-
-        assertTrue(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution)).isTrue();
 
         solution = "Exampl slution";
-
-        observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution);
-
-        assertFalse(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution)).isFalse();
 
         solution = "example solution";
-
-        observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution);
-
-        assertTrue(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solution", solution)).isTrue();
     }
 
     /**
@@ -94,21 +75,12 @@ class ShortAnswerSubmittedTextTest {
         shortAnswerQuestion.setSimilarityValue(70);
 
         String solution = "Example solution";
-
-        boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Example solut", solution);
-
-        assertTrue(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Example solut", solution)).isTrue();
 
         solution = "Exampl slution";
-
-        observed = shortAnswerSubmittedText.isSubmittedTextCorrect("Exmple soluton", solution);
-
-        assertTrue(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("Exmple soluton", solution)).isTrue();
 
         solution = "example solution";
-
-        observed = shortAnswerSubmittedText.isSubmittedTextCorrect("random text", solution);
-
-        assertFalse(observed);
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("random text", solution)).isFalse();
     }
 }

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,13 +11,13 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { SortService } from 'app/shared/service/sort.service';
-import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -115,12 +116,10 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     callback() {}
 
     openImportModal() {
-        const modalRef = this.modalService.open(ModelingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: ModelingExercise) => {
-                this.router.navigate(['course-management', this.courseId, 'modeling-exercises', result.id, 'import']);
-            },
-            () => {},
-        );
+        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseType = ExerciseType.MODELING;
+        modalRef.result.then((result: ModelingExercise) => {
+            this.router.navigate(['course-management', this.courseId, 'modeling-exercises', result.id, 'import']);
+        });
     }
 }

@@ -19,8 +19,8 @@ public class ExamPrepareExercisesTestUtil {
      * watching responses from the status endpoint. Will fail after one minute if the process doesn't finish.
      *
      * @param requestUtilService the request util service
-     * @param exam the exam
-     * @param course the course of the exam
+     * @param exam               the exam
+     * @param course             the course of the exam
      * @return the number of generated participations
      * @throws Exception potentially an exception from the request util service
      */

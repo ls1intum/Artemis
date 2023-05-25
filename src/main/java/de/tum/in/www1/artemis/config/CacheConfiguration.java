@@ -20,7 +20,6 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
@@ -50,8 +49,6 @@ public class CacheConfiguration {
 
     private final ApplicationContext applicationContext;
 
-    private final Environment env;
-
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
@@ -64,11 +61,10 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext, Environment env) {
+    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext) {
         this.serverProperties = serverProperties;
         this.discoveryClient = discoveryClient;
         this.applicationContext = applicationContext;
-        this.env = env;
     }
 
     @Autowired(required = false) // ok
@@ -90,6 +86,7 @@ public class CacheConfiguration {
 
     /**
      * Setup the hazelcast instance based on the given jHipster properties and the enabled spring profiles.
+     *
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
      */
@@ -114,7 +111,6 @@ public class CacheConfiguration {
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
-        config.setMemberAttributeConfig(getMemberAttributeConfig());
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
@@ -216,12 +212,5 @@ public class CacheConfiguration {
         MapConfig mapConfig = new MapConfig();
         mapConfig.setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
         return mapConfig;
-    }
-
-    private MemberAttributeConfig getMemberAttributeConfig() {
-        MemberAttributeConfig memberAttributeConfig = new MemberAttributeConfig();
-        memberAttributeConfig.setAttribute("profiles", String.join(",", env.getActiveProfiles()));
-
-        return memberAttributeConfig;
     }
 }

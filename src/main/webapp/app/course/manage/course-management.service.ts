@@ -5,15 +5,13 @@ import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { User } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
-import { SubjectObservablePair } from 'app/utils/rxjs.utils';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
@@ -23,26 +21,33 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
+export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
+
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
-
-    private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
+    private resourceUrl = 'api/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
+
     private fetchingCoursesForNotifications = false;
 
     constructor(
         private http: HttpClient,
+        private courseStorageService: CourseStorageService,
         private lectureService: LectureService,
         private accountService: AccountService,
         private entityTitleService: EntityTitleService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private tutorialGroupsService: TutorialGroupsService,
+        private scoresStorageService: ScoresStorageService,
     ) {}
 
     /**
@@ -135,32 +140,65 @@ export class CourseManagementService {
      */
     findAllForDashboard(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
-        return this.http.get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+        return this.http.get<CourseForDashboardDTO[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CourseForDashboardDTO[]>) => {
+                if (res.body) {
+                    const courses: Course[] = [];
+                    res.body.forEach((courseForDashboardDTO) => {
+                        courses.push(courseForDashboardDTO.course);
+                        this.saveScoresInStorage(courseForDashboardDTO);
+                    });
+                    // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
+                    return res.clone({ body: courses });
+                }
+                return res;
+            }),
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
-            map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
+            tap((res: EntityArrayResponseType) => this.courseStorageService.setCourses(res.body !== null ? res.body : undefined)),
         );
     }
 
-    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' }).pipe(
+    /**
+     * finds one course using a GET request
+     * @param courseId the course to fetch
+     * @param userRefresh whether this is a user-initiated refresh (default: false)
+     */
+    findOneForDashboard(courseId: number, userRefresh = false): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        if (userRefresh) {
+            params = params.set('refresh', String(true));
+        }
+        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
+            map((res: HttpResponse<CourseForDashboardDTO>) => {
+                if (res.body) {
+                    const courseForDashboardDTO: CourseForDashboardDTO = res.body;
+                    this.saveScoresInStorage(courseForDashboardDTO);
+
+                    // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
+                    return res.clone({ body: courseForDashboardDTO.course });
+                }
+                return res;
+            }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)),
-            tap((res: EntityResponseType) => this.courseWasUpdated(res.body)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
         );
     }
 
-    courseWasUpdated(course: Course | null): void {
-        if (course) {
-            return this.courses.get(course.id!)?.subject.next(course);
-        }
-    }
+    saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {
+        // Save the total scores in the scores-storage.service.
+        this.scoresStorageService.setStoredTotalScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.totalScores);
 
-    getCourseUpdates(courseId: number): Observable<Course> {
-        if (!this.courses.has(courseId)) {
-            this.courses.set(courseId, new SubjectObservablePair());
-        }
-        return this.courses.get(courseId)!.observable;
+        const scoresPerExerciseType: ScoresPerExerciseType = new Map();
+        scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseForDashboardDTO.programmingScores);
+        scoresPerExerciseType.set(ExerciseType.MODELING, courseForDashboardDTO.modelingScores);
+        scoresPerExerciseType.set(ExerciseType.QUIZ, courseForDashboardDTO.quizScores);
+        scoresPerExerciseType.set(ExerciseType.TEXT, courseForDashboardDTO.textScores);
+        scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, courseForDashboardDTO.fileUploadScores);
+        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, scoresPerExerciseType);
+
+        // Save the participation results in the scores-storage.service.
+        this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
     }
 
     /**
@@ -185,15 +223,6 @@ export class CourseManagementService {
     }
 
     /**
-     * finds all courses that can be registered to
-     */
-    findAllToRegister(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
-    }
-
-    /**
      * returns the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
@@ -208,6 +237,24 @@ export class CourseManagementService {
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-assessment-dashboard`, { observe: 'response' });
+    }
+
+    /**
+     * finds all courses that can be registered to
+     */
+    findAllForRegistration(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
+    }
+
+    /**
+     * finds a single course that can be registered to (with limited information)
+     */
+    findOneForRegistration(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
@@ -329,6 +376,13 @@ export class CourseManagementService {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
     }
 
+    searchUsers(courseId: number, loginOrName: string, roles: RoleGroup[]): Observable<HttpResponse<UserPublicInfoDTO[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        httpParams = httpParams.append('roles', roles.join(','));
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/users/search`, { observe: 'response', params: httpParams });
+    }
+
     /**
      * Search for a student on the server by login or name in the specified course.
      * @param loginOrName The login or name to search for.
@@ -393,7 +447,7 @@ export class CourseManagementService {
      * @param courseGroup the course group into which the user should be added
      * @return studentDtos of users that were not found in the system.
      */
-    addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: String): Observable<HttpResponse<StudentDTO[]>> {
+    addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: string): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, studentDtos, { observe: 'response' });
     }
 
@@ -565,7 +619,7 @@ export class CourseManagementService {
     }
 
     /**
-     * Set the learning goals and prerequisites to an empty array if undefined
+     * Set the competencies and prerequisites to an empty array if undefined
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
@@ -589,24 +643,6 @@ export class CourseManagementService {
     private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             this.accountService.setAccessRightsForCourseAndReferencedExercises(res.body);
-        }
-        return res;
-    }
-
-    private setParticipationStatusForExercisesInCourse(res: EntityResponseType): EntityResponseType {
-        if (res.body?.exercises) {
-            res.body.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
-        }
-        return res;
-    }
-
-    private setParticipationStatusForExercisesInCourses(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.exercises) {
-                    course.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
-                }
-            });
         }
         return res;
     }

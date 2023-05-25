@@ -61,11 +61,14 @@ import { StudentExam } from 'app/entities/student-exam.model';
     styleUrls: ['navbar.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    readonly SERVER_API_URL = SERVER_API_URL;
-
     inProduction: boolean;
+    testServer: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
+    gitCommitId: string;
+    gitBranchName: string;
+    gitTimestamp: string;
+    gitUsername: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -108,7 +111,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
-    private lastRouteUrlSegment: string;
+    private lastRouteUrlSegment?: string;
 
     constructor(
         private loginService: LoginService,
@@ -177,7 +180,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
+                this.testServer = profileInfo.testServer ?? false;
                 this.openApiEnabled = profileInfo.openApiEnabled;
+                this.gitCommitId = profileInfo.git.commit.id.abbrev;
+                this.gitBranchName = profileInfo.git.branch;
+                this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
+                this.gitUsername = profileInfo.git.commit.user.name;
             }
         });
 
@@ -218,6 +226,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     breadcrumbTranslation = {
         new: 'global.generic.create',
+        process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
+        verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
         create: 'global.generic.create',
         start: 'global.generic.start',
         edit: 'global.generic.edit',
@@ -256,7 +266,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
-        goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
+        competency_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
         communication: 'artemisApp.metis.communication.label',
@@ -269,6 +279,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         quiz_statistic: 'artemisApp.quizExercise.statistics',
         quiz_point_statistic: 'artemisApp.quizExercise.statistics',
         import: 'artemisApp.exercise.import.table.doImport',
+        import_from_file: 'artemisApp.programmingExercise.importFromFile.title',
         plagiarism: 'artemisApp.plagiarism.plagiarismDetection',
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
@@ -299,6 +310,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         participant_scores: 'artemisApp.participantScores.pageTitle',
         course_statistics: 'statistics.course_statistics_title',
         grading_system: 'artemisApp.gradingSystem.title',
+        grading_key: 'artemisApp.gradingSystem.title',
         exercise_statistics: 'exercise-statistics.title',
         tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
         text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
@@ -314,6 +326,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+        privacy_statement: 'artemisApp.privacyStatement.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -321,10 +334,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
-        learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
+        competencies: 'artemisApp.courseOverview.menu.learningGoals',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
-        messages: 'artemisApp.messages.label',
+        messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
@@ -373,7 +386,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.lastRouteUrlSegment = segment;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            /* empty */
+        }
     }
 
     /**
@@ -431,6 +446,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-hints':
                 // obtain the exerciseId of the current path
                 // current path of form '/course-management/:courseId/exercises/:exerciseId/...
+
                 const exerciseId = currentPath.split('/')[4];
                 this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;
@@ -439,6 +455,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'lectures':
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
+                break;
+            case 'competencies':
+                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);
@@ -455,6 +474,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // This has to go in the future
                 this.addTranslationAsCrumb(currentPath, 'import');
                 break;
+            case 'import-from-file':
+                this.addTranslationAsCrumb(currentPath, 'import-from-file');
+                break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
@@ -464,7 +486,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addTranslationAsCrumb(currentPath, 'text-feedback-conflict');
                 break;
             // No breadcrumbs for those segments
-            case 'goal-management':
+            case 'competency-management':
             case 'unit-management':
             case 'exercise-groups':
             case 'student-exams':
@@ -514,6 +536,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'sa-question-statistic':
             case 'test-exam':
             case 'participate':
+            case 'overview':
                 break;
             case 'example-submissions':
                 // Hide example submission dashboard for non instructor users
@@ -538,7 +561,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
-                } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
+                } else if (this.lastRouteUrlSegment?.endsWith('-exercises') && segment === 'import') {
                     // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {

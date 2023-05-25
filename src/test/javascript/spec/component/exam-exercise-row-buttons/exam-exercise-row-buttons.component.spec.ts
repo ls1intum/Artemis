@@ -19,7 +19,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
@@ -56,7 +55,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(NgbTooltip), MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
+            declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
             providers: [
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),

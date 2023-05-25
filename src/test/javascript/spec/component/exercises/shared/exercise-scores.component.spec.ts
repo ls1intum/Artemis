@@ -1,53 +1,60 @@
-import { ArtemisTestModule } from '../../../test.module';
-import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { Subscription, of } from 'rxjs';
 import { NgModel } from '@angular/forms';
-import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
-import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { HttpResponse } from '@angular/common/http';
+import { Result } from 'app/entities/result.model';
+import { Submission } from 'app/entities/submission.model';
 import { Team } from 'app/entities/team.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
+import { ExerciseScoresComponent, FilterProp } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Range } from 'app/shared/util/utils';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { Subscription, of } from 'rxjs';
+import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { MockParticipationService } from '../../../helpers/mocks/service/mock-participation.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
+import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
     let fixture: ComponentFixture<ExerciseScoresComponent>;
     let resultService: ResultService;
+    let participationService: ParticipationService;
     let programmingSubmissionService: ProgrammingSubmissionService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
 
     const exercise: Exercise = {
         id: 1,
-        type: ExerciseType.TEXT,
+        type: ExerciseType.PROGRAMMING,
         numberOfAssessmentsOfCorrectionRounds: [],
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
@@ -75,16 +82,15 @@ describe('Exercise Scores Component', () => {
         ],
     };
 
-    const result = new Result();
     const participation: ProgrammingExerciseStudentParticipation = {
         buildPlanId: '1',
         userIndependentRepositoryUrl: 'url',
         participantIdentifier: 'participationId',
         participantName: 'participantName',
+        results: [{ assessmentType: AssessmentType.MANUAL }],
     };
-    result.participation = participation;
-    result.assessmentType = AssessmentType.MANUAL;
-    const resultsToFilter = [{ score: 3 }, { score: 11 }, { score: 22 }, { score: 33 }, { score: 44 }, { score: 55 }, { score: 66 }, { score: 77 }, { score: 88 }, { score: 99 }];
+    const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 99];
+    let participationsToFilter: Participation[];
     const filterRanges = [
         new Range(0, 10),
         new Range(10, 20),
@@ -104,6 +110,14 @@ describe('Exercise Scores Component', () => {
         params: of({ courseId: 1, exerciseId: 2 }),
         snapshot: { queryParamMap: { get: () => undefined } },
     } as any as ActivatedRoute;
+
+    beforeAll(() => {
+        participationsToFilter = scoresToFilter.map((score: number) => {
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.results = [{ score }];
+            return studentParticipation;
+        });
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -129,6 +143,7 @@ describe('Exercise Scores Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: ParticipationService, useClass: MockParticipationService },
             ],
         })
             .compileComponents()
@@ -136,6 +151,7 @@ describe('Exercise Scores Component', () => {
                 fixture = TestBed.createComponent(ExerciseScoresComponent);
                 component = fixture.componentInstance;
                 resultService = TestBed.inject(ResultService);
+                participationService = TestBed.inject(ParticipationService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 courseService = TestBed.inject(CourseManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
@@ -152,7 +168,9 @@ describe('Exercise Scores Component', () => {
     it('should be correctly set onInit', fakeAsync(() => {
         const findCourseSpy = jest.spyOn(courseService, 'find');
         const findExerciseSpy = jest.spyOn(exerciseService, 'find');
-        const getResultsMock = jest.spyOn(resultService, 'getResults').mockReturnValue(of(new HttpResponse<Result[]>({ body: resultsToFilter })));
+        const getParticipationsMock = jest
+            .spyOn(participationService, 'findAllParticipationsByExercise')
+            .mockReturnValue(of(new HttpResponse<Result[]>({ body: participationsToFilter })));
 
         component.ngOnInit();
         tick();
@@ -161,15 +179,15 @@ describe('Exercise Scores Component', () => {
         expect(findCourseSpy).toHaveBeenCalledWith(1);
         expect(findExerciseSpy).toHaveBeenCalledOnce();
         expect(findExerciseSpy).toHaveBeenCalledWith(2);
-        expect(getResultsMock).toHaveBeenCalledOnce();
-        expect(getResultsMock).toHaveBeenCalledWith({ id: 2 });
-        expect(component.filteredResults).toEqual(resultsToFilter);
+        expect(getParticipationsMock).toHaveBeenCalledOnce();
+        expect(getParticipationsMock).toHaveBeenCalledWith(2, true);
+        expect(component.filteredParticipations).toEqual(participationsToFilter);
+        expect(component.correctionRoundIndices).toEqual([0]);
     }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
-        const expectedLink = ['/course-management', course.id!.toString(), 'text-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
+        const expectedLink = ['/course-management', course.id!.toString(), 'programming-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
         component.course = course;
-        component.exercise = exercise;
 
         const returnedLink = component.getExerciseParticipationsLink(1);
 
@@ -177,9 +195,19 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should get exercise participation link for exercise with an exercise group', () => {
-        const expectedLink = ['/course-management', course.id!.toString(), 'exams', '1', 'exercise-groups', '1', 'text-exercises', exercise.id!.toString(), 'participations', '2'];
+        const expectedLink = [
+            '/course-management',
+            course.id!.toString(),
+            'exams',
+            '1',
+            'exercise-groups',
+            '1',
+            'programming-exercises',
+            exercise.id!.toString(),
+            'participations',
+            '2',
+        ];
         component.course = course;
-        component.exercise = exercise;
         component.exercise.exerciseGroup = {
             id: 1,
             exam: {
@@ -193,62 +221,40 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should update result', fakeAsync(() => {
-        component.updateResultFilter(component.FilterProp.SUCCESSFUL);
+        component.updateParticipationFilter(component.FilterProp.MANUAL);
 
         expect(component.isLoading).toBeTrue();
         tick();
-        expect(component.resultCriteria.filterProp).toBe(component.FilterProp.SUCCESSFUL);
+        expect(component.resultCriteria.filterProp).toBe(component.FilterProp.MANUAL);
         expect(component.isLoading).toBeFalse();
     }));
 
-    it('should filter result prop "successful"', () => {
-        component.resultCriteria.filterProp = component.FilterProp.SUCCESSFUL;
-        result.successful = true;
-
-        expect(component.filterResultByProp(result)).toBeTrue();
-    });
-
-    it('should filter result prop "unsuccessful"', () => {
-        component.resultCriteria.filterProp = component.FilterProp.UNSUCCESSFUL;
-        result.successful = true;
-
-        expect(component.filterResultByProp(result)).toBeFalse();
-    });
-
-    it('should filter result prop "build failed"', () => {
-        component.resultCriteria.filterProp = component.FilterProp.BUILD_FAILED;
-
-        expect(component.filterResultByProp(result)).toBeFalse();
-    });
-
-    it('should filter result prop "manual"', () => {
-        component.resultCriteria.filterProp = component.FilterProp.MANUAL;
-
-        expect(component.filterResultByProp(result)).toBeTrue();
-    });
-
-    it('should filter result prop "automatic"', () => {
-        component.resultCriteria.filterProp = component.FilterProp.AUTOMATIC;
-
-        expect(component.filterResultByProp(result)).toBeFalse();
-    });
-
-    it('should filter result prop default value', () => {
-        expect(component.filterResultByProp(result)).toBeTrue();
-    });
-
-    it('should handle result size change', () => {
-        component.handleResultsSizeChange(10);
-
-        expect(component.filteredResultsSize).toBe(10);
+    it.each([
+        [FilterProp.ALL, {} as Participation, true],
+        [FilterProp.SUCCESSFUL, { results: [{ successful: true }] } as Participation, true],
+        [FilterProp.SUCCESSFUL, { results: [{ successful: false }] } as Participation, false],
+        [FilterProp.UNSUCCESSFUL, { results: [{ successful: false }] } as Participation, true],
+        [FilterProp.UNSUCCESSFUL, { results: [{ successful: true }] } as Participation, false],
+        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{ buildFailed: true } as Submission] } as Participation, true],
+        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{}] } as Participation, false],
+        [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, true],
+        [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, false],
+        [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, true],
+        [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, false],
+        [FilterProp.LOCKED, { results: [{ completionDate: undefined }] } as Participation, true],
+        [FilterProp.LOCKED, { results: [{ completionDate: dayjs() }] } as Participation, false],
+    ])('should filter participations correctly', (filter: FilterProp, participation: Participation, expected: boolean) => {
+        component.resultCriteria.filterProp = filter;
+        expect(component.filterParticipationsByProp(participation)).toEqual(expected);
     });
 
     it('should return build plan id', () => {
-        expect(component.buildPlanId(result)).toBe('1');
+        expect(component.buildPlanId(participation)).toBe('1');
     });
 
     it('should return project key', () => {
         component.exercise = {
+            type: ExerciseType.PROGRAMMING,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
@@ -259,11 +265,11 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should return repository link', () => {
-        expect(component.getRepositoryLink(result)).toBe('url');
+        expect(component.getRepositoryLink(participation)).toBe('url');
     });
 
     it('should export names correctly for student participation', () => {
-        component.results = [result];
+        component.participations = [participation];
         const rows = ['data:text/csv;charset=utf-8,participantName'];
         const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
 
@@ -275,7 +281,7 @@ describe('Exercise Scores Component', () => {
 
     it('should export names correctly for team participation', () => {
         participation.team = team;
-        component.results = [result];
+        component.participations = [participation];
         const rows = ['data:text/csv;charset=utf-8,Team Name,Team Short Name,Students', 'name,shortName,"name1, name2"'];
         const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
 
@@ -294,7 +300,7 @@ describe('Exercise Scores Component', () => {
             guidedTourSettings: [],
         };
 
-        expect(component.searchResultFormatter(result)).toBe('login (name)');
+        expect(component.searchParticipationFormatter(participation)).toBe('login (name)');
 
         participation.student = undefined;
     });
@@ -303,42 +309,44 @@ describe('Exercise Scores Component', () => {
         participation.team = team;
         const expectedResult = 'name (shortName) ⟹ name1 (login1), name2 (login2)';
 
-        expect(component.searchResultFormatter(result)).toBe(expectedResult);
+        expect(component.searchParticipationFormatter(participation)).toBe(expectedResult);
 
         participation.team = undefined;
     });
 
     it('should search result and return empty string', () => {
-        expect(component.searchResultFormatter(result)).toBe('');
+        expect(component.searchParticipationFormatter(participation)).toBe('');
     });
 
     it('should search text from result', () => {
-        expect(component.searchTextFromResult(result)).toBe('participationId');
+        expect(component.searchTextFromParticipation(participation)).toBe('participationId');
     });
 
     it('should refresh properly', () => {
-        const resultServiceStub = jest.spyOn(resultService, 'getResults').mockReturnValue(of(new HttpResponse<Result[]>({ body: [result] })));
+        const participationServiceStub = jest
+            .spyOn(participationService, 'findAllParticipationsByExercise')
+            .mockReturnValue(of(new HttpResponse<Result[]>({ body: [participation] })));
 
         component.refresh();
 
-        expect(resultServiceStub).toHaveBeenCalledOnce();
-        expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
-        expect(component.results).toEqual([result]);
-        expect(component.filteredResults).toEqual([result]);
+        expect(participationServiceStub).toHaveBeenCalledOnce();
+        expect(participationServiceStub).toHaveBeenCalledWith(1, true);
+        expect(component.participations).toEqual([participation]);
+        expect(component.filteredParticipations).toEqual([participation]);
         expect(component.isLoading).toBeFalse();
     });
 
     it.each(filterRanges)('should filter results correctly and reset the filter', (rangeFilter: Range) => {
         component.rangeFilter = rangeFilter;
-        component.results = [result];
+        component.participations = [participation];
 
-        const returnedResults = component.filterByScoreRange(resultsToFilter);
+        const returnedResults = component.filterByScoreRange(participationsToFilter);
 
-        expect(returnedResults).toEqual([resultsToFilter[filterRanges.indexOf(rangeFilter)]]);
+        expect(returnedResults).toEqual([participationsToFilter[filterRanges.indexOf(rangeFilter)]]);
 
         component.resetFilterOptions();
 
         expect(component.rangeFilter).toBeUndefined();
-        expect(component.filteredResults).toEqual([result]);
+        expect(component.filteredParticipations).toEqual([participation]);
     });
 });

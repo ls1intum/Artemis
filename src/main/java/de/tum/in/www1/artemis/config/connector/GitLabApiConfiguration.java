@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("gitlab")
+@Profile("gitlab | gitlabci")
 public class GitLabApiConfiguration {
 
     @Value("${artemis.version-control.token}")

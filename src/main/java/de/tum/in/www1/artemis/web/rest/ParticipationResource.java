@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -29,14 +28,17 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
@@ -77,6 +79,8 @@ public class ParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserRepository userRepository;
@@ -109,14 +113,20 @@ public class ParticipationResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final QuizSubmissionService quizSubmissionService;
+
+    private final GradingScaleService gradingScaleService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository,
+            GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService) {
+            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
+            QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -124,6 +134,7 @@ public class ParticipationResource {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
+        this.participationAuthCheckService = participationAuthCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
@@ -140,6 +151,8 @@ public class ParticipationResource {
         this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.groupNotificationService = groupNotificationService;
+        this.quizSubmissionService = quizSubmissionService;
+        this.gradingScaleService = gradingScaleService;
     }
 
     /**
@@ -200,7 +213,7 @@ public class ParticipationResource {
     /**
      * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
-     * @param exerciseId the participationId of the exercise for which to init a participation
+     * @param exerciseId             the participationId of the exercise for which to init a participation
      * @param useGradedParticipation a flag that indicates that the student wants to use their graded participation as baseline for the new repo
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
@@ -244,9 +257,9 @@ public class ParticipationResource {
     /**
      * PUT exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
-     * @param exerciseId of the exercise for which to resume participation
+     * @param exerciseId      of the exercise for which to resume participation
      * @param participationId of the participation that should be resumed
-     * @param principal  current user principal
+     * @param principal       current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
     @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
@@ -268,6 +281,20 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
+        }
+
+        // There is a second participation of that student in the exericse that is inactive/finished now
+        Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
+                !participation.isTestRun());
+        if (optionalOtherStudentParticipation.isPresent()) {
+            StudentParticipation otherParticipation = optionalOtherStudentParticipation.get();
+            if (participation.getInitializationState() == InitializationState.INACTIVE) {
+                otherParticipation.setInitializationState(InitializationState.FINISHED);
+            }
+            else {
+                otherParticipation.setInitializationState(InitializationState.INACTIVE);
+            }
+            studentParticipationRepository.saveAndFlush(otherParticipation);
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
@@ -299,13 +326,13 @@ public class ParticipationResource {
 
         var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
-        if (Objects.isNull(result) || result.getScore() < 100) {
+        if (result == null || result.getScore() < 100) {
             throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
         }
 
         var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
-        if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
+        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
@@ -331,6 +358,7 @@ public class ParticipationResource {
 
     /**
      * Checks if the student is currently allowed to participate in the course exercise using this participation
+     *
      * @param programmingExercise the exercise where the user wants to participate
      * @param participation       the participation, may be null in case there is none
      * @return a boolean indicating if the user may participate
@@ -366,7 +394,7 @@ public class ParticipationResource {
      * @param exerciseId    the id of the exercise, the participation belongs to
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
-     * 500 (Internal Server Error) if the participation couldn't be updated
+     *         500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
@@ -384,14 +412,35 @@ public class ParticipationResource {
         var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, originalParticipation.getExercise(), null);
-        if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
-            participation.setPresentationScore(0);
+
+        Course course = findCourseFromParticipation(participation);
+        if (participation.getPresentationScore() != null && participation.getExercise().getPresentationScoreEnabled() != null
+                && participation.getExercise().getPresentationScoreEnabled()) {
+            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+
+            // Validity of presentationScore for basic presentations
+            if (course.getPresentationScore() != null && course.getPresentationScore() > 0) {
+                if (participation.getPresentationScore() >= 1.) {
+                    participation.setPresentationScore(1.);
+                }
+                else {
+                    participation.setPresentationScore(null);
+                }
+            }
+            // Validity of presentationScore for graded presentations
+            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null
+                    && (participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
+                throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
+            }
         }
-        if (participation.getPresentationScore() > 1) {
-            participation.setPresentationScore(1);
+        // Validity of presentationScore for no presentations
+        else {
+            participation.setPresentationScore(null);
         }
+
         StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
-        if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
+        if (currentParticipation.getPresentationScore() != null && participation.getPresentationScore() == null || course.getPresentationScore() != null
+                && currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             log.info("{} removed the presentation score of {} for exercise with participationId {}", user.getLogin(), originalParticipation.getParticipantIdentifier(),
                     originalParticipation.getExercise().getId());
         }
@@ -451,31 +500,41 @@ public class ParticipationResource {
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
-     * @param exerciseId       The participationId of the exercise
-     * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
+     * @param exerciseId        The participationId of the exercise
+     * @param withLatestResults Whether the manual and latest {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
     @GetMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withLatestResult) {
+            @RequestParam(defaultValue = "false") boolean withLatestResults) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
-        if (withLatestResult) {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
+        if (withLatestResults) {
+            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exerciseId);
+            participations.forEach(participation -> {
+                participation.setSubmissionCount(participation.getSubmissions().size());
+                if (participation.getResults() != null && !participation.getResults().isEmpty()) {
+                    participation.setSubmissions(null);
+                }
+                else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
+                    participation.setSubmissions(Set
+                            .of(participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL).max(Comparator.naturalOrder()).get()));
+                }
+            });
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);
+
+            Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+            participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             // remove unnecessary data to reduce response size
             participation.setExercise(null);
         }).collect(Collectors.toSet());
-
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
-        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
     }
@@ -551,7 +610,8 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
-        authCheckService.canAccessParticipation(participation);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
         Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
@@ -646,7 +706,7 @@ public class ParticipationResource {
 
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), null);
             if (participation == null) {
                 return null;
             }
@@ -662,13 +722,13 @@ public class ParticipationResource {
         quizExercise.setQuizBatches(null); // not available here
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
-        if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
+        if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
             // set view
             var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
             MappingJacksonValue value = new MappingJacksonValue(participation);
@@ -692,7 +752,8 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
+     * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted
+     * here!
      *
      * @param participationId  the participationId of the participation to delete
      * @param deleteBuildPlan  True, if the build plan should also get deleted
@@ -713,7 +774,8 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a tutorial)
+     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a
+     * tutorial)
      * Please note: all users can delete their own participation when it belongs to a guided tutorial
      *
      * @param participationId  the participationId of the participation to delete
@@ -833,12 +895,13 @@ public class ParticipationResource {
      *
      * @param quizExercise the quiz exercise to attach to the participation
      * @param username     the username of the user that the participation belongs to
+     * @param quizBatch    the quiz batch of quiz exercise which user participated in
      * @return the found or created participation with a result
      */
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
-    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
-        if (quizExercise.isQuizEnded()) {
+    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
+        if (quizExercise.isQuizEnded() || quizSubmissionService.isSubmitted(quizBatch, username)) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
@@ -878,7 +941,7 @@ public class ParticipationResource {
 
         // construct participation
         participation = new StudentParticipation();
-        participation.setInitializationState(INITIALIZED);
+        participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setExercise(quizExercise);
         participation.addResult(result);
         return participation;

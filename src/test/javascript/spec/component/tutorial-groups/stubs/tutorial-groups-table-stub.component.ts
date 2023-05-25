@@ -16,6 +16,13 @@ export class TutorialGroupsTableStubComponent {
     @Input()
     showIdColumn = false;
 
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    mixOfOfflineAndOfflineTutorialGroups = false;
+    mifOfDifferentLanguages = false;
+
+    @Input()
+    showChannelColumn = false;
+
     @Input()
     tutorialGroups: TutorialGroup[] = [];
 
@@ -28,15 +35,19 @@ export class TutorialGroupsTableStubComponent {
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
 
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 }
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-tutorial-group-row]',
     template: `
         <div>
             <div *ngIf="showIdColumn">
                 <span>{{ tutorialGroup.id }}</span>
+            </div>
+            <div *ngIf="showChannelColumn">
+                <span>{{ tutorialGroup?.channel?.name || '' }}</span>
             </div>
             <div *ngIf="extraColumn">
                 <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
@@ -47,6 +58,16 @@ export class TutorialGroupsTableStubComponent {
 export class TutorialGroupRowStubComponent {
     @Input()
     showIdColumn = false;
+
+    @Input()
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    @Input()
+    mixOfOfflineAndOfflineTutorialGroups = false;
+    @Input()
+    mifOfDifferentLanguages = false;
+
+    @Input()
+    showChannelColumn = false;
 
     @Input() extraColumn: TemplateRef<any>;
 

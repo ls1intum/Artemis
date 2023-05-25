@@ -34,9 +34,9 @@ public class AtheneResource {
     /**
      * Saves automatic textAssessments of Athene
      *
-     * @param exerciseId The exerciseId of the exercise which will be saved
+     * @param exerciseId     The exerciseId of the exercise which will be saved
      * @param atheneResponse The calculation results containing blocks and clusters
-     * @param auth The secret for authorization
+     * @param auth           The secret for authorization
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
     @PostMapping(value = "/{exerciseId}", consumes = "application/x-protobuf")

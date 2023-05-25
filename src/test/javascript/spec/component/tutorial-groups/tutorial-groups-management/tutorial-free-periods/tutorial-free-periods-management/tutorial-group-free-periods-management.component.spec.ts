@@ -97,6 +97,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
 
                 configurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 findConfigurationSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+                fixture.detectChanges();
             });
     });
 
@@ -105,7 +106,6 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
@@ -116,8 +116,6 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openCreateFreeDayDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
@@ -126,21 +124,19 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(CreateTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(CreateTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupConfigurationId).toEqual(configuration.id);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });
     }));
 
     it('should load all free periods and sort by start date ascending', () => {
-        fixture.detectChanges();
         expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);
     });
 
     it('should display three rows for three free periods', () => {
-        fixture.detectChanges();
         const rowButtons = fixture.debugElement.queryAll(By.directive(TutorialGroupRowButtonsStubComponent));
         expect(rowButtons).toHaveLength(3);
         expect(rowButtons[0].componentInstance.tutorialFreePeriod).toEqual(thirdOfJanuaryPeriod);

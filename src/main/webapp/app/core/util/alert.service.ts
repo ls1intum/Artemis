@@ -5,7 +5,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -48,7 +48,7 @@ interface AlertInternal extends AlertBase {
     openedAt?: dayjs.Dayjs;
 }
 
-export interface Alert extends Readonly<AlertInternal> {}
+export type Alert = Readonly<AlertInternal>;
 
 const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
@@ -72,6 +72,9 @@ export class AlertService {
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse: HttpErrorResponse = response.content;
+            if (httpErrorResponse.error?.skipAlert) {
+                return;
+            }
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
@@ -79,9 +82,6 @@ export class AlertService {
                     break;
 
                 case 400:
-                    if (httpErrorResponse.error !== null && httpErrorResponse.error.skipAlert) {
-                        break;
-                    }
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;
@@ -267,7 +267,7 @@ export class AlertService {
         });
     }
 
-    private addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
         if (message && typeof message !== 'string') {
             message = '' + message;
         }

@@ -27,9 +27,7 @@
 </ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.categories">Categories</span></dt>
 <dd *ngIf="exercise.categories">
-    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-        <span>{{ item.category }}</span>
-    </span>
+    <jhi-exercise-categories [exercise]="exercise" [ngClass]="'categories-row'"></jhi-exercise-categories>
 </dd>
 <dd *ngIf="!exercise.categories">
     <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
@@ -53,7 +51,7 @@
         <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
     </dd>
 </ng-container>
-<ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">
+<ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING && exercise.course">
     <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
     <dd>
         <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
@@ -69,7 +67,7 @@
         <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>
         <span *ngIf="!exercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
     </dd>
-    <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+    <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span></dt>
     <dd>
         <span *ngIf="exercise.assessmentDueDate">{{ exercise.assessmentDueDate | artemisDate }}</span>
         <span *ngIf="!exercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>

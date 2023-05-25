@@ -39,7 +39,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
-            .post(SERVER_API_URL + '/api/lti13/auth-login', requestBody.toString(), {
+            .post('api/lti13/auth-login', requestBody.toString(), {
                 headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
             })
             .subscribe({
@@ -48,12 +48,11 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                     window.sessionStorage.removeItem('state');
 
                     if (targetLinkUri) {
-                        window.location.href = targetLinkUri;
-                        return;
+                        window.location.replace(targetLinkUri);
+                    } else {
+                        this.isLaunching = false;
+                        console.error('No LTI targetLinkUri received for a successful launch');
                     }
-
-                    this.isLaunching = false;
-                    console.error('No LTI targetLinkUri received for a successful launch');
                 },
                 error: () => {
                     window.sessionStorage.removeItem('state');

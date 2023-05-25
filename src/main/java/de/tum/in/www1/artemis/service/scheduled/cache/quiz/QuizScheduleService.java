@@ -121,7 +121,7 @@ public class QuizScheduleService {
      * this should only be invoked once, when the quiz was submitted
      *
      * @param quizExerciseId the quizExerciseId of the quiz the result belongs to (first Key)
-     * @param result the result, which should be added
+     * @param result         the result, which should be added
      */
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
         log.debug("add result for statistic update for quiz {}: {}", quizExerciseId, result);
@@ -133,8 +133,8 @@ public class QuizScheduleService {
     /**
      * add a participation to participationHashMap to send them back to the user when the quiz ends
      *
-     * @param quizExerciseId        the quizExerciseId of the quiz the result belongs to (first Key)
-     * @param participation the result, which should be added
+     * @param quizExerciseId the quizExerciseId of the quiz the result belongs to (first Key)
+     * @param participation  the result, which should be added
      */
     private void addParticipation(Long quizExerciseId, StudentParticipation participation) {
         if (quizExerciseId != null && participation != null) {
@@ -145,10 +145,10 @@ public class QuizScheduleService {
     /**
      * get a cached quizSubmission by quizExerciseId and username
      *
-     * @param quizExerciseId   the quizExerciseId of the quiz the submission belongs to (first Key)
-     * @param username the username of the user, who submitted the submission (second Key)
-     * @return the quizSubmission, with the given quizExerciseId and username -> return an empty QuizSubmission if there is no quizSubmission -> return null if the quizExerciseId or if the
-     *         username is null
+     * @param quizExerciseId the quizExerciseId of the quiz the submission belongs to (first Key)
+     * @param username       the username of the user, who submitted the submission (second Key)
+     * @return the quizSubmission, with the given quizExerciseId and username -> return an empty QuizSubmission if there is no quizSubmission -> return null if the quizExerciseId
+     *         or if the username is null
      */
     public QuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
         if (quizExerciseId == null || username == null) {
@@ -165,9 +165,10 @@ public class QuizScheduleService {
     /**
      * get a cached participation by quizExerciseId and username
      *
-     * @param quizExerciseId   the quizExerciseId of the quiz, the participation belongs to (first Key)
-     * @param username the username of the user, the participation belongs to (second Key)
-     * @return the participation with the given quizExerciseId and username -> return null if there is no participation -> return null if the quizExerciseId or if the username is null
+     * @param quizExerciseId the quizExerciseId of the quiz, the participation belongs to (first Key)
+     * @param username       the username of the user, the participation belongs to (second Key)
+     * @return the participation with the given quizExerciseId and username -> return null if there is no participation -> return null if the quizExerciseId or if the username is
+     *         null
      */
     @Nullable
     public StudentParticipation getParticipation(Long quizExerciseId, String username) {
@@ -180,7 +181,7 @@ public class QuizScheduleService {
     /**
      * get a cached quiz exercise by quizExerciseId
      *
-     * @param quizExerciseId   the quizExerciseId of the quiz
+     * @param quizExerciseId the quizExerciseId of the quiz
      * @return the QuizExercise with the given quizExerciseId -> return null if no quiz with the given id exists
      */
     public QuizExercise getQuizExercise(Long quizExerciseId) {
@@ -386,6 +387,7 @@ public class QuizScheduleService {
      * Clears all quiz data for one specific quiz exercise for quizzes
      * <p>
      * This will cause cached submissions, participations and results to be lost!
+     *
      * @param quizExerciseId refers to one specific quiz exercise for which the data should be cleared
      */
     public void clearQuizData(Long quizExerciseId) {
@@ -406,7 +408,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.info("Process cached quiz submissions");
+        log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Cache cache : quizCache.getAllCaches()) {
@@ -527,7 +529,8 @@ public class QuizScheduleService {
     }
 
     public Optional<Long> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        return Optional.ofNullable(((QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId())).getBatches().get(login));
+        var quizExerciseCache = (QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId());
+        return Optional.ofNullable(quizExerciseCache.getBatches().get(login));
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
@@ -615,7 +618,11 @@ public class QuizScheduleService {
                 // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
                 participation.setInitializationDate(quizSubmission.getSubmissionDate());
                 Optional<User> user = userRepository.findOneByLogin(username);
-                user.ifPresent(participation::setParticipant);
+                if (user.isEmpty()) {
+                    log.error("Cannot find the user for username {}", username);
+                } else {
+                    participation.setParticipant(user.get());
+                }
                 // add the quizExercise to the participation
                 participation.setExercise(quizExercise);
                 participation.setInitializationState(InitializationState.FINISHED);

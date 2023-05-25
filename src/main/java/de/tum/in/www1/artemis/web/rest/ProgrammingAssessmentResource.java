@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
@@ -20,7 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
@@ -29,7 +28,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-/** REST controller for managing ProgrammingAssessment. */
+/**
+ * REST controller for managing ProgrammingAssessment.
+ */
 @RestController
 @RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
@@ -65,7 +66,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     /**
      * Update an assessment after a complaint was accepted.
      *
-     * @param submissionId the id of the submission for which the assessment should be updated
+     * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the programing assessment update
      * @return the updated result
      */
@@ -115,8 +116,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * Save or submit feedback for programming exercise.
      *
      * @param participationId the id of the participation that should be sent to the client
-     * @param submit       defines if assessment is submitted or saved
-     * @param newManualResult    result with list of feedbacks to be saved to the database
+     * @param submit          defines if assessment is submitted or saved
+     * @param newManualResult result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
@@ -205,9 +206,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
-        var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(participation.getIndividualDueDate())
+        var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && participation.getIndividualDueDate() != null
                 && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
-        var isBeforeDueDate = Objects.nonNull(programmingExercise.getDueDate()) && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
+        var isBeforeDueDate = programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
         if (isManualFeedbackRequest && isBeforeDueDate) {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);
@@ -221,9 +222,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     /**
      * Delete an assessment of a given submission.
      *
-     * @param participationId  - the id of the participation to the submission
-     * @param submissionId - the id of the submission for which the current assessment should be deleted
-     * @param resultId     - the id of the result which should get deleted
+     * @param participationId - the id of the participation to the submission
+     * @param submissionId    - the id of the submission for which the current assessment should be deleted
+     * @param resultId        - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("/participations/{participationId}/programming-submissions/{submissionId}/results/{resultId}")

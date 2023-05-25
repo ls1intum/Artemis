@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -107,11 +109,10 @@ public class QuizSubmissionService {
     /**
      * Saves a quiz submission into the hash maps for live quizzes. Submitted quizzes are marked to be saved into the database in the QuizScheduleService
      *
-     * @param exerciseId the exerciseID to the corresponding QuizExercise
+     * @param exerciseId     the exerciseID to the corresponding QuizExercise
      * @param quizSubmission the submission which should be saved
-     * @param userLogin the login of the user who has initiated the request
-     * @param submitted whether the user has pressed the submit button or not
-     *
+     * @param userLogin      the login of the user who has initiated the request
+     * @param submitted      whether the user has pressed the submit button or not
      * @return the updated quiz submission object
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
@@ -195,10 +196,10 @@ public class QuizSubmissionService {
     /**
      * Updates a submission for the exam mode
      *
-     * @param quizExercise      the quiz exercise for which the submission for the exam mode should be done
-     * @param quizSubmission    the quiz submission includes the submitted answers by the student
-     * @param user              the student who wants to submit the quiz during the exam
-     * @return                  the updated quiz submission after it has been saved to the database
+     * @param quizExercise   the quiz exercise for which the submission for the exam mode should be done
+     * @param quizSubmission the quiz submission includes the submitted answers by the student
+     * @param user           the student who wants to submit the quiz during the exam
+     * @return the updated quiz submission after it has been saved to the database
      */
     public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         // update submission properties
@@ -230,5 +231,18 @@ public class QuizSubmissionService {
 
         log.debug("submit exam quiz finished: {}", quizSubmission);
         return quizSubmission;
+    }
+
+    /**
+     * Returns true if student has submitted at least once for the given quiz batch
+     *
+     * @param quizBatch the quiz batch of interest to check if submission exists
+     * @param login     the student of interest to check if submission exists
+     * @return boolean the submission status of student for the given quiz batch
+     */
+    public boolean isSubmitted(QuizBatch quizBatch, String login) {
+        Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
+        Optional<QuizSubmission> submission = submissions.stream().findFirst();
+        return submission.map(QuizSubmission::isSubmitted).orElse(false);
     }
 }

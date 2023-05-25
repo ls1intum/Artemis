@@ -4,7 +4,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -21,7 +20,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "Q")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"), @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
@@ -217,6 +215,7 @@ public abstract class QuizQuestion extends DomainObject {
      * NOTE: do not use this in a transactional context and do not save the returned object to the database
      * This method is useful when we want to cut off attributes while sending entities to the client and we are only interested in the id of the object
      * We use polymorphism here, so subclasses should implement / override this method to create the correct object type
+     *
      * @return an empty question just including the id of the object
      */
     public abstract QuizQuestion copyQuestionId();
@@ -235,4 +234,10 @@ public abstract class QuizQuestion extends DomainObject {
      * @return a boolean which is true if the question-changes make an update necessary and false if not
      */
     public abstract boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion);
+
+    /**
+     * Initialize QuizQuestionStatistic of the implementor
+     *
+     */
+    public abstract void initializeStatistic();
 }

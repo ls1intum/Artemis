@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockModule } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { of } from 'rxjs';
@@ -20,6 +19,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faEdit } from '@fortawesome/free-solid-svg-icons';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -33,8 +33,8 @@ describe('Exam Navigation Bar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule)],
+            declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent)],
             providers: [
                 ExamParticipationService,
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },

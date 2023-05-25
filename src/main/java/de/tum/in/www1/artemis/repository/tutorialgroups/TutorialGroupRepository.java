@@ -14,11 +14,20 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Long> {
+
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
+            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+            """)
+    Optional<TutorialGroup> getTutorialGroupWithChannel(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
             SELECT tutorialGroup.title
@@ -29,10 +38,16 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-            SELECT DISTINCT tutorialGroup.campus
+                SELECT DISTINCT tutorialGroup.campus
             FROM TutorialGroup tutorialGroup
             WHERE tutorialGroup.course.id = :#{#courseId} AND tutorialGroup.campus IS NOT NULL""")
     Set<String> findAllUniqueCampusValuesInCourse(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT tutorialGroup.language
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.course.id = :#{#courseId} AND tutorialGroup.language IS NOT NULL""")
+    Set<String> findAllUniqueLanguageValuesInCourse(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT tutorialGroup
@@ -40,6 +55,14 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             WHERE tutorialGroup.course.id = :#{#courseId}
             ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel
+            WHERE tutorialGroup.course.id = :#{#courseId}
+            ORDER BY tutorialGroup.title""")
+    Set<TutorialGroup> findAllByCourseIdWithChannel(@Param("courseId") Long courseId);
 
     boolean existsByTitleAndCourse(String title, Course course);
 
@@ -50,7 +73,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             LEFT JOIN FETCH tutorialGroup.registrations
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
             WHERE tutorialGroup.course.id = :#{#courseId}
-            ORDER BY tutorialGroup.title""")
+                ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("courseId") Long courseId);
 
     @Query("""
@@ -92,6 +115,8 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             """)
     Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(String title, Long courseId);
 
+    Optional<TutorialGroup> findByTutorialGroupChannelId(Long channelId);
+
     boolean existsByTitleAndCourseId(String title, Long courseId);
 
     Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
@@ -127,5 +152,9 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(long tutorialGroupId) {
         return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    }
+
+    default Optional<Channel> getTutorialGroupChannel(Long tutorialGroupId) {
+        return getTutorialGroupWithChannel(tutorialGroupId).map(TutorialGroup::getTutorialGroupChannel);
     }
 }

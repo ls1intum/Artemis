@@ -49,7 +49,7 @@ public class ExamSubmissionService {
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, User user) {
         if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException("Submission not allowed for " + user.getLogin() + " for exercise " + exercise.getId() + " in the exam.");
         }
     }
 
@@ -61,10 +61,10 @@ public class ExamSubmissionService {
      * @param user            the user that wants to submit
      * @param withGracePeriod whether the grace period should be taken into account or not
      * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
-     * the user's student exam
+     *         the user's student exam
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
-        if (isExamSubmission(exercise)) {
+        if (exercise.isExamExercise()) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
             // Step 1: Find real exam
@@ -137,7 +137,7 @@ public class ExamSubmissionService {
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submissions or if it is a programming exercise
-        if (!isExamSubmission(exercise) || exercise instanceof ProgrammingExercise) {
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
             return submission;
         }
 
@@ -154,10 +154,6 @@ public class ExamSubmissionService {
         }
 
         return submission;
-    }
-
-    private boolean isExamSubmission(Exercise exercise) {
-        return exercise.isExamExercise();
     }
 
     private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam, boolean withGracePeriod) {

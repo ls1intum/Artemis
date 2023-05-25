@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "progextask";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -47,10 +49,10 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     void initTestCases() {
-        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
-        database.addUsers(2, 2, 1, 2);
+        database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         this.testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntry = new ProgrammingExerciseSolutionEntry();
@@ -65,31 +67,26 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
         }
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeletionAsStudent() throws Exception {
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeletionAsTutor() throws Exception {
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDeletionAsEditor() throws Exception {
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteAllTasksAndSolutionEntriesForProgrammingExercise() throws Exception {
         Set<Long> solutionEntryIdsBeforeDeleting = testCases.stream().map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).map(DomainObject::getId)
                 .collect(Collectors.toSet());
@@ -106,13 +103,13 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTaskExtractionAsStudent() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN, Set.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTaskExtractionForProgrammingExercise() throws Exception {
         String taskName1 = "Implement Bubble Sort";
         String taskName2 = "Implement Policy and Context";
@@ -143,13 +140,13 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTaskExtractionForEmptyProblemStatement() throws Exception {
         programmingExercise.setProblemStatement("");
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
 
-        assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 }

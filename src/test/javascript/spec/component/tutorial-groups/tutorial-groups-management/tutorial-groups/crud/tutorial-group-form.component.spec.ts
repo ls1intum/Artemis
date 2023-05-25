@@ -19,10 +19,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScheduleFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
-import { Language } from 'app/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -41,7 +41,7 @@ describe('TutorialGroupFormComponent', () => {
     const validCampus = 'ExampleCampus';
     const validCapacity = 10;
     const validIsOnline = true;
-    const validLanguage = Language.GERMAN;
+    const validLanguage = 'GERMAN';
     const validAdditionalInformation = 'ExampleAdditionalInformation';
     const validNotificationText = 'ExampleNotificationText';
     // schedule
@@ -79,6 +79,9 @@ describe('TutorialGroupFormComponent', () => {
                     getUniqueCampusValues: () => {
                         return of(new HttpResponse({ body: [] }));
                     },
+                    getUniqueLanguageValues: () => {
+                        return of(new HttpResponse({ body: [] }));
+                    },
                 }),
                 MockProvider(AlertService),
             ],
@@ -91,6 +94,7 @@ describe('TutorialGroupFormComponent', () => {
                 component = fixture.componentInstance;
                 component.course = course;
                 testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
+                fixture.detectChanges();
             });
     });
 
@@ -98,10 +102,10 @@ describe('TutorialGroupFormComponent', () => {
         jest.restoreAllMocks();
     });
 
-    describe('with schedule', function () {
+    describe('with schedule', () => {
         beforeEach(() => {
             component.configureSchedule = true;
-            fixture.detectChanges();
+            runOnPushChangeDetection(fixture);
             clickSubmit = generateClickSubmitButton(component, fixture, {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -140,13 +144,13 @@ describe('TutorialGroupFormComponent', () => {
 
         it('should block submit when time range is invalid', fakeAsync(() => {
             setValidFormValues();
-            fixture.detectChanges();
+            runOnPushChangeDetection(fixture);
             expect(component.form.valid).toBeTrue();
             expect(component.isSubmitPossible).toBeTrue();
 
             component.form.get('schedule')!.get('endTime')!.setValue('11:00:00');
             component.form.get('schedule')!.get('startTime')!.setValue('12:00:00');
-            fixture.detectChanges();
+            runOnPushChangeDetection(fixture);
             expect(component.form.invalid).toBeTrue();
             expect(component.isSubmitPossible).toBeFalse();
 
@@ -155,6 +159,7 @@ describe('TutorialGroupFormComponent', () => {
 
         it('should correctly set form values in edit mode', () => {
             component.isEditMode = true;
+            runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -172,8 +177,6 @@ describe('TutorialGroupFormComponent', () => {
                     location: validLocation,
                 },
             };
-            fixture.detectChanges();
-
             component.formData = formData;
             component.ngOnChanges();
 
@@ -191,7 +194,7 @@ describe('TutorialGroupFormComponent', () => {
 
         it('should submit valid form', fakeAsync(() => {
             setValidFormValues();
-            fixture.detectChanges();
+            runOnPushChangeDetection(fixture);
             expect(component.form.valid).toBeTrue();
             expect(component.isSubmitPossible).toBeTrue();
 
@@ -199,9 +202,10 @@ describe('TutorialGroupFormComponent', () => {
         }));
     });
 
-    describe('without schedule', function () {
+    describe('without schedule', () => {
         beforeEach(() => {
             component.configureSchedule = false;
+            runOnPushChangeDetection(fixture);
             clickSubmit = generateClickSubmitButton(component, fixture, {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -214,12 +218,10 @@ describe('TutorialGroupFormComponent', () => {
         });
 
         it('should initialize', () => {
-            fixture.detectChanges();
             expect(component).not.toBeNull();
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
-            fixture.detectChanges();
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             for (const controlName of requiredGroupControlNames) {
                 testFormIsInvalidOnMissingRequiredProperty(controlName);
@@ -228,6 +230,7 @@ describe('TutorialGroupFormComponent', () => {
 
         it('should correctly set form values in edit mode', () => {
             component.isEditMode = true;
+            runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -238,7 +241,6 @@ describe('TutorialGroupFormComponent', () => {
                 language: validLanguage,
                 schedule: undefined,
             };
-            fixture.detectChanges();
 
             component.formData = formData;
             component.ngOnChanges();
@@ -251,9 +253,8 @@ describe('TutorialGroupFormComponent', () => {
         });
 
         it('should submit valid form', fakeAsync(() => {
-            fixture.detectChanges();
             setValidFormValues();
-            fixture.detectChanges();
+            runOnPushChangeDetection(fixture);
             expect(component.form.valid).toBeTrue();
             expect(component.isSubmitPossible).toBeTrue();
 

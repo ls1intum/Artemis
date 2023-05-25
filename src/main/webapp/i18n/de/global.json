@@ -12,7 +12,8 @@
             "start": "Start",
             "edit": "Editieren",
             "copy": "Kopieren",
-            "copied": "Kopiert"
+            "copied": "Kopiert",
+            "new": "Neu"
         },
         "menu": {
             "home": "Startseite",
@@ -30,7 +31,7 @@
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Vorlesung",
-                "learningGoal": "Lernziel",
+                "learningGoal": "Kompetenz",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -41,7 +42,6 @@
                 "dropLocation": "Drop Location",
                 "dragItem": "Drag Item",
                 "participation": "Participation",
-                "ltiUserId": "Lti User Id",
                 "exerciseResult": "Ergebnis",
                 "feedback": "Feedback",
                 "submission": "Submission",
@@ -104,6 +104,7 @@
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
+                "privacyStatement": "Datenschutzerklärung",
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",
@@ -200,6 +201,7 @@
             "dashboard": "Dashboard",
             "units": "Einheiten",
             "edit": "Bearbeiten",
+            "connect": "Verknüpfen",
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
@@ -212,6 +214,7 @@
             "view": "Details",
             "reset": "Zurücksetzen",
             "preview": "Vorschau",
+            "visual": "Visuell",
             "cleanup": "Aufräumen",
             "remove": "Entfernen",
             "purge": "Löschen",
@@ -246,13 +249,14 @@
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
             "exams": "Klausuren",
-            "manageHints": "Verwalte Hinweise",
+            "hints": "Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben",
             "endNow": "Jetzt Beenden",
-            "ldap": "von LDAP synchronisieren"
+            "ldap": "von LDAP synchronisieren",
+            "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden."
         },
         "detail": {
             "field": "Feld",
@@ -285,6 +289,9 @@
         "exportRepos": {
             "title": "Herunterladen bestätigen"
         },
+        "resetProgrammingExercise": {
+            "title": "Programmieraufgabe zurücksetzen"
+        },
         "validation": {
             "required": "Dieses Feld wird benötigt.",
             "minlength": "Dieses Feld muss mind. {{min}} Zeichen lang sein.",
@@ -315,7 +322,7 @@
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
-        "learningGoals": "Lernziele",
+        "learningGoals": "Kompetenzen",
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",

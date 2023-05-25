@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +16,7 @@ export interface TutorialGroupSessionFormData {
     selector: 'jhi-tutorial-group-session-form',
     templateUrl: './tutorial-group-session-form.component.html',
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     @Input()

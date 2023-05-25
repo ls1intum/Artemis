@@ -1,14 +1,15 @@
 <div>
-    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
-        <span class="mb-1 me-auto">
+    <div class="d-flex mb-3 flex-wrap justify-content-end">
+        <h4 class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
             <span *ngIf="fileUploadExercises && showHeading && !filter.isEmpty() && fileUploadExercises.length">
                 {{ getAmountOfExercisesString(filteredFileUploadExercises) }} /
             </span>
             <span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
-        </span>
-        <a
+        </h4>
+
+        <button
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-file-upload-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
@@ -16,8 +17,17 @@
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"> Create File Upload Exercise </span>
-        </a>
-    </h4>
+        </button>
+        <button
+            *ngIf="course?.isAtLeastEditor"
+            id="import-file-upload-exercise"
+            class="btn btn-primary jh-create-entity import-file-upload-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"> Import new file upload exercise </span>
+        </button>
+    </div>
     <div class="row"></div>
     <br />
     <div class="table-responsive" *ngIf="fileUploadExercises && filteredFileUploadExercises.length > 0">
@@ -26,20 +36,17 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="assessmentDueDate">
-                        <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
-                    </th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="includedInOverallScore">
-                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
-                    </th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></th>
+                    <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -68,16 +75,9 @@
                     <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
+                    <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="fileUploadExercise"></jhi-exercise-categories></td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
-                            <a
-                                *ngIf="fileUploadExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'scores']"
-                                class="btn btn-info btn-sm me-1"
-                            >
-                                <fa-icon [icon]="faTable"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                            </a>
                             <a
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'participations']"
@@ -87,12 +87,12 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
                             <a
-                                *ngIf="fileUploadExercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'submissions']"
-                                class="btn btn-success btn-sm me-1"
+                                *ngIf="fileUploadExercise.isAtLeastTutor"
+                                [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'scores']"
+                                class="btn btn-info btn-sm me-1"
                             >
-                                <fa-icon [icon]="faBook"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                                <fa-icon [icon]="faTable"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </a>
                             <a
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"

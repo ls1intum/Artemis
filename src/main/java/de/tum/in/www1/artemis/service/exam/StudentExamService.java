@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.service.exam;
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -14,10 +16,12 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -35,6 +39,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -48,6 +53,8 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
+    private static final String WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
+
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
@@ -55,6 +62,8 @@ public class StudentExamService {
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -82,11 +91,14 @@ public class StudentExamService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final TaskScheduler scheduler;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -100,9 +112,11 @@ public class StudentExamService {
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingTriggerService = programmingTriggerService;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
+        this.scheduler = scheduler;
     }
 
     /**
@@ -128,12 +142,6 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
-        if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
-            // immediately evaluate quiz participations for test runs and test exams
-            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
-        }
-
         // NOTE: only for real exams and test exams, the student repositories need to be locked
         // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
         if (!studentExam.isTestRun()) {
@@ -143,6 +151,22 @@ public class StudentExamService {
             }
             catch (Exception e) {
                 log.error("lockStudentRepositories threw an exception", e);
+            }
+        }
+
+        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
+        if (studentExam.isTestRun() || studentExam.isTestExam()) {
+            // immediately evaluate quiz participations for test runs and test exams
+            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
+
+            // Trigger build for all programing participations
+            var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                    .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
+
+            if (!currentStudentParticipations.isEmpty()) {
+                // Delay to ensure that "Building and testing" is shown in the client
+                scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
             }
         }
 
@@ -289,7 +313,8 @@ public class StudentExamService {
      *
      * @param exam                the exam
      * @param assessor            the assessor should be the instructor making the call
-     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see {@link StudentExamService#assessUnsubmittedStudentExams}
+     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see
+     *                                {@link StudentExamService#assessUnsubmittedStudentExams}
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
@@ -313,7 +338,7 @@ public class StudentExamService {
                     wasEmptyProgrammingParticipation = true;
                     latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 }
-                if ((latestSubmission.isPresent() && latestSubmission.get().isEmpty()) || wasEmptyProgrammingParticipation) {
+                if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || wasEmptyProgrammingParticipation)) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
@@ -346,25 +371,24 @@ public class StudentExamService {
      * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
-        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.areManualResultsAllowed()) {
             submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
             return studentParticipation.findLatestSubmission();
         }
         return latestSubmission;
     }
 
-    private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
-        // Only lock programming exercises when the student submitted early. Otherwise, the lock operations were already scheduled/executed.
-        if (existingStudentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDate())) {
+    private void lockStudentRepositories(User currentUser, StudentExam studentExam) {
+        // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
+        // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
+        if (studentExam.isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
-            for (Exercise exercise : existingStudentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
-                        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
-                                currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
+                        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
+                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
@@ -445,6 +469,7 @@ public class StudentExamService {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
+            // NOTE: the following code is performed in parallel threads, therefore we need to set the authorization here
             SecurityUtils.setAuthorizationObject();
             // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
@@ -471,16 +496,17 @@ public class StudentExamService {
                     }
                     generatedParticipations.add(participation);
                     // Unlock repository only if the real exam starts within 5 minutes or if we have a test exam or test run
-                    if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.getExam().isTestExam()
+                    if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.isTestExam()
                             || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now()))) {
                         // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
                     }
-                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
+                            student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
-                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
-                            ex.getMessage(), ex);
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
+                            student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
         }
@@ -513,7 +539,7 @@ public class StudentExamService {
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
-                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
+                            log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
                             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
@@ -577,53 +603,9 @@ public class StudentExamService {
     }
 
     /**
-     * Deletes a test run.
-     * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
-     *
-     * @param testRunId the id of the test run
-     * @return the deleted test run
-     */
-    public StudentExam deleteTestRun(Long testRunId) {
-        var testRun = studentExamRepository.findByIdWithExercisesElseThrow(testRunId);
-        User instructor = testRun.getUser();
-        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
-                testRun.getExercises());
-        testRun.getExercises().forEach(exercise -> {
-            var relevantParticipation = exercise.findParticipation(participations);
-            if (relevantParticipation != null) {
-                exercise.setStudentParticipations(Set.of(relevantParticipation));
-            }
-            else {
-                exercise.setStudentParticipations(new HashSet<>());
-            }
-        });
-
-        List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
-                .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
-
-        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
-        var testRunExercises = testRun.getExercises();
-        // Collect all distinct exercises of other instructor test runs
-        var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().toList();
-        // Collect exercises which are not referenced by other test runs. Their participations can be safely deleted
-        var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).toList();
-
-        for (final Exercise exercise : exercisesToBeDeleted) {
-            // Only delete participations that exist (and were not deleted in some other way)
-            if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true, true);
-            }
-        }
-
-        // Delete the test run student exam
-        studentExamRepository.deleteById(testRunId);
-        return testRun;
-    }
-
-    /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
+     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
@@ -638,7 +620,6 @@ public class StudentExamService {
         log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
-
     }
 
     /**
@@ -653,5 +634,9 @@ public class StudentExamService {
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
         return studentExamRepository.createRandomStudentExams(exam, userHashSet).get(0);
+    }
+
+    public void notifyStudentAboutWorkingTimeChangeDuringConduction(StudentExam studentExam) {
+        messagingTemplate.convertAndSend(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(studentExam.getId()), studentExam.getWorkingTime());
     }
 }

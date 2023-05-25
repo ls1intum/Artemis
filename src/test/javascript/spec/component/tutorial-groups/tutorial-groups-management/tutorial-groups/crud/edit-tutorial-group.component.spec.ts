@@ -58,6 +58,7 @@ describe('EditTutorialGroupComponent', () => {
                 });
 
                 findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+                fixture.detectChanges();
             });
     });
 
@@ -66,15 +67,12 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
         expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);
     });
 
     it('should set form data correctly', () => {
-        fixture.detectChanges();
-
         const tutorialGroupFormStubComponent: TutorialGroupFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFormStubComponent)).componentInstance;
 
         expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
@@ -86,7 +84,6 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        fixture.detectChanges();
         delete exampleTutorialGroup.isUserRegistered;
         delete exampleTutorialGroup.isUserTutor;
         delete exampleTutorialGroup.course;
@@ -114,7 +111,7 @@ describe('EditTutorialGroupComponent', () => {
         tutorialGroupForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(2, 1, changedTutorialGroup, undefined);
+        expect(updatedStub).toHaveBeenCalledWith(2, 1, changedTutorialGroup, undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
     });

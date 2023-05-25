@@ -47,8 +47,8 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     height = 500;
 
     showYAxisLabel = true;
-    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+    yAxisLabel: string;
+    xAxisLabel: string;
 
     helpIconTooltip: string;
 
@@ -65,6 +65,8 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
 
     ngOnInit() {
+        this.setupAxisLabels();
+
         this.translateService.onLangChange.subscribe(() => {
             this.setupAxisLabels();
         });
@@ -190,6 +192,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * @param gradeName the grade name corresponding to one of the grade names in the gradingScale.
      */
     findGradeStepIndexByGradeName(gradeName: string): number {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const index = this.gradingScale?.gradeSteps.findIndex((gradeStep) => gradeStep.gradeName === gradeName)!;
         return index >= 0 ? index : 0;
     }

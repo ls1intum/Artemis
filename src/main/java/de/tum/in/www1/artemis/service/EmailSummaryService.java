@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsS
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,31 +46,42 @@ public class EmailSummaryService {
      * and initiate the creation of summary emails for each found user.
      */
     @Async
-    public void prepareEmailSummaries() {
+    public void prepareEmailSummariesAsynchronously() {
         checkSecurityUtils();
         Set<User> filteredUsers = findRelevantUsersForSummary();
         if (filteredUsers.isEmpty()) {
             return;
         }
 
+        prepareEmailSummariesForUsers(filteredUsers);
+    }
+
+    /**
+     * Prepare email summaries for a set of users
+     *
+     * @param users the users to prepare email summaries for
+     */
+    public void prepareEmailSummariesForUsers(Set<User> users) {
+        checkSecurityUtils();
         // More elements that should be displayed in weekly summaries can be extracted here
         // Currently only exercises are used for weekly summaries
 
         // load all relevant exercises from the DB once
         Set<Exercise> allExercisesRelevantForSummary = exerciseRepository.findAllExercisesForSummary(ZonedDateTime.now(), ZonedDateTime.now().minusDays(scheduleInterval.toDays()));
 
-        filteredUsers.forEach(user -> prepareEmailSummaryForUser(user, allExercisesRelevantForSummary));
+        users.forEach(user -> prepareEmailSummaryForUser(user, allExercisesRelevantForSummary));
     }
 
     /**
      * Prepares all needed information to create the summary email for one user
      * and calls the MailService
-     * @param user for whom the summary email should be prepared
+     *
+     * @param user                                   for whom the summary email should be prepared
      * @param allPossiblyRelevantExercisesForSummary are used to find the relevant exercises for this concrete user
      */
     private void prepareEmailSummaryForUser(User user, Set<Exercise> allPossiblyRelevantExercisesForSummary) {
         // Get all courses with exercises, lectures and exams (filtered for given user)
-        List<Course> courses = courseService.findAllActiveForUser(user);
+        Set<Course> courses = courseService.findAllActiveForUser(user);
 
         // Filter out the relevant exercises for this individual user's summary
         Set<Exercise> relevantExercisesForThisUser = allPossiblyRelevantExercisesForSummary.stream()
@@ -86,9 +96,11 @@ public class EmailSummaryService {
     /**
      * Finds all users that should receive this summary email based on their user/notification settings and schedule interval
      * e.g. if the schedule interval is weekly -> check for weekly summary setting
+     *
      * @return all users that should receive this summary email
      */
-    private Set<User> findRelevantUsersForSummary() {
+    public Set<User> findRelevantUsersForSummary() {
+        checkSecurityUtils();
         // currently, only weekly summaries are supported -> for daily just add one more case
         if (scheduleInterval.equals(weekly)) {
             return notificationSettingRepository

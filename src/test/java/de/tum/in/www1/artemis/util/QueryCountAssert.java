@@ -52,7 +52,6 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
         interceptor.startQueryCount();
         T result = actual.call();
         long callCount = interceptor.getQueryCount();
-
         return new CallResult<>(result, callCount);
     }
 }

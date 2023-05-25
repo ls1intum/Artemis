@@ -4,7 +4,7 @@ public enum BuildPlanType {
 
     TEMPLATE("BASE"), SOLUTION("SOLUTION");
 
-    private String name;
+    private final String name;
 
     BuildPlanType(String name) {
         this.name = name;

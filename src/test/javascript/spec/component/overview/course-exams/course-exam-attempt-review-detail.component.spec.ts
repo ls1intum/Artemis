@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exam } from 'app/entities/exam.model';
+import { TestexamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/testexam-working-time.component';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -38,7 +39,13 @@ describe('CourseExamAttemptReviewDetailComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CourseExamAttemptReviewDetailComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
+            declarations: [
+                CourseExamAttemptReviewDetailComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisDurationFromSecondsPipe),
+                MockComponent(TestexamWorkingTimeComponent),
+            ],
             providers: [{ provide: Router, useClass: MockRouter }],
         })
             .compileComponents()

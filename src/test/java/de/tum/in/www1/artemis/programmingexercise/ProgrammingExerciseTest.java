@@ -3,9 +3,10 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,15 +23,18 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "programmingexercise";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -45,14 +49,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        var course = database.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
@@ -66,14 +65,16 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
 
+        var programmingExerciseCountBefore = programmingExerciseRepository.count();
+
         ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         // The result from the put response should be updated with the new data.
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
         assertThat(updatedProgrammingExercise.getTitle()).isEqualTo(newTitle);
 
-        // There should still be only 1 programming exercise.
-        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+        // There should still be the same number of programming exercises.
+        assertThat(programmingExerciseRepository.count()).isEqualTo(programmingExerciseCountBefore);
         // The programming exercise in the db should also be updated.
         ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
@@ -82,7 +83,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseOnce() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
@@ -90,7 +91,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseTwice() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
@@ -99,7 +100,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement() throws Exception {
         final var newProblem = "a new problem statement";
         final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExerciseId));
@@ -112,7 +113,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackNoTestCases() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
@@ -126,7 +127,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
@@ -139,7 +140,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
@@ -158,19 +159,14 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
             bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
             bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
             bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
+        }
 
-            // test cases with weights = 0, changing to automatic feedback: update should NOT work
-            request.putAndExpectError("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, ProgrammingExerciseResourceErrorKeys.INVALID_TEST_CASE_WEIGHTS);
-        }
-        else {
-            // for exercises with manual feedback the update should work
-            updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
-        }
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void findAppropriateSubmissionRespectingIndividualDueDate(boolean isSubmissionAfterIndividualDueDate) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         exercise.setDueDate(ZonedDateTime.now());
@@ -185,9 +181,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
             // submission time after exercise due date but before individual due date
             submission.setSubmissionDate(ZonedDateTime.now().plusHours(1));
         }
-        submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        submission = database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
 
-        ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, "student1").get();
+        ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1").get();
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         submission.setParticipation(participation);
 
@@ -197,6 +193,39 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
         else {
             assertThat(latestValidSubmission).isEqualTo(submission);
+        }
+    }
+
+    @Test
+    void testFindRelevantParticipations() {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+
+        StudentParticipation gradedParticipationInitialized = new StudentParticipation();
+        gradedParticipationInitialized.setInitializationState(InitializationState.INITIALIZED);
+        gradedParticipationInitialized.setExercise(exercise);
+        StudentParticipation gradedParticipationFinished = new StudentParticipation();
+        gradedParticipationFinished.setInitializationState(InitializationState.FINISHED);
+        gradedParticipationFinished.setExercise(exercise);
+        StudentParticipation practiceParticipation = new StudentParticipation();
+        practiceParticipation.setTestRun(true);
+        practiceParticipation.setExercise(exercise);
+        List<StudentParticipation> allParticipations = List.of(gradedParticipationInitialized, gradedParticipationFinished, practiceParticipation);
+
+        // Create all possible combinations of the entries in allParticipations
+        for (int i = 0; i < 2 << allParticipations.size(); i++) {
+            List<StudentParticipation> participationsToTest = new ArrayList<>();
+            for (int j = 0; j < allParticipations.size(); j++) {
+                if (((i >> j) & 1) == 1) {
+                    participationsToTest.add(allParticipations.get(j));
+                }
+            }
+            List<StudentParticipation> expectedParticipations = new ArrayList<>(participationsToTest);
+            if (expectedParticipations.contains(gradedParticipationInitialized)) {
+                expectedParticipations.remove(gradedParticipationFinished);
+            }
+
+            List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
+            assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
         }
     }
 }

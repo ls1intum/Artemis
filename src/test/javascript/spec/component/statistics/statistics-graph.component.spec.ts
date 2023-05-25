@@ -56,8 +56,7 @@ describe('StatisticsGraphComponent', () => {
                     arrayLength = 7;
                     break;
                 case SpanType.MONTH:
-                    const startDate = dayjs().subtract(1, 'months');
-                    arrayLength = dayjs().diff(startDate, 'days');
+                    arrayLength = dayjs().diff(dayjs().subtract(1, 'months'), 'days');
                     break;
                 case SpanType.QUARTER:
                     arrayLength = 12;

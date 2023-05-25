@@ -17,8 +17,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
@@ -56,15 +56,15 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
+    private final LtiService ltiService;
+
     private final UserRepository userRepository;
 
-    private final LtiUserIdRepository ltiUserIdRepository;
-
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, LtiUserIdRepository ltiUserIdRepository) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, LtiService ltiService) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.ltiService = ltiService;
         this.userCreationService = userCreationService;
-        this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
     /**
@@ -146,11 +146,11 @@ public class UserResource {
     @PutMapping("users/initialize")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (ltiUserIdRepository.findByUser(user).isEmpty() || !user.isInternal()) {
+        if (!ltiService.isLtiCreatedUser(user) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());

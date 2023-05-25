@@ -1,8 +1,0 @@
-<?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="krusche" id="1548777349810">
-        <dropForeignKeyConstraint baseTableName="short_answer_submitted_text" constraintName="FKpkb6e1yjqhma5tgvabb9smyv3"/>
-        <dropUniqueConstraint constraintName="UC_SHORT_ANSWER_SUBMITTED_TEXTSPOT_ID_COL" tableName="short_answer_submitted_text"/>
-        <addForeignKeyConstraint baseColumnNames="spot_id" baseTableName="short_answer_submitted_text" constraintName="FKpkb6e1yjqhma5tgvabb9smyv4" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="short_answer_spot"/>
-    </changeSet>
-</databaseChangeLog>

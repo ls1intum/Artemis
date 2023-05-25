@@ -16,6 +16,8 @@ import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -29,6 +31,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
             declarations: [TextExerciseUpdateComponent],

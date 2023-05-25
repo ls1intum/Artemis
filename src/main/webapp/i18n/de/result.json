@@ -3,10 +3,9 @@
         "result": {
             "home": {
                 "title": "Results",
-                "createLabel": "Result erstellen",
-                "createOrEditLabel": "Result erstellen oder bearbeiten"
+                "createLabel": "Bewertung erstellen"
             },
-            "created": "Result erstellt mit ID {{ param }}",
+            "created": "Bewertung erstellt mit ID {{ param }}",
             "updated": "Bewertung aktualisiert mit ID {{ param }}",
             "deleted": "Bewertung gelöscht mit ID {{ param }}",
             "delete": {
@@ -18,7 +17,6 @@
                 }
             },
             "detail": {
-                "title": "Bewertung",
                 "feedback": "Feedback",
                 "feedbackForTask": "Feedback für Teilaufgabe: {{ taskName }}",
                 "codeIssue": {
@@ -32,10 +30,8 @@
                 "test": {
                     "name": "Testfall",
                     "noInfo": "Kein Ergebnis für {{ name }}",
-                    "passed": "Test {{ name }} bestanden",
-                    "failed": "Test {{ name }} fehlgeschlagen",
-                    "passedTest": "1 bestandener Test",
-                    "passedTests": "{{ number }} bestandene Tests"
+                    "passed": "{{ name }} bestanden",
+                    "failed": "{{ name }} fehlgeschlagen"
                 }
             },
             "noResult": "Kein Ergebnis",
@@ -55,9 +51,9 @@
             "successful": "Erfolgreich",
             "buildArtifact": "Build-Artefakt",
             "buildError": "Build Fehler:",
-            "score": "Bewertung {{score}}%",
+            "score": "Deine Bewertung ist {{score}}%",
             "scorePercentage": "Bewertung (in %)",
-            "scoreWithPoints": "Bewertung {{score}}%, {{points}} Punkte",
+            "scoreWithPoints": "Deine Bewertung ist {{score}}%, {{points}} Punkte",
             "currentScore": "Aktuelle Bewertung",
             "rated": "Bewertet",
             "assessmentType": "Bewertungstyp",
@@ -89,6 +85,7 @@
             "preliminaryTooltip": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden.",
             "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden oder eine manuelle Bewertung aussteht.",
             "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
+            "onlyCompilationTested": "Dein Code kompiliert erfolgreich. Derzeit sind keine Testfälle sichtbar.",
             "chart": {
                 "points": "Punkte",
                 "deductions": "Abzüge",

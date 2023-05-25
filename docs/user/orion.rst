@@ -39,7 +39,7 @@ Settings
 
 Orion's settings are at *Settings -> Tools -> Orion*. The settings include:
 
-- Artemis base url: Can be changed to switch to a specific Artemis instance. Defaults to https://artemis.ase.in.tum.de. **Important:** The url must not end with a ``/``, otherwise it does not work!
+- Artemis base url: Can be changed to switch to a specific Artemis instance. Defaults to https://artemis.cit.tum.de. **Important:** The url must not end with a ``/``, otherwise it does not work!
 - Artemis exercise paths: Orion suggests to store newly downloaded exercises at ``default-path/course/exercise-name``, with the default path dependent of the setting.
 - Default commit message: The default message for each commit.
 - Change user agent: The user agent is sent to Artemis to identify Orion. Usually, no changes are required.

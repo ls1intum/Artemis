@@ -9,6 +9,7 @@ pipeline {
             docker {
                 image '#dockerImage'
                 label 'docker'
+                args '#dockerArgs'
             }
         }
         stages {
@@ -29,9 +30,12 @@ pipeline {
         post {
             #testwiseCoverageScript
             cleanup {
-                sh 'rm -rf results'
-                sh 'mkdir results'
-                sh 'cp build/test-results/test/*.xml $WORKSPACE/results/ || true'
+                sh '''
+                rm -rf results
+                mkdir results
+                cp build/test-results/test/*.xml $WORKSPACE/results/ || true
+                sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
+                '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }

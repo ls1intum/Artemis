@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.Lti10Service;
-import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 /**
@@ -130,11 +130,10 @@ public class LtiResource {
      * Redirects the launch request to Artemis.
      * Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
      *
-     * @param request       HTTP request
-     * @param response      HTTP response
-     * @param exercise      The exercise to redirect to
-     * @throws IOException  If an input or output exception occurs
-     *
+     * @param request  HTTP request
+     * @param response HTTP response
+     * @param exercise The exercise to redirect to
+     * @throws IOException If an input or output exception occurs
      */
     private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise) throws IOException {
 
@@ -154,8 +153,8 @@ public class LtiResource {
     /**
      * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
      *
-     * @param request       HTTP request
-     * @param response      HTTP response
+     * @param request  HTTP request
+     * @param response HTTP response
      * @throws IOException If an input or output exception occurs
      */
     @PostMapping("/lti13/auth-callback")

@@ -8,7 +8,7 @@ import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExam
 import { Component, Input } from '@angular/core';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
-class MockSidePanel {
+class MockSidePanelComponent {
     @Input() panelHeader: string;
     @Input() panelDescriptionHeader?: string;
 }
@@ -22,7 +22,7 @@ describe('TutorialGroupsCourseInformationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TutorialGroupsCourseInformationComponent, MockSidePanel, MockPipe(ArtemisTranslatePipe)],
+            declarations: [TutorialGroupsCourseInformationComponent, MockSidePanelComponent, MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsCourseInformationComponent);

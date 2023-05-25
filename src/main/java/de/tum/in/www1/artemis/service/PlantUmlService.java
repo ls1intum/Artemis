@@ -45,17 +45,17 @@ public class PlantUmlService {
 
     private void ensureThemes() {
         Stream.of(DARK_THEME_FILE_NAME, LIGHT_THEME_FILE_NAME).forEach(fileName -> {
-            var path = PATH_TMP_THEME.resolve(fileName);
+            final Path path = PATH_TMP_THEME.resolve(fileName);
             if (!Files.exists(path)) {
                 log.info("Storing UML theme to temporary directory");
-                var themeResource = resourceLoaderService.getResource("puml", fileName);
+                final var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
                 try (var inputStream = themeResource.getInputStream()) {
                     Files.createDirectories(PATH_TMP_THEME);
                     Files.write(path, inputStream.readAllBytes());
                     log.info("UML theme stored successfully to {}", path);
                 }
                 catch (IOException e) {
-                    log.error("Unable to store UML dark theme");
+                    log.error("Unable to store UML dark theme", e);
                     throw new RuntimeException("Unable to store UML dark theme", e); // NOPMD
                 }
             }
@@ -65,7 +65,7 @@ public class PlantUmlService {
     /**
      * Generate PNG diagram for given PlantUML commands
      *
-     * @param plantUml PlantUML command(s)
+     * @param plantUml     PlantUML command(s)
      * @param useDarkTheme whether the dark theme should be used
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
@@ -83,7 +83,7 @@ public class PlantUmlService {
     /**
      * Generate SVG diagram for given PlantUML commands
      *
-     * @param plantUml PlantUML command(s)
+     * @param plantUml     PlantUML command(s)
      * @param useDarkTheme whether the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the SVG

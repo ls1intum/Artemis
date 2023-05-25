@@ -32,10 +32,6 @@ public class BuildLogEntry extends DomainObject {
     @JsonIgnore
     private ProgrammingSubmission programmingSubmission;
 
-    public BuildLogEntry() {
-        // Required for Hibernate
-    }
-
     public BuildLogEntry(ZonedDateTime time, String log) {
         this.time = time;
         this.log = log;
@@ -45,6 +41,10 @@ public class BuildLogEntry extends DomainObject {
         this.time = time;
         this.log = log;
         this.programmingSubmission = programmingSubmission;
+    }
+
+    public BuildLogEntry() {
+        // added for Hibernate and Jackson, because we have custom constructors
     }
 
     public ZonedDateTime getTime() {

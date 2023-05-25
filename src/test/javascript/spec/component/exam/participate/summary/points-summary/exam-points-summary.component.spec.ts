@@ -128,7 +128,7 @@ describe('ExamPointsSummaryComponent', () => {
                 studentExamWithGrade = {
                     maxPoints: 40,
                     maxBonusPoints: 20,
-                    studentExam: { exercises, exam },
+                    studentExam: { exercises, exam, numberOfExamSessions: 0 },
                     studentResult: {
                         userId: 1,
                         name: 'user1',

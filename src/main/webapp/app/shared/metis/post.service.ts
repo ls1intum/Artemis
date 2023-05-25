@@ -13,7 +13,7 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 
 @Injectable({ providedIn: 'root' })
 export class PostService extends PostingService<Post> {
-    public resourceUrl = SERVER_API_URL + 'api/courses/';
+    public resourceUrl = 'api/courses/';
 
     constructor(protected http: HttpClient) {
         super();
@@ -75,7 +75,7 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.filterToAnsweredOrReacted) {
             params = params.set('filterToAnsweredOrReacted', postContextFilter.filterToAnsweredOrReacted);
         }
-        if (!!postContextFilter.pagingEnabled) {
+        if (postContextFilter.pagingEnabled) {
             params = params.set('pagingEnabled', postContextFilter.pagingEnabled);
             params = params.set('page', postContextFilter.page!);
             params = params.set('size', postContextFilter.pageSize!);

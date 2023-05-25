@@ -21,6 +21,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import com.vdurmont.semver4j.Semver;
+
+import liquibase.Scope;
+import liquibase.SingletonScopeManager;
 import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
@@ -48,25 +52,25 @@ public class LiquibaseConfiguration {
     /**
      * reads properties and configures liquibase
      *
-     * @param liquibaseDataSource the liquibase sql data source
-     * @param liquibaseProperties the liquibase properties
+     * @param liquibaseDataSource      the liquibase sql data source
+     * @param liquibaseProperties      the liquibase properties
      * @param dataSourceObjectProvider the sql data source
-     * @param dataSourceProperties data source properties
+     * @param dataSourceProperties     data source properties
      * @return the configured spring liquibase object
      */
     @Bean
     public SpringLiquibase liquibase(@LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource, LiquibaseProperties liquibaseProperties,
             ObjectProvider<DataSource> dataSourceObjectProvider, DataSourceProperties dataSourceProperties) {
-        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSourceObjectProvider.getIfUnique(),
-                dataSourceProperties);
 
-        if (!isTestEnvironment(env)) {
-            dataSource = dataSourceObjectProvider.getIfUnique();
-            currentVersionString = buildProperties.getVersion();
-            previousVersionString = getPreviousVersionElseThrow();
-            log.info("The previous version was {}", previousVersionString);
+        this.dataSource = dataSourceObjectProvider.getIfUnique();
+        this.currentVersionString = buildProperties.getVersion();
+
+        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            checkMigrationPath();
         }
 
+        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
+        Scope.setScopeManager(new SingletonScopeManager());
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
@@ -90,7 +94,39 @@ public class LiquibaseConfiguration {
         return liquibase;
     }
 
+    String migrationPathVersion5_12_9_String = "5.12.9";
+
+    private void checkMigrationPath() {
+        var currentVersion = new Semver(currentVersionString);
+        var migrationPathVersion = new Semver(migrationPathVersion5_12_9_String);
+        var version600 = new Semver("6.0.0");
+        var version700 = new Semver("7.0.0");
+        if (currentVersion.isLowerThan(version600)) {
+            log.info("Migration path check: Not necessary");
+        }
+        if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
+            previousVersionString = getPreviousVersionElseThrow();
+            log.info("The previous version was {}", previousVersionString);
+            if (previousVersionString == null) {
+                // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
+                return;
+            }
+            var previousVersion = new Semver(previousVersionString);
+            if (previousVersion.isLowerThan(migrationPathVersion)) {
+                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
+            }
+            else if (previousVersion.isEqualTo(migrationPathVersion)) {
+                // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
+                updateInitialChecksum();
+                log.info("Successfully cleaned up initial schema during migration");
+            }
+        }
+
+    }
+
     private String getPreviousVersionElseThrow() {
+        String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_12_9_String
+                + " first, otherwise the migration will fail";
         try (var statement = createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");
             var result = statement.executeQuery("SELECT latest_version FROM artemis_version;");
@@ -98,12 +134,30 @@ public class LiquibaseConfiguration {
             if (result.next()) {
                 return result.getString("latest_version");
             }
-            return null;
+            // if no version exists, we fail here
+            log.error(error);
+            throw new RuntimeException(error);
         }
         catch (SQLException e) {
-            log.info(e.getMessage());
-            // if no changelog or no version cane be found, it means it is not yet available, we do not need to throw an exception
-            return null;
+            if (e.getMessage().contains("databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
+                return null;
+            }
+            log.error(error);
+            throw new RuntimeException(error, e);
+        }
+    }
+
+    private void updateInitialChecksum() {
+        try (var statement = createStatement()) {
+            log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
+            statement.executeUpdate(
+                    "UPDATE DATABASECHANGELOG SET MD5SUM = null, DATEEXECUTED = now(), DESCRIPTION = 'Initial schema generation for version 6.0.0', LIQUIBASE = '4.15.0', FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml' WHERE ID = '00000000000001';");
+            statement.getConnection().commit();
+            statement.closeOnCompletion();
+        }
+        catch (SQLException e) {
+            log.error("Cannot update checksum for initial schema migration", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -113,12 +167,13 @@ public class LiquibaseConfiguration {
     }
 
     /**
-     * Stores the current version in the database after the application is ready
-     * @param event used to prevent this method for running in tests
+     * stores the current version in the database
+     *
+     * @param event used to retrieve the application context and the used profiles
      */
     @EventListener()
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
-        if (isTestEnvironment(event.getApplicationContext().getEnvironment())) {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
         try (var statement = createStatement()) {
@@ -136,9 +191,5 @@ public class LiquibaseConfiguration {
         catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private boolean isTestEnvironment(Environment env) {
-        return env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 }

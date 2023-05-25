@@ -36,6 +36,7 @@ public class TutorLeaderboardService {
 
     /**
      * Returns tutor leaderboards for the specified course.
+     *
      * @param exerciseIdsOfCourse - the ids of the exercises which belong to the course
      * @param course              - course for which leaderboard is created
      * @return list of tutor leaderboard objects

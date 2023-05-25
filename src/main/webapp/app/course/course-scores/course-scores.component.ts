@@ -13,7 +13,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
@@ -43,6 +43,10 @@ import {
     SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { GradeStep } from 'app/entities/grade-step.model';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -134,6 +138,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private plagiarismCasesService: PlagiarismCasesService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -248,26 +253,31 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
-        forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable]).subscribe(([participationsOfCourse, courseScoresResult, gradingScaleResponse]) => {
-            this.allParticipationsOfCourse = participationsOfCourse;
+        const plagiarismCasesObservable = this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(courseId);
+        forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(
+            ([participationsOfCourse, courseScoresResult, gradingScaleResponse, plagiarismCases]) => {
+                this.allParticipationsOfCourse = participationsOfCourse;
 
-            this.calculateExerciseLevelStatistics();
-            this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
+                this.calculateExerciseLevelStatistics();
+                this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
 
-            this.calculateStudentLevelStatistics();
+                this.calculateStudentLevelStatistics();
 
-            // if grading scale exists set properties
-            if (gradingScaleResponse.body) {
-                this.calculateGradingScaleInformation(gradingScaleResponse.body);
-            }
+                // if grading scale exists set properties
+                if (gradingScaleResponse.body) {
+                    this.calculateGradingScaleInformation(gradingScaleResponse.body, plagiarismCases.body ?? undefined);
+                }
 
-            // comparing with calculation from course scores (using new participation score table)
-            const courseScoreDTOs = courseScoresResult.body!;
-            this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
-            this.calculateAverageAndMedianScores();
-            this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
-            this.highlightBar(HighlightType.AVERAGE);
-        });
+                // comparing with calculation from course scores (using new participation score table)
+                const courseScoreDTOs = courseScoresResult.body!;
+                this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
+                this.calculateAverageAndMedianScores();
+                this.scoresToDisplay = this.students.map((student) =>
+                    roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course),
+                );
+                this.highlightBar(HighlightType.AVERAGE);
+            },
+        );
     }
 
     /**
@@ -484,8 +494,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets grading scale related properties
      * @param gradingScale the grading scale for the course
+     * @param plagiarismCases the list of plagiarism cases involving the students of the course
      */
-    calculateGradingScaleInformation(gradingScale: GradingScale) {
+    calculateGradingScaleInformation(gradingScale: GradingScale, plagiarismCases?: PlagiarismCase[]) {
         this.gradingScaleExists = true;
         this.gradingScale = gradingScale;
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
@@ -493,16 +504,48 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.maxGrade = this.gradingSystemService.maxGrade(this.gradingScale.gradeSteps);
 
         if (this.maxNumberOfOverallPoints >= 0) {
+            const plagiarismMap = this.createStudentPlagiarismMap(plagiarismCases);
             const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
             this.averageGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentage)!.gradeName;
             for (const student of this.students) {
-                const overallPercentageForStudent =
-                    student.overallPoints > 0 && this.maxNumberOfOverallPoints > 0 ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
-                student.gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentageForStudent);
+                student.gradeStep = this.findStudentGradeStep(student, gradingScale, plagiarismMap);
             }
         }
 
         this.changeDetector.detectChanges();
+    }
+
+    /**
+     * Finds the correct grade step for the student according to the given gradingScale, also handles special grades.
+     * @param student The student for which the grade should be determined.
+     * @param gradingScale The grading scale of the course.
+     * @param plagiarismMap An object which has value true for a student id if the student has at least one PlagiarismVerdict.PLAGIARISM verdict assigned in the course.
+     */
+    findStudentGradeStep(student: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }): GradeStep | undefined {
+        if (!student.participations?.length) {
+            // Currently the server does not return CourseScoresStudentStatistics for users without participations,
+            // but this should handle noParticipation grade if the server response changes.
+            return {
+                gradeName: gradingScale.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+            } as GradeStep;
+        } else if (plagiarismMap[student.user.id!]) {
+            return {
+                gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
+            } as GradeStep;
+        } else {
+            const overallPercentageForStudent = student.overallPoints && this.maxNumberOfOverallPoints ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+            return this.gradingSystemService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
+        }
+    }
+
+    private createStudentPlagiarismMap(plagiarismCases?: PlagiarismCase[]): { [id: number]: boolean } {
+        const plagiarismMap = {};
+        plagiarismCases?.forEach((plagiarismCase) => {
+            if (plagiarismCase.verdict === PlagiarismVerdict.PLAGIARISM && plagiarismCase.student?.id) {
+                plagiarismMap[plagiarismCase.student.id] = true;
+            }
+        });
+        return plagiarismMap;
     }
 
     /**
@@ -948,13 +991,5 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 break;
         }
         this.changeDetector.detectChanges();
-    }
-
-    /**
-     * Handles the click on an arbitrary bar in the score distribution
-     * Delegates the user to the participant scores view of the course
-     */
-    accessParticipantScores(): void {
-        this.navigationUtilService.routeInNewTab(['course-management', this.course.id, 'participant-scores']);
     }
 }

@@ -2,10 +2,10 @@ import { ArtemisTestModule } from '../../test.module';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { MockDirective } from 'ng-mocks';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective } from 'ng-mocks';
 
 describe('ThemeSwitchComponent', () => {
     let component: ThemeSwitchComponent;
@@ -14,8 +14,8 @@ describe('ThemeSwitchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ThemeSwitchComponent, MockDirective(NgbPopover)],
+            imports: [ArtemisTestModule, MockDirective(NgbPopover)],
+            declarations: [ThemeSwitchComponent],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()

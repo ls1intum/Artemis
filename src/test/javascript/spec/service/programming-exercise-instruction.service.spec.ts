@@ -27,6 +27,10 @@ describe('ProgrammingExerciseInstructionService', () => {
         const { testCaseState: taskState2, detailed: detailed2 } = programmingExerciseInstructionService.testStatusForTask(testCases.slice(1), result);
         expect(taskState2).toBe(TestCaseState.SUCCESS);
         expect(detailed2).toEqual({ successfulTests: ['testMergeSort'], failedTests: [], notExecutedTests: [] });
+
+        const { testCaseState: taskState3, detailed: detailed3 } = programmingExerciseInstructionService.testStatusForTask([], result);
+        expect(taskState3).toBe(TestCaseState.NOT_EXECUTED);
+        expect(detailed3).toEqual({ successfulTests: [], failedTests: [], notExecutedTests: [] });
     });
 
     it('should determine a failed state for a task if at least one test has failed (non legacy case)', () => {

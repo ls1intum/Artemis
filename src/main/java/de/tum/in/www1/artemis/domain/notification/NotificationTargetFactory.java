@@ -4,7 +4,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class NotificationTargetFactory {
@@ -27,6 +29,18 @@ public class NotificationTargetFactory {
 
     public static final String TUTORIAL_GROUPS_TEXT = "tutorial-groups";
 
+    public static final String NEW_MESSAGE_TEXT = "new-message";
+
+    public static final String NEW_REPLY_TEXT = "new-reply";
+
+    public static final String MESSAGE_TEXT = "message";
+
+    public static final String CONVERSATION_TEXT = "conversation";
+
+    public static final String CONVERSATION_CREATION_TEXT = "conversation-creation";
+
+    public static final String CONVERSATION_DELETION_TEXT = "conversation-deletion";
+
     public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
     public static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
@@ -47,6 +61,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "ExerciseReleased" notifications
+     *
      * @param exercise that was released
      * @return the final target property
      */
@@ -56,6 +71,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "ExerciseUpdated" notifications
+     *
      * @param exercise that was updated
      * @return the final target property
      */
@@ -96,7 +112,7 @@ public class NotificationTargetFactory {
      * Create a NotificationTarget for a GroupNotification for an Exercise.
      *
      * @param exercise for which to create the notification
-     * @param message to use for the notification
+     * @param message  to use for the notification
      * @return the final NotificationTarget for this case
      */
     public static NotificationTarget createExerciseTarget(Exercise exercise, String message) {
@@ -129,6 +145,7 @@ public class NotificationTargetFactory {
 
     /**
      * Create the needed target for "AttachmentUpdated" notifications
+     *
      * @param lecture where an attachment was updated
      * @return the final NotificationTarget
      */
@@ -141,7 +158,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for a GroupNotification for a Course.
      *
-     * @param course for which to create the notification
+     * @param course  for which to create the notification
      * @param message to use for the notification
      * @return the final NotificationTarget for this case
      */
@@ -154,7 +171,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for "LecturePost" notifications
      *
-     * @param post which contains the needed lecture
+     * @param post   which contains the needed lecture
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
@@ -167,7 +184,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for "ExercisePost" notifications
      *
-     * @param post which contains the needed exercise
+     * @param post   which contains the needed exercise
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
@@ -180,7 +197,7 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for "CoursePost" notifications
      *
-     * @param post course-wide post
+     * @param post   course-wide post
      * @param course the post belongs to
      * @return the final NotificationTarget
      */
@@ -223,6 +240,60 @@ public class NotificationTargetFactory {
         return notificationTarget;
     }
 
+    // Conversation related targets
+
+    /**
+     * Create a NotificationTarget for notifications related to a new message in conversation.
+     *
+     * @param message  that is related to the notification
+     * @param courseId of the course to which the conversation belongs
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createConversationMessageTarget(Post message, Long courseId) {
+        var notificationTarget = new NotificationTarget(NEW_MESSAGE_TEXT, message.getId(), MESSAGE_TEXT, courseId, COURSES_TEXT);
+        notificationTarget.setConversationId(message.getConversation().getId());
+        return notificationTarget;
+    }
+
+    /**
+     * Create a NotificationTarget for notifications related to a new conversation creation.
+     *
+     * @param conversation that is related to the notification
+     * @param courseId     of the course to which the conversation belongs
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createConversationCreationTarget(Conversation conversation, Long courseId) {
+        var notificationTarget = new NotificationTarget(CONVERSATION_CREATION_TEXT, conversation.getId(), CONVERSATION_TEXT, courseId, COURSES_TEXT);
+        notificationTarget.setConversationId(conversation.getId());
+        return notificationTarget;
+    }
+
+    /**
+     * Create a NotificationTarget for notifications related to a new message reply in conversation.
+     *
+     * @param messageReply that is related to the notification
+     * @param courseId     of the course to which the tutorial group belongs
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createMessageReplyTarget(AnswerPost messageReply, Long courseId) {
+        var notificationTarget = new NotificationTarget(NEW_REPLY_TEXT, messageReply.getPost().getId(), MESSAGE_TEXT, courseId, COURSES_TEXT);
+        notificationTarget.setConversationId(messageReply.getPost().getConversation().getId());
+        return notificationTarget;
+    }
+
+    /**
+     * Create a NotificationTarget for notifications related to conversation deletion.
+     *
+     * @param conversation that is related to the notification
+     * @param courseId     of the course to which the tutorial group belongs
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createConversationDeletionTarget(Conversation conversation, Long courseId) {
+        var notificationTarget = new NotificationTarget(CONVERSATION_DELETION_TEXT, conversation.getId(), CONVERSATION_TEXT, courseId, COURSES_TEXT);
+        notificationTarget.setConversationId(conversation.getId());
+        return notificationTarget;
+    }
+
     /// URL/Link related methods
 
     /**
@@ -245,7 +316,7 @@ public class NotificationTargetFactory {
     /**
      * Extracts a viable URL from the provided notification that is based on a Post and baseUrl
      *
-     * @param post which information will be needed to create the URL
+     * @param post    which information will be needed to create the URL
      * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */

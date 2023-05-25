@@ -16,7 +16,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
@@ -24,19 +24,24 @@ export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
+export interface Badge {
+    class: string;
+    text: string;
+    tooltip: string;
+}
+
 export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
-    getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
-    getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
+    getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
-    private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
-    private resultResourceUrl = SERVER_API_URL + 'api/results';
-    private participationResourceUrl = SERVER_API_URL + 'api/participations';
+    private exerciseResourceUrl = 'api/exercises';
+    private resultResourceUrl = 'api/results';
+    private participationResourceUrl = 'api/participations';
 
     private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
 
@@ -177,16 +182,6 @@ export class ResultService implements IResultService {
         }
     }
 
-    getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Result[]>(`${this.exerciseResourceUrl}/${exerciseId}/results`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
-    }
-
     getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -197,8 +192,14 @@ export class ResultService implements IResultService {
             .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultsWithPointsResponse(res)));
     }
 
-    getFeedbackDetailsForResult(participationId: number, resultId: number): Observable<HttpResponse<Feedback[]>> {
-        return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${resultId}/details`, { observe: 'response' });
+    getFeedbackDetailsForResult(participationId: number, result: Result): Observable<HttpResponse<Feedback[]>> {
+        return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${result.id!}/details`, { observe: 'response' }).pipe(
+            map((res) => {
+                const feedbacks = res.body ?? [];
+                feedbacks.forEach((feedback) => (feedback.result = result));
+                return res;
+            }),
+        );
     }
 
     delete(participationId: number, resultId: number): Observable<HttpResponse<void>> {
@@ -247,20 +248,6 @@ export class ResultService implements IResultService {
     }
 
     /**
-     * Fetches all results for an exercise and returns them
-     * @param exercise of which the results with points should be fetched.
-     */
-    getResults(exercise: Exercise): Observable<HttpResponse<Result[]>> {
-        return this.getResultsForExercise(exercise.id!, {
-            withSubmissions: exercise.type === ExerciseType.MODELING,
-        }).pipe(
-            tap((res: HttpResponse<Result[]>) => {
-                return res.body!.map((result) => ResultService.processReceivedResult(exercise, result));
-            }),
-        );
-    }
-
-    /**
      * Fetches all results together with the total points and points per grading criterion for each of the given exercise.
      * @param exercise of which the results with points should be fetched.
      */
@@ -278,14 +265,16 @@ export class ResultService implements IResultService {
         );
     }
 
-    private static processReceivedResult(exercise: Exercise, result: Result): Result {
-        result.participation!.results = [result];
-        (result.participation! as StudentParticipation).exercise = exercise;
-        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation!.initializationDate ?? exercise.releaseDate!);
-        // Nest submission into participation so that it is available for the result component
-        if (result.submission) {
-            result.participation!.submissions = [result.submission];
+    public static processReceivedResult(exercise: Exercise, result: Result): Result {
+        if (result.participation) {
+            result.participation.results = [result];
+            (result.participation as StudentParticipation).exercise = exercise;
+            // Nest submission into participation so that it is available for the result component
+            if (result.submission) {
+                result.participation.submissions = [result.submission];
+            }
         }
+        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation?.initializationDate ?? exercise.releaseDate!);
         return result;
     }
 
@@ -309,15 +298,15 @@ export class ResultService implements IResultService {
         link.click();
     }
 
-    public static evaluateBadge(participation: Participation, result: Result): { badgeClass: string; text: string; tooltip: string } {
+    public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             const studentParticipation = participation as StudentParticipation;
             if (studentParticipation.testRun) {
-                return { badgeClass: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
+                return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }
         return result.rated
-            ? { badgeClass: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
-            : { badgeClass: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
+            ? { class: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { class: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }

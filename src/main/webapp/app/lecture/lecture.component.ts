@@ -11,6 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -33,6 +34,8 @@ export class LectureComponent implements OnInit {
 
     activeFilters = new Set<LectureDateFilter>();
     readonly filterType = LectureDateFilter;
+
+    documentationType = DocumentationType.Lecture;
 
     // Icons
     faPlus = faPlus;

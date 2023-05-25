@@ -117,8 +117,8 @@ describe('Participation Service', () => {
         };
 
         const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
-        expect(mergedParticipation?.team!.id!).toEqual(participation1.team!.id);
-        expect(mergedParticipation?.team!.name!).toEqual(participation1.team!.name);
+        expect(mergedParticipation?.team!.id).toEqual(participation1.team!.id);
+        expect(mergedParticipation?.team!.name).toEqual(participation1.team!.name);
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);

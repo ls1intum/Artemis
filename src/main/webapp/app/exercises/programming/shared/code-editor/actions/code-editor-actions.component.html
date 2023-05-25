@@ -6,9 +6,7 @@
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="disableActions"
         (click)="resetRepository()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="{{ 'artemisApp.editor.conflict.resetRepository' | artemisTranslate }}"
+        [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
     >
         <span *ngIf="isResolvingConflict; else notResolvingConflict">
             <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
@@ -28,9 +26,7 @@
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="{{ 'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate }}"
+        [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
     >
         <span *ngIf="editorState === EditorState.REFRESHING; else notRefreshing">
             <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
@@ -53,9 +49,7 @@
             (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
         "
         (click)="commit()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="{{ 'artemisApp.editor.submitDescription' | artemisTranslate }}"
+        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
     >
         <span>
             <fa-icon [icon]="farPlayCircle"></fa-icon>

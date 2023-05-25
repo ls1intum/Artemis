@@ -1,0 +1,44 @@
+<div class="conversation-list-entry" *ngIf="conversation" [class.active]="isActiveConversation">
+    <div>
+        <span class="conversation-name">
+            <ng-container *ngIf="getAsChannel(conversation) as channel">
+                <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!"></jhi-channel-icon>
+            </ng-container>
+            <ng-container *ngIf="getAsGroupChat(conversation) as groupChatDto">
+                <jhi-group-chat-icon></jhi-group-chat-icon>
+            </ng-container>
+            {{ conversationService.getConversationName(conversation) }}
+        </span>
+        <span [hidden]="!isConversationUnread">
+            <span class="badge bg-info">
+                {{ conversation.unreadMessagesCount }}
+            </span>
+        </span>
+    </div>
+    <div class="interaction" (click)="$event.stopPropagation()">
+        <div ngbDropdown container="body" class="d-inline-block">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                <fa-icon [icon]="faEllipsis" size="sm"></fa-icon>
+            </button>
+            <div ngbDropdownMenu>
+                <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">
+                    {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
+                </button>
+                <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
+                    {{
+                        conversation.isHidden
+                            ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)
+                            : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hide' | artemisTranslate)
+                    }}
+                </button>
+                <button class="favorite" ngbDropdownItem (click)="onFavoriteClicked($event)">
+                    {{
+                        conversation.isFavorite
+                            ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unfavorite' | artemisTranslate)
+                            : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.favorite' | artemisTranslate)
+                    }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

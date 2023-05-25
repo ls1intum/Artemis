@@ -3,8 +3,7 @@
         "multipleChoiceQuestion": {
             "home": {
                 "title": "Multiple-Choice Questions",
-                "createLabel": "Multiple-Choice Question erstellen",
-                "createOrEditLabel": "Multiple-Choice Question erstellen oder bearbeiten"
+                "createLabel": "Multiple-Choice Question erstellen"
             },
             "created": "Multiple-Choice Question erstellt mit ID {{ param }}",
             "updated": "Multiple-Choice Question aktualisiert mit ID {{ param }}",
@@ -47,6 +46,16 @@
                 "codeBlock": "Code Block",
                 "code": "Code",
                 "color": "Farbe"
+            },
+            "visualEditor": {
+                "hintTooltip": "Füge hier einen Hinweis hinzu (sichtbar während des Quizzes über den ?-Button)",
+                "explanationTooltip": "Füge hier eine Erklärung hinzu (nur sichtbar im Feedback nachdem das Quiz beended ist)",
+                "hintPlaceholder": "Hinweis ...",
+                "explanationPlaceholder": "Erklärung ...",
+                "textPlaceholder": "Text ...",
+                "questionTitle": "Frage",
+                "answersTitle": "Antwortmöglichkeiten",
+                "newAnswerTitle": "Neue Antwortmöglichkeit hinzufügen"
             }
         }
     }

@@ -56,18 +56,18 @@ class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     void getWebsocketInfoEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/info")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/websocket/info")).andExpect(status().isOk());
     }
 
     @Test
     void getWebsocketEndpointFailedHandshakeNoCookie() throws Exception {
-        request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket")).andExpect(status().isOk()); // Failed handshake without cookie returns 200
+        request.getMvc().perform(get("/websocket/308/sessionId/websocket")).andExpect(status().isOk()); // Failed handshake without cookie returns 200
     }
 
     @Test
     void getWebsocketEndpointWithInvalidCookie() throws Exception {
         Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, "invalidCookie");
-        request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket").cookie(cookie)).andExpect(status().isOk()); // Failed handshake with invalid cookie returns 200
+        request.getMvc().perform(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isOk()); // Failed handshake with invalid cookie returns 200
     }
 
     @Test
@@ -75,12 +75,12 @@ class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void getWebsocketEndpointWithCookie() throws Exception {
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
-        request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket").cookie(cookie)).andExpect(status().isBadRequest())
+        request.getMvc().perform(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isBadRequest())
                 .andExpect(content().string("Can \"Upgrade\" only to \"WebSocket\".")); // Handshake is successfull but connection fails to upgrade using MockMvc
     }
 
     @Test
     void getWebsocketFallbackEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/tracker/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/websocket/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
     }
 }

@@ -9,10 +9,8 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.*;
 
@@ -21,7 +19,6 @@ import de.tum.in.www1.artemis.domain.*;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("L")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -29,13 +26,9 @@ import de.tum.in.www1.artemis.domain.*;
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
         @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
         @JsonSubTypes.Type(value = OnlineUnit.class, name = "online") })
-public abstract class LectureUnit extends DomainObject implements Completable {
+public abstract class LectureUnit extends DomainObject implements LearningObject {
 
     @Transient
-    private boolean visibleToStudents;
-
-    @Transient
-    @JsonSerialize
     private boolean completed;
 
     @Column(name = "name")
@@ -55,13 +48,15 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
-    @ManyToMany(mappedBy = "lectureUnits")
+    @ManyToMany
+    @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @OrderBy("title")
+    @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     protected Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnore
+    @JsonIgnore // important, so that the completion status of other users do not leak to anyone
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
     public String getName() {
@@ -69,7 +64,7 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name != null ? name.strip() : null;
     }
 
     public int getOrder() {
@@ -100,6 +95,8 @@ public abstract class LectureUnit extends DomainObject implements Completable {
         this.learningGoals = learningGoals;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty("completed")
     public boolean isCompleted() {
         return completed;
     }

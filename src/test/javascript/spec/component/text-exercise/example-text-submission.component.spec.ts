@@ -18,6 +18,7 @@ import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-asse
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { State } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
@@ -30,7 +31,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -67,6 +68,8 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockComponent(TextAssessmentAreaComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(ConfirmAutofocusButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [

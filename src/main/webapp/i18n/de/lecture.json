@@ -15,7 +15,7 @@
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
                 "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
                 "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStep": "Weiter"
+                "nextStepLabel": "Weiter"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
@@ -51,7 +51,7 @@
                 "notificationPlaceholder": "Optional: Mitteilung über die Änderung",
                 "chooseFile": "Datei auswählen",
                 "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB.",
-                "fileLimitation": "Max. Dateigröße 10 MB",
+                "fileLimitation": "Max. Dateigröße 20 MB",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
             "import": {
@@ -74,8 +74,8 @@
                     "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch.",
                     "unitsStepTitle": "Vorlesungseinheiten",
                     "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten.",
-                    "learningGoalsStepTitle": "Lernziele",
-                    "learningGoalsStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Lernzielen, um zu zeigen, welche Lernziele Studenten erreichen werden, wenn sie sie absolvieren."
+                    "competenciesStepTitle": "Kompetenzen",
+                    "learningGoalsStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Kompetenzen, um zu zeigen, welche Kompetenzen Studierende erreichen werden, wenn sie die Einheit abschließen."
                 },
                 "newLectureUnit": "Neue Vorlesungseinheit",
                 "editLectureUnit": "Vorlesungseinheit bearbeiten",

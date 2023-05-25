@@ -18,7 +18,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { NgForm, NgModel } from '@angular/forms';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -54,7 +53,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FormDateTimePickerComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(NgModel),
@@ -67,7 +65,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors
@@ -80,7 +77,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 // stubs
                 jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
 
-                comp.exerciseId = exerciseId;
+                comp.programmingExercises = [programmingExercise];
                 comp.participationIdList = participationIdList;
                 comp.singleParticipantMode = singleParticipantMode;
             });
@@ -92,12 +89,12 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     it('test initialization', () => {
         fixture.detectChanges();
-        expect(comp.exerciseId).toBe(42);
+        expect(comp.programmingExercises[0].id).toBe(42);
     });
 
     it('Exercise service should find the correct programming exercise', () => {
         fixture.detectChanges();
-        expect(comp.exercise).toEqual(programmingExercise);
+        expect(comp.programmingExercises[0]).toEqual(programmingExercise);
     });
 
     it('Export a repo by participations should download a zipped file', fakeAsync(() => {
@@ -105,7 +102,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
-        comp.exportRepos(exerciseId);
+        comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
         expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBeTrue();
@@ -120,7 +117,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
-        comp.exportRepos(exerciseId);
+        comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
@@ -130,17 +127,42 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     it('Export of multiple repos download multiple files', fakeAsync(() => {
         const programmingExercise2 = new ProgrammingExercise(new Course(), undefined);
         programmingExercise2.id = 43;
-        fixture.componentInstance.exercise = programmingExercise2;
-        fixture.componentInstance.exercise.isAtLeastInstructor = true;
-        comp.selectedProgrammingExercises = [programmingExercise, programmingExercise2];
+        programmingExercise2.isAtLeastInstructor = true;
+        comp.programmingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
-        comp.bulkExportRepos();
+        comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.exportAllParticipants).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));
+
+    describe('Export a repo with excludePracticeSubmissions as true', () => {
+        const httpResponse = createBlobHttpResponse();
+
+        beforeEach(() => {
+            fixture.detectChanges();
+            comp.repositoryExportOptions.excludePracticeSubmissions = true;
+        });
+
+        it('should call exportReposByParticipations with correct options', fakeAsync(() => {
+            comp.participationIdList = participationIdList;
+            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+            comp.exportRepos();
+            tick();
+            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
+        }));
+
+        it('should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
+            comp.participationIdList = [];
+            comp.participantIdentifierList = 'ALL';
+            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+            comp.exportRepos();
+            tick();
+            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+        }));
+    });
 });

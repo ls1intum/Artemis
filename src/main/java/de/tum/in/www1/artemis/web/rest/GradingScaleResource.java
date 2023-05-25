@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,7 +85,7 @@ public class GradingScaleResource {
      * GET /courses/{courseId}/exams/{examId}/grading-scale : Find grading scale for exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale")
@@ -114,14 +116,14 @@ public class GradingScaleResource {
     /**
      * POST /courses/{courseId}/grading-scale : Create grading scale for course
      *
-     * @param courseId the course to which the grading scale belongs
+     * @param courseId     the course to which the grading scale belongs
      * @param gradingScale the grading scale which will be created
      * @return ResponseEntity with status 201 (Created) with body the new grading scale if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) throws URISyntaxException {
+    public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
@@ -149,20 +151,24 @@ public class GradingScaleResource {
         else if (gradingScale.getId() != null) {
             throw new BadRequestAlertException("A grading scale can't contain a predefined id", ENTITY_NAME, "gradingScaleHasId");
         }
+        else if (gradingScale.getPresentationsNumber() != null && gradingScale.getCourse().getPresentationScore() != null && gradingScale.getCourse().getPresentationScore() > 0) {
+            throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
+                    "basicPresentationAlreadySet");
+        }
     }
 
     /**
      * POST /courses/{courseId}/exams/{examId}grading-scale : Create grading scale for exam
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param courseId     the course to which the exam belongs
+     * @param examId       the exam to which the grading scale belongs
      * @param gradingScale the grading scale which will be created
      * @return ResponseEntity with status 201 (Created) with body the new grading scale if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale)
+    public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -170,8 +176,8 @@ public class GradingScaleResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         validateGradingScale(existingGradingScale, gradingScale);
         Exam exam = examRepository.findByIdElseThrow(examId);
-        if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
-            exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
+        if (gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
+            exam.setExamMaxPoints(gradingScale.getExam().getExamMaxPoints());
             examRepository.save(exam);
         }
         gradingScale.setExam(exam);
@@ -184,13 +190,13 @@ public class GradingScaleResource {
     /**
      * PUT /courses/{courseId}/grading-scale : Update grading scale for course
      *
-     * @param courseId the course to which the grading scale belongs
+     * @param courseId     the course to which the grading scale belongs
      * @param gradingScale the grading scale which will be updated
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
@@ -209,14 +215,14 @@ public class GradingScaleResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/grading-scale : Update grading scale for exam
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param courseId     the course to which the exam belongs
+     * @param examId       the exam to which the grading scale belongs
      * @param gradingScale the grading scale which will be updated
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examRepository.findByIdElseThrow(examId);
@@ -224,8 +230,8 @@ public class GradingScaleResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
-        if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
-            exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
+        if (gradingScale.getExam().getExamMaxPoints() != exam.getExamMaxPoints()) {
+            exam.setExamMaxPoints(gradingScale.getExam().getExamMaxPoints());
             examRepository.save(exam);
         }
         gradingScale.setExam(exam);
@@ -254,7 +260,7 @@ public class GradingScaleResource {
      * DELETE /courses/{courseId}/exams/{examId}/grading-scale : Delete grading scale for course
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the grading scale belongs
+     * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) if the grading scale is successfully deleted and 400 (Bad request) otherwise
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/grading-scale")

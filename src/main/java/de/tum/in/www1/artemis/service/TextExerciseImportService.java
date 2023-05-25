@@ -51,7 +51,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        newExercise.setKnowledge(templateExercise.getKnowledge());
         textExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
@@ -75,10 +74,11 @@ public class TextExerciseImportService extends ExerciseImportService {
         return newExercise;
     }
 
-    /** This helper functions does a hard copy of the text blocks and inserts them into {@code newSubmission}
+    /**
+     * This helper functions does a hard copy of the text blocks and inserts them into {@code newSubmission}
      *
      * @param originalTextBlocks The original text blocks to be copied
-     * @param newSubmission The submission in which we enter the new text blocks
+     * @param newSubmission      The submission in which we enter the new text blocks
      * @return the cloned list of text blocks
      */
     private Set<TextBlock> copyTextBlocks(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {

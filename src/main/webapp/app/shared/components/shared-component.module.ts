@@ -14,6 +14,14 @@ import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-e
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
+import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -24,12 +32,20 @@ import { StartPracticeModeButtonComponent } from 'app/shared/components/start-pr
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
         CloneRepoButtonComponent,
+        ResetRepoButtonComponent,
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
+        DifficultyBadgeComponent,
+        IncludedInScoreBadgeComponent,
+        DocumentationButtonComponent,
+        ExerciseImportComponent,
+        ExerciseImportTabsComponent,
+        ExerciseImportFromFileComponent,
+        ExerciseImportWrapperComponent,
     ],
     exports: [
         ButtonComponent,
@@ -37,12 +53,20 @@ import { StartPracticeModeButtonComponent } from 'app/shared/components/start-pr
         HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         CloneRepoButtonComponent,
+        ResetRepoButtonComponent,
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
+        DifficultyBadgeComponent,
+        IncludedInScoreBadgeComponent,
+        DocumentationButtonComponent,
+        ExerciseImportComponent,
+        ExerciseImportTabsComponent,
+        ExerciseImportFromFileComponent,
+        ExerciseImportWrapperComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}

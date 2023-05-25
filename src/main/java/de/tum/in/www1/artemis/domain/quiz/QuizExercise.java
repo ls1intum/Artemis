@@ -13,9 +13,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -28,14 +26,22 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time which are
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
+ * which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
 @Entity
 @DiscriminatorValue(value = "Q")
+@JsonTypeName("quiz")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizExercise extends Exercise {
+public class QuizExercise extends Exercise implements QuizConfiguration {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @JsonView(QuizView.Before.class)
+    public String getType() {
+        return "quiz";
+    }
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -55,9 +61,9 @@ public class QuizExercise extends Exercise {
     private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "quiz_mode")
+    @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
     @JsonView(QuizView.Before.class)
-    private QuizMode quizMode;
+    private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
 
     /**
      * The duration of the quiz exercise in seconds
@@ -98,6 +104,7 @@ public class QuizExercise extends Exercise {
         this.allowedNumberOfAttempts = allowedNumberOfAttempts;
     }
 
+    @JsonProperty
     public Integer getRemainingNumberOfAttempts() {
         return remainingNumberOfAttempts;
     }
@@ -151,18 +158,13 @@ public class QuizExercise extends Exercise {
         this.quizMode = quizMode;
     }
 
-    @JsonView(QuizView.Before.class)
-    public String getType() {
-        return "quiz";
-    }
-
     /**
      * Check if the quiz has started, that means quiz batches could potentially start
      *
      * @return true if quiz has started, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isQuizStarted() {
+    public boolean isQuizStarted() {
         return isVisibleToStudents();
     }
 
@@ -172,7 +174,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isQuizEnded() {
+    public boolean isQuizEnded() {
         return getDueDate() != null && ZonedDateTime.now().isAfter(getDueDate());
     }
 
@@ -182,7 +184,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz should be filtered, false otherwise
      */
     @JsonIgnore
-    public Boolean shouldFilterForStudents() {
+    public boolean shouldFilterForStudents() {
         return !isQuizEnded();
     }
 
@@ -192,7 +194,7 @@ public class QuizExercise extends Exercise {
      * @return true if the quiz is valid, otherwise false
      */
     @JsonIgnore
-    public Boolean isValid() {
+    public boolean isValid() {
         // check title
         if (getTitle() == null || getTitle().isEmpty()) {
             return false;
@@ -338,20 +340,20 @@ public class QuizExercise extends Exercise {
     }
 
     @Override
-    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
-                return participation;
+                return List.of(participation);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
         // In exams, all results should be seen as relevant as they will only be created once the exam is over
         if (shouldFilterForStudents() && !isExamExercise()) {
@@ -543,113 +545,10 @@ public class QuizExercise extends Exercise {
     }
 
     /**
-     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
-     */
-    public void reconnectJSONIgnoreAttributes() {
-        // iterate through quizQuestions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        // that prevents infinite recursive JSON serialization.
-        for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            if (quizQuestion.getId() != null) {
-                quizQuestion.setExercise(this);
-                // reconnect QuestionStatistics
-                if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
-                }
-                // do the same for answerOptions (if quizQuestion is multiple choice)
-                if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                    // reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
-                    // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
-                }
-                if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
-                    // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                }
-                if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
-                    // reconnect spots
-                    for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
-                        if (spot.getId() != null) {
-                            spot.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect solutions
-                    for (ShortAnswerSolution solution : shortAnswerQuestion.getSolutions()) {
-                        if (solution.getId() != null) {
-                            solution.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect spotCounters
-                    for (ShortAnswerSpotCounter shortAnswerSpotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
-                        if (shortAnswerSpotCounter.getId() != null) {
-                            shortAnswerSpotCounter.setShortAnswerQuestionStatistic(shortAnswerStatistic);
-                            shortAnswerSpotCounter.getSpot().setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                }
-            }
-        }
-
-        // reconnect pointCounters
-        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
-            }
-        }
-
-        if (getQuizBatches() != null) {
-            for (QuizBatch quizBatch : getQuizBatches()) {
-                quizBatch.setQuizExercise(this);
-            }
-        }
-    }
-
-    /**
      * add Result to all Statistics of the given QuizExercise
      *
-     * @param result            the result which will be added
-     * @param quizSubmission    the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
+     * @param result         the result which will be added
+     * @param quizSubmission the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
      */
     public void addResultToAllStatistics(Result result, QuizSubmission quizSubmission) {
 
@@ -668,7 +567,7 @@ public class QuizExercise extends Exercise {
     /**
      * remove Result from all Statistics of the given QuizExercise
      *
-     * @param result       the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
+     * @param result the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
      */
     public void removeResultFromAllStatistics(Result result) {
         // update QuizPointStatistic with the result
@@ -697,7 +596,7 @@ public class QuizExercise extends Exercise {
         if (isQuizEnded()) {
             return QuizView.After.class;
         }
-        else if (batch != null && batch.isSubmissionAllowed()) {
+        else if (batch != null && batch.isStarted()) {
             return QuizView.During.class;
         }
         else {
@@ -710,10 +609,36 @@ public class QuizExercise extends Exercise {
     public void validateDates() {
         super.validateDates();
         quizBatches.forEach(quizBatch -> {
-            if (quizBatch.getStartTime().isBefore(getReleaseDate())) {
+            if (quizBatch.getStartTime() != null && quizBatch.getStartTime().isBefore(getReleaseDate())) {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });
+    }
+
+    @Override
+    public void setQuestionParent(QuizQuestion quizQuestion) {
+        quizQuestion.setExercise(this);
+    }
+
+    /**
+     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     */
+    public void reconnectJSONIgnoreAttributes() {
+        QuizConfiguration.super.reconnectJSONIgnoreAttributes();
+
+        // reconnect pointCounters
+        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
+            }
+        }
+
+        // reconnect quizBatches
+        if (getQuizBatches() != null) {
+            for (QuizBatch quizBatch : getQuizBatches()) {
+                quizBatch.setQuizExercise(this);
+            }
+        }
     }
 
     @Override

@@ -11,6 +11,7 @@ import {
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 describe('TutorialFreePeriodFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
@@ -47,7 +48,6 @@ describe('TutorialFreePeriodFormComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
@@ -57,8 +57,6 @@ describe('TutorialFreePeriodFormComponent', () => {
             date: validDate,
             reason: validReason,
         };
-        fixture.detectChanges();
-
         component.formData = formData;
         component.ngOnChanges();
 
@@ -70,7 +68,7 @@ describe('TutorialFreePeriodFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         setValidFormValues();
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
         clickSubmit(true);

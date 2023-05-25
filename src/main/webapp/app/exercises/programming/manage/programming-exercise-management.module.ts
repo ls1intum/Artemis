@@ -8,7 +8,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
@@ -53,7 +52,6 @@ import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programmi
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,
-        ProgrammingExerciseImportComponent,
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,

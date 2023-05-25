@@ -34,7 +34,7 @@ public class AnswerPostResource {
      * @param courseId   id of the course the post belongs to
      * @param answerPost answer post to create
      * @return ResponseEntity with status 201 (Created) containing the created answer post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/answer-posts")
     @PreAuthorize("hasRole('USER')")
@@ -46,11 +46,11 @@ public class AnswerPostResource {
     /**
      * PUT /courses/{courseId}/answer-posts/{answerPostId} : Update an existing answer post with given id
      *
-     * @param courseId      id of the course the answer post belongs to
-     * @param answerPostId  id of the answer post to update
-     * @param answerPost    answer post to update
+     * @param courseId     id of the course the answer post belongs to
+     * @param answerPostId id of the answer post to update
+     * @param answerPost   answer post to update
      * @return ResponseEntity with status 200 (OK) containing the updated answer post in the response body,
-     * or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
      */
     @PutMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @PreAuthorize("hasRole('USER')")
@@ -65,7 +65,7 @@ public class AnswerPostResource {
      * @param courseId     id of the course the post belongs to
      * @param answerPostId id of the answer post to delete
      * @return ResponseEntity with status 200 (OK),
-     * or 400 (Bad Request) if the checks on user or course validity fail
+     *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @DeleteMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @PreAuthorize("hasRole('USER')")

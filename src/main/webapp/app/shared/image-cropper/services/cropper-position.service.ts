@@ -119,9 +119,8 @@ export class CropperPositionService {
                 );
                 break;
             case 'center':
-                const scale = event.scale;
-                const newWidth = Math.min(Math.max(settings.cropperScaledMinWidth, Math.abs(moveStart.x2 - moveStart.x1) * scale), settings.cropperScaledMaxWidth);
-                const newHeight = Math.min(Math.max(settings.cropperScaledMinHeight, Math.abs(moveStart.y2 - moveStart.y1) * scale), settings.cropperScaledMaxHeight);
+                const newWidth = Math.min(Math.max(settings.cropperScaledMinWidth, Math.abs(moveStart.x2 - moveStart.x1) * event.scale), settings.cropperScaledMaxWidth);
+                const newHeight = Math.min(Math.max(settings.cropperScaledMinHeight, Math.abs(moveStart.y2 - moveStart.y1) * event.scale), settings.cropperScaledMaxHeight);
                 cropperPosition.x1 = moveStart.clientX - newWidth / 2;
                 cropperPosition.x2 = moveStart.clientX + newWidth / 2;
                 cropperPosition.y1 = moveStart.clientY - newHeight / 2;

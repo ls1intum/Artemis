@@ -1,19 +1,27 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
-    templateUrl: '../message-inline-input.component.html',
-    styleUrls: ['../message-inline-input.component.scss'],
+    templateUrl: './message-reply-inline-input.component.html',
+    styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> {
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
+export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit {
+    warningDismissed = false;
+
+    ngOnInit(): void {
+        super.ngOnInit();
+        this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
+    }
+
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
         super(metisService, modalService, formBuilder);
     }
 
@@ -59,5 +67,10 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                 this.isLoading = false;
             },
         });
+    }
+
+    closeAlert() {
+        this.warningDismissed = true;
+        this.localStorageService.store('chatWarningDismissed', true);
     }
 }

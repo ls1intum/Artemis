@@ -67,7 +67,7 @@ export class ExerciseDetailNavigationChartComponent extends ChartComponent imple
         }
         this.reached = navigations;
         this.ngxData.push({ name: 'Navigations', value: navigations } as NgxChartsSingleSeriesDataEntry);
-        this.ngxData.push({ name: 'Missing', value: (this.exam.numberOfRegisteredUsers ?? 0) - navigations } as NgxChartsSingleSeriesDataEntry);
+        this.ngxData.push({ name: 'Missing', value: (this.exam.numberOfExamUsers ?? 0) - navigations } as NgxChartsSingleSeriesDataEntry);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
     }

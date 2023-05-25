@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+    <!--
+    This changeset adds special grade name columns to grading scale for plagiarism and no participation grades.
+    -->
+    <changeSet author="akesfeden" id="20221117081200">
+        <addColumn tableName="grading_scale">
+            <column name="plagiarism_grade" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="no_participation_grade" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

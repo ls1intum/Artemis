@@ -3,17 +3,17 @@ import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
-class MockExtraColumn {
+class MockExtraColumnComponent {
     @Input() tutorialGroupSession: TutorialGroupSession;
 }
 
@@ -27,7 +27,7 @@ class MockExtraColumn {
         </jhi-tutorial-group-sessions-table>
     `,
 })
-class MockWrapper {
+class MockWrapperComponent {
     @Input()
     tutorialGroup: TutorialGroup;
 
@@ -40,34 +40,34 @@ class MockWrapper {
     @ViewChild(TutorialGroupSessionsTableComponent)
     sessionTableInstance: TutorialGroupSessionsTableComponent;
 
-    @ViewChildren(MockExtraColumn)
-    mockExtraColumns: QueryList<MockExtraColumn>;
+    @ViewChildren(MockExtraColumnComponent)
+    mockExtraColumns: QueryList<MockExtraColumnComponent>;
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
-    let fixture: ComponentFixture<MockWrapper>;
-    let component: MockWrapper;
+    let fixture: ComponentFixture<MockWrapperComponent>;
+    let component: MockWrapperComponent;
     let tableInstance: TutorialGroupSessionsTableComponent;
-    let mockExtraColumns: MockExtraColumn[];
+    let mockExtraColumns: MockExtraColumnComponent[];
     let sessionOne: TutorialGroupSession;
     let sessionTwo: TutorialGroupSession;
     let tutorialGroup: TutorialGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbCollapseMocksModule],
             declarations: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
-                MockWrapper,
-                MockExtraColumn,
+                MockWrapperComponent,
+                MockExtraColumnComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(NgbCollapse),
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MockWrapper);
+                fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 tutorialGroup = generateExampleTutorialGroup({});
                 sessionOne = generateExampleTutorialGroupSession({ id: 1 });
@@ -96,8 +96,7 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     it('should return the correct number of columns', () => {
-        fixture.detectChanges();
-        expect(tableInstance.numberOfColumns).toBe(5);
+        expect(tableInstance.numberOfColumns).toBe(6);
     });
 });
 
@@ -112,13 +111,8 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                TutorialGroupSessionsTableComponent,
-                TutorialGroupSessionRowStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(NgbCollapse),
-            ],
+            imports: [NgbCollapseMocksModule],
+            declarations: [TutorialGroupSessionsTableComponent, TutorialGroupSessionRowStubComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()
             .then(() => {
@@ -138,11 +132,13 @@ describe('TutorialGroupSessionTableComponent', () => {
                     location: 'Room 1',
                 });
                 tutorialGroup = generateExampleTutorialGroup({});
+                tutorialGroup.nextSession = upcomingSession;
 
                 component.sessions = [upcomingSession, pastSession];
                 component.tutorialGroup = tutorialGroup;
                 component.timeZone = timeZone;
                 jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
+                fixture.detectChanges();
             });
     });
 
@@ -151,23 +147,51 @@ describe('TutorialGroupSessionTableComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
-    it('should split sessions into upcoming and past', () => {
-        fixture.detectChanges();
+    it('should sync next session and upcoming sessions when attendance changed', () => {
         const changes = {} as SimpleChanges;
         changes.sessions = new SimpleChange([], component.sessions, true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        component.ngOnChanges(changes);
+
+        const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSession;
+        component.onAttendanceChanged(sessionWithAttendanceData);
+        fixture.detectChanges();
+        expect(component.nextSession).toEqual(sessionWithAttendanceData);
+        expect(component.upcomingSessions[0]).toEqual(sessionWithAttendanceData);
+        expect(component.pastSessions[0]).toEqual(pastSession);
+    });
+
+    it('should sync next session and past sessions when attendance changed', () => {
+        const changes = {} as SimpleChanges;
+        changes.sessions = new SimpleChange([], component.sessions, true);
+        tutorialGroup.nextSession = pastSession;
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        component.ngOnChanges(changes);
+
+        const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSession;
+        component.onAttendanceChanged(sessionWithAttendanceData);
+        fixture.detectChanges();
+        expect(component.nextSession).toEqual(sessionWithAttendanceData);
+        expect(component.upcomingSessions[0]).toEqual(upcomingSession);
+        expect(component.pastSessions[0]).toEqual(sessionWithAttendanceData);
+    });
+
+    it('should split sessions into upcoming and past', () => {
+        const changes = {} as SimpleChanges;
+        changes.sessions = new SimpleChange([], component.sessions, true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
         component.ngOnChanges(changes);
         expect(component.upcomingSessions).toHaveLength(1);
         expect(component.upcomingSessions).toEqual([upcomingSession]);
         expect(component.pastSessions).toHaveLength(1);
         expect(component.pastSessions).toEqual([pastSession]);
+        expect(component.nextSession).toEqual(upcomingSession);
     });
 
     it('should return the correct number of columns', () => {
-        fixture.detectChanges();
-        expect(component.numberOfColumns).toBe(3);
+        expect(component.numberOfColumns).toBe(4);
     });
 });

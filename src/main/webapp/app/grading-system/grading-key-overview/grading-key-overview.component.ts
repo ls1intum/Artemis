@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType } from 'app/entities/grading-scale.model';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
@@ -12,6 +11,8 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -25,12 +26,14 @@ export class GradingKeyOverviewComponent implements OnInit {
 
     readonly GradeEditMode = GradeEditMode;
 
+    plagiarismGrade: string;
+    noParticipationGrade: string;
+
     constructor(
         private route: ActivatedRoute,
-        private router: Router,
         private gradingSystemService: GradingSystemService,
         private bonusService: BonusService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private scoresStorageService: ScoresStorageService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private themeService: ThemeService,
     ) {}
@@ -61,12 +64,16 @@ export class GradingKeyOverviewComponent implements OnInit {
                 this.title = gradeSteps.title;
                 this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
                 this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
+                this.plagiarismGrade = gradeSteps.plagiarismGrade;
+                this.noParticipationGrade = gradeSteps.noParticipationGrade;
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
-                        // calculate course max points based on exercises
-                        const course = this.courseCalculationService.getCourse(this.courseId!);
-                        const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
-                        this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
+                        let maxPoints = 0;
+                        const totalScoresForCourse = this.scoresStorageService.getStoredTotalScores(this.courseId!);
+                        if (totalScoresForCourse) {
+                            maxPoints = totalScoresForCourse[ScoreType.REACHABLE_POINTS];
+                        }
+                        this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints);
                     } else {
                         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
                         this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
@@ -95,6 +102,10 @@ export class GradingKeyOverviewComponent implements OnInit {
                         gradeType: source.gradeType,
                         gradeSteps: source.gradeSteps,
                         maxPoints: this.gradingSystemService.getGradingScaleMaxPoints(source),
+                        plagiarismGrade: source.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
+                        noParticipationGrade: source.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+                        presentationsNumber: source.presentationsNumber,
+                        presentationsWeight: source.presentationsWeight,
                     };
                 }),
             );

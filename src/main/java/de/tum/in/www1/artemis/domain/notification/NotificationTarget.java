@@ -38,6 +38,8 @@ public class NotificationTarget {
 
     private Long lectureId; // will stay "lectureId" in toJsonString()
 
+    private Long conversationId; // will stay "conversationId" in toJsonString()
+
     public NotificationTarget() {
         // intentionally empty. e.g. used for cases without courseId
     }
@@ -138,9 +140,18 @@ public class NotificationTarget {
         this.lectureId = lectureId;
     }
 
+    @JsonProperty("conversation")
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
+    }
+
     /**
      * @return the NotificationTarget as a JSON String
-     * This is needed to stay consistent with the legacy implementation & data in the DB
+     *         This is needed to stay consistent with the legacy implementation & data in the DB
      */
     public String toJsonString() {
         String result = null;

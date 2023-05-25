@@ -1,6 +1,6 @@
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -8,21 +8,23 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
-import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
+import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Slide } from 'app/entities/lecture-unit/slide.model';
 
-export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
-
+export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
+export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
+export const metisAttachmentUnit = { id: 1, name: 'Metis Attachment Unit', attachment: metisAttachment, slides: [metisSlide1] } as AttachmentUnit;
 export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
-export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
+export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
+export const metisLecture3 = { id: 3, title: 'Third Metis  Lecture 3', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
 
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
 export const metisUser2 = { id: 2, name: 'username2', login: 'login2', groups: ['metisStudents'] } as User;
-export const metisUser3 = { id: 3, name: 'username3', login: 'login3', groups: ['metisStudents'] } as User;
 export const metisTutor = { id: 4, name: 'username4', login: 'login4', groups: ['metisTutors'] } as User;
 
 export const metisTags = ['Tag1', 'Tag2'];
@@ -35,8 +37,8 @@ export const metisCourse = {
     id: 1,
     title: 'Metis Course',
     exercises: [metisExercise, metisExercise2],
-    lectures: [metisLecture, metisLecture2],
-    postsEnabled: true,
+    lectures: [metisLecture, metisLecture2, metisLecture3],
+    courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
 
@@ -54,15 +56,6 @@ export const metisAnswerPostUser2 = {
     content: 'metisAnswerPostUser3',
     creationDate: undefined,
 } as AnswerPost;
-
-export const metisApprovedAnswerPostTutor = {
-    id: 3,
-    author: metisTutor,
-    content: 'metisApprovedAnswerPostTutor',
-    resolvesPost: true,
-    creationDate: undefined,
-} as AnswerPost;
-
 export const metisAnswerPostToCreateUser1 = {
     author: metisUser1,
     content: 'metisAnswerPostToCreateUser1',
@@ -248,29 +241,13 @@ export const postsWithCreationDate = [
     post7WithCreationDate,
 ];
 
-const conversationParticipantUser1 = { id: 1, user: metisUser1 } as ConversationParticipant;
+const conversationParticipantUser1 = { id: 1, user: metisUser1, unreadMessagesCount: 1 } as ConversationParticipant;
 
-const conversationParticipantUser2 = { id: 2, user: metisUser2 } as ConversationParticipant;
-
-const conversationParticipantTutor = { id: 3, user: metisTutor } as ConversationParticipant;
+const conversationParticipantUser2 = { id: 2, user: metisUser2, unreadMessagesCount: 0 } as ConversationParticipant;
 
 export const conversationBetweenUser1User2 = {
     id: 1,
     conversationParticipants: [conversationParticipantUser1, conversationParticipantUser2],
-    creationDate: undefined,
-    lastMessageDate: undefined,
-} as Conversation;
-
-export const conversationBetweenUser1Tutor = {
-    id: 4,
-    conversationParticipants: [conversationParticipantUser1, conversationParticipantTutor],
-    creationDate: undefined,
-    lastMessageDate: undefined,
-} as Conversation;
-
-export const conversationBetweenUser2AndTutor = {
-    id: 2,
-    conversationParticipants: [conversationParticipantUser2, conversationParticipantTutor],
     creationDate: undefined,
     lastMessageDate: undefined,
 } as Conversation;
@@ -291,38 +268,4 @@ export const directMessageUser2 = {
     conversation: conversationBetweenUser1User2,
 } as Post;
 
-export const conversationsOfUser1 = [conversationBetweenUser1User2, conversationBetweenUser1Tutor];
-
-export const conversationsOfUser2 = [conversationBetweenUser1User2, conversationBetweenUser2AndTutor];
-
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
-
-export const conversationParticipantToCreateUser2 = {
-    user: metisUser2,
-    lastRead: undefined,
-    closed: false,
-} as ConversationParticipant;
-
-export const conversationToCreateUser1 = {
-    course: metisCourse,
-    conversationParticipants: [conversationParticipantToCreateUser2],
-    creationDate: undefined,
-    lastMessageDate: undefined,
-} as Conversation;
-
-export const conversationUser1 = {
-    ...conversationToCreateUser1,
-    id: 3,
-} as Conversation;
-
-export const conversationCreatedDTO = {
-    conversation: conversationBetweenUser1Tutor,
-    crudAction: MetisPostAction.CREATE,
-} as ConversationDTO;
-
-export const conversationReadDTO = {
-    conversation: conversationBetweenUser1Tutor,
-    crudAction: MetisPostAction.READ_CONVERSATION,
-} as ConversationDTO;
-
-export const metisConversationsOfUser1 = [conversationToCreateUser1];

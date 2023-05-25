@@ -11,6 +11,7 @@ public class StringUtil {
 
     /**
      * Removes all chars from ILLEGAL_CHARACTERS from the input String
+     *
      * @param input String to strip
      * @return stripped String
      */

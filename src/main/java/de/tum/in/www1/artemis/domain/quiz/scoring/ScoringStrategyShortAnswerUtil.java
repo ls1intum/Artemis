@@ -11,7 +11,7 @@ public class ScoringStrategyShortAnswerUtil {
     /**
      * Get number of correct and incorrect solutions for the short answer question
      *
-     * @param shortAnswerQuestion for which the correct and incorrect solutions should be counted
+     * @param shortAnswerQuestion        for which the correct and incorrect solutions should be counted
      * @param shortAnswerSubmittedAnswer for the given short answer question
      * @return array with correct and incorrect solution count
      */

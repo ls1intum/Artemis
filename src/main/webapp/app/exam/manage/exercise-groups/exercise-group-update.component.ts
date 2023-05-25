@@ -49,7 +49,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
         }
     }
 
-    // tslint:disable-next-line:completed-docs
+    // eslint-disable-next-line
     previousState() {
         this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exercise-groups']);
     }

@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 
 public interface MockDelegate {
 
@@ -24,10 +23,12 @@ public interface MockDelegate {
     void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception;
 
+    void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception;
+
     void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception;
 
-    void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status) throws Exception;
+    void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception;
 
     void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception;
 
@@ -45,9 +46,6 @@ public interface MockDelegate {
     void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception;
 
     void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException;
-
-    void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
-            throws URISyntaxException, JsonProcessingException;
 
     void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl);
 
@@ -73,7 +71,7 @@ public interface MockDelegate {
 
     void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
-    void resetMockProvider();
+    void resetMockProvider() throws Exception;
 
     void verifyMocks();
 
@@ -86,7 +84,7 @@ public interface MockDelegate {
 
     void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception;
 
-    void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
+    void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
 
     void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception;
 
@@ -98,7 +96,7 @@ public interface MockDelegate {
 
     void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
 
-    void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception;
+    void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception;
 
     void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception;
 
@@ -129,4 +127,6 @@ public interface MockDelegate {
     void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception;
 
     void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
+
+    void mockUserExists(String username) throws Exception;
 }

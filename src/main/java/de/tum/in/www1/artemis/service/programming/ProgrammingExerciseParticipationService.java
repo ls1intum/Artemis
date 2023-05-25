@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -16,9 +20,8 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -38,28 +41,18 @@ public class ProgrammingExerciseParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    private final UserRepository userRepository;
-
     private final GitService gitService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
-        this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.gitService = gitService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -67,7 +60,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @return the SolutionProgrammingExerciseParticipation of programming exercise.
-     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a SolutionParticipation).
+     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     SolutionParticipation).
      */
     // TODO: move into solutionParticipationRepository
     public SolutionProgrammingExerciseParticipation findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
@@ -83,7 +77,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param programmingExerciseId ProgrammingExercise id
      * @return the TemplateProgrammingExerciseParticipation of programming exercise.
-     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a TemplateParticipation).
+     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     TemplateParticipation).
      */
     // TODO: move into templateParticipationRepository
     public TemplateProgrammingExerciseParticipation findTemplateParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
@@ -135,41 +130,11 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Check if the currently logged-in user can access a given participation by accessing the exercise and course connected to this participation
-     * The method will treat the participation types differently:
-     * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
-     * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
-     *
-     * @param participation to check permissions for.
-     * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
-     */
-    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation) {
-        if (participation == null) {
-            return false;
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        // If the current user is owner of the participation, they are allowed to access it
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
-            return true;
-        }
-
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
-        if (programmingExercise == null) {
-            log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
-            // Cannot access a programming participation that has no programming exercise associated with it
-            return false;
-        }
-
-        return authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user);
-    }
-
-    /**
      * Setup the initial solution participation for an exercise. Creates the new participation entity and sets
      * the correct build plan ID and repository URL. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
-    @NotNull
     public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
         final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
@@ -186,7 +151,6 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
-    @NotNull
     public void setupInitialTemplateParticipation(ProgrammingExercise newExercise) {
         final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
@@ -201,7 +165,7 @@ public class ProgrammingExerciseParticipationService {
      * Lock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be locked
+     * @param participation       the programming exercise student participation whose repository should be locked
      * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -217,7 +181,7 @@ public class ProgrammingExerciseParticipationService {
      * Unlock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be unlocked
+     * @param participation       the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -234,7 +198,7 @@ public class ProgrammingExerciseParticipationService {
      * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
      *
      * @param programmingExercise exercise with information about the due date
-     * @param participation student participation whose not submitted changes will be stashed
+     * @param participation       student participation whose not submitted changes will be stashed
      */
     public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
@@ -251,5 +215,33 @@ public class ProgrammingExerciseParticipationService {
         else {
             log.warn("Cannot stash student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
+    }
+
+    /**
+     * Replaces all files except the .git folder of the target repository with the files from the source repository
+     *
+     * @param targetURL the repository where all files should be replaced
+     * @param sourceURL the repository that should be used as source for all files
+     */
+    public void resetRepository(VcsRepositoryUrl targetURL, VcsRepositoryUrl sourceURL) throws GitAPIException, IOException {
+        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
+
+        // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
+        FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
+        for (java.io.File file : targetRepo.getLocalPath().toFile().listFiles(filter)) {
+            FileSystemUtils.deleteRecursively(file);
+        }
+        for (java.io.File file : sourceRepo.getLocalPath().toFile().listFiles(filter)) {
+            if (file.isDirectory()) {
+                FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+            }
+            else {
+                FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+            }
+        }
+
+        gitService.stageAllChanges(targetRepo);
+        gitService.commitAndPush(targetRepo, "Reset Exercise", true, null);
     }
 }

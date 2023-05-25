@@ -16,6 +16,22 @@
                 "lower": "Untere Schranke inklusiv",
                 "upper": "Obere Schranke inklusiv"
             },
+            "presentationType": {
+                "title": "Präsentationsmodus",
+                "description": "Wählen Sie \"Einfach\", um die Anzahl der Präsentationen festzulegen, die ein Student halten muss, um den Notenbonus für den Kurs zu erhalten. Wählen Sie \"Benotet\", um die Anzahl der von Tutoren benoteten Präsentationen, die ein Student halten kann, und die Gewichtung der Präsentationen für die Kursnote festzulegen.",
+                "none": "Keine",
+                "basic": "Einfach",
+                "graded": "Benotet"
+            },
+            "basicPresentation": {
+                "label": "Einfache Präsentationen",
+                "numberOfPresentations": "Präsentationen"
+            },
+            "gradedPresentation": {
+                "label": "Benotete Präsentationen",
+                "number": "Anzahl",
+                "weight": "Gesamtgewichtung"
+            },
             "csv": {
                 "importButton": "Importieren (.csv)",
                 "exportButton": "Exportieren (.csv)"
@@ -32,6 +48,9 @@
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
             "stickyGradeStep": "Der letzte Notenschritt ist immer offen, um Punkte zu verarbeiten, die das Maximum überschreiten. Es klebt am Boden.",
+            "plagiarismGradeHelp": "Diese Note wird vergeben, wenn bei einen Studierenden in einer beliebigen Übung ein \"Unterschleif\" festgestellt wurde.",
+            "noParticipationGradeHelp": "Diese besondere Note für Nichtbestehen wird vergeben, wenn ein Student nicht teilgenommen hat. Bei Kursen bedeutet dies, dass der Studierende keine Übung begonnen hat. Bei Prüfungen bedeutet dies, dass der Studierende nicht begonnen oder nicht abgegeben hat.",
+            "defaultGradeName": "Standard: {{default}}",
             "info": {
                 "title": "Hilfe zum Notenschlüssel",
                 "general": {
@@ -70,7 +89,10 @@
                 "invalidBonusPoints": "Die Bonuspunkte müssen mindestens 0 sein!",
                 "nonStrictlyIncreasingBonusPoints": "Aufeinanderfolgende Notenstufen müssen steigende Bonuspunktzahl haben!",
                 "invalidAdjacency": "Die Max % aller Notenstufen (außer der letzten), müssen gleich den Min % ihrer nachfolgenden Notenstufe sein!",
-                "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss mindestens 100 sein!"
+                "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss mindestens 100 sein!",
+                "invalidBasicPresentationIsEnabled": "Die Präsentationen sind für diesen Kurs schon definiert!",
+                "invalidPresentationsNumber": "Die Anzahl der Präsentationen muss ganzzahlig größer als 0 sein!",
+                "invalidPresentationsWeight": "Das Gesamtgewicht der Präsentationen muss zwischen 0 und 100 liegen!"
             },
             "overview": {
                 "info": "Der Notenschlüssel basiert auf der erreichbaren Punktzahl. Er kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
@@ -89,12 +111,15 @@
             },
             "detailedTab": {
                 "title": "Ausführlich"
-            }
+            },
+            "gradingStepsAboveMaxPointsWarning": "Mindestens eine Notenstufe überschreitet die maximale Punktzahl für diesen Kurs."
         },
         "gradingScale": {
             "created": "Notenschlüssel wurde erstellt",
             "updated": "Notenschlüssel wurde aktualisiert",
-            "deleted": "Notenschlüssel wurde gelöscht"
+            "deleted": "Notenschlüssel wurde gelöscht",
+            "plagiarismGrade": "Plagiatsnote",
+            "noParticipationGrade": "Nicht Teilgenommen Note"
         }
     }
 }

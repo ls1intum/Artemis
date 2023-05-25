@@ -25,7 +25,6 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
         const registrationToken = this.route.snapshot.queryParamMap.get('registration_token');
 
         if (!openIdConfiguration) {
-            console.error('Required parameter for LTI dynamic registration missing');
             this.isRegistering = false;
             this.registeredSuccessfully = false;
             return;
@@ -37,7 +36,7 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
         }
 
         this.http
-            .post(`${SERVER_API_URL}/api/lti13/dynamic-registration/${this.courseId}`, null, { observe: 'response', params: httpParams })
+            .post(`api/lti13/dynamic-registration/${this.courseId}`, null, { observe: 'response', params: httpParams })
             .subscribe({
                 next: () => {
                     this.registeredSuccessfully = true;

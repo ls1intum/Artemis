@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -24,6 +23,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -49,14 +49,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
             ],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

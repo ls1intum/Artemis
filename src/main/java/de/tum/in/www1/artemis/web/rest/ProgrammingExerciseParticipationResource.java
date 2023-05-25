@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -11,24 +13,27 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/api")
 public class ProgrammingExerciseParticipationResource {
+
+    private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
     private final ParticipationRepository participationRepository;
 
@@ -44,12 +49,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
+    private final ResultService resultService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ExerciseDateService exerciseDateService) {
+            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -57,7 +64,8 @@ public class ProgrammingExerciseParticipationResource {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.exerciseDateService = exerciseDateService;
+        this.resultService = resultService;
+        this.participationAuthCheckService = participationAuthCheckService;
     }
 
     /**
@@ -72,15 +80,10 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-            // hide details that should not be shown to the students
-            participation.getExercise().filterSensitiveInformation();
-            participation.getResults().forEach(result -> filterSensitiveInformationInResult(participation, result));
-        }
+        // hide details that should not be shown to the students
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults());
         return ResponseEntity.ok(participation);
     }
 
@@ -88,42 +91,21 @@ public class ProgrammingExerciseParticipationResource {
      * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
-     * @param withSubmission flag determining whether the corresponding submission should also be returned
-     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
+     * @param withSubmission  flag determining whether the corresponding submission should also be returned
+     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
+     *         to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
         var participation = participationRepository.findByIdElseThrow(participationId);
-        if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
-        if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-            filterSensitiveInformationInResult(participation, result.get());
-        }
+        result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
-    }
-
-    /**
-     * Removes sensitive information that students should not see (yet) from the given result.
-     * @param participation the result belongs to.
-     * @param result the sensitive information of which should be removed.
-     */
-    private void filterSensitiveInformationInResult(final Participation participation, final Result result) {
-        result.filterSensitiveInformation();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-            // The test cases marked as after_due_date should only be shown after all
-            // students can no longer submit so that no unfair advantage is possible.
-            // This applies only to automatic results. For manual ones the instructors
-            // are responsible to set an appropriate assessment due date.
-            final boolean applyFilter = exerciseDateService.isBeforeDueDate(participation)
-                    || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exerciseDateService.isBeforeLatestDueDate(participation.getExercise()));
-            result.filterSensitiveFeedbacks(applyFilter);
-        }
     }
 
     /**
@@ -144,8 +126,9 @@ public class ProgrammingExerciseParticipationResource {
      * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
-     * @param lastGraded if true will not try to find the latest pending submission, but the latest GRADED pending submission.
-     * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
+     * @param lastGraded      if true will not try to find the latest pending submission, but the latest GRADED pending submission.
+     * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given
+     *         id and forbidden (403) if the user is not allowed to access the participation.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasRole('USER')")
@@ -166,7 +149,8 @@ public class ProgrammingExerciseParticipationResource {
      * For every student participation of a programming exercise, try to find a pending submission.
      *
      * @param exerciseId for which to search pending submissions.
-     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
+     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
+     *         pending submission exists or null if not.
      */
     @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
     @PreAuthorize("hasRole('TA')")
@@ -186,5 +170,45 @@ public class ProgrammingExerciseParticipationResource {
             return submissionOpt;
         }));
         return ResponseEntity.ok(pendingSubmissions);
+    }
+
+    /**
+     * Resets the specified repository to either the exercise template or graded participation
+     *
+     * @param participationId       the id of the programming participation that should be resetted
+     * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("/programming-exercise-participations/{participationId}/reset-repository")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
+            throws GitAPIException, IOException {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByStudentParticipationIdWithTemplateParticipation(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise for Participation", participationId));
+        participation.setProgrammingExercise(exercise);
+
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        if (participation.isLocked()) {
+            throw new AccessForbiddenException("participation", participationId);
+        }
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
+        }
+
+        VcsRepositoryUrl sourceURL;
+        if (gradedParticipationId != null) {
+            ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
+
+            sourceURL = gradedParticipation.getVcsRepositoryUrl();
+        }
+        else {
+            sourceURL = exercise.getVcsTemplateRepositoryUrl();
+        }
+
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUrl(), sourceURL);
+
+        return ResponseEntity.ok().build();
     }
 }

@@ -172,6 +172,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private fetchExampleResult(): Promise<void> {
         return new Promise((resolve) => {
             this.assessmentsService
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 .getExampleResult(this.exerciseId, this.submission?.id!)
                 .pipe(filter(notUndefined))
                 .subscribe((result) => {
@@ -302,7 +303,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     async back(): Promise<void> {
         const courseId = getCourseFromExercise(this.exercise!)?.id;
         // check if exam exercise
-        if (!!this.exercise?.exerciseGroup) {
+        if (this.exercise?.exerciseGroup) {
             const examId = this.exercise.exerciseGroup.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup.id;
             if (this.readOnly || this.toComplete) {
@@ -421,6 +422,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     editSubmission(): void {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.assessmentsService.deleteExampleAssessment(this.exercise!.id!, this.exampleSubmission?.id!).subscribe(() => {
             delete this.submission?.blocks;
             if (this.submission && this.submission.results) {

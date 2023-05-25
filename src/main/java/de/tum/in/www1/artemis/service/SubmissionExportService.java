@@ -53,7 +53,7 @@ public abstract class SubmissionExportService {
      * The zip file is deleted automatically after 30 minutes. The function throws a bad request if the
      * export process fails.
      *
-     * @param exerciseId the id   of the exercise to be exported
+     * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
      * @return the zipped file with the exported submissions
      */
@@ -66,7 +66,7 @@ public abstract class SubmissionExportService {
      * Exports student submission of an exercise to a zip file located in the submission exports folder.
      * The zip file is deleted automatically after 30 minutes.
      *
-     * @param exerciseId the id   of the exercise to be exported
+     * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
      * @return the zipped file with the exported submissions
      */
@@ -90,11 +90,11 @@ public abstract class SubmissionExportService {
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
-     * @param exerciseId the id of the exercise to be exported
+     * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @param outputDir directory to store the temporary files in
-     * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
-     * @param reportData   a list of all exercises and their statistics
+     * @param outputDir               directory to store the temporary files in
+     * @param exportErrors            a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param reportData              a list of all exercises and their statistics
      * @return a reference to the zipped file
      * @throws IOException if an error occurred while zipping
      */
@@ -136,8 +136,7 @@ public abstract class SubmissionExportService {
         // Sort the student participations by id
         exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, enableFilterAfterDueDate, filterLateSubmissionsDate, outputDir, exportErrors,
-                reportData);
+        return createZipFileFromParticipations(exercise, exportedStudentParticipations, enableFilterAfterDueDate, filterLateSubmissionsDate, outputDir, exportErrors, reportData);
     }
 
     /**
@@ -146,13 +145,13 @@ public abstract class SubmissionExportService {
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
-     * @param exercise the exercise in question
-     * @param participations a list of participations to include
+     * @param exercise                 the exercise in question
+     * @param participations           a list of participations to include
      * @param enableFilterAfterDueDate true, if all submissions that have been submitted after the due date should not be included in the file
-     * @param lateSubmissionFilter an optional date filter for submissions
-     * @param outputDir directory to store the temporary files in
-     * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
-     * @param reportData   a list of all exercises and their statistics
+     * @param lateSubmissionFilter     an optional date filter for submissions
+     * @param outputDir                directory to store the temporary files in
+     * @param exportErrors             a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param reportData               a list of all exercises and their statistics
      * @return the zipped file
      * @throws IOException if an error occurred while zipping
      */
@@ -229,9 +228,9 @@ public abstract class SubmissionExportService {
     /**
      * Finds the latest submission for the given participation while optionally ignoring all submissions after a given date.
      *
-     * @param participation for which the latest submission should be returned.
+     * @param participation            for which the latest submission should be returned.
      * @param enableFilterAfterDueDate true, if all submissions that have been submitted after the due date should not be included in the file.
-     * @param lateSubmissionFilter an optional date filter for submissions.
+     * @param lateSubmissionFilter     an optional date filter for submissions.
      * @return the latest submission of the given participation.
      */
     private Submission latestSubmission(final StudentParticipation participation, boolean enableFilterAfterDueDate, @Nullable ZonedDateTime lateSubmissionFilter) {

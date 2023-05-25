@@ -33,9 +33,9 @@ public class ExamSessionService {
      *
      * @param studentExam student exam for which an exam session shall be created
      * @param fingerprint the browser fingerprint reported by the client, can be null
-     * @param userAgent the user agent of the client, can be null
-     * @param instanceId the instance id of the client, can be null
-     * @param ipAddress the ip address of the client, can be null
+     * @param userAgent   the user agent of the client, can be null
+     * @param instanceId  the instance id of the client, can be null
+     * @param ipAddress   the ip address of the client, can be null
      * @return the newly create exam session
      */
     public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent, @Nullable String instanceId,
@@ -48,7 +48,7 @@ public class ExamSessionService {
         examSession.setBrowserFingerprintHash(fingerprint);
         examSession.setUserAgent(userAgent);
         examSession.setInstanceId(instanceId);
-        examSession.setIpAddress(ipAddress);
+        examSession.setIpAddressFromIpAddress(ipAddress);
         examSession = examSessionRepository.save(examSession);
         return examSession;
     }

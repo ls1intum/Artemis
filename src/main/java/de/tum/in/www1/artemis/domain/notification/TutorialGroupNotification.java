@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 public class TutorialGroupNotification extends Notification {
 
     @JsonIgnore
-    public final static Set<NotificationType> TUTORIAL_GROUP_NOTIFICATION_TYPES = Set.of(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED);
+    public static final Set<NotificationType> TUTORIAL_GROUP_NOTIFICATION_TYPES = Set.of(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED);
 
     // ToDo: Idea: Reuse jhi_type_column to allow tutorial group notifications to be sent to only for example officially registered students and not self registered students
     @ManyToOne
@@ -41,13 +41,16 @@ public class TutorialGroupNotification extends Notification {
         // Empty constructor needed for Jackson.
     }
 
-    public TutorialGroupNotification(TutorialGroup tutorialGroup, String title, String text, NotificationType notificationType) {
+    public TutorialGroupNotification(TutorialGroup tutorialGroup, String title, String text, boolean textIsPlaceholder, String[] placeholderValues,
+            NotificationType notificationType) {
         verifySupportedNotificationType(notificationType);
         this.notificationType = notificationType;
         this.setTutorialGroup(tutorialGroup);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
+        this.setTextIsPlaceholder(textIsPlaceholder);
+        this.setPlaceholderValues(placeholderValues);
     }
 
     public TutorialGroup getTutorialGroup() {

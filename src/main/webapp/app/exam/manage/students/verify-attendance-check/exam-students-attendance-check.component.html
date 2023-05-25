@@ -1,0 +1,97 @@
+<div>
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+        </div>
+    </div>
+    <div *ngIf="!isLoading" class="d-flex border-bottom pb-2 mt-3">
+        <div *ngIf="!hasExamStarted; else hasStarted">
+            <h3><span class="text-white badge bg-danger" [jhiTranslate]="'artemisApp.examManagement.examStudents.examNotStarted'">Exam have not started yet!</span></h3>
+        </div>
+        <ng-template #hasStarted>
+            <div *ngIf="allExamUsersAttendanceCheck && allExamUsersAttendanceCheck.length > 0">
+                <span [jhiTranslate]="'artemisApp.examManagement.examStudents.notCheckedStudents'">Students who did not sign</span>:
+                <span class="badge bg-danger text-white ms-1 px-2" id="#registered-users"> {{ allExamUsersAttendanceCheck.length }}</span>
+            </div>
+            <div *ngIf="!allExamUsersAttendanceCheck || allExamUsersAttendanceCheck.length === 0">
+                <span class="fs-3" [jhiTranslate]="'artemisApp.examManagement.examStudents.allStudentsCheckedPassed'">All students passed</span>
+                <fa-icon [icon]="faCheck" style="color: green" class="fa-2x ms-1"></fa-icon>
+            </div>
+        </ng-template>
+    </div>
+    <div class="row"></div>
+    <br />
+    <div *ngIf="allExamUsersAttendanceCheck.length > 0 && !isLoading" class="table-responsive" id="exams-table">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                    <th class="d-md-table-cell" jhiSortBy="id">
+                        <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th></th>
+                    <th class="d-md-table-cell" jhiSortBy="login">
+                        <span>{{ 'artemisApp.examManagement.examStudents.login' | artemisTranslate }}</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="d-md-table-cell" jhiSortBy="registrationNumber">
+                        <span>{{ 'artemisApp.examManagement.examStudents.registrationNumber' | artemisTranslate }}</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="d-md-table-cell">
+                        <span>{{ 'artemisApp.examManagement.examStudents.attendanceChecks' | artemisTranslate }}</span>
+                    </th>
+                    <th class="d-md-table-cell">
+                        <span>{{ 'artemisApp.studentExams.started' | artemisTranslate }}</span>
+                    </th>
+                    <th class="d-md-table-cell">
+                        <span>{{ 'artemisApp.studentExams.submitted' | artemisTranslate }}</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let examUser of allExamUsersAttendanceCheck">
+                    <td class="d-md-table-cell">
+                        <span>
+                            {{ examUser.id }}
+                        </span>
+                    </td>
+                    <td class="d-md-table-cell">
+                        <img class="img-fluid" width="60" [src]="examUser.studentImagePath ? examUser.studentImagePath : missingImage" />
+                    </td>
+                    <td class="d-md-table-cell">
+                        <span>
+                            {{ examUser.login }}
+                        </span>
+                    </td>
+                    <td class="d-md-table-cell">
+                        <span>
+                            {{ examUser.registrationNumber }}
+                        </span>
+                    </td>
+                    <td class="d-md-table-cell">
+                        <img
+                            *ngIf="allExamUsersAttendanceCheck.length === 0 && examUser?.signingImagePath; else notSigned"
+                            class="img-fluid"
+                            width="60"
+                            [src]="examUser.signingImagePath"
+                        />
+                        <ng-template #notSigned>
+                            <h3>
+                                <span class="m-2">
+                                    <fa-icon class="text-danger" [icon]="faXmark"></fa-icon>
+                                </span>
+                            </h3>
+                        </ng-template>
+                    </td>
+                    <td class="d-md-table-cell">
+                        <span>{{ (examUser?.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    </td>
+                    <td class="d-md-table-cell">
+                        <span>{{ (examUser?.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

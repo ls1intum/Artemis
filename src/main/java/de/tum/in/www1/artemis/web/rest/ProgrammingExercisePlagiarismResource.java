@@ -105,7 +105,7 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language);
 
-        if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
+        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
             throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
                     ENTITY_NAME, "programmingLanguageNotSupported");
         }
@@ -126,7 +126,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
-     * @throws IOException   is thrown for file handling errors
+     * @throws IOException is thrown for file handling errors
      */
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @PreAuthorize("hasRole('EDITOR')")
@@ -137,7 +137,7 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         var programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
+        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
             throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
                     "Plagiarism Check", "programmingLanguageNotSupported");
         }

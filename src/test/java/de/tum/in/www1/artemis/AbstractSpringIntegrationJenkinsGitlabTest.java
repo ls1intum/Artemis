@@ -13,15 +13,16 @@ import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
@@ -32,15 +33,15 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
-        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
+@SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureTestDatabase
+@ExtendWith(SpringExtension.class)
+@AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene", "scheduling" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
@@ -67,7 +68,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     protected GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @AfterEach
-    public void resetSpyBeans() {
+    protected void resetSpyBeans() {
         Mockito.reset(continuousIntegrationService, versionControlService, jenkinsServer);
         super.resetSpyBeans();
     }
@@ -112,6 +113,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
             mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName(), null, null, List.of());
             mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName(), null, null, List.of());
         }
+    }
+
+    @Override
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
+        mockConnectorRequestsForSetup(exerciseForImport, false);
     }
 
     @Override
@@ -184,8 +190,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
-            throws Exception {
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
@@ -248,11 +253,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs) {
-        // TODO: implement
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not needed in Gitlab
     }
@@ -282,7 +282,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
         // Not needed here
     }
 
@@ -324,7 +324,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
         gitlabRequestMockProvider.mockCreateVcsUser(user, failInVcs);
         jenkinsRequestMockProvider.mockCreateUser(user, false, failInCi, failToGetCiUser);
     }
@@ -359,8 +359,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
-        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repostoryName, shouldFail);
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repositoryName, shouldFail);
     }
 
     @Override
@@ -403,7 +403,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
         // Not needed here
     }
 
@@ -457,17 +457,19 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void resetMockProvider() {
+    public void resetMockProvider() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
     }
 
     @Override
-    /**
-     * Verify that the mocked REST-calls were called
-     */
     public void verifyMocks() {
         gitlabRequestMockProvider.verifyMocks();
         jenkinsRequestMockProvider.verifyMocks();
+    }
+
+    @Override
+    public void mockUserExists(String username) throws Exception {
+        gitlabRequestMockProvider.mockUserExists(username, true);
     }
 }

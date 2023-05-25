@@ -31,7 +31,7 @@ describe('User Settings Service', () => {
     let resultingUserSettings: UserSettingsStructure<Setting>;
 
     // notification settings specific
-    const notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
+    const notificationSettingsResourceUrl = 'api/notification-settings';
 
     /**
      * Updates the NotificationSettings of the provided NotificationSettings by using provided Settings
@@ -169,8 +169,10 @@ describe('User Settings Service', () => {
                 ) as NotificationSetting[];
                 updateNotificationSettings(expectedNotificationSettings, notificationSettingsForTesting);
 
-                let resultingSettings: NotificationSetting[];
-                resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(notificationSettingsForTesting, userSettingsCategory) as NotificationSetting[];
+                const resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                    notificationSettingsForTesting,
+                    userSettingsCategory,
+                ) as NotificationSetting[];
 
                 expect(resultingSettings).toHaveLength(expectedNotificationSettings.length);
                 checkIfProvidedNotificationSettingsArePartOfExpectedSettings(resultingSettings, expectedNotificationSettings);

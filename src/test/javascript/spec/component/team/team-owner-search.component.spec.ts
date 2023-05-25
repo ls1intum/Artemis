@@ -20,8 +20,8 @@ describe('Team Owner Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [TeamOwnerSearchComponent, MockDirective(NgbTypeahead), MockDirective(NgModel), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, MockDirective(NgbTypeahead)],
+            declarations: [TeamOwnerSearchComponent, MockDirective(NgModel), MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: CourseManagementService, useClass: MockCourseManagementService }],
         }).compileComponents();
 

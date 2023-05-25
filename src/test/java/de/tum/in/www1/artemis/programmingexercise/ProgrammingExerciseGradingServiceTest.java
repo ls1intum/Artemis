@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -47,11 +47,13 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  * <p>
  * This <b>abstract</b> test class two nested subclasses that run all tests for different exercise setups:
  * <ul>
- * <li> {@link CourseProgrammingExerciseGradingServiceTest} - for exercises in courses.</li>
+ * <li>{@link CourseProgrammingExerciseGradingServiceTest} - for exercises in courses.</li>
  * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
  * </ul>
  */
 abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "progexgradingservice";
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -69,9 +71,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     private ExamRepository examRepository;
 
     @Autowired
-    private ProgrammingExerciseTestCaseService testCaseService;
-
-    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -87,7 +86,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @BeforeEach
     void setUp() {
-        database.addUsers(5, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = generateDefaultProgrammingExercise();
@@ -96,7 +95,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExerciseSCAEnabled = generateScaProgrammingExercise();
         database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
 
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         result = new Result();
         result.setParticipation(participation);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -108,7 +107,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     abstract ProgrammingExercise generateDefaultProgrammingExercise();
 
     /**
-     * Generates a new programming exercise with SCA enabled and 42.0 points, no bonus points, no test cases and a SCA penalty of 40%. The SCA categories must be saved in the database.
+     * Generates a new programming exercise with SCA enabled and 42.0 points, no bonus points, no test cases and a SCA penalty of 40%. The SCA categories must be saved in the
+     * database.
      */
     abstract ProgrammingExercise generateScaProgrammingExercise();
 
@@ -120,7 +120,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     /**
      * Test class for COURSE exercises
      */
-    public static class CourseProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
+    static class CourseProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
 
         @Override
         ProgrammingExercise generateDefaultProgrammingExercise() {
@@ -145,7 +145,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     /**
      * Test class for EXAM exercises
      */
-    public static class ExamProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
+    static class ExamProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
 
         @Override
         ProgrammingExercise generateDefaultProgrammingExercise() {
@@ -184,14 +184,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bambooRequestMockProvider.reset();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotUpdateResultIfNoTestCasesExist() {
-        testCaseRepository.deleteAll();
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         Double scoreBeforeUpdate = result.getScore();
         gradingService.calculateScoreForResult(result, programmingExercise, true);
@@ -200,10 +200,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldAddFeedbackForDuplicateTestCases() {
         // Adjust existing test cases to our need
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
@@ -225,7 +225,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         var duplicateFeedbackEntries = result.getFeedbacks().stream()
                 .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).toList();
-        assertThat(result.getScore()).isEqualTo(0D);
+        assertThat(result.getScore()).isZero();
         assertThat(duplicateFeedbackEntries).hasSize(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
@@ -234,7 +234,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -256,7 +256,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
@@ -283,9 +283,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(0.);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.00000000000000001);
@@ -306,10 +306,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
@@ -317,7 +317,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         testCaseRepository.saveAll(testCases.values());
 
-        Participation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        Participation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var result1 = new Result();
         result1.setParticipation(participation);
@@ -382,12 +382,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result5.getFeedbacks()).hasSize(3);
 
         // Assertions result6 - only negative feedback
-        assertThat(result6.getScore()).isEqualTo(0D);
+        assertThat(result6.getScore()).isZero();
         assertThat(result6.isSuccessful()).isFalse();
         assertThat(result6.getFeedbacks()).hasSize(3);
 
         // Assertions resultBF - build failure
-        assertThat(resultBF.getScore()).isEqualTo(0D);
+        assertThat(resultBF.getScore()).isZero();
         assertThat(resultBF.isSuccessful()).isNull(); // Won't get touched by the service method
         assertThat(resultBF.getFeedbacks()).isEmpty();
 
@@ -398,10 +398,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
@@ -412,7 +412,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise.setBonusPoints(programmingExercise.getMaxPoints());
         programmingExerciseRepository.save(programmingExercise);
 
-        Participation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        Participation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var result1 = new Result();
         result1.setParticipation(participation);
@@ -452,7 +452,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
@@ -479,7 +479,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
@@ -506,7 +506,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in the past.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
@@ -530,11 +530,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> "test3".equals(feedback.getText()))).isFalse();
+        assertThat(result.getFeedbacks()).anyMatch(feedback -> "test3".equals(feedback.getText()));
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -581,7 +581,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
         if (isAfterDueDate) {
@@ -641,7 +641,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateTheLatestResultOfASingleParticipation() {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -662,7 +662,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateOnlyResultsForParticipationsWithoutIndividualDueDate() {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -689,7 +689,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWeightSumZero() {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -726,7 +726,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
@@ -835,7 +835,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
 
         // student1 only has one automatic result
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         {
             // score 50 %
             var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
@@ -845,7 +845,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testParticipations[0] = participation1;
 
         // student2 has an automatic result and a manual result as well
-        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         {
             // score 75 %
             var result2a = new Result().participation(participation2).successful(false).rated(true).score(100D);
@@ -869,11 +869,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testParticipations[1] = participation2;
 
         // student3 only started the exercise, but did not submit anything
-        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
+        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student3");
         testParticipations[2] = participation3;
 
         // student4 only has one automatic result
-        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student4");
+        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student4");
         {
             // score 100 %
             var result4 = new Result().participation(participation4).successful(false).rated(true).score(100D);
@@ -883,7 +883,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testParticipations[3] = participation4;
 
         // student5 has a build failure
-        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student5");
+        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student5");
         {
             // Build Failed
             var result5 = new Result().participation(participation5) //
@@ -903,9 +903,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() {
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
         result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -928,7 +928,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithoutCaps() {
         activateAllTestCases(false);
 
@@ -938,14 +938,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         staticCodeAnalysisCategoryRepository.saveAll(updatedCategories);
 
         // create results for tests without category penalty limits
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         {
             // Capped by limit for exercise -> Score 60
             var result1 = new Result().participation(participation1);
             participation1.setResults(Set.of(result1));
             updateAndSaveAutomaticResult(result1, true, true, true, 10, 10);
         }
-        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student2");
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student2");
         {
             // Testcase points: 42; Penalty: 4*3 = 12; Score: 71
             var result2 = new Result().participation(participation2);
@@ -975,14 +975,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // create results for tests without any limits
-        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student3");
+        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student3");
         {
             // Penalty will be higher than points -> score 0
             var result3 = new Result().participation(participation3);
             participation3.setResults(Set.of(result3));
             updateAndSaveAutomaticResult(result3, true, true, true, 10, 10);
         }
-        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student4");
+        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student4");
         {
             // Testcase points: 35; Penalty: 5*3 + 3*5 = 30; Score: 11
             var result4 = new Result().participation(participation4);
@@ -1009,7 +1009,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithBonus() {
         activateAllTestCases(true);
 
@@ -1018,7 +1018,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExerciseRepository.save(programmingExerciseSCAEnabled);
 
         // create results
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         {
             // Test case points are capped at 50 first, then the penalty of 19 is calculated but capped at at 40 percent of the maxScore -> score = (50-16.8)/42
             var result1 = new Result().participation(participation1);
@@ -1046,7 +1046,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         staticCodeAnalysisCategoryRepository.saveAll(updatedCategories);
 
         // create result without limits
-        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student2");
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student2");
         {
             // Test case points are capped at 50 first, then the penalty of 55 is calculated but capped at at 100 percent of the maxScore, which means only the achieved bonus
             // points remain
@@ -1067,7 +1067,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateScoreWithStaticCodeAnalysisPenalties() {
         activateAllTestCases(false);
 
@@ -1076,18 +1076,48 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         double[] expectedScores = { 4.8, 40.5, 0, 26.2, 60 };
         int[] expectedFeedbackSize = { 5, 7, 10, 9, 14 };
 
+        testResultScores(participations, expectedScores, expectedFeedbackSize);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCalculateScoreWithStaticCodeAnalysisPenalties_cappedByExerciseMaxPenalty() {
+        programmingExerciseSCAEnabled.setMaxStaticCodeAnalysisPenalty(20);
+        programmingExerciseSCAEnabled = exerciseRepository.save(programmingExerciseSCAEnabled);
+
+        activateAllTestCases(false);
+
+        var participations = createTestParticipationsWithResults();
+
+        // Exercise max points: 42, 0.2 * 42 = 8.4P max penalty
+        // Participation 1: Testcases: 7P; Penalty: 5; Score: (int) ((7-5) / 42) = 4.8
+        // Participation 2: Testcases: 28P; Penalty: 11 -> 8.4; Score: (int) ((28-8.4) / 42)) = 46.7
+        // Participation 3: 0 points
+        // Participation 4: Testcases: 21P; Penalty: 10 -> 8.4; Score: (int) ((21-8.4) / 42)) = 30
+        // Participation 4: Testcases: 42P; Penalty 8.4; Score: (int) ((42-8.4) / 42)) = 80
+        double[] expectedScores = { 4.8, 46.7, 0, 30, 80 };
+        int[] expectedFeedbackSize = { 5, 7, 10, 9, 14 };
+
+        testResultScores(participations, expectedScores, expectedFeedbackSize);
+    }
+
+    private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize) {
+        testResultScores(participations, expectedScores, expectedFeedbackSize, AssessmentType.AUTOMATIC);
+    }
+
+    private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize, AssessmentType assessmentType) {
         for (int i = 0; i < participations.size(); i++) {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], assessmentType);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCalculateCorrectStatistics() throws Exception {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
@@ -1123,7 +1153,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
@@ -1131,7 +1161,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
@@ -1142,7 +1172,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private void activateAllTestCases(boolean withBonus) {
-        var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
+        var testCases = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
         var bonusPoints = withBonus ? 4D : null;
         testCases.get(0).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
@@ -1154,35 +1184,35 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     private List<Participation> createTestParticipationsWithResults() {
 
         // create results
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         {
             // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
             var result1 = new Result().participation(participation1);
             participation1.setResults(Set.of(result1));
             updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
         }
-        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student2");
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student2");
         {
             // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
             var result2 = new Result().participation(participation2);
             participation2.setResults(Set.of(result2));
             updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
         }
-        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student3");
+        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student3");
         {
             // Points capped at zero, score can't be negative
             var result3 = new Result().participation(participation3);
             participation3.setResults(Set.of(result3));
             updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
         }
-        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student4");
+        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student4");
         {
             // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
             var result4 = new Result().participation(participation4);
             participation4.setResults(Set.of(result4));
             updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
         }
-        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student5");
+        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student5");
         {
             // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
             var result5 = new Result().participation(participation5);
@@ -1196,7 +1226,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     private void createTestParticipationsWithMultipleResults() {
 
         // create results
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         {
             // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
             var result11 = new Result().participation(participation1);
@@ -1205,28 +1235,28 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             updateAndSaveAutomaticResult(result11, false, false, false, 0, 1, ZonedDateTime.now().minusMinutes(1));
             updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
         }
-        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student2");
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student2");
         {
             // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
             var result2 = new Result().participation(participation2);
             participation2.setResults(Set.of(result2));
             updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
         }
-        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student3");
+        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student3");
         {
             // Points capped at zero, score can't be negative
             var result3 = new Result().participation(participation3);
             participation3.setResults(Set.of(result3));
             updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
         }
-        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student4");
+        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student4");
         {
             // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
             var result4 = new Result().participation(participation4);
             participation4.setResults(Set.of(result4));
             updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
         }
-        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student5");
+        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student5");
         {
             // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
             var result5 = new Result().participation(participation5);
@@ -1240,6 +1270,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
         assertThat(result.getFeedbacks()).hasSize(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
+
+        Exercise exercise = result.getParticipation().getExercise();
+        double calculatedScore = result.calculateTotalPointsForProgrammingExercises() / exercise.getMaxPoints() * 100.;
+        calculatedScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculatedScore, exercise.getCourseViaExerciseGroupOrCourseMember());
+        assertThat(calculatedScore).isEqualTo(score);
     }
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2) {

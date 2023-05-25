@@ -39,7 +39,6 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @Column(name = "verdict")
     private PlagiarismVerdict verdict;
 
-    @Lob
     @Column(name = "verdict_message")
     private String verdictMessage;
 

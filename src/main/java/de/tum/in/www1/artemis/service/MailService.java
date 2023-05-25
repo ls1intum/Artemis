@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
@@ -104,15 +104,15 @@ public class MailService {
     /**
      * Sends an e-mail to the specified sender
      *
-     * @param recipient who should be contacted.
-     * @param subject The mail subject
-     * @param content The content of the mail. Can be enriched with HTML tags
+     * @param recipient   who should be contacted.
+     * @param subject     The mail subject
+     * @param content     The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
-     * @param isHtml Whether the mail should support HTML tags
+     * @param isHtml      Whether the mail should support HTML tags
      */
     @Async
     public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}", isMultipart, isHtml, recipient, subject, content);
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -134,9 +134,9 @@ public class MailService {
     /**
      * Sends a predefined mail based on a template
      *
-     * @param user The receiver of the mail
+     * @param user         The receiver of the mail
      * @param templateName The name of the template
-     * @param titleKey The key mapping the title for the subject of the mail
+     * @param titleKey     The key mapping the title for the subject of the mail
      */
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
@@ -167,9 +167,10 @@ public class MailService {
 
     /**
      * Sets the context and subject for the case that the notificationSubject is a Post
-     * @param context that is modified
+     *
+     * @param context             that is modified
      * @param notificationSubject which has to be a Post
-     * @param locale used for translations
+     * @param locale              used for translations
      * @return the modified subject of the email
      */
     private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
@@ -183,12 +184,13 @@ public class MailService {
 
     /**
      * Sends a notification based email to one user
-     * @param notification which properties are used to create the email
-     * @param user who should be contacted
+     *
+     * @param notification        which properties are used to create the email
+     * @param user                who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
     public void sendNotificationEmail(Notification notification, User user, Object notificationSubject) {
-        NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType notificationType = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
 
         String localeKey = user.getLangKey();
@@ -205,14 +207,14 @@ public class MailService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
-        String subject = notification.getTitle();
+        String subject = messageSource.getMessage(notification.getTitle(), null, context.getLocale());
 
         if (notificationSubject instanceof Exercise exercise) {
             context.setVariable(EXERCISE_TYPE, exercise.getExerciseType());
             checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
         }
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
-            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+            subject = setPlagiarismContextAndSubject(context, notificationType, notification, plagiarismCase);
         }
 
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
@@ -232,6 +234,27 @@ public class MailService {
         String content = createContentForNotificationEmailByType(notificationType, context);
 
         sendEmail(user, subject, content, false, true);
+    }
+
+    /**
+     * Sets the context and subject for the case that the notificationSubject is a PlagiarismCase
+     *
+     * @param context          the context of the email template
+     * @param notificationType the notification type of which the email to be sent
+     * @param notification     the object which contains the notification title
+     * @param plagiarismCase   the plagiarism case for which the email to be sent
+     * @return the modified subject of the email
+     */
+    private String setPlagiarismContextAndSubject(Context context, NotificationType notificationType, Notification notification, PlagiarismCase plagiarismCase) {
+        if (notificationType == NotificationType.NEW_PLAGIARISM_CASE_STUDENT) {
+            Exercise exercise = plagiarismCase.getExercise();
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return messageSource.getMessage("email.plagiarism.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
+        }
+        else {
+            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+            return notification.getTitle();
+        }
     }
 
     private void setContextForTutorialGroupNotifications(Context context, NotificationType notificationType,
@@ -295,8 +318,8 @@ public class MailService {
      * Auxiliary method for EXERCISE_SUBMISSION_ASSESSED case to load the needed score property to use it in the template.
      *
      * @param notificationType that needs to be EXERCISE_SUBMISSION_ASSESSED
-     * @param context that should be updated with the score property
-     * @param exercise that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
+     * @param context          that should be updated with the score property
+     * @param exercise         that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
      * @param recipientStudent who will receive the email
      * @return the updated context
      */
@@ -320,7 +343,7 @@ public class MailService {
     /**
      * Sends an email based on a weekly summary
      *
-     * @param user who is the recipient
+     * @param user      who is the recipient
      * @param exercises that will be used in the weekly summary
      */
     @Async

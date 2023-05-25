@@ -30,12 +30,13 @@ import { BASE_API, POST } from './constants';
 export {};
 
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace Cypress {
         interface Chainable {
             login(credentials: CypressCredentials, url?: string): any;
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
-            getSettled(selector: string, options?: {}): Chainable<unknown>;
+            getSettled(selector: string, options?: any): Chainable<unknown>;
             reloadUntilFound(selector: string, interval?: number, timeout?: number): Chainable<undefined>;
             formRequest(url: string, method: string, formData: FormData): Chainable<any>;
         }
@@ -73,7 +74,7 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
  *  this prevents the "Element is detached from DOM" issue in some cases
  */
-Cypress.Commands.add('getSettled', (selector, opts = {}) => {
+Cypress.Commands.add('getSettled', (selector: any, opts: { retries?: number; delay?: number } = {}) => {
     const retries = opts.retries || 3;
     const delay = opts.delay || 100;
 
@@ -130,8 +131,8 @@ Cypress.Commands.add('formRequest', (url: string, method: string, formData: Form
         .then((win) => {
             const xhr = new win.XMLHttpRequest();
             xhr.open(method, url);
-            const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
-            if (!!token) {
+            const token = localStorage.getItem('authTokenKey')?.replace(/"/g, '');
+            if (token) {
                 const authHeader = 'Bearer ' + token;
                 xhr.setRequestHeader('Authorization', authHeader);
             }

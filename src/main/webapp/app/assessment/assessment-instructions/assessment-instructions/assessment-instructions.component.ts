@@ -38,6 +38,7 @@ export class AssessmentInstructionsComponent {
 
     constructor(private markdownService: ArtemisMarkdownService) {}
 
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('exercise') set exerciseInput(exercise: Exercise) {
         this.exercise = exercise;
         this.problemStatement = this.markdownService.safeHtmlForMarkdown(exercise.problemStatement);

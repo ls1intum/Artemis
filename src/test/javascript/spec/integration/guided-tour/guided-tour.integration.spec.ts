@@ -16,6 +16,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { CourseCardComponent } from 'app/overview/course-card.component';
@@ -30,16 +32,18 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ProfileToggleHideDirective } from 'app/shared/profile-toggle/profile-toggle-hide.directive';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -65,6 +69,9 @@ describe('Guided tour integration', () => {
                     },
                 ]),
                 MockModule(PieChartModule),
+                MockDirective(NgbTooltip),
+                MockDirective(NgbCollapse),
+                NgbDropdownMocksModule,
             ],
             declarations: [
                 CourseCardComponent,
@@ -73,12 +80,14 @@ describe('Guided tour integration', () => {
                 FooterComponent,
                 NotificationSidebarComponent,
                 MockHasAnyAuthorityDirective,
-                MockComponent(FaIconComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(CoursesComponent),
                 MockComponent(SecuredImageComponent),
+                MockComponent(SystemNotificationComponent),
+                MockComponent(ThemeSwitchComponent),
+                MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
@@ -86,10 +95,8 @@ describe('Guided tour integration', () => {
                 MockPipe(FindLanguageFromKeyPipe),
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
-                MockDirective(NgbDropdown),
                 MockComponent(JhiConnectionWarningComponent),
+                MockDirective(ProfileToggleHideDirective),
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
@@ -97,9 +104,9 @@ describe('Guided tour integration', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);

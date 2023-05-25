@@ -36,7 +36,7 @@ export async function generateDragAndDropQuizExercise(
     const elements = [...model.elements, ...model.relationships];
 
     // Render the diagram's background image and store it
-    const renderedDiagram = ApollonEditor.exportModelAsSvg(model, {
+    const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
         exclude: interactiveElements,
     });
@@ -139,7 +139,7 @@ async function generateDragAndDropItem(
     svgSize: { width: number; height: number },
     fileUploaderService: FileUploaderService,
 ): Promise<DragAndDropMapping> {
-    const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
+    const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute, UMLElementType.ObjectMethod];
     if (element.type in UMLRelationshipType) {
         return generateDragAndDropItemForRelationship(element, model, svgSize, fileUploaderService);
     } else if (textualElementTypes.includes(element.type as UMLElementType)) {
@@ -165,7 +165,7 @@ async function generateDragAndDropItemForElement(
     svgSize: { width: number; height: number },
     fileUploaderService: FileUploaderService,
 ): Promise<DragAndDropMapping> {
-    const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
+    const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
 
@@ -221,7 +221,7 @@ async function generateDragAndDropItemForRelationship(
         margin = { ...margin, top: delta / 2, bottom: delta / 2 };
     }
 
-    const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
+    const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `relationship-${element.id}.png`);
 
@@ -245,6 +245,9 @@ async function generateDragAndDropItemForRelationship(
  */
 function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
     const dropLocation = new DropLocation();
+    // on quiz exercise generation, svg exports adds 15px padding
+    elementLocation.x += 15;
+    elementLocation.y += 15;
     // round to second decimal
     dropLocation.posX = round((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT, 2);
     dropLocation.posY = round((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT, 2);

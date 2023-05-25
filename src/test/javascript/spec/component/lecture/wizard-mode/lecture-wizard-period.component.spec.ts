@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('LectureWizardPeriodComponent', () => {
     let wizardPeriodComponentFixture: ComponentFixture<LectureUpdateWizardPeriodComponent>;
@@ -10,8 +12,8 @@ describe('LectureWizardPeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [LectureUpdateWizardPeriodComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ReactiveFormsModule, FormsModule],
+            declarations: [LectureUpdateWizardPeriodComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [],
             schemas: [],
         })

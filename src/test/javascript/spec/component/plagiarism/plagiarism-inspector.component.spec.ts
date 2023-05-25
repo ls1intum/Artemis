@@ -23,7 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
 import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -98,7 +98,6 @@ describe('Plagiarism Inspector Component', () => {
             declarations: [
                 PlagiarismInspectorComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockDirective(NgModel),
                 MockComponent(PlagiarismDetailsComponent),
                 MockComponent(PlagiarismRunDetailsComponent),

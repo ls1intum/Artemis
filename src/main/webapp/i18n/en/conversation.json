@@ -1,0 +1,231 @@
+{
+    "artemisApp": {
+        "errors": {
+            "channelNameDuplicate": "Channel with name {{ channelName }} already exists"
+        },
+        "messageWarning": {
+            "headerText": "Confidential Information Warning",
+            "mainParagraph": "Do not share confidential information like passwords, credit card numbers, or personal identification numbers in the chat. This information is sensitive and could potentially be used for identity theft or fraud if it falls into the wrong hands.",
+            "lastParagraph": "Keep your personal information safe by keeping it to yourself and not sharing it online."
+        },
+        "conversationsLayout": {
+            "tabTitle": "Course Messages",
+            "breadCrumbLabel": "Messages",
+            "others": "{{ count }} others",
+            "onlyYou": "Only you",
+            "archived": "Archived",
+            "sendMessage": "Send",
+            "conversationMessages": {
+                "searchLabel": "Search messages",
+                "clearSearch": "Clear search",
+                "searchBarPlaceholder": "Search for messages within the current conversation",
+                "searchResultsMultiple": "{{ count }} messages found",
+                "searchResultsSingle": "1 message found",
+                "searchResultsNone": "No messages found"
+            },
+            "threadSideBar": {
+                "label": "Thread",
+                "close": "Close thread",
+                "reply": "Reply in thread"
+            },
+            "conversationSelectionSideBar": {
+                "header": "Conversations",
+                "show": "Show conversations",
+                "hide": "Hide conversations",
+                "notFound": "No conversation found",
+                "favorites": "Favorites",
+                "channels": "Channels",
+                "createChannel": "Create channel",
+                "browseChannels": "Browse channels",
+                "groupChats": "Group Chats",
+                "oneToOneChats": "Direct Messages",
+                "filterConversationPlaceholder": "Filter conversations",
+                "sideBarSection": {
+                    "shown": "shown",
+                    "hidden": "hidden",
+                    "show": "Show",
+                    "hide": "Hide",
+                    "favorite": "Favorite",
+                    "unfavorite": "Unfavorite",
+                    "settings": "Settings"
+                }
+            }
+        },
+        "dialogs": {
+            "archiveChannel": {
+                "title": "Archive Channel {{ channelName }} ?",
+                "question": "Do you really want to archive the channel {{ channelName }} ?",
+                "description": "No one will be able to send messages to the channel. You can unarchive the channel at any time.",
+                "confirmButton": "Archive Channel"
+            },
+            "unArchiveChannel": {
+                "title": "Unarchive Channel {{ channelName }} ?",
+                "question": "Do you really want to unarchive the channel {{ channelName }} ?",
+                "description": "Unarchiving a channel will allow members to post. You can archive the channel again at any time.",
+                "confirmButton": "Unarchive Channel"
+            },
+            "deleteChannel": {
+                "question": "Are you sure to delete the channel with name '{{ title }}'? This is a permanent action and cannot be undone.",
+                "confirm": "Please enter the title of the channel to confirm."
+            },
+            "grantChannelModerator": {
+                "title": "Make {{ userName }} an moderator of {{ channelName }} ?",
+                "question": "Do you really want to make {{ userName }} an moderator of {{ channelName }} ?",
+                "description": "This will allow {{ userName }} to manage the channel and its members. They can also edit and delete messages in the channel.",
+                "confirmButton": "Grant Moderator Role"
+            },
+            "revokeChannelModerator": {
+                "title": "Revoke moderator role of {{ userName }} in {{ channelName }} ?",
+                "question": "Do you really want to revoke the moderator role of {{ userName }} in {{ channelName }} ?",
+                "description": "This will revoke the moderator role of {{ userName }} in {{ channelName }}. You can grant the moderator role again at any time.",
+                "confirmButton": "Revoke Moderator Role"
+            },
+            "removeUserPrivateChannel": {
+                "title": "Remove user from private channel?",
+                "question": "Remove {{ userName }} from private channel {{ channelName }} ?",
+                "warning": "This member will not be able to access this channel anymore unless they are invited again.",
+                "remove": "Remove user"
+            },
+            "removeUserPublicChannel": {
+                "title": "Remove user from public channel?",
+                "question": "Remove {{ userName }} from public channel {{ channelName }} ?",
+                "warning": "This member will not be able to access this channel anymore unless they join again.",
+                "remove": "Remove user"
+            },
+            "removeUserGroupChat": {
+                "title": "Remove user from group chat?",
+                "question": "Remove {{ userName }} from group chat?",
+                "warning": "This member will not be able to access this group chat anymore unless they are invited again.",
+                "remove": "Remove user"
+            },
+            "conversationSettings": {
+                "actions": {
+                    "leave": "Leave Conversation",
+                    "archiveChannel": "Archive Channel",
+                    "unarchiveChannel": "Unarchive Channel"
+                }
+            },
+            "conversationDetail": {
+                "tabs": {
+                    "members": "Members",
+                    "info": "Info",
+                    "settings": "Settings"
+                },
+                "memberTab": {
+                    "findMembers": "Find members",
+                    "searching": "Searching...",
+                    "addUsers": "Add users",
+                    "filter": "Select a Filter",
+                    "allFilter": "All Members",
+                    "instructorFilter": "Course Instructors",
+                    "editorFilter": "Course Editors",
+                    "tutorFilter": "Course Tutors",
+                    "studentFilter": "Course Students",
+                    "channelModeratorFilter": "Channel Moderators",
+                    "memberRow": {
+                        "channelModeratorTooltip": "Channel Moderator that can manage the channel and its members",
+                        "removeUser": "Remove user",
+                        "grantModeratorRole": "Grant Moderator Role",
+                        "revokeModeratorRole": "Revoke Moderator Role"
+                    }
+                },
+                "infoTab": {
+                    "name": "Name",
+                    "topic": "Topic",
+                    "description": "Description",
+                    "noName": "No name set...",
+                    "noTopic": "No topic set...",
+                    "editTopic": "Edit topic",
+                    "noDescription": "No description set...",
+                    "editDescription": "Edit description",
+                    "editName": "Edit name",
+                    "moreInfo": "More info",
+                    "createdBy": "Created by",
+                    "createdOn": "Created on"
+                }
+            },
+            "addUsers": {
+                "addUsersToGroupChat": "Add users to group chat",
+                "addUsersToChannel": "Add users to: ",
+                "addUsersForm": {
+                    "addUsersButton": "Add Users",
+                    "requiredError": "You must select at least one user",
+                    "maxError": "You can only add {{ max }} users",
+                    "addUserLabel": "Search for users in the course",
+                    "maxUsersNote": "Note: You can add {{ max }} users to this conversation",
+                    "addIndividualUsers": "Add individual users",
+                    "addWholeGroups": "Add whole groups",
+                    "addAllStudents": "Add all students",
+                    "addAllTutors": "Add all tutors",
+                    "addAllEditors": "Add all editors",
+                    "addAllInstructors": "Add all instructors"
+                }
+            },
+            "createOneToOneChat": {
+                "title": "Start a direct conversation with another user",
+                "userSelectorLabel": "Select a user to chat with"
+            },
+            "createGroupChat": {
+                "title": "Start a group chat between you and a maximum of 9 other users",
+                "userSelectorLabel": "Search for users to add to the group chat",
+                "requiredError": "You must select at least one user",
+                "maxError": "You can only add {{ max }} users",
+                "confirmButton": "Create group chat"
+            },
+            "editChannelTopic": {
+                "topicInput": {
+                    "label": "Topic (optional)",
+                    "topicHelp": "What is the channel currently dealing with? (Displayed in header)",
+                    "maxLengthValidationError": "The topic can be a maximum of {{ max }} characters long!"
+                }
+            },
+            "channelOverview": {
+                "title": "All Channels in course {{ courseTitle }}",
+                "createChannelButton": "Create a new channel",
+                "channelItem": {
+                    "joined:": "Joined",
+                    "members": "Members"
+                },
+                "actions": {
+                    "view": "View",
+                    "join": "Join",
+                    "leave": "Leave"
+                }
+            },
+            "createChannel": {
+                "titlePublicChannel": "Create a public",
+                "titlePrivateChannel": "Create a private",
+                "titleAnnouncementChannel": "announcement channel",
+                "titleRegularChannel": "channel",
+                "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want. You will become the first channel moderator. You will not be able to leave the channel.",
+                "channelForm": {
+                    "nameInput": {
+                        "label": "Name",
+                        "placeholder": "e.g. tech-support",
+                        "requiredValidationError": "Name is required!",
+                        "maxLengthValidationError": "Name can be max {{ max }} characters long!",
+                        "regexValidationError": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $."
+                    },
+                    "descriptionInput": {
+                        "label": "Description (optional)",
+                        "descriptionHelp": "What's this channel about?",
+                        "maxLengthValidationError": "Description can be max {{ max }} characters long!"
+                    },
+                    "isPublicInput": {
+                        "label": "Private Channel / Public Channel",
+                        "explanation": "Every user except instructors will need an invitation to join a private channel. Everybody can join a public channel.",
+                        "public": "Public",
+                        "private": "Private"
+                    },
+                    "isAnnouncementChannelInput": {
+                        "label": "Announcement Channel",
+                        "explanation": "Only instructors and channel moderators can create new messages in an announcement channel. Students can only read the messages and answer to them.",
+                        "true": "Announcement Channel",
+                        "false": "Unrestricted Channel"
+                    },
+                    "createButton": "Create Channel"
+                }
+            }
+        }
+    }
+}

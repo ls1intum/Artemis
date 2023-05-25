@@ -31,7 +31,7 @@ export class ManualTextSelectionComponent {
     public submissionWords: string[] | undefined;
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
-    public ready: Boolean = false;
+    public ready = false;
 
     constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
         textAssessmentAnalytics.setComponentRoute(route);

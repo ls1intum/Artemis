@@ -41,11 +41,11 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 
 @Service
 @Profile("bitbucket")
@@ -89,10 +89,9 @@ public class BitbucketService extends AbstractVersionControlService {
                 throw new BitbucketException("The user was not created in Bitbucket and has to be manually added.");
             }
 
-            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
-                // only add access to the repository if the offline IDE usage is NOT disallowed
-                // NOTE: null values are interpreted as offline IDE is allowed
-                addMemberToRepository(participation.getVcsRepositoryUrl(), user);
+            if (allowAccess) {
+                final RepositoryPermissions permissions = determineRepositoryPermissions(exercise);
+                addMemberToRepository(participation.getVcsRepositoryUrl(), user, permissions);
             }
         }
 
@@ -102,8 +101,19 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        giveWritePermission(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl), user.getLogin());
+    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+        final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        final String urlSlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        final VersionControlRepositoryPermission repositoryPermission = getVersionControlPermissions(permissions);
+
+        giveRepoPermission(projectKey, urlSlug, user.getLogin(), repositoryPermission);
+    }
+
+    private static VersionControlRepositoryPermission getVersionControlPermissions(final RepositoryPermissions permissions) {
+        return switch (permissions) {
+            case READ_ONLY -> VersionControlRepositoryPermission.REPO_READ;
+            case READ_WRITE -> VersionControlRepositoryPermission.REPO_WRITE;
+        };
     }
 
     @Override
@@ -124,7 +134,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
         final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
-        // A wildcard (*) ist used to protect all branches
+        // A wildcard (*) is used to protect all branches
         final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
         // Prevent force-pushes
         final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);
@@ -201,7 +211,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @return true if it exists
      * @throws BitbucketException any exception occurred on the Bitbucket server
      */
-    public Boolean userExists(String username) throws BitbucketException {
+    public boolean userExists(String username) throws BitbucketException {
         try {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
         }
@@ -397,10 +407,12 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param projectKey     The project key of the repository's project.
      * @param repositorySlug The repository's slug.
      * @param username       The user whom to give write permissions.
+     * @param permissions    The permissions the user gets on the repository.
      */
     // TODO: Refactor to also use setStudentRepositoryPermission.
-    private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-        String url = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=" + username + "&permission=REPO_WRITE";
+    private void giveRepoPermission(String projectKey, String repositorySlug, String username, VersionControlRepositoryPermission permissions) throws BitbucketException {
+        String url = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=" + username + "&permission="
+                + permissions;
 
         try {
             /*

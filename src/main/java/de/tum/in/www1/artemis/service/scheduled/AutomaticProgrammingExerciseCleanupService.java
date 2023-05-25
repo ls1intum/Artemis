@@ -59,7 +59,8 @@ public class AutomaticProgrammingExerciseCleanupService {
     }
 
     /**
-     * cleans up old build plans on the continuous integration server and old local git repositories on the Artemis server at 3:00:00 am in the night in form of a repeating "cron" job
+     * cleans up old build plans on the continuous integration server and old local git repositories on the Artemis server at 3:00:00 am in the night in form of a repeating "cron"
+     * job
      */
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanup() {
@@ -123,7 +124,7 @@ public class AutomaticProgrammingExerciseCleanupService {
     }
 
     /**
-     *  Cleans up old build plans on the continuous integration server
+     * Cleans up old build plans on the continuous integration server
      */
     public void cleanupBuildPlansOnContinuousIntegrationServer() {
         log.info("Find build plans for potential cleanup");

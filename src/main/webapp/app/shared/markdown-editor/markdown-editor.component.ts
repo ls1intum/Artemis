@@ -35,12 +35,16 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { v4 as uuid } from 'uuid';
+import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
+    EXTRA_LARGE = 1500,
 }
 
 export enum EditorMode {
@@ -131,7 +135,15 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
     @Input() showPreviewButton = true;
 
+    /**
+     * true -> the markdown content will be rendered and shown, used when there are no special additions (e.g. text exercises)
+     * false -> the parent component adds its own preview content with id=preview. Used e.g. for programming exercises
+     */
+    @Input() showDefaultPreview = true;
+
     @Input() showEditButton = true;
+
+    @Input() showVisualModeButton = false;
 
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
     previewTextAsHtml: SafeHtml | null;
@@ -139,9 +151,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
 
-    /** {previewChild} Is not null when the parent component is responsible for the preview content
-     * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
-    @ContentChild('preview', { static: false }) previewChild: ElementRef;
+    /** {visualMode} when editor is created the visual mode is set to false, since the edit mode is set active */
+    visualMode = false;
+    @Input()
+    minHeightEditor = MarkdownEditorHeight.SMALL.valueOf();
+
+    @ContentChild(MultipleChoiceVisualQuestionComponent, { static: false }) visualChild: MultipleChoiceVisualQuestionComponent;
 
     /** Resizable constants **/
     @Input()
@@ -163,16 +178,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
     faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     uniqueMarkdownEditorId: string;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
-    }
-
-    /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
-    get showDefaultPreview(): boolean {
-        return this.previewChild == undefined;
     }
 
     /** opens the button for selecting the color */
@@ -204,6 +215,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     removeCommand(classRef: typeof Command) {
         setTimeout(() => (this.defaultCommands = this.defaultCommands.filter((element) => !(element instanceof classRef))));
+    }
+
+    isTypeOfExerciseReferenceCommand(commandToCheck: MultiOptionCommand) {
+        return commandToCheck instanceof ExerciseReferenceCommand;
     }
 
     ngAfterViewInit(): void {
@@ -378,13 +393,24 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @function togglePreview
      * @desc Toggle the preview in the template and parse the text
      */
-    togglePreview(event: any): void {
-        this.previewMode = !this.previewMode;
+    changeNavigation(event: any): void {
+        this.previewMode = event.nextId === 'editor_preview';
+        this.visualMode = event.nextId === 'editor_visual';
+
         if (this.previewMode) {
             this.onPreviewSelect.emit();
         } else {
             this.onEditSelect.emit();
         }
+
+        if (event.activeId === 'editor_visual' && this.visualChild) {
+            this.markdown = this.visualChild.parseQuestion();
+
+            if (this.previewMode) {
+                this.parse();
+            }
+        }
+
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {
             this.parse();

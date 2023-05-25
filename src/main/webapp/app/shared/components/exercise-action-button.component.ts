@@ -3,7 +3,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    /* tslint:disable-next-line component-selector */
+    /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
     styleUrls: ['../../overview/course-overview.scss'],

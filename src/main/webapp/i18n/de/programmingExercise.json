@@ -3,16 +3,17 @@
         "programmingExercise": {
             "home": {
                 "title": "Programmieraufgaben",
-                "createLabel": "Neue Programmieraufgabe erstellen",
+                "createLabel": "Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
-                "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
+                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
+                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
+                "nextStepLabel": "Weiter"
             },
-            "created": "Programmieraufgabe erstellt mit Title {{ param }}",
-            "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
-            "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
+            "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
@@ -24,12 +25,62 @@
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studierenden-Repositories und Studierenden-Build-Pläne gelöscht werden."
+                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "deleteBuildPlans": {
+                    "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
+                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
+                },
+                "deleteRepositories": {
+                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
+                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
+                },
+                "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfen Sie sorgfältig, ob dies die gewünschte Aktion ist, bevor Sie den Vorgang fortsetzen.",
+                "recreateBuildPlans": "Erstelle Build-Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "successMessage": "Das Zurücksetzen war erfolgreich.",
+                "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
             "detail": {
                 "title": "Programmieraufgabe",
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
+            },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Informationen",
+                    "difficultyStepTitle": "Schwierigkeit",
+                    "languageStepTitle": "Sprache",
+                    "gradingStepTitle": "Benotung",
+                    "problemStepTitle": "Problem"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "Allgemeine Informationen",
+                    "generalInfoStepMessage": "Füge allgemeine Informationen über die neue Übung hinzu.",
+                    "difficultyStepTitle": "Schwierigkeit",
+                    "difficultyStepMessage": "Lege die Schwierigkeit für die neue Übung fest.",
+                    "languageStepTitle": "Programmiersprache",
+                    "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
+                    "gradingStepTitle": "Benotung",
+                    "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
+                    "problemStepTitle": "Aufgabenstellung",
+                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                },
+                "gradingLabels": {
+                    "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",
+                    "noBonus": "Es gibt keine Bonuspunkte für diese Aufgabe.",
+                    "bonus": "Es können {bonusPoints} Bonuspunkte erreicht werden.",
+                    "assessment": "Diese Aufgabe wird {assessmentType} bewertet.",
+                    "lockedSubmission": "Die Repositories werden automatisch nach {submissionLimit} Abgaben gesperrt.",
+                    "penaltySubmission": "Es gibt einen Abzug von {exceedingPenalty} Punkten für jede Abgabe nach {submissionLimit} Abgaben.",
+                    "unrestrictedSubmission": "Es gibt keine Begrenzung für die Anzahl an Abgaben.",
+                    "staticAnalysisEnabled": "Statische Code-Analyse ist aktiviert für diese Aufgabe und es können maximal {maxPenalty} Punkte durch Probleme bei der Code-Analyse abgezogen werden.",
+                    "staticAnalysisDisabled": "Statische Code-Analyse ist deaktiviert für diese Aufgabe.",
+                    "normalExercise": "Aufgabe",
+                    "bonusExercise": "Bonusaufgabe",
+                    "assessmentAutomatic": "automatisch",
+                    "assessmentSemiautomatic": "halb-automatisch"
+                }
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Sie können aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
@@ -86,6 +137,16 @@
                 "title": "Aktualisiere Template",
                 "description": "Durch Aktivierung dieser Option werden die Template-Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
             },
+            "importFromFile": {
+                "title": "Programmieraufgabe aus Datei importieren",
+                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
+                "uploadForImport": "Programmieraufgabe für den Import hochladen",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine .json-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
+                "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
+                "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
+            },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
@@ -127,7 +188,8 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
-                "testCaseCommand": "Testfall einfügen"
+                "testCaseCommand": "Testfall einfügen",
+                "tasksOfExercise": "Teilaufgaben:"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -151,6 +213,8 @@
                 "shortTitle": "Bewertung",
                 "save": "Speichern",
                 "reset": "Zurücksetzen",
+                "expandAll": "Alle Testfälle einblenden",
+                "collapseAll": "Alle Testfälle ausblenden",
                 "status": {
                     "unsavedChanges": "Ungespeicherte Änderungen",
                     "unsavedTestCaseChanges": "Ungespeicherte Tests",
@@ -176,7 +240,11 @@
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
                     "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",
-                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden."
+                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden.",
+                    "import": "Konfiguration übernehmen",
+                    "importLabel": "Konfiguration einer Aufgabe übernehmen",
+                    "importSuccessful": "Die Kategorien von Aufgabe {{exercise}} wurden erfolgreich übernommen.",
+                    "importFailed": "Die Kategorien von Aufgabe {{exercise}} konnten nicht übernommen werden."
                 },
                 "charts": {
                     "title": "Diagramme",
@@ -203,7 +271,7 @@
                     }
                 },
                 "gradingTableHeader": {
-                    "testName": "Testname",
+                    "testName": "<b>Task</b> / Test",
                     "weight": "Gewichtung",
                     "bonusMultiplier": "Bonusmultiplikator",
                     "bonusPoints": "Bonuspunkte",
@@ -213,13 +281,14 @@
                     "passedPercent": "Bestanden %"
                 },
                 "help": {
+                    "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
                     "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",
                     "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
                     "maxPenalty": "Der maximale Punktabzug über alle Issues einer/s Studierenden in dieser Kategorie.",
                     "detectedIssues": "Zeigt die Anzahl an Studierenden je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
-                    "weight": "Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
-                    "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
-                    "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
+                    "weight": "Gewichtung: Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
+                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
+                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
                     "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
@@ -233,17 +302,44 @@
             },
             "export": {
                 "downloadRepo": "Repo Herunterladen",
+                "downloadExampleSolution": "Beispiellösung herunterladen",
+                "downloadTests": "Tests herunterladen",
+                "downloadTestsWithExampleSolution": "Tests mit Beispiellösung herunterladen",
                 "downloadExercise": "Programmierübung herunterladen",
                 "downloadAllStudents": "Oder lade die Repositories aller Studierenden herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
-                "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
-                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
-                "addStudentName": "Namen der Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "addTeamOrStudentName": "Namen der Teams/Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "combineStudentCommits": "Alle Änderungen von Studierenden in einem Commit zusammenfassen (um das Review zu vereinfachen)",
-                "anonymizeStudentCommits": "Alle Änderungen von Studierenden anonymisieren",
-                "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
+                "filterLateSubmissions": {
+                    "title": "Verspätete Abgaben herausfiltern",
+                    "tooltip": "Alle Abgaben und Commits nach einem bestimmten Datum ausschließen"
+                },
+                "filterLateSubmissionsDate": {
+                    "title": "Datum zum Filtern verspäteter Abgaben",
+                    "tooltip": "Standardmäßig das Abgabedatum der Aufgabe, falls kein Datum gesetzt"
+                },
+                "excludePracticeSubmissions": {
+                    "title": "Abgaben aus dem Übungsmodus ausschließen",
+                    "tooltip": "Ignoriere als Übung markierte Abgaben und behalte nur benotete Abgaben"
+                },
+                "addToProject": {
+                    "title": {
+                        "student": "Namen der Studierenden zum Projekt hinzufügen",
+                        "team": "Namen der Teams zum Projekt hinzufügen",
+                        "teamOrStudent": "Namen der Teams/Studierenden zum Projekt hinzufügen"
+                    },
+                    "tooltip": "Erlaubt das gleichzeitige Importieren mehrerer Projekte in Eclipse"
+                },
+                "combineStudentCommits": {
+                    "title": "Alle Änderungen in einem Commit zusammenfassen",
+                    "tooltip": "Fasst alle Commits eines Studierenden in einem einzigen Commit für leichtere Korrektur zusammen"
+                },
+                "anonymizeStudentCommits": {
+                    "title": "Alle Änderungen von Studierenden anonymisieren",
+                    "tooltip": "Verberge die Namen der Studierenden in Commits für eine unvoreingenommene Bewertung"
+                },
+                "normalizeCodeStyle": {
+                    "title": "Code-Style normalisieren",
+                    "tooltip": "Standardisiere Zeilenumbrüche und Kodierung für Konsistenz"
+                },
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."
             },
@@ -264,7 +360,6 @@
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
-            "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
             "projectTypeTooltip": "Dieser Wert legt den Projekttypen von Vorlagen- und Lösungs-Repository fest.",
             "testRepositoryProjectTypeTooltip": "Dieser Wert legt den Projekttypen des Test-Repository fest.",
             "timeline": {
@@ -292,16 +387,15 @@
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
                 "allowFeedbackRequests": "Feedbackanfragen erlauben",
-                "feedbackRequestsEnabledTooltip": "Studierende können manuelle Korrekturen vor der Abgabefrist anfragen.",
-                "feedbackRequestsDisabledTooltip": "Studierende können keine manuelle Korrekturen vor der Abgabefrist anfragen.",
+                "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
+                "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Abgabefrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
                 "feedbackRequestsDisabled": "Korrekturanfragen sind nicht möglich",
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
-                "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
-                "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
-                "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
-                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich",
-                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
+                "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
+                "releaseTestsWithExampleSolution": "Tests veröffentlichen",
+                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Deadline zum Download bereit gestellt werden."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -454,7 +548,8 @@
                 "totalJobDuration": "kompletter Job",
                 "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
                 "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
-            }
+            },
+            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen."
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."

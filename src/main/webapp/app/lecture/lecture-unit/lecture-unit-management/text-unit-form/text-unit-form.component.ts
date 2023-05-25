@@ -6,11 +6,13 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface TextUnitFormData {
     name?: string;
     releaseDate?: dayjs.Dayjs;
     content?: string;
+    learningGoals?: LearningGoal[];
 }
 
 @Component({
@@ -20,11 +22,7 @@ export interface TextUnitFormData {
 })
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
-    formData: TextUnitFormData = {
-        name: undefined,
-        releaseDate: undefined,
-        content: undefined,
-    };
+    formData: TextUnitFormData;
 
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
@@ -93,6 +91,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         this.form = this.fb.group({
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
+            learningGoals: [undefined as LearningGoal[] | undefined],
         });
     }
 

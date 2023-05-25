@@ -4,16 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mockStatic;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -23,13 +18,29 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
 class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private ResourceLoaderService resourceLoaderService;
+
+    private final Path javaPath = Path.of("templates", "java", "java.txt");
+
+    // the resource loader allows to load resources from the file system for this prefix
+    private final Path overridableBasePath = Path.of("templates", "jenkins");
+
+    @AfterEach
+    void cleanup() throws IOException {
+        Files.deleteIfExists(javaPath);
+        FileUtils.deleteDirectory(overridableBasePath.toFile());
+    }
 
     /*
      * We have to save the content as a String as git will automatically convert the line endings based on the developer's OS, therefore we do not store it as a file in
@@ -282,33 +293,82 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertThat(exception.getMessage()).endsWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
+    // TODO: either rework those tests or delete them
     @Test
     void testGetUniquePath_shouldNotThrowException() {
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.isDirectory(any())).thenReturn(true);
-        mockedFiles.when(() -> Files.createDirectories(any())).thenThrow(NoSuchFileException.class);
         assertDoesNotThrow(() -> {
-            var uniquePath = fileService.getUniquePath("some-path");
+            var uniquePath = fileService.getUniquePath("some-random-path-which-does-not-exist");
             assertThat(uniquePath.toString()).isNotEmpty();
         });
-        mockedFiles.close();
     }
 
     @Test
     void testCreateDirectory_shouldNotThrowException() {
-        Path path = Path.of("some-path");
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.createDirectories(path)).thenThrow(NoSuchFileException.class);
+        Path path = Path.of("some-random-path-which-does-not-exist");
         assertDoesNotThrow(() -> fileService.createDirectory(path));
-        mockedFiles.close();
     }
 
     @Test
     void testDeleteFiles_shouldNotThrowException() {
-        Path path = Path.of("some-path");
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.delete(path)).thenThrow(NoSuchFileException.class);
+        Path path = Path.of("some-random-path-which-does-not-exist");
         assertDoesNotThrow(() -> fileService.deleteFiles(List.of(path)));
-        mockedFiles.close();
+    }
+
+    @Test
+    void testCopyResourceKeepDirectories(@TempDir Path targetDir) throws IOException {
+        final Resource[] resources = { resourceLoaderService.getResource(javaPath) };
+
+        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
+
+        final Path expectedTargetFile = targetDir.resolve("java").resolve("java.txt");
+        assertThat(expectedTargetFile).exists().isNotEmptyFile();
+    }
+
+    @Test
+    void testCopyResourceDoNotKeepDirectory(@TempDir Path targetDir) throws IOException {
+        final Resource[] resources = { resourceLoaderService.getResource(javaPath) };
+
+        fileService.copyResources(resources, Path.of("templates"), targetDir, false);
+
+        final Path expectedTargetFile = targetDir.resolve("java.txt");
+        assertThat(expectedTargetFile).exists().isNotEmptyFile();
+    }
+
+    @Test
+    void testCopyResourceRemovePrefix(@TempDir Path targetDir) throws IOException {
+        final Resource[] resources = { resourceLoaderService.getResource(javaPath) };
+
+        fileService.copyResources(resources, Path.of("templates", "java"), targetDir, true);
+
+        final Path expectedTargetFile = targetDir.resolve("java.txt");
+        assertThat(expectedTargetFile).exists().isNotEmptyFile();
+    }
+
+    @Test
+    void testRenameSpecialFilename(@TempDir Path targetDir) throws IOException {
+        final Path sourceFile = overridableBasePath.resolve("Makefile.file");
+        FileUtils.writeStringToFile(sourceFile.toFile(), "content", Charset.defaultCharset());
+
+        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        assertThat(resources).isNotEmpty();
+
+        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
+
+        final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("Makefile");
+        assertThat(expectedTargetFile).exists().isNotEmptyFile();
+    }
+
+    @Test
+    void testIgnoreDirectoryFalsePositives(@TempDir Path targetDir) throws IOException {
+        final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
+        Files.createDirectories(sourceDirectory);
+
+        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        assertThat(resources).isNotEmpty();
+
+        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
+
+        final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
+        assertThat(expectedTargetFile).doesNotExist();
     }
 }

@@ -1,13 +1,15 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
+import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -28,6 +30,11 @@ import dayjs from 'dayjs/esm';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { By } from '@angular/platform-browser';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { cloneDeep } from 'lodash-es';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -43,8 +50,12 @@ describe('Course Management Update Component', () => {
     let courseAdminService: CourseAdminService;
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
+    let loadImageService: LoadImageService;
+    let accountService: AccountService;
     let course: Course;
     const validTimeZone = 'Europe/Berlin';
+    let loadImageSpy: jest.SpyInstance;
+    let eventManager: EventManager;
 
     beforeEach(() => {
         course = new Course();
@@ -66,7 +77,7 @@ describe('Course Management Update Component', () => {
         course.maxComplaintTextLimit = 500;
         course.maxComplaintResponseTextLimit = 1000;
         course.maxRequestMoreFeedbackTimeDays = 15;
-        course.postsEnabled = true;
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         course.registrationEnabled = true;
         course.registrationConfirmationMessage = 'testRegistrationConfirmationMessage';
         course.presentationScore = 16;
@@ -79,7 +90,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -87,20 +98,20 @@ describe('Course Management Update Component', () => {
                 },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(TranslateService),
+                MockProvider(LoadImageService),
             ],
             declarations: [
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(SecuredImageComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
-                MockDirective(NgbTypeahead),
             ],
         })
             .compileComponents()
@@ -112,6 +123,10 @@ describe('Course Management Update Component', () => {
                 courseAdminService = TestBed.inject(CourseAdminService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
+                loadImageService = TestBed.inject(LoadImageService);
+                loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
+                accountService = TestBed.inject(AccountService);
+                eventManager = TestBed.inject(EventManager);
             });
     });
 
@@ -162,7 +177,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
             expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['postsEnabled'])?.value).toBe(course.postsEnabled);
+            expect(comp.messagingEnabled).toBe(isMessagingEnabled(course));
+            expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.registrationConfirmationMessage);
             expect(comp.courseForm.get(['presentationScore'])?.value).toBe(course.presentationScore);
@@ -175,6 +191,7 @@ describe('Course Management Update Component', () => {
         it('should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
             const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
@@ -190,7 +207,6 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
@@ -210,6 +226,7 @@ describe('Course Management Update Component', () => {
         it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -223,7 +240,6 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
                 maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
@@ -238,6 +254,34 @@ describe('Course Management Update Component', () => {
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving).toBeFalse();
+        }));
+
+        it('should broadcast course modification on delete', fakeAsync(() => {
+            // GIVEN
+            const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
+
+            const previousCourse = new Course();
+            previousCourse.id = 123;
+            previousCourse.title = 'previous title';
+            comp.course = previousCourse;
+
+            const updatedCourse = cloneDeep(previousCourse);
+            updatedCourse.title = 'updated title';
+            comp.courseForm = new FormGroup({
+                title: new FormControl(updatedCourse.title),
+            });
+            const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
+
+            // WHEN
+            comp.save();
+            tick();
+
+            // THEN
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({
+                name: 'courseModification',
+                content: 'Changed a course',
+            });
         }));
     });
 
@@ -451,6 +495,8 @@ describe('Course Management Update Component', () => {
 
     describe('deleteIcon', () => {
         it('should remove icon image and delete icon button from component', () => {
+            const base64String = Buffer.from('testContent').toString('base64');
+            loadImageSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
             setIcon();
             let deleteIconButton = getDeleteIconButton();
             deleteIconButton.dispatchEvent(new Event('click'));
@@ -469,9 +515,7 @@ describe('Course Management Update Component', () => {
         });
 
         function setIcon(): void {
-            const croppedImage = 'testCroppedImage';
-            comp.croppedImage = 'data:image/png;base64,' + croppedImage;
-            comp.courseImageUploadFile = new File([''], 'testFilename');
+            comp.courseImageUploadFile = new File([''], 'testFilename.png', { type: 'image/png' });
             comp.showCropper = true;
             comp.ngOnInit();
             fixture.detectChanges();
@@ -480,5 +524,35 @@ describe('Course Management Update Component', () => {
         function getDeleteIconButton() {
             return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
         }
+    });
+
+    describe('changeOrganizations', () => {
+        beforeEach(() => {
+            const organization = new Organization();
+            organization.id = 12345;
+            jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
+        });
+
+        it('should allow adding / removing organizations if admin', () => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            fixture.detectChanges();
+
+            const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
+            const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton'));
+
+            expect(addButton).not.toBeNull();
+            expect(removeButton).not.toBeNull();
+        });
+
+        it('should not allow adding / removing organizations if not admin', () => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            fixture.detectChanges();
+
+            const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
+            const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton'));
+
+            expect(addButton).toBeNull();
+            expect(removeButton).toBeNull();
+        });
     });
 });

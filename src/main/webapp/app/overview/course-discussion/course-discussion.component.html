@@ -3,15 +3,17 @@
         <!-- search bar -->
         <input
             name="searchText"
+            id="search"
             [(ngModel)]="searchText"
             class="form-control"
             (keyup.enter)="onSelectContext()"
             placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
-        <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+        <jhi-documentation-button [type]="documentationType" class="information-button"></jhi-documentation-button>
         <div *ngIf="createdPost">
-            <button class="btn btn-md btn-primary ms-1" (click)="createEditModal.open()">
+            <button id="new-post" class="btn btn-md btn-primary ms-1" (click)="createEditModal.open()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
             </button>
@@ -31,6 +33,7 @@
                     <div class="col-auto p-0">
                         <select
                             formControlName="context"
+                            id="filter-context"
                             class="form-select course-discussion-select"
                             [compareWith]="compareContextFilterOptionFn"
                             (change)="onSelectContext()"
@@ -145,9 +148,9 @@
         <div class="col-12">
             <jhi-virtual-scroll
                 #virtualScrollContainer
+                [scrollPaddingTop]="325"
                 [items]="posts"
                 [minItemHeight]="126.7"
-                [containerHeight]="'500px'"
                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
                 [endOfListReachedItemThreshold]="5"
                 [(forceReload)]="forceReload"
@@ -155,9 +158,12 @@
             >
                 <jhi-posting-thread
                     *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
+                    [id]="'item-' + post.id"
+                    class="item"
                     [post]="post"
                     [showAnswers]="posts.length === 1"
-                ></jhi-posting-thread>
+                >
+                </jhi-posting-thread>
                 <!-- spinner while loading posts -->
                 <div class="text-center">
                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>

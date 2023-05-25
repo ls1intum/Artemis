@@ -57,6 +57,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                             description: this.attachmentUnit.description,
                             releaseDate: this.attachment.releaseDate,
                             version: this.attachment.version,
+                            learningGoals: this.attachmentUnit.learningGoals,
                         },
                         fileProperties: {
                             fileName: this.attachment.link,
@@ -68,7 +69,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     }
 
     updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, learningGoals } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // optional update notification text for students
@@ -82,6 +83,7 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachment.attachmentType = AttachmentType.FILE;
         // === Setting attachmentUnit ===
         this.attachmentUnit.description = description;
+        this.attachmentUnit.learningGoals = learningGoals;
 
         this.isLoading = true;
 

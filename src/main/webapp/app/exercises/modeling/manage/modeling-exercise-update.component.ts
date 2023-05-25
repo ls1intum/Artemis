@@ -23,6 +23,7 @@ import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -54,6 +55,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
     goBackAfterSaving = false;
+
+    documentationType = DocumentationType.Model;
 
     // Icons
     faSave = faSave;
@@ -112,7 +115,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
-                        if (!!this.modelingExercise.course) {
+                        if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
                                 next: (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
@@ -190,7 +193,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.modelingExercise, this.notificationText)
+            .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),

@@ -85,17 +85,17 @@ public class AdminSystemNotificationResource {
     }
 
     /**
-     * DELETE /system-notifications/:id : delete the "id" system notification.
+     * DELETE /system-notifications/:notificationId : delete the "id" system notification.
      *
-     * @param id the id of the system notification to delete
+     * @param notificationId the id of the system notification to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("system-notifications/{id}")
+    @DeleteMapping("system-notifications/{notificationId}")
     @EnforceAdmin
-    public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long id) {
-        log.debug("REST request to delete SystemNotification : {}", id);
-        systemNotificationRepository.deleteById(id);
+    public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long notificationId) {
+        log.debug("REST request to delete SystemNotification : {}", notificationId);
+        systemNotificationRepository.deleteById(notificationId);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, notificationId.toString())).build();
     }
 }

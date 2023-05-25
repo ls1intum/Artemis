@@ -1,7 +1,10 @@
 <div class="row justify-content-center programming-exercise-detail-wrapper-class">
     <div class="col-md-8">
         <div *ngIf="programmingExercise">
-            <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
+            <div class="d-flex align-items-center">
+                <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            </div>
             <hr />
             <div class="button-header">
                 <div>
@@ -20,7 +23,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                        <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                     </a>
 
                     <a
@@ -29,10 +32,8 @@
                         class="btn btn-warning btn-sm me-1 position-relative"
                         style="margin-bottom: 10px"
                     >
-                        <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
-                        <!-- New Badge -->
-                        <span class="position-absolute top-0 end-0 translate-middle-y badge rounded-pill bg-info">New</span>
+                        <fa-icon [icon]="faLightbulb"></fa-icon>
+                        <span jhiTranslate="entity.action.hints">Hints</span>
                     </a>
 
                     <a
@@ -41,19 +42,14 @@
                         class="btn btn-warning btn-sm me-1"
                         style="margin-bottom: 10px"
                     >
-                        <fa-icon [icon]="faUserCheck"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                        <fa-icon [icon]="faFileSignature"></fa-icon>
+                        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                     </a>
-                    <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"> </jhi-external-submission>
                 </div>
                 <div>
-                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
-                        <fa-icon [icon]="faBook"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
-                    </a>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                        <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
                     </a>
                     <!-- Teams -->
                     <a
@@ -63,7 +59,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faUsers"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                        <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments"
@@ -72,7 +68,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+                        <span jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
@@ -96,18 +92,13 @@
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faTable"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                        <span jhiTranslate="entity.action.scores">Scores</span>
                     </a>
                     <jhi-programming-exercise-instructor-exercise-download
                         *ngIf="programmingExercise.isAtLeastInstructor"
                         [exerciseId]="programmingExercise.id!"
                         class="me-1"
                     ></jhi-programming-exercise-instructor-exercise-download>
-                    <jhi-programming-assessment-repo-export
-                        *ngIf="programmingExercise.isAtLeastInstructor"
-                        [exerciseId]="programmingExercise.id!"
-                        class="me-1"
-                    ></jhi-programming-assessment-repo-export>
                     <a
                         *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
@@ -191,42 +182,18 @@
                         <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                     </button>
-
                     <button
                         *ngIf="programmingExercise.isAtLeastEditor"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        jhiDeleteButton
-                        [actionType]="ActionType.Reset"
-                        [entityTitle]="programmingExercise.title || ''"
-                        deleteQuestion="artemisApp.programmingExercise.recreateBuildPlans.question"
-                        (delete)="recreateBuildPlans()"
-                        [dialogError]="dialogError$"
-                        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                        [additionalChecks]="{}"
+                        jhiProgrammingExerciseResetButton
+                        [programmingExercise]="programmingExercise"
+                        class="me-1"
                     >
-                        <fa-icon [icon]="faEraser"></fa-icon>
-                        <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.buttonText">Build Plan</span>
+                        <fa-icon [icon]="faTimes"></fa-icon>
+                        <span jhiTranslate="entity.action.reset">Reset</span>
                     </button>
-
                     <button
-                        *ngIf="programmingExercise.isAtLeastInstructor"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        jhiDeleteButton
-                        [actionType]="ActionType.Cleanup"
-                        [entityTitle]="programmingExercise.title || ''"
-                        deleteQuestion="artemisApp.instructorDashboard.cleanup.question"
-                        (delete)="cleanupProgrammingExercise($event)"
-                        [dialogError]="dialogError$"
-                        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                        [additionalChecks]="{
-                            deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
-                        }"
-                    >
-                        <fa-icon [icon]="faEraser"></fa-icon>
-                    </button>
-
-                    <button
-                        *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastInstructor"
                         jhiDeleteButton
                         [entityTitle]="programmingExercise.title || ''"
                         deleteQuestion="artemisApp.programmingExercise.delete.question"
@@ -237,6 +204,7 @@
                             deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
                             deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                         }"
+                        class="me-1"
                     >
                         <fa-icon [icon]="faTimes"></fa-icon>
                     </button>
@@ -452,8 +420,8 @@
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation!"
                             [showUngradedResults]="true"
-                            [showTestNames]="true"
                             [personalParticipation]="false"
+                            [short]="false"
                             (onParticipationChange)="onParticipationChange()"
                             class="me-2"
                         ></jhi-updating-result>
@@ -484,8 +452,8 @@
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation!"
                             [showUngradedResults]="true"
-                            [showTestNames]="true"
                             [personalParticipation]="false"
+                            [short]="false"
                             class="me-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status

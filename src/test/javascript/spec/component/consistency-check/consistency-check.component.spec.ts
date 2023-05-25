@@ -36,8 +36,8 @@ describe('ConsistencyCheckComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ConsistencyCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(NgbHighlight), MockRouterLinkDirective],
+            imports: [ArtemisTestModule, MockComponent(NgbHighlight)],
+            declarations: [ConsistencyCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(ConsistencyCheckService)],
         })
             .compileComponents()

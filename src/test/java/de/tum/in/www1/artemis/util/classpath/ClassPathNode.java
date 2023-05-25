@@ -113,7 +113,7 @@ public abstract class ClassPathNode implements Comparable<ClassPathNode>, Iterab
      * @param <P>           The new type for the <b>P</b>ackage nodes
      * @param classMapper   A function that maps the {@link ClassNode}s to the new leaf node type <code>C</code>
      * @param packageMapper A function that maps a {@link PackageNode} to the new inner node type <code>P</code>. It gets passed the already converted children {@link ClassNode}s
-     *                      and {@link PackageNode}s as two {@link Stream}s of type <code>P</code> and <code>C</code>.
+     *                          and {@link PackageNode}s as two {@link Stream}s of type <code>P</code> and <code>C</code>.
      * @return the new tree structure, a subclass of <code>N</code>
      */
     public abstract <N, C extends N, P extends N> N mapTreeAdvanced(Function<ClassNode, C> classMapper, TriFunction<PackageNode, Stream<P>, Stream<C>, P> packageMapper);
@@ -126,7 +126,7 @@ public abstract class ClassPathNode implements Comparable<ClassPathNode>, Iterab
      * @param <T>           the (common super-) type of the new tree nodes
      * @param classMapper   A function that maps the {@link ClassNode}s to the new node type <code>T</code>
      * @param packageMapper A function that maps a {@link PackageNode} to the new node type <code>T</code>. It gets passed the already converted children {@link ClassNode}s and
-     *                      {@link PackageNode}s as a single {@link Stream} of <code>T</code> nodes, converted package nodes first.
+     *                          {@link PackageNode}s as a single {@link Stream} of <code>T</code> nodes, converted package nodes first.
      * @return the new tree structure
      * @see #mapTreeAdvanced(Function, TriFunction)
      */

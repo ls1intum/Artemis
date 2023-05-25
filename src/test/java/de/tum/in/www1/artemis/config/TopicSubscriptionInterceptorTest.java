@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.config;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.security.Principal;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
@@ -19,18 +18,15 @@ import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 @SuppressWarnings("unchecked")
 class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "topicsubscriptioninterceptor";
+
     @Autowired
     private WebsocketConfiguration websocketConfiguration;
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
     void testAllowSubscription() {
-        database.addUsers(4, 0, 1, 1);
-        var course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
+        database.addUsers(TEST_PREFIX, 1, 0, 1, 1);
+        var course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         var exercise = course.getExercises().stream().findFirst().orElseThrow();
         var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
 
@@ -52,59 +48,59 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBi
             // Team Destination
             when(headerAccessorMock.getDestination()).thenReturn("/topic/participations/" + participation.getId() + "/team");
 
-            when(principalMock.getName()).thenReturn("student1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             var returnedValue = interceptor.preSend(msgMock, channel);
-            assertEquals(msgMock, returnedValue);
+            assertThat(returnedValue).isEqualTo(msgMock);
 
-            when(principalMock.getName()).thenReturn("student2");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student2");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertNull(returnedValue);
+            assertThat(returnedValue).isNull();
 
             // Non Personal Exercise Result Destination
             when(headerAccessorMock.getDestination()).thenReturn("/topic/exercise/" + exercise.getId() + "/newResults");
 
             // Normal course exercise
-            when(principalMock.getName()).thenReturn("instructor1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "instructor1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertEquals(msgMock, returnedValue);
+            assertThat(returnedValue).isEqualTo(msgMock);
 
-            when(principalMock.getName()).thenReturn("editor1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertEquals(msgMock, returnedValue);
+            assertThat(returnedValue).isEqualTo(msgMock);
 
-            when(principalMock.getName()).thenReturn("student1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertNull(returnedValue);
+            assertThat(returnedValue).isNull();
 
             // Exam exercise
             when(headerAccessorMock.getDestination()).thenReturn("/topic/exercise/" + examExercise.getId() + "/newResults");
 
-            when(principalMock.getName()).thenReturn("instructor1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "instructor1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertEquals(msgMock, returnedValue);
+            assertThat(returnedValue).isEqualTo(msgMock);
 
-            when(principalMock.getName()).thenReturn("editor1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertNull(returnedValue);
+            assertThat(returnedValue).isNull();
 
-            when(principalMock.getName()).thenReturn("student1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertNull(returnedValue);
+            assertThat(returnedValue).isNull();
 
             // Exam destination
             when(headerAccessorMock.getDestination()).thenReturn("/topic/exams/" + exam.getId() + "/test");
 
-            when(principalMock.getName()).thenReturn("instructor1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "instructor1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertEquals(msgMock, returnedValue);
+            assertThat(returnedValue).isEqualTo(msgMock);
 
-            when(principalMock.getName()).thenReturn("editor1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertNull(returnedValue);
+            assertThat(returnedValue).isNull();
 
-            when(principalMock.getName()).thenReturn("student1");
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
-            assertNull(returnedValue);
+            assertThat(returnedValue).isNull();
         }
     }
 }

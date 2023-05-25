@@ -16,11 +16,11 @@ public final class ProgrammingSubmissionConstants {
 
     public static final String BAMBOO_BUILD_RESULT_REQUEST;
 
-    public final static String GITLAB_PUSH_EVENT_REQUEST;
+    public static final String GITLAB_PUSH_EVENT_REQUEST;
 
-    public final static String GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT;
+    public static final String GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT;
 
-    public final static String GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER;
+    public static final String GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER;
 
     static {
         try {

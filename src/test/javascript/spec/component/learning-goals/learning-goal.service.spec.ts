@@ -6,15 +6,13 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
 
 describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;
     let httpTestingController: HttpTestingController;
-    let defaultLearningGoal: LearningGoal;
-    let defaultLearningGoalProgress: IndividualLearningGoalProgress;
+    let defaultLearningGoals: LearningGoal[];
+    let defaultLearningGoalProgress: LearningGoalProgress;
     let defaultLearningGoalCourseProgress: CourseLearningGoalProgress;
     let expectedResultLearningGoal: any;
     let expectedResultLearningGoalProgress: any;
@@ -35,23 +33,14 @@ describe('LearningGoalService', () => {
             ],
         });
         expectedResultLearningGoal = {} as HttpResponse<LearningGoal>;
-        expectedResultLearningGoalProgress = {} as HttpResponse<IndividualLearningGoalProgress>;
+        expectedResultLearningGoalProgress = {} as HttpResponse<LearningGoalProgress>;
 
         learningGoalService = TestBed.inject(LearningGoalService);
         httpTestingController = TestBed.inject(HttpTestingController);
 
-        defaultLearningGoal = new LearningGoal();
-        defaultLearningGoal.id = 0;
-        defaultLearningGoal.title = 'title';
-        defaultLearningGoal.description = 'description';
-
-        defaultLearningGoalProgress = new IndividualLearningGoalProgress();
-        defaultLearningGoalProgress.learningGoalId = 0;
-        defaultLearningGoalProgress.learningGoalTitle = 'title';
-
-        defaultLearningGoalCourseProgress = new CourseLearningGoalProgress();
-        defaultLearningGoalCourseProgress.learningGoalId = 0;
-        defaultLearningGoalCourseProgress.learningGoalTitle = 'title';
+        defaultLearningGoals = [{ id: 0, title: 'title', description: 'description' } as LearningGoal];
+        defaultLearningGoalProgress = { progress: 20, confidence: 50 } as LearningGoalProgress;
+        defaultLearningGoalCourseProgress = { learningGoalId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress;
     });
 
     afterEach(() => {
@@ -59,7 +48,7 @@ describe('LearningGoalService', () => {
     });
 
     it('should find a learning goal', fakeAsync(() => {
-        const returnedFromService = { ...defaultLearningGoal };
+        const returnedFromService = [...defaultLearningGoals];
         learningGoalService
             .findById(1, 1)
             .pipe(take(1))
@@ -69,29 +58,29 @@ describe('LearningGoalService', () => {
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoal);
+        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoals);
     }));
 
     it('should find all learning goals', fakeAsync(() => {
-        const returnedFromService = { ...defaultLearningGoal };
+        const returnedFromService = [...defaultLearningGoals];
         learningGoalService.getAllForCourse(1).subscribe((resp) => (expectedResultLearningGoal = resp));
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoal);
+        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoals);
     }));
 
     it('should find all prerequisites', fakeAsync(() => {
-        const returnedFromService = { ...defaultLearningGoal };
+        const returnedFromService = [...defaultLearningGoals];
         learningGoalService.getAllPrerequisitesForCourse(1).subscribe((resp) => (expectedResultLearningGoal = resp));
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         tick();
 
-        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoal);
+        expect(expectedResultLearningGoal.body).toEqual(defaultLearningGoals);
     }));
 
     it('should get individual progress for a learning goal', fakeAsync(() => {
@@ -123,7 +112,7 @@ describe('LearningGoalService', () => {
     }));
 
     it('should create a LearningGoal', fakeAsync(() => {
-        const returnedFromService = { ...defaultLearningGoal, id: 0 };
+        const returnedFromService = { ...defaultLearningGoals.first(), id: 0 };
         const expected = { ...returnedFromService };
         learningGoalService
             .create(new LearningGoal(), 1)
@@ -138,7 +127,7 @@ describe('LearningGoalService', () => {
     }));
 
     it('should update a LearningGoal', fakeAsync(() => {
-        const returnedFromService = { ...defaultLearningGoal, title: 'Test' };
+        const returnedFromService = { ...defaultLearningGoals.first(), title: 'Test' };
         const expected = { ...returnedFromService };
         learningGoalService
             .update(expected, 1)
@@ -152,11 +141,46 @@ describe('LearningGoalService', () => {
         expect(expectedResultLearningGoal.body).toEqual(expected);
     }));
 
+    it('should delete a LearningGoal', fakeAsync(() => {
+        let result: any;
+        learningGoalService.delete(1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        tick();
+
+        expect(result).toBeTrue();
+    }));
+
+    it('should add a LearningGoal relation', fakeAsync(() => {
+        const returnedFromService = { tailLearningGoal: 1, headLearningGoal: 2, type: 'assumes' } as LearningGoalRelation;
+        let result: any;
+        learningGoalService
+            .createLearningGoalRelation(1, 2, 'assumes', 1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(result.body).toEqual(returnedFromService);
+    }));
+
+    it('should remove a LearningGoal relation', fakeAsync(() => {
+        let result: any;
+        learningGoalService.removeLearningGoalRelation(1, 1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        tick();
+
+        expect(result).toBeTrue();
+    }));
+
     it('should add a prerequisite', fakeAsync(() => {
-        const returnedFromService = { ...defaultLearningGoal, id: 0 };
+        const returnedFromService = { ...defaultLearningGoals.first(), id: 0 };
         const expected = { ...returnedFromService };
         learningGoalService
-            .addPrerequisite(defaultLearningGoal.id!, 1)
+            .addPrerequisite(defaultLearningGoals.first()!.id!, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoal = resp));
 
@@ -165,5 +189,15 @@ describe('LearningGoalService', () => {
         tick();
 
         expect(expectedResultLearningGoal.body).toEqual(expected);
+    }));
+
+    it('should remove a prerequisite', fakeAsync(() => {
+        let result: any;
+        learningGoalService.removePrerequisite(1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        tick();
+
+        expect(result).toBeTrue();
     }));
 });

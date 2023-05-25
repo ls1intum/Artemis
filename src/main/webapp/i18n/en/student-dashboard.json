@@ -10,13 +10,15 @@
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
             "register": {
-                "signUp": "Register for a course",
+                "title": "Course Registration",
                 "registerSuccessful": "Registration successful",
-                "signUpForCourse": "Register",
+                "registerForCourse": "Register",
+                "notInCourseButCanRegister": "You are not registered for this course, but you can register yourself.",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
-                "courseLoading": "Courses are loading...",
+                "courseLoading": "Course is loading...",
+                "coursesLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
             },
             "course": "Course"
@@ -30,7 +32,7 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorial Groups",
-                "learningGoals": "Learning Goals",
+                "learningGoals": "Competencies",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
@@ -46,7 +48,7 @@
                 "overdue": "Hide overdue",
                 "optional": "Hide optional",
                 "noExerciseDate": "No date associated",
-                "exerciseGroupHeader": "Exercises: {{ total }}",
+                "exerciseGroupHeader": "(Exercises: {{ total }})",
                 "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
@@ -66,16 +68,14 @@
                 "exerciseLateSubmission": "Late submission, waiting for feedback.",
                 "exerciseLateFeedback": "Late submission with feedback.",
                 "quizNotStarted": "The quiz is not active.",
-                "userNotStartedQuiz": "You have not started this quiz yet.",
                 "userNotParticipated": "You did not participate in this live quiz.",
                 "userParticipating": "You are currently participating in this quiz.",
-                "userSubmitted": "You have already submitted. Wait for the quiz to end to see results.",
+                "userSubmitted": "You have already submitted.",
                 "userNotStartedExerciseShort": "Not yet started.",
                 "userNotAssignedToTeamShort": "No team yet.",
                 "exerciseNotSubmittedShort": "No Submission",
                 "exerciseMissedDeadlineShort": "Deadline missed.",
                 "quizNotStartedShort": "Not yet started.",
-                "userNotStartedQuizShort": "Not yet started.",
                 "userNotParticipatedShort": "Not participated.",
                 "userParticipatingShort": "Currently participating.",
                 "userSubmittedShort": "Already submitted.",
@@ -103,7 +103,7 @@
                 "yourPoints": "Your points: {{ number }}",
                 "reachablePoints": "Attainable points: {{ number }} ({{ relative }}%)",
                 "totalPoints": "Overall points: {{ number }} ({{ relative }}%)",
-                "presentationScore": "Presentation score: {{ number }}",
+                "presentationScore": "Presentations: {{ number }}",
                 "noStatistics": "No statistics available for this course.",
                 "bonusPointTooltip": "Bonus Exercise: Points count as bonus points towards your course score!",
                 "notIncludedTooltip": "Not Included Exercise: Points do NOT count towards your course score!",
@@ -139,15 +139,14 @@
                 "pointsPerExercise": "Points per Exercise"
             },
             "learningGoals": {
-                "noData": "No learning goals available for this course."
+                "noData": "No competencies available for this course."
             },
             "lectureList": {
-                "lectureGroupHeader": "Lectures: {{ total }}",
+                "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
                 "isLecture": "This is a lecture",
-                "noLectures": "No lectures available for the course.",
-                "sortLectures": "Sort lectures"
+                "noLectures": "No lectures available for the course."
             },
             "lectureDetails": {
                 "description": "Description",
@@ -177,7 +176,6 @@
                     "title": "Instructor actions:",
                     "titleTutor": "Tutor actions:",
                     "scores": "Scores",
-                    "submissions": "Submissions",
                     "statistics": "Statistics"
                 },
                 "notParticipated": "Not participated",

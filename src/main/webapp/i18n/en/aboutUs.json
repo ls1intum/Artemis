@@ -30,7 +30,7 @@
                 "text": "<a href={{ assessmentUrl }}>Assessment:</a> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
             },
             "communication": {
-                "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
+                "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions. Message course participants in private."
             },
             "notifications": {
                 "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."
@@ -39,7 +39,7 @@
                 "text": "<a href={{ teamExercisesUrl }}>Team exercises</a> with real time collaboration and dedicated tutors per team."
             },
             "lectures": {
-                "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
+                "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define competencies."
             },
             "integratedMarkdownEditor": {
                 "text": "<a href={{ markdownEditorUrl }}>Integrated Markdown Editor:</a> Markdown is used to format text content across the platform using an integrated markdown editor."
@@ -48,7 +48,10 @@
                 "text": "<a href={{ plagiarismChecksUrl }}>Plagiarism checks</a> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
             },
             "learningAnalytics": {
-                "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
+                "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and competencies."
+            },
+            "tutorialGroups": {
+                "text": "<a href={{ tutorialGroupsUrl }}>Tutorial Groups:</a> Manage the tutorial groups of a course. Plan the sessions, assign responsible tutors, register students and track the attendance."
             },
             "scalable": {
                 "text": "<a href={{ scalingUrl }}>Scalable</a> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
@@ -64,8 +67,12 @@
             },
             "getInTouch": "Get in touch",
             "contributors": "Individual contributors",
-            "projectManager": "Project Manager",
-            "website": "Website"
+            "website": "Website",
+            "roles": {
+                "projectManager": "Project Manager",
+                "administrator": "System Administrator",
+                "exerciseManagement": "Exercise Management"
+            }
         }
     }
 }

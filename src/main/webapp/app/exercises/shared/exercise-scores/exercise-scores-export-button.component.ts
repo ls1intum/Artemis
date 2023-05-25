@@ -3,68 +3,90 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Component, Injectable, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
+import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ExportToCsv } from 'export-to-csv';
+import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
-    template: `
-        <button class="btn btn-info btn-sm me-1" (click)="exportResults()">
-            <fa-icon [icon]="faDownload"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
-        </button>
-    `,
+    templateUrl: './exercise-scores-export-button.component.html',
 })
-@Injectable({ providedIn: 'root' })
-export class ExerciseScoresExportButtonComponent {
+export class ExerciseScoresExportButtonComponent implements OnInit {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
+
+    isProgrammingExerciseResults = false;
 
     // Icons
     faDownload = faDownload;
 
     constructor(private resultService: ResultService, private alertService: AlertService) {}
 
+    ngOnInit(): void {
+        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
+    }
+
     /**
      * Exports the exercise results as a CSV file.
+     * @param withTestCases parameter that includes test cases info in the exported CSV file
+     * @param withFeedback parameter including the feedback's full text in case of failed test case
      */
-    exportResults() {
+    exportResults(withTestCases: boolean, withFeedback: boolean) {
         if (this.exercises.length === 0 && this.exercise !== undefined) {
             this.exercises = this.exercises.concat(this.exercise);
         }
 
-        this.exercises.forEach((exercise) => this.constructCSV(exercise));
+        this.exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases, withFeedback));
     }
 
     /**
      * Builds the CSV with results and triggers the download to the user for it.
      * @param exercise for which the results should be exported.
+     * @param withTestCases optional parameter that includes test cases info in the exported CSV file
+     * @param withFeedback optional parameter including the feedback's full text in case of failed test case
      * @private
      */
-    private constructCSV(exercise: Exercise) {
+    private constructCSV(exercise: Exercise, withTestCases?: boolean, withFeedback?: boolean) {
         this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
-                this.alertService.warning(`artemisApp.exercise.exportResultsEmptyError`, { exercise: exercise.title });
+                this.alertService.warning(`artemisApp.exercise.export.results.emptyError`, { exercise: exercise.title });
                 window.scroll(0, 0);
                 return;
             }
             const isTeamExercise = !!(results[0].result.participation! as StudentParticipation).team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
-            const keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
-            const rows = results.map((resultWithPoints) => {
-                const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
-                return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
-            });
-
+            let keys;
+            let rows;
+            if (withTestCases) {
+                const testCasesNames = getTestCaseNamesFromResults(results);
+                keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
+                rows = results.map((resultWithPoints) => {
+                    const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
+                    const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
+                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
+                });
+            } else {
+                keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
+                rows = results.map((resultWithPoints) => {
+                    const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
+                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
+                });
+            }
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
-            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows);
+
+            if (withFeedback) {
+                ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows, ',');
+            } else {
+                ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows);
+            }
         });
     }
 
@@ -73,11 +95,12 @@ export class ExerciseScoresExportButtonComponent {
      * @param filename The filename the results should be downloaded as.
      * @param keys The column names in the CSV.
      * @param rows The actual data rows in the CSV.
+     * @param fieldSeparator Optional parameter for exporting the CSV file using a custom separator symbol
      * @private
      */
-    private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[]) {
+    private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
         const options = {
-            fieldSeparator: ';',
+            fieldSeparator,
             quoteStrings: '"',
             decimalSeparator: 'locale',
             showLabels: true,
@@ -124,14 +147,22 @@ class ExerciseScoresRowBuilder {
     private readonly gradingCriteria: GradingCriterion[];
     private readonly participation: StudentParticipation;
     private readonly resultWithPoints: ResultWithPointsPerGradingCriterion;
+    private readonly testCaseResults?: TestCaseResult[];
 
     private csvRow: ExerciseScoresRow = {};
 
-    constructor(exercise: Exercise, gradingCriteria: GradingCriterion[], participation: StudentParticipation, resultWithPoints: ResultWithPointsPerGradingCriterion) {
+    constructor(
+        exercise: Exercise,
+        gradingCriteria: GradingCriterion[],
+        participation: StudentParticipation,
+        resultWithPoints: ResultWithPointsPerGradingCriterion,
+        testCaseResults?: TestCaseResult[],
+    ) {
         this.exercise = exercise;
         this.gradingCriteria = gradingCriteria;
         this.participation = participation;
         this.resultWithPoints = resultWithPoints;
+        this.testCaseResults = testCaseResults;
     }
 
     /**
@@ -147,6 +178,10 @@ class ExerciseScoresRowBuilder {
         this.setGradingCriteriaPoints();
         this.setProgrammingExerciseInformation();
         this.setTeamInformation();
+
+        if (this.testCaseResults) {
+            this.setTestCaseResults();
+        }
 
         return this.csvRow;
     }
@@ -214,6 +249,16 @@ class ExerciseScoresRowBuilder {
     }
 
     /**
+     * Adds information about each exercise's test case result.
+     * @private
+     */
+    private setTestCaseResults() {
+        this.testCaseResults!.forEach((testResult) => {
+            this.set(testResult.testName, testResult.testResult);
+        });
+    }
+
+    /**
      * CSV columns [alternative column name for team exercises]:
      * - Name [Team Name]
      * - Username [Team Short Name]
@@ -227,8 +272,9 @@ class ExerciseScoresRowBuilder {
      * @param exercise The exercise for which results should be exported.
      * @param isTeamExercise True, if the students participate in teams in this exercise.
      * @param gradingCriteria The grading criteria that can be used in this exercise.
+     * @param testCases Optional columns representing each exercise test case
      */
-    public static keys(exercise: Exercise, isTeamExercise: boolean, gradingCriteria: GradingCriterion[]): Array<string> {
+    public static keys(exercise: Exercise, isTeamExercise: boolean, gradingCriteria: GradingCriterion[], testCases?: string[]): Array<string> {
         const columns = [];
 
         if (isTeamExercise) {
@@ -256,6 +302,10 @@ class ExerciseScoresRowBuilder {
         if (isTeamExercise) {
             columns.push('Students');
         }
+
+        testCases?.forEach((testCase) => {
+            columns.push(testCase);
+        });
 
         return columns;
     }

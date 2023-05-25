@@ -23,7 +23,7 @@ public class BonusService {
     /**
      * Saves a bonus source to the database if it is valid
      *
-     * @param bonus the bonus source to be saved
+     * @param bonus                     the bonus source to be saved
      * @param isSourceGradeScaleUpdated used to skip source grading scale validation if it is not updated
      * @return the saved bonus source
      */
@@ -40,13 +40,12 @@ public class BonusService {
     /**
      * Applies bonus from sourceGradingScale to bonusToGradingScale so that the student's final grade in bonusToGradingScale is improved.
      *
-     *
-     * @param bonusStrategy bonus strategy (together with the weight) determines the formula for bonus calculation
-     * @param bonusToGradingScale the grading scale that the bonus will be applied to (e.g. a final exam)
+     * @param bonusStrategy           bonus strategy (together with the weight) determines the formula for bonus calculation
+     * @param bonusToGradingScale     the grading scale that the bonus will be applied to (e.g. a final exam)
      * @param achievedPointsOfBonusTo points received by the student from bonusTo exam before bonus calculations
-     * @param sourceGradingScale the grading scale that will determine how much bonus will be added (e.g. a course with exercises)
-     * @param achievedPointsOfSource points received by the student from source exam/course
-     * @param calculationSign weight of the bonus, currently can be either -1.0 or 1.0
+     * @param sourceGradingScale      the grading scale that will determine how much bonus will be added (e.g. a course with exercises)
+     * @param achievedPointsOfSource  points received by the student from source exam/course
+     * @param calculationSign         weight of the bonus, currently can be either -1.0 or 1.0
      * @return a record containing the final grade and points along
      */
     public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo, GradingScale sourceGradingScale,
@@ -65,9 +64,9 @@ public class BonusService {
      * Improves the points and/or grade of the bonusTo exam by applying bonus according to the parameters defined in {@code bonus}.
      * This method is a wrapper for {@link #calculateGradeWithBonus(IBonusStrategy, GradingScale, Double, GradingScale, Double, double)}.
      *
-     * @param bonus the bonus instance determining the bonus calculation strategy and weight
+     * @param bonus                   the bonus instance determining the bonus calculation strategy and weight
      * @param achievedPointsOfBonusTo points received by the student from bonusTo exam before bonus calculations
-     * @param achievedPointsOfSource points received by the student from source exam/course
+     * @param achievedPointsOfSource  points received by the student from source exam/course
      * @return bonus strategy, weight, points and grades achieved from the bonusTo exam, source course/exam and the final points and grade
      */
     public BonusExampleDTO calculateGradeWithBonus(Bonus bonus, Double achievedPointsOfBonusTo, Double achievedPointsOfSource) {

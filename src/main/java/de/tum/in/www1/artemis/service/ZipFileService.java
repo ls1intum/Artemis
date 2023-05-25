@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -11,9 +11,12 @@ import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.compress.utils.FileNameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import net.lingala.zip4j.ZipFile;
 
 @Service
 public class ZipFileService {
@@ -23,18 +26,20 @@ public class ZipFileService {
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
-     * @param zipFilePath       path where the zip file should be saved
-     * @param paths             multiple paths that should be zipped
-     * @param createParentDir if set to true, each zip file entry will be placed within its parent directory
+     * @param zipFilePath path where the zip file should be saved
+     * @param paths       multiple paths that should be zipped
      * @throws IOException if an error occurred while zipping
      */
-    public void createZipFile(Path zipFilePath, List<Path> paths, boolean createParentDir) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
-                var zipPath = createParentDir ? path : path.getFileName();
-                ZipEntry zipEntry = new ZipEntry(zipPath.toString());
-                copyToZipFile(zipOutputStream, path, zipEntry);
-            });
+    public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+            for (var path : paths) {
+                if (Files.isReadable(path) && !Files.isDirectory(path)) {
+                    zipFile.addFile(path.toFile());
+                }
+                else if (Files.isReadable(path) && Files.isDirectory(path)) {
+                    zipFile.addFolder(path.toFile());
+                }
+            }
         }
     }
 
@@ -55,7 +60,7 @@ public class ZipFileService {
      *
      * @param zipFilePath     path where the zip file should be saved
      * @param contentRootPath a path to a folder: all content in this folder (and in any subfolders) will be included in the zip file
-     * @param contentFilter a path filter to exclude some files, can be null to include everything
+     * @param contentFilter   a path filter to exclude some files, can be null to include everything
      * @return the path of the newly created zip file for further processing
      * @throws IOException if an error occurred while zipping
      */
@@ -64,6 +69,27 @@ public class ZipFileService {
             createZipFileFromPathStream(zipFilePath, files, contentRootPath, contentFilter);
             return zipFilePath;
         }
+    }
+
+    /**
+     * Extracts a zip file to a folder with the same name as the zip file
+     *
+     * @param zipPath path to the zip file
+     * @throws IOException if an error occurred while extracting
+     */
+    public void extractZipFileRecursively(Path zipPath) throws IOException {
+        var dirToUnzip = Files.createDirectory(zipPath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(zipPath.toString())));
+        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+            zipFile.extractAll(dirToUnzip.toString());
+        }
+        List<Path> zipFilesInDirList;
+        try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FileNameUtils.getExtension(path.toString())))) {
+            zipFilesInDirList = zipFilesInDir.toList();
+        }
+        for (Path path : zipFilesInDirList) {
+            extractZipFileRecursively(path);
+        }
+
     }
 
     private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {

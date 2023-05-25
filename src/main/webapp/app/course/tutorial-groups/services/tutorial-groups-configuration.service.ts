@@ -9,7 +9,7 @@ type EntityResponseType = HttpResponse<TutorialGroupsConfiguration>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsConfigurationService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient) {}
 
@@ -65,6 +65,8 @@ export class TutorialGroupsConfigurationService {
         return Object.assign({}, tutorialGroupsConfiguration, {
             tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
             tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
+            useTutorialGroupChannels: tutorialGroupsConfiguration.useTutorialGroupChannels,
+            usePublicTutorialGroupChannels: tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
         });
     }
 }

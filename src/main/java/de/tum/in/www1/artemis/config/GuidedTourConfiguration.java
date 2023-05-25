@@ -23,6 +23,7 @@ public class GuidedTourConfiguration {
 
     /**
      * Get the list of the mapping tourKey -> exerciseIdentifier from the info.guided-tour configuration in the application.yml file
+     *
      * @return List of mappings of tourKey -> exerciseIdentifier
      */
     public List<Map<String, String>> getTours() {
@@ -45,7 +46,8 @@ public class GuidedTourConfiguration {
      * Helper method to determine if the given exercise mapped to a guided tour
      * based on the info.guided-tour configuration in the application.yml file
      * Throws an exception if the exercise is not part of a tutorial
-     * @param exercise  the exercise for which the configuration has to be determined
+     *
+     * @param exercise the exercise for which the configuration has to be determined
      */
     public void checkExerciseForTutorialElseThrow(Exercise exercise) {
         String exerciseId = exercise instanceof ProgrammingExercise ? exercise.getShortName() : exercise.getTitle();

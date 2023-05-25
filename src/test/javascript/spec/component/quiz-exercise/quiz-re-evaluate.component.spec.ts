@@ -19,7 +19,6 @@ import { NgModel } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { SimpleChange } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
@@ -126,17 +125,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.isValidQuiz()).toBeTrue();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(quizServiceFindStub).toHaveBeenCalledOnce();
-    });
-
-    it('should create correct duration strings', () => {
-        comp.duration = new Duration(1, 0);
-        expect(comp.durationString()).toBe('1:00');
-
-        comp.duration = new Duration(1, 9);
-        expect(comp.durationString()).toBe('1:09');
-
-        comp.duration = new Duration(1, 10);
-        expect(comp.durationString()).toBe('1:10');
     });
 
     it('should delete quiz question', () => {
@@ -274,5 +262,26 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_COMPLETELY);
         comp.includedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);
         expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_AS_BONUS);
+    });
+
+    it('should be valid when mc option is marked as invalid', () => {
+        quizExercise.title = 'Test';
+        quizExercise.duration = 100;
+        const question = new MultipleChoiceQuestion();
+        question.title = 'Test Question';
+        question.singleChoice = false;
+        const answerOption1 = new AnswerOption();
+        answerOption1.isCorrect = true;
+        const answerOption2 = new AnswerOption();
+        answerOption2.isCorrect = true;
+        const answerOption3 = new AnswerOption();
+        answerOption3.isCorrect = false;
+        question.answerOptions = [answerOption1, answerOption2, answerOption3];
+        question.points = 100;
+        quizExercise.quizQuestions = [question];
+        comp.quizExercise = quizExercise;
+        // @ts-ignore
+        comp.invalidFlaggedQuestions = [question];
+        expect(comp.isValidQuiz()).toBeTrue();
     });
 });

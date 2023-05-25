@@ -16,7 +16,7 @@ export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
-    private resourceUrl = SERVER_API_URL + 'api/text-exercises';
+    private resourceUrl = 'api/text-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -89,7 +89,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * Deletes the text exercise with the given id.
      * @param exerciseId of the text exercise of type {number}
      */
-    delete(exerciseId: number): Observable<HttpResponse<{}>> {
+    delete(exerciseId: number): Observable<HttpResponse<any>> {
         return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 

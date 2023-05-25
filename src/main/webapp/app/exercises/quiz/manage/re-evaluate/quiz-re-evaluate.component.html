@@ -1,4 +1,4 @@
-<div class="container" *ngIf="quizExercise">
+<div *ngIf="quizExercise">
     <h1>
         <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }"> </span>
     </h1>
@@ -9,32 +9,61 @@
     <hr />
 
     <div class="edit-quiz-re-evaluate">
-        <div class="input-group">
-            <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px" />
-            <span class="input-group-btn">
-                <button class="btn btn-outline-secondary" type="button" (click)="resetQuizTitle()">
-                    <fa-icon [icon]="faUndo"></fa-icon>
-                </button>
-            </span>
-        </div>
-        <br />
         <div class="quiz-options">
-            <div class="form-group">
-                <span jhiTranslate="artemisApp.quizExercise.duration" class="colon-suffix"></span>
-                <span>{{ durationString() }}</span>
-                <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+            <div class="row form-group" style="width: 100%">
+                <div class="row">
+                    <label for="quiz-title" jhiTranslate="artemisApp.exercise.title">Title</label>
+                </div>
+                <div class="row">
+                    <div class="col-11">
+                        <input
+                            id="quiz-title"
+                            type="text"
+                            class="form-control"
+                            [(ngModel)]="quizExercise.title"
+                            placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
+                        />
+                    </div>
+                    <div class="col-1">
+                        <span class="input-group-btn">
+                            <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                (click)="resetQuizTitle()"
+                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faUndo"></fa-icon>
+                            </button>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="form-group form-check custom-control custom-checkbox">
-                <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise.randomizeQuestionOrder" />
-                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
-            </div>
-            <div class="form-group">
-                <span jhiTranslate="artemisApp.quizExercise.startTime" class="colon-suffix"></span>
-                <span>{{ quizExercise.releaseDate | artemisDate : 'long' : true }}</span>
-            </div>
-            <div class="row mb-2">
-                <div class="col">
-                    <div class="form-group-narrow">
+            <div class="row" style="width: 100%">
+                <div class="col-12 col-lg-7">
+                    <div class="row">
+                        <div class="form-group">
+                            <jhi-date-time-picker
+                                class="start-time"
+                                labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
+                                [(ngModel)]="quizExercise.releaseDate"
+                                [disabled]="true"
+                            ></jhi-date-time-picker>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group quiz-duration">
+                            <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
+                            <div class="d-flex align-items-center">
+                                <input id="quiz-duration-minutes" class="form-control me-2" title="Duration" [value]="duration.minutes" type="number" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                                <input id="quiz-duration-seconds" class="form-control me-2 ms-2" title="Duration" type="number" [value]="duration.seconds" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-5">
+                    <div class="row form-group">
                         <label class="form-control-label">{{
                             'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
                         }}</label>
@@ -47,10 +76,21 @@
                             ></jhi-included-in-overall-score-picker>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="form-group custom-control custom-checkbox">
+                            <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise.randomizeQuestionOrder" />
+                            <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div *ngFor="let question of quizExercise.quizQuestions; let i = index" style="width: 100%">
+        <div class="text-start mt-1 mb-1" style="width: 100%">
+            <h4>
+                <span jhiTranslate="artemisApp.quizExercise.questions"></span>
+            </h4>
+        </div>
+        <div class="card mb-3" *ngFor="let question of quizExercise.quizQuestions; let i = index" style="width: 100%">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-re-evaluate-multiple-choice-question
                     [question]="question"
@@ -85,7 +125,6 @@
                 >
                 </jhi-re-evaluate-short-answer-question>
             </div>
-            &nbsp;
         </div>
     </div>
     <div class="edit-quiz-footer">

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -14,7 +14,7 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;
-    let router: any;
+    let router: MockRouter;
 
     const route = {
         data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
@@ -26,7 +26,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
         router.setUrl('');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockModule(RouterModule)],
             declarations: [
                 SystemNotificationManagementDetailComponent,
                 MockRouterLinkDirective,
