@@ -632,7 +632,7 @@ export class CourseManagementService {
      */
     private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.learningGoals = res.body.learningGoals || [];
+            res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];
         }
         return res;

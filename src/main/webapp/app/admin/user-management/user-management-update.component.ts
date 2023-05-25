@@ -15,7 +15,6 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Observable } from 'rxjs';
@@ -99,7 +98,8 @@ export class UserManagementUpdateComponent implements OnInit {
                 map((value) => (value ? this.filter(value) : this.allGroups.slice())),
             );
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+
             this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
         });
         this.authorities = [];
