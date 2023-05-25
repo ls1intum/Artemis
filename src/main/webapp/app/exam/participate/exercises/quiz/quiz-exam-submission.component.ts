@@ -141,7 +141,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizQuestions) {
+        if (this.quizQuestions.length) {
             // iterate through all questions of this quiz
             this.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
