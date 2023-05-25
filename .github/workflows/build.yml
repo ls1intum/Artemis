@@ -10,7 +10,7 @@ on:
     - 'SECURITY.md'
     - 'docs/**'
     - '.github/**'
-    - '!.github/workflows/build-deploy.yml'
+    - '!.github/workflows/build.yml'
   push:
     branches:
     - develop
@@ -25,7 +25,7 @@ on:
     - 'SECURITY.md'
     - 'docs/**'
     - '.github/**'
-    - '!.github/workflows/build-deploy.yml'
+    - '!.github/workflows/build.yml'
   release:
     types:
     - created

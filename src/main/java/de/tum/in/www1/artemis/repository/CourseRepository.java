@@ -120,8 +120,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningGoals", "prerequisites" })
-    Optional<Course> findWithEagerLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
+    Optional<Course> findWithEagerCompetenciesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
@@ -132,11 +132,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "learningGoals", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
-    Optional<Course> findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndOnlineConfigurationById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
+    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @Query("""
                 SELECT course
@@ -374,18 +374,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(long courseId) {
-        return findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(long courseId) {
+        return findWithEagerOrganizationsAndCompetenciesAndOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
-    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(long courseId) {
-        return findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
+        return findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
-    default Course findWithEagerLearningGoalsByIdElseThrow(long courseId) {
-        return findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
+        return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
