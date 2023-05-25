@@ -4,7 +4,7 @@
         "projects/**/*"
     ],
     "parserOptions": {
-        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "./tsconfig.webpack.json", "src/test/cypress/tsconfig.json"]
+        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json", "src/test/cypress/tsconfig.json"]
     },
     "extends": [
         "plugin:prettier/recommended"

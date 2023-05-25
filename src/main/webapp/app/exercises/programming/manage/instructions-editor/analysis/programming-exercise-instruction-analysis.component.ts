@@ -20,6 +20,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
 
     invalidTestCases: string[] = [];
     missingTestCases: string[] = [];
+    numOfTasks = 0;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -32,13 +33,14 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
             .pipe(
                 debounceTime(500),
                 map(() => {
-                    const { completeAnalysis, missingTestCases, invalidTestCases } = this.analysisService.analyzeProblemStatement(
+                    const { completeAnalysis, missingTestCases, invalidTestCases, numOfTasks } = this.analysisService.analyzeProblemStatement(
                         this.problemStatement,
                         this.taskRegex,
                         this.exerciseTestCases,
                     );
                     this.missingTestCases = missingTestCases;
                     this.invalidTestCases = invalidTestCases;
+                    this.numOfTasks = numOfTasks;
                     return completeAnalysis;
                 }),
                 tap((analysis: ProblemStatementAnalysis) => this.emitAnalysis(analysis)),
