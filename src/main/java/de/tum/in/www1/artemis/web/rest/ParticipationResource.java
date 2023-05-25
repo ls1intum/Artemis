@@ -29,8 +29,10 @@ import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -513,17 +515,27 @@ public class ParticipationResource {
         Set<StudentParticipation> participations;
         if (withLatestResults) {
             participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exerciseId);
+            participations.forEach(participation -> {
+                participation.setSubmissionCount(participation.getSubmissions().size());
+                if (participation.getResults() != null && !participation.getResults().isEmpty()) {
+                    participation.setSubmissions(null);
+                }
+                else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
+                    participation.setSubmissions(Set
+                            .of(participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL).max(Comparator.naturalOrder()).get()));
+                }
+            });
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);
+
+            Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+            participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             // remove unnecessary data to reduce response size
             participation.setExercise(null);
         }).collect(Collectors.toSet());
-
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
-        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
     }
@@ -890,7 +902,7 @@ public class ParticipationResource {
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
     private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
-        if (quizExercise.isQuizEnded() || quizSubmissionService.isSubmitted(quizBatch, username)) {
+        if (quizExercise.isQuizEnded() || quizSubmissionService.hasUserSubmitted(quizBatch, username)) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
@@ -923,7 +935,7 @@ public class ParticipationResource {
         }
 
         // get submission from HashMap
-        QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+        AbstractQuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
         // construct result
         Result result = new Result().submission(quizSubmission);

@@ -56,9 +56,9 @@
                 </div>
                 <div class="col-1 my-auto mx-auto">
                     <jhi-learning-goals-popover
-                        [hidden]="!lectureUnit.learningGoals || lectureUnit.learningGoals!.length === 0"
+                        [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
                         [courseId]="lecture!.course!.id!"
-                        [learningGoals]="lectureUnit.learningGoals || []"
+                        [learningGoals]="lectureUnit.competencies || []"
                         [navigateTo]="'courseLearningGoals'"
                     ></jhi-learning-goals-popover>
                 </div>

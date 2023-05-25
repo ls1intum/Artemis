@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
     let service: LectureService;
-    const resourceUrl = SERVER_API_URL + 'api/lectures';
+    const resourceUrl = 'api/lectures';
     let expectedResult: any;
     let elemDefault: Lecture;
 
@@ -93,6 +93,22 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
+        it('should find a lecture with details and with slides in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService, posts: [] };
+            const lectureId = elemDefault.id!;
+            service
+                .findWithDetailsWithSlides(lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${lectureId}/details-with-slides`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
         it('should find a lecture in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
@@ -134,6 +150,40 @@ describe('Lecture Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
                 url: `api/courses/${courseId}/lectures?withLectureUnits=0`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should import lecture', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            const lectureId = elemDefault.id!;
+            const courseId = 1;
+            service
+                .import(courseId, lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lectures/import/${lectureId}?courseId=${courseId}`,
+                method: 'POST',
+            });
+
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should get all lectures with lecture units slides by courseId', async () => {
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllByCourseIdWithSlides(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/courses/${courseId}/lectures-with-slides`,
                 method: 'GET',
             });
             req.flush(returnedFromService);

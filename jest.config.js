@@ -8,12 +8,10 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
 const {
     compilerOptions: { baseUrl = './' },
 } = require('./tsconfig.json');
-const environment = require('./webpack/environment');
 
 module.exports = {
     globalSetup: 'jest-preset-angular/global-setup',
     globals: {
-        ...environment,
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
@@ -60,8 +58,8 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 85.8,
-            branches: 72.8,
-            functions: 79.3,
+            branches: 72.7,
+            functions: 79.4,
             lines: 85.8,
         },
     },

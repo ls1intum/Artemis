@@ -33,7 +33,7 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = 'api/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
@@ -619,13 +619,13 @@ export class CourseManagementService {
     }
 
     /**
-     * Set the learning goals and prerequisites to an empty array if undefined
+     * Set the competencies and prerequisites to an empty array if undefined
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
     private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.learningGoals = res.body.learningGoals || [];
+            res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];
         }
         return res;

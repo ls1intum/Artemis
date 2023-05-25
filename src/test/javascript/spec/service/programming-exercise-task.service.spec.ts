@@ -24,7 +24,7 @@ describe('ProgrammingExerciseTask Service', () => {
     let updateTestCasesStub: jest.SpyInstance;
     let resetTestCasesStub: jest.SpyInstance;
 
-    const resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    const resourceUrl = 'api/programming-exercises';
     let httpMock: HttpTestingController;
     const serverSideTasks: ProgrammingExerciseServerSideTask[] = [
         {

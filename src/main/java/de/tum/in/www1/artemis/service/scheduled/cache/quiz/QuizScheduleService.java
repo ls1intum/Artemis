@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -150,7 +151,7 @@ public class QuizScheduleService {
      * @return the quizSubmission, with the given quizExerciseId and username -> return an empty QuizSubmission if there is no quizSubmission -> return null if the quizExerciseId
      *         or if the username is null
      */
-    public QuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
+    public AbstractQuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
         if (quizExerciseId == null || username == null) {
             return null;
         }
@@ -637,7 +638,7 @@ public class QuizScheduleService {
                 result.setSubmission(quizSubmission);
 
                 // calculate scores and update result and submission accordingly
-                quizSubmission.calculateAndUpdateScores(quizExercise);
+                quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                 result.evaluateQuizSubmission();
 
                 // add result to participation
