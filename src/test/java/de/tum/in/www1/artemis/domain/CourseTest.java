@@ -137,9 +137,17 @@ class CourseTest {
         course1.setUnenrollmentEnabled(true);
         course1.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(2));
 
-        Course course2 = createCourse(pastTimeStamp1, futureTimeStamp2, pastTimeStamp2, futureTimeStamp1);
+        Course course2 = createCourse(pastTimeStamp1, futureTimeStamp2, null, null);
         course2.setUnenrollmentEnabled(true);
-        course2.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
+        course2.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(2));
+
+        Course course3 = createCourse(pastTimeStamp1, futureTimeStamp2, pastTimeStamp2, futureTimeStamp1);
+        course3.setUnenrollmentEnabled(true);
+        course3.setUnenrollmentEndDate(ZonedDateTime.now());
+
+        Course course4 = createCourse(pastTimeStamp1, futureTimeStamp2, pastTimeStamp2, futureTimeStamp1);
+        course4.setUnenrollmentEnabled(true);
+        course4.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
 
         return Stream.of(Arguments.of(course1, false), Arguments.of(course2, true));
     }
