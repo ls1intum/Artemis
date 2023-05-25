@@ -415,7 +415,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExercise.channel.name = this.channelName;
         }
 
-        this.parseAllQuestions();
         this.quizQuestionsEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
