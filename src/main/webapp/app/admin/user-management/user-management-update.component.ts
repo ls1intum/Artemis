@@ -51,7 +51,6 @@ export class UserManagementUpdateComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
     editForm: FormGroup;
-    groupInput = '';
 
     private oldLogin?: string;
     private isJenkins: boolean;
@@ -99,7 +98,6 @@ export class UserManagementUpdateComponent implements OnInit {
             );
         });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-
             this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
         });
         this.authorities = [];
