@@ -862,17 +862,7 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Returns true if the start and end date of the course fulfill all requirements
-     *
-     * @return true if the dates are valid
-     */
-    @JsonIgnore
-    public boolean isValidStartAndEndDate() {
-        return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
-    }
-
-    /**
-     * Validates if the start and end dates of the course fulfill all rquirements.
+     * Validates if the start and end dates of the course fulfill all requirements.
      */
     public void validateStartAndEndDate() {
         if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
