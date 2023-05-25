@@ -173,7 +173,76 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachmentToBeCreated).toBeUndefined();
     }));
 
-    it('should create Attachment', fakeAsync(() => {
+    it('should reset on error for create', fakeAsync(() => {
+        const errorMessage = 'File too large';
+        fixture.detectChanges();
+        const attachment = {
+            lecture: comp.lecture,
+            attachmentType: AttachmentType.FILE,
+            version: 1,
+            uploadDate: dayjs(),
+        } as Attachment;
+        const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        comp.fileInput = { nativeElement: { value: 'Test-File.pdf' } };
+        comp.attachmentToBeCreated = attachment;
+        comp.attachmentFile = file;
+        const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(new Error(errorMessage)));
+        comp.saveAttachment();
+        expect(attachmentServiceCreateStub).toHaveBeenCalledOnceWith(attachment, file);
+        expect(comp.attachmentToBeCreated).toEqual(attachment);
+        expect(comp.attachmentFile).toBeUndefined();
+        expect(comp.erroredFile).toEqual(file);
+        expect(comp.errorMessage).toBe(errorMessage);
+        expect(comp.fileInput.nativeElement.value).toBe('');
+    }));
+
+    it.each([true, false])(
+        'should reset on error for update: %s',
+        fakeAsync((withFile: boolean) => {
+            const errorMessage = 'Some error message';
+            const notification = 'Notification';
+            const attachment = {
+                id: 1,
+                lecture: comp.lecture,
+                attachmentType: AttachmentType.FILE,
+                version: 1,
+                uploadDate: dayjs(),
+            } as Attachment;
+            const backup = Object.assign({}, attachment);
+            fixture.detectChanges();
+            comp.fileInput = { nativeElement: { value: '' } };
+            const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+            if (withFile) {
+                comp.fileInput.nativeElement.value = 'Test-File.pdf';
+                comp.attachmentFile = file;
+            }
+            comp.attachmentToBeCreated = attachment;
+            comp.notificationText = notification;
+            comp.attachmentBackup = backup;
+            comp.attachments = [attachment];
+
+            // Do change
+            attachment.name = 'New Name';
+
+            const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(new Error(errorMessage)));
+            comp.saveAttachment();
+            expect(attachmentServiceUpdateStub).toHaveBeenCalledOnceWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
+            expect(comp.attachmentToBeCreated).toEqual(attachment);
+            expect(comp.errorMessage).toBe(errorMessage);
+            expect(comp.fileInput.nativeElement.value).toBe('');
+            expect(comp.attachments).toEqual([backup]);
+            expect(comp.attachmentBackup).toBeUndefined();
+            expect(comp.attachmentFile).toBeUndefined();
+
+            if (withFile) {
+                expect(comp.erroredFile).toEqual(file);
+            } else {
+                expect(comp.erroredFile).toBeUndefined();
+            }
+        }),
+    );
+
+    it('should update Attachment', fakeAsync(() => {
         fixture.detectChanges();
         comp.attachmentToBeCreated = {
             id: 1,

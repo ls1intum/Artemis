@@ -115,6 +115,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             }
             this.attachmentService.update(this.attachmentToBeCreated.id, this.attachmentToBeCreated, this.attachmentFile, requestOptions).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
+                    this.attachmentFile = undefined;
                     this.attachmentToBeCreated = undefined;
                     this.attachmentBackup = undefined;
                     this.notificationText = undefined;
@@ -128,6 +129,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
+                    this.attachmentFile = undefined;
                     this.attachmentToBeCreated = undefined;
                     this.attachmentBackup = undefined;
                 },
