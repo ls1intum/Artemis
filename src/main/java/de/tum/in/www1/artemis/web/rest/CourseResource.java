@@ -309,7 +309,7 @@ public class CourseResource {
      */
     @PostMapping("courses/{courseId}/unenroll")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<User> unenrollForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<User> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
