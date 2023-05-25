@@ -389,6 +389,15 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUnenrollFromCourse() throws Exception {
+        User student = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "student1").get();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup(student.getLogin(), "unenrolltestcourse1");
+        courseTestService.testUnenrollFromCourse();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
         bitbucketRequestMockProvider.mockUpdateUserDetails(TEST_PREFIX + "tutor1", TEST_PREFIX + "tutor1@test.de", TEST_PREFIX + "tutor1First " + TEST_PREFIX + "tutor1Last");

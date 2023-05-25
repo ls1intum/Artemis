@@ -1452,6 +1452,48 @@ public class CourseTestService {
     }
 
     // Test
+    public void testUnenrollFromCourse() throws Exception {
+        User student = database.getUserByLogin(userPrefix + "student1");
+        var groups = new HashSet<String>();
+        groups.add("unenrolltestcourse1");
+        groups.add("unenrolltestcourse2");
+        groups.add("unenrolltestcourse3");
+        student.setGroups(groups);
+        userRepo.save(student);
+
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
+        Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
+        course1.setUnenrollmentEnabled(true);
+        course1.setUnenrollmentEndDate(futureTimestamp);
+        course2.setUnenrollmentEnabled(false);
+        course3.setUnenrollmentEnabled(true);
+        course3.setUnenrollmentEndDate(pastTimestamp);
+
+        course1 = courseRepo.save(course1);
+        course2 = courseRepo.save(course2);
+        course3 = courseRepo.save(course3);
+
+        mockDelegate.mockRemoveUserFromGroup(student, course1.getStudentGroupName(), false);
+        mockDelegate.mockRemoveUserFromGroup(student, course2.getStudentGroupName(), false);
+        mockDelegate.mockRemoveUserFromGroup(student, course3.getStudentGroupName(), false);
+
+        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/unenroll", null, User.class, HttpStatus.OK);
+        assertThat(updatedStudent.getGroups()).as("User is not enrolled in course").doesNotContain(course1.getStudentGroupName());
+
+        List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
+        assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
+        AuditEvent auditEvent = auditEvents.get(0);
+        assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
+
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+
+        request.postWithResponseBody("/api/courses/" + course3.getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+    }
+
+    // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
