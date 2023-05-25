@@ -44,6 +44,14 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
         return attachmentUnits;
     }
 
+    @Query("""
+            SELECT attachmentUnit
+            FROM AttachmentUnit attachmentUnit
+                LEFT JOIN FETCH attachmentUnit.slides slides
+            WHERE attachmentUnit.id = :attachmentUnitId
+            """)
+    AttachmentUnit findOneWithSlides(@Param("attachmentUnitId") long attachmentUnitId);
+
     @NotNull
     default AttachmentUnit findByIdElseThrow(Long attachmentUnitId) throws EntityNotFoundException {
         return findById(attachmentUnitId).orElseThrow(() -> new EntityNotFoundException("AttachmentUnit", attachmentUnitId));

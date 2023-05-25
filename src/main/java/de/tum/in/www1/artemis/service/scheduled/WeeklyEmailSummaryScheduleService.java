@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.*;
-import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -9,13 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.EmailSummaryService;
-import tech.jhipster.config.JHipsterConstants;
+import de.tum.in.www1.artemis.service.ProfileService;
 
 @Service
 @Profile("scheduling")
@@ -23,7 +21,7 @@ public class WeeklyEmailSummaryScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(WeeklyEmailSummaryScheduleService.class);
 
-    private final Environment environment;
+    private final ProfileService profileService;
 
     private final TaskScheduler scheduler;
 
@@ -33,8 +31,8 @@ public class WeeklyEmailSummaryScheduleService {
 
     private final Duration weekly = Duration.ofDays(7);
 
-    public WeeklyEmailSummaryScheduleService(Environment environment, @Qualifier("taskScheduler") TaskScheduler scheduler, EmailSummaryService emailSummaryService) {
-        this.environment = environment;
+    public WeeklyEmailSummaryScheduleService(ProfileService profileService, @Qualifier("taskScheduler") TaskScheduler scheduler, EmailSummaryService emailSummaryService) {
+        this.profileService = profileService;
         this.scheduler = scheduler;
         this.emailSummaryService = emailSummaryService;
         // time based variables needed for scheduling
@@ -52,8 +50,7 @@ public class WeeklyEmailSummaryScheduleService {
     @PostConstruct
     public void scheduleEmailSummariesOnStartUp() {
         try {
-            Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            if (profileService.isDev()) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;
