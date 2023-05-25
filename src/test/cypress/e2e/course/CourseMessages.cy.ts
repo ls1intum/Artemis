@@ -31,6 +31,15 @@ describe('Course messages', () => {
 
     describe('Channel messages', () => {
         describe('Create channel', () => {
+            it('check for pre-created channels', () => {
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.checkChannelsExists('tech-support');
+                courseMessages.checkChannelsExists('organization');
+                courseMessages.checkChannelsExists('random');
+                courseMessages.checkChannelsExists('announcement');
+            });
+
             it('instructors should be able to create public announcement channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 const name = 'public-ancmnt-ch';
@@ -126,6 +135,27 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementRequest.createCourseMessageChannel(course, 'join-test-channel', 'Join Test Channel', true, true).then((response) => {
                     channel = response.body;
+                });
+            });
+
+            it('student should be joined into pre-created channels automatically', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.getChannelIdByName('tech-support').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('random').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('announcement').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('organization').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
                 });
             });
 

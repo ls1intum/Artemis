@@ -13,18 +13,18 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
-public class LearningGoalService {
+public class CompetencyService {
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final CompetencyRepository competencyRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
-    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
-        this.learningGoalRepository = learningGoalRepository;
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyProgressService competencyProgressService) {
+        this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -35,14 +35,14 @@ public class LearningGoalService {
      * @param updateProgress Whether the competency progress should be updated or taken from the database.
      * @return A list of competencies with their lecture units (filtered for the user) and user progress.
      */
-    public Set<LearningGoal> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
+    public Set<Competency> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
         if (updateProgress) {
             // Get the competencies with the updated progress for the specified user.
-            return learningGoalProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
+            return competencyProgressService.getCompetenciesAndUpdateProgressByUserInCourse(user, course);
         }
         else {
             // Fetch the competencies with the user progress from the database.
-            return learningGoalRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
+            return competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
         }
     }
 
@@ -53,10 +53,10 @@ public class LearningGoalService {
      * @param user   The user that is requesting the prerequisites.
      * @return A list of prerequisites (without lecture units if student is not part of course).
      */
-    public Set<LearningGoal> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
-        Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(course.getId());
+    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
+        Set<Competency> prerequisites = competencyRepository.findPrerequisitesByCourseId(course.getId());
         // Remove all lecture units
-        for (LearningGoal prerequisite : prerequisites) {
+        for (Competency prerequisite : prerequisites) {
             prerequisite.setLectureUnits(Collections.emptySet());
         }
         return prerequisites;
@@ -69,27 +69,27 @@ public class LearningGoalService {
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
-    public SearchResultPageDTO<LearningGoal> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createLearningGoalPageRequest(search);
+    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createCompetencyPageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningGoal> learningGoalPage;
+        final Page<Competency> competencyPage;
         if (authCheckService.isAdmin(user)) {
-            learningGoalPage = learningGoalRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+            competencyPage = competencyRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
         else {
-            learningGoalPage = learningGoalRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            competencyPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
         }
-        return new SearchResultPageDTO<>(learningGoalPage.getContent(), learningGoalPage.getTotalPages());
+        return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
     }
 
     /**
      * Checks if the provided competencies and relations between them contain a cycle
      *
-     * @param learningGoals The set of competencies that get checked for cycles
-     * @param relations     The set of relations that get checked for cycles
+     * @param competencies The set of competencies that get checked for cycles
+     * @param relations    The set of relations that get checked for cycles
      * @return A boolean that states whether the provided competencies and relations contain a cycle
      */
-    public boolean doesCreateCircularRelation(Set<LearningGoal> learningGoals, Set<LearningGoalRelation> relations) {
+    public boolean doesCreateCircularRelation(Set<Competency> competencies, Set<CompetencyRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
         class Vertex {
 
@@ -177,12 +177,12 @@ public class LearningGoalService {
         }
 
         var graph = new Graph();
-        for (LearningGoal learningGoal : learningGoals) {
-            graph.addVertex(new Vertex(learningGoal.getTitle()));
+        for (Competency competency : competencies) {
+            graph.addVertex(new Vertex(competency.getTitle()));
         }
-        for (LearningGoalRelation relation : relations) {
-            var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
-            var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
+        for (CompetencyRelation relation : relations) {
+            var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadCompetency().getTitle())).findFirst().orElseThrow();
+            var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailCompetency().getTitle())).findFirst().orElseThrow();
             // Only EXTENDS and ASSUMES are included in the generated graph as other relations are no problem if they are circular
             // MATCHES relations are considered in the next step by merging the edges and combining the adjacencyLists
             switch (relation.getType()) {
@@ -190,10 +190,10 @@ public class LearningGoalService {
             }
         }
         // combine vertices that are connected through MATCHES
-        for (LearningGoalRelation relation : relations) {
-            if (relation.getType() == LearningGoalRelation.RelationType.MATCHES) {
-                var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
-                var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
+        for (CompetencyRelation relation : relations) {
+            if (relation.getType() == CompetencyRelation.RelationType.MATCHES) {
+                var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadCompetency().getTitle())).findFirst().orElseThrow();
+                var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailCompetency().getTitle())).findFirst().orElseThrow();
                 if (headVertex.adjacencyList.contains(tailVertex) || tailVertex.adjacencyList.contains(headVertex)) {
                     return true;
                 }
