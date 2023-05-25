@@ -44,7 +44,7 @@ public class MessageSpecs {
                 return null;
             }
             // search by text or #message
-            else if (searchText.startsWith("#") && (searchText.substring(1) != null && !searchText.substring(1).isBlank())) {
+            else if (searchText.startsWith("#") && !searchText.substring(1).isBlank()) {
                 // if searchText starts with a # and is followed by a message id, filter for message with id
                 return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
             }
@@ -67,10 +67,8 @@ public class MessageSpecs {
     public static Specification<Post> getSortSpecification() {
         return ((root, query, criteriaBuilder) -> {
 
-            Expression<?> sortCriterion = null;
-
             // sort by creation date
-            sortCriterion = root.get(Post_.CREATION_DATE);
+            Expression<?> sortCriterion = root.get(Post_.CREATION_DATE);
 
             // descending
             query.orderBy(criteriaBuilder.desc(sortCriterion));

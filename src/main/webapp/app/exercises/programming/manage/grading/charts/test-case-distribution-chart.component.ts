@@ -128,6 +128,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
 
     constructor(private translateService: TranslateService, private navigationUtilService: ArtemisNavigationUtilService) {
         super();
+
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
