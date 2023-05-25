@@ -19,15 +19,13 @@
                 id="result-score"
                 (click)="showDetails(result)"
             >
-                <span class="guided-tour result" [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ" [ngbTooltip]="resultTooltip | artemisTranslate">
+                <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
                 <span class="result" *ngIf="short && (result?.codeIssueCount ?? 0) > 0">
                     <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle"></fa-icon>
                 </span>
-                <span class="result" [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ" [ngbTooltip]="result.completionDate | artemisDate">
-                    ({{ result.completionDate | artemisTimeAgo }})
-                </span>
+                <span class="result" [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
