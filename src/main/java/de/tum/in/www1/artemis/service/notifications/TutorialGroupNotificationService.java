@@ -72,7 +72,7 @@ public class TutorialGroupNotificationService {
 
     private void sendInstantNotification(TutorialGroupNotification notification, boolean notifyTutor) {
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(notification.notificationType)) {
-            var usersToMail = findUsersToMail(notification, notifyTutor);
+            var usersToMail = findUsersToNotify(notification, notifyTutor);
             if (!usersToMail.isEmpty()) {
                 notificationService.sendNotification(notification, new ArrayList<>(usersToMail), notification.getTutorialGroup());
             }
@@ -84,7 +84,7 @@ public class TutorialGroupNotificationService {
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
     }
 
-    private Set<User> findUsersToMail(TutorialGroupNotification notification, boolean notifyTutor) {
+    private Set<User> findUsersToNotify(TutorialGroupNotification notification, boolean notifyTutor) {
         var tutorialGroup = notification.getTutorialGroup();
         // ToDo: Adapt to the type of registration in the future
         var potentiallyInterestedUsers = tutorialGroupRegistrationRepository.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)
