@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebaseP
 
 /**
  * A Handler for InstantNotifications such as MailService and PushNotifications.
- * Handles the sending of Notifications via this channels.
+ * Handles the sending of Notifications via these channels.
  */
 @Service
 public class GeneralInstantNotificationService implements InstantNotificationService {
