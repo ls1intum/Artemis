@@ -43,6 +43,10 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
     /**
      * Checks for the user if the notification should be sent as an email or/and as a push notification.
      * Then delegates the actual sending to the corresponding {@link InstantNotificationService}s
+     *
+     * @param notification        the notification to be sent
+     * @param user                the user the notification should be sent to
+     * @param notificationSubject the object that is used to provide further information for mails (e.g. exercise, attachment, post, etc.)
      */
     @Override
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
