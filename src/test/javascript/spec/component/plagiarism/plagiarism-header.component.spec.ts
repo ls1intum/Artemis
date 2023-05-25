@@ -51,12 +51,12 @@ describe('Plagiarism Header Component', () => {
         comp.confirmPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
-        expect(comp.plagiarismStatusDirty).toBeTrue();
+        expect(comp.disableConfirmDenyButton).toBeTrue();
     });
 
     it('should disable confirm button if plagiarism status is dirty', () => {
         comp.comparison.status = PlagiarismStatus.NONE;
-        comp.plagiarismStatusDirty = true;
+        comp.disableConfirmDenyButton = true;
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector("[data-qa='confirm-plagiarism-button']") as ButtonComponent;
@@ -70,12 +70,12 @@ describe('Plagiarism Header Component', () => {
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
-        expect(comp.plagiarismStatusDirty).toBeTrue();
+        expect(comp.disableConfirmDenyButton).toBeTrue();
     });
 
-    it('should disable deby button if plagiarism status is dirty', () => {
+    it('should disable deny button if plagiarism status is dirty', () => {
         comp.comparison.status = PlagiarismStatus.NONE;
-        comp.plagiarismStatusDirty = true;
+        comp.disableConfirmDenyButton = true;
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as ButtonComponent;
@@ -94,7 +94,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
         expect(modalSpy).toHaveBeenCalledOnce();
-        expect(comp.plagiarismStatusDirty).toBeTrue();
+        expect(comp.disableConfirmDenyButton).toBeTrue();
     });
 
     it('should update the plagiarism status', fakeAsync(() => {
@@ -107,7 +107,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
-        expect(comp.plagiarismStatusDirty).toBeFalse();
+        expect(comp.disableConfirmDenyButton).toBeFalse();
     }));
 
     it('should emit when expanding left split view pane', () => {

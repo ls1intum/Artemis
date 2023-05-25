@@ -24,7 +24,7 @@ export class PlagiarismHeaderComponent {
     @Input() splitControlSubject: Subject<string>;
 
     readonly plagiarismStatus = PlagiarismStatus;
-    plagiarismStatusDirty = false;
+    disableConfirmDenyButton = false;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal) {}
 
@@ -48,13 +48,13 @@ export class PlagiarismHeaderComponent {
 
     private askForConfirmationOfDenying(onConfirm: () => void) {
         // change the status to dirty so that both buttons are disabled
-        this.plagiarismStatusDirty = true;
+        this.disableConfirmDenyButton = true;
 
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.plagiarism.denyAfterConfirmModalTitle';
         modalRef.componentInstance.text = 'artemisApp.plagiarism.denyAfterConfirmModalText';
         modalRef.componentInstance.translateText = true;
-        modalRef.result.then(onConfirm);
+        modalRef.result.then(onConfirm, () => (this.disableConfirmDenyButton = false));
     }
 
     /**
@@ -63,12 +63,12 @@ export class PlagiarismHeaderComponent {
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
         // change the status to dirty so that both buttons are disabled
-        this.plagiarismStatusDirty = true;
+        this.disableConfirmDenyButton = true;
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
         this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
             comparison.status = status;
-            this.plagiarismStatusDirty = false;
+            this.disableConfirmDenyButton = false;
         });
     }
 
