@@ -35,8 +35,14 @@ def get_latest_build_id(username, password, branch_name):
     bamboo_branch_name = branch_name.replace("origin/", "").replace("/", "-")
     url = f"{base_url}/rest/api/latest/plan/{project_key}-{plan_key}/branch/{bamboo_branch_name}.json"
     response = requests.get(url, auth=(username, password))
-    if response.status_code != 200:
-        logging.info(f"Branch {branch_name} not found in Bamboo")
+    if response.status_code == 200:
+        branch = json.loads(response.content)
+        return int(branch["shortKey"].replace("TESTS", ""))
+    elif response.status_code == 404:
+        logging.error(f"Branch {branch_name} not found in Bamboo")
+        sys.exit(1)
+    else:
+        logging.error(f"Error accessing Bamboo with status code {response.status_code}")
         sys.exit(1)
 
     branch = json.loads(response.content)
@@ -131,13 +137,13 @@ def get_server_line_coverage(username, password, key, file_name):
     return file_name, file_report_url, line_coverage
 
 
-def coverage_to_table(covs):
+def coverage_to_table(covs, exclude_urls=False):
     header = "| Class/File | Line Coverage | Confirmation (assert/expect) |\n|------------|--------------:|---------------------:|"
     table_data = []
 
     for cov in covs:
         filename_only = cov[0].rsplit("/", 1)[1]
-        class_file = f"[{filename_only}]({cov[1]})"
+        class_file = filename_only if exclude_urls else f"[{filename_only}]({cov[1]})"
         line_coverage = "N/A" if cov[2] is None else cov[2]
         confirmation = "❌" if cov[2] is None else "✅❌"
         table_data.append(f"| {class_file} | {line_coverage}% | {confirmation} |")
@@ -170,6 +176,14 @@ def main(argv):
     )
     parser.add_argument(
         "--verbose", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument(
+        "--exclude-urls", action="store_true",
+        help="Exclude URLs from the report"
+    )
+    parser.add_argument(
+        "--print-results", action="store_true",
+        help="Print the report to console instead of copying to clipboard"
     )
 
     args = parser.parse_args(argv)
@@ -204,8 +218,8 @@ def main(argv):
         for file_name in tqdm(server_file_names, desc="Fetching server coverage", unit="files")
     ]
 
-    client_table = coverage_to_table(client_cov)
-    server_table = coverage_to_table(server_cov)
+    client_table = coverage_to_table(client_cov, args.exclude_urls)
+    server_table = coverage_to_table(server_cov, args.exclude_urls)
 
     result = ""
     if client_file_names:
@@ -213,11 +227,14 @@ def main(argv):
     if server_file_names:
         result += f"#### Server\n\n{server_table}\n\n"
 
-    pyperclip.copy(result)
-    logging.info("") # newline
     logging.info("Info: ✅❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
-    logging.info("Code coverage report copied to clipboard.")
+    logging.info("") # newline
 
+    if args.print_results:
+        print(result)
+    else:
+        pyperclip.copy(result)
+        logging.info("Code coverage report copied to clipboard.")
 
 if __name__ == "__main__":
     main(sys.argv[1:])
