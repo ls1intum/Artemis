@@ -163,8 +163,11 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectories(repoDownloadClonePath);
+        }
         var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var course = database.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", courseShortName, true);
+        var course = database.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", courseShortName, true, true);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).get();

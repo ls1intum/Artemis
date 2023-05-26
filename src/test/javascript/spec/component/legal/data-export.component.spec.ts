@@ -1,6 +1,6 @@
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
@@ -48,14 +48,15 @@ describe('DataExportComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should store the current user on init', () => {
+    it('should store the current user on init', fakeAsync(() => {
         const user = new User();
         user.login = 'admin';
         user.id = 1;
         accountService.userIdentity = user;
         component.ngOnInit();
+        tick();
         expect(component.currentLogin).toBe('admin');
-    });
+    }));
 
     it('should call data export service when data export is requested', () => {
         const dataExportReturned = new DataExport();

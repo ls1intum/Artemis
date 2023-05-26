@@ -896,13 +896,13 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(User user, String studentGroupName, String shortName,
-            boolean withProgrammingExercise) {
+    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(User user, String studentGroupName, String shortName, boolean withProgrammingExercise,
+            boolean withAllQuizQuestionTypes) {
         Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName);
         Exam exam = addExam(course, user, ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
                 ZonedDateTime.now().minusMinutes(1));
         course.addExam(exam);
-        addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise);
+        addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         return courseRepo.save(course);
     }
 
@@ -1923,6 +1923,10 @@ public class DatabaseUtilService {
     }
 
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
+        return addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, false);
+    }
+
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
         ModelFactory.generateExerciseGroup(true, exam); // text
         ModelFactory.generateExerciseGroup(true, exam); // quiz
         ModelFactory.generateExerciseGroup(true, exam); // file upload
@@ -1945,8 +1949,14 @@ public class DatabaseUtilService {
         exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
         exerciseRepo.save(textExercise1);
         exerciseRepo.save(textExercise2);
+        QuizExercise quizExercise1;
+        if (withAllQuizQuestionTypes) {
+            quizExercise1 = createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
+        }
+        else {
+            quizExercise1 = createQuizForExam(exerciseGroup1);
+        }
 
-        QuizExercise quizExercise1 = createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
         QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
@@ -4324,6 +4334,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
         quizExercise.addQuestions(createShortAnswerQuestionWithRealisticText());
         quizExercise.addQuestions(createSingleChoiceQuestion());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
     }
 
     private ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {

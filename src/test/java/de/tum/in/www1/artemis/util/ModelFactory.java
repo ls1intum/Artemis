@@ -242,7 +242,9 @@ public class ModelFactory {
     }
 
     public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup, String title) {
-        return (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup, title);
+        var textExercise = (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup, title);
+        textExercise.setExampleSolution("This is my example solution");
+        return textExercise;
     }
 
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
