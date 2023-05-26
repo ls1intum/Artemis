@@ -131,7 +131,7 @@
                 </span>
             </div>
             <div *ngIf="exercise.presentationScoreEnabled">
-                <div *ngIf="(course?.presentationScore ?? 0) > 0">
+                <ng-template [ngIf]="course?.presentationScore" [ngIfElse]="notBasicPresentation">
                     {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
                     <span *ngIf="(studentParticipation?.presentationScore ?? 0) > 0" class="badge bg-success">
                         {{ 'global.generic.yes' | artemisTranslate }}
@@ -139,8 +139,8 @@
                     <span *ngIf="(studentParticipation?.presentationScore ?? 0) <= 0" class="badge bg-secondary">
                         {{ 'global.generic.no' | artemisTranslate }}
                     </span>
-                </div>
-                <div *ngIf="!((course?.presentationScore ?? 0) > 0)">
+                </ng-template>
+                <ng-template #notBasicPresentation>
                     {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
                     <span *ngIf="studentParticipation?.presentationScore" class="badge bg-success">
                         {{ studentParticipation!.presentationScore + '%' }}
@@ -148,7 +148,7 @@
                     <span *ngIf="!studentParticipation?.presentationScore" class="badge bg-secondary">
                         {{ 'global.generic.unset' | artemisTranslate }}
                     </span>
-                </div>
+                </ng-template>
             </div>
         </ng-template>
     </div>

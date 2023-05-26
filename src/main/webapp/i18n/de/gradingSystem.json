@@ -30,7 +30,7 @@
             "gradedPresentation": {
                 "label": "Benotete Präsentationen",
                 "number": "Anzahl",
-                "weight": "Gesamtgewichtung"
+                "weight": "Gesamtgewichtung (%)"
             },
             "csv": {
                 "importButton": "Importieren (.csv)",

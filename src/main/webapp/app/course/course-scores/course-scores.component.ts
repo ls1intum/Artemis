@@ -697,7 +697,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             keys.push(ExportRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY));
         }
 
-        if ((this.gradingScale?.presentationsNumber ?? 0) > 0) {
+        if (this.gradingScale?.presentationsNumber) {
             keys.push(PRESENTATION_POINTS_KEY, PRESENTATION_SCORE_KEY);
         }
 
@@ -745,7 +745,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowData.setExerciseTypeScore(exerciseType, exerciseScoresPerType);
         }
 
-        if ((this.gradingScale?.presentationsNumber ?? 0) > 0) {
+        if (this.gradingScale?.presentationsNumber) {
             const presentationScore = roundScorePercentSpecifiedByCourseSettings(student.presentationPoints / this.maxNumberOfPresentationPoints, this.course);
             rowData.setPoints(PRESENTATION_POINTS_KEY, student.presentationPoints);
             rowData.setScore(PRESENTATION_SCORE_KEY, presentationScore);
@@ -781,7 +781,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowData.setExerciseTypeScore(exerciseType, 100);
         }
 
-        if ((this.gradingScale?.presentationsNumber ?? 0) > 0) {
+        if (this.gradingScale?.presentationsNumber) {
             rowData.setPoints(PRESENTATION_POINTS_KEY, this.maxNumberOfPresentationPoints);
             rowData.setScore(PRESENTATION_SCORE_KEY, 100);
         }
@@ -822,7 +822,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowData.setExerciseTypeScore(exerciseType, averageScore);
         }
 
-        if ((this.gradingScale?.presentationsNumber ?? 0) > 0) {
+        if (this.gradingScale?.presentationsNumber) {
             const averagePresentationScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfPresentationPoints / this.maxNumberOfPresentationPoints, this.course);
             rowData.setPoints(PRESENTATION_POINTS_KEY, this.averageNumberOfPresentationPoints);
             rowData.setScore(PRESENTATION_SCORE_KEY, averagePresentationScore);
@@ -905,7 +905,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             emptyLine.setExerciseTypeScore(exerciseType, '');
         }
 
-        if ((this.gradingScale?.presentationsNumber ?? 0) > 0) {
+        if (this.gradingScale?.presentationsNumber) {
             emptyLine.set(PRESENTATION_POINTS_KEY, '');
             emptyLine.set(PRESENTATION_SCORE_KEY, '');
         }

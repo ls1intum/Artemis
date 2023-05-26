@@ -145,8 +145,7 @@ public class StatisticsService {
         Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        averageScoreForCourse = averageScoreForCourse != null && averageScoreForCourse > 0.0 ? averageScoreForCourse : 0.0;
+        double averageScoreForCourse = Objects.requireNonNullElse(participantScoreRepository.findAvgScore(includedExercises), 0.0);
         List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
         sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {

@@ -30,7 +30,7 @@
             "gradedPresentation": {
                 "label": "Graded Presentations",
                 "number": "Number",
-                "weight": "Combined Weight"
+                "weight": "Combined Weight (%)"
             },
             "csv": {
                 "importButton": "Import (.csv)",
