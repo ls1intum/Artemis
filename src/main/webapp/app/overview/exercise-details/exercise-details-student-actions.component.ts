@@ -18,8 +18,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -52,7 +50,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
-    localVCEnabled = false;
 
     // Icons
     faComment = faComment;
@@ -70,7 +67,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         private router: Router,
         private translateService: TranslateService,
         private participationService: ParticipationService,
-        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
@@ -80,9 +76,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
-            });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
         } else if (this.exercise.type === ExerciseType.TEXT) {

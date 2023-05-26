@@ -21,12 +21,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -42,12 +40,11 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @PreAuthorize("hasRole('TA')")
 public class TestRepositoryResource extends RepositoryResource {
 
-    public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
+    public TestRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalCIConnectorService> localCIConnectorService) {
-        super(profileService, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                repositoryAccessService, localCIConnectorService);
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                repositoryAccessService);
     }
 
     @Override

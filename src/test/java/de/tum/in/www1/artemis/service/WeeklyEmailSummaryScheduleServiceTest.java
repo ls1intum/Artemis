@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -30,7 +31,7 @@ class WeeklyEmailSummaryScheduleServiceTest {
     private static TaskScheduler schedulerSpy;
 
     @Mock
-    private static ProfileService profileService;
+    private static Environment environment;
 
     @Mock
     private static EmailSummaryService emailSummaryService;
@@ -40,15 +41,15 @@ class WeeklyEmailSummaryScheduleServiceTest {
      */
     @BeforeAll
     static void setUp() {
-        profileService = mock(ProfileService.class);
-        when(profileService.isDev()).thenReturn(false);
+        environment = mock(Environment.class);
+        when(environment.getActiveProfiles()).thenReturn(new String[] {});
 
         emailSummaryService = mock(EmailSummaryService.class);
 
         scheduler = new ThreadPoolTaskScheduler();
         schedulerSpy = spy(scheduler);
 
-        weeklyEmailSummaryService = new WeeklyEmailSummaryScheduleService(profileService, schedulerSpy, emailSummaryService);
+        weeklyEmailSummaryService = new WeeklyEmailSummaryScheduleService(environment, schedulerSpy, emailSummaryService);
     }
 
     /**

@@ -130,7 +130,7 @@ public class DatabaseUtilService {
     private LectureRepository lectureRepo;
 
     @Autowired
-    private CompetencyRepository competencyRepo;
+    private LearningGoalRepository learningGoalRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -773,12 +773,12 @@ public class DatabaseUtilService {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
-    public Competency createCompetency(Course course) {
-        Competency competency = new Competency();
-        competency.setTitle("Example Competency");
-        competency.setDescription("Magna pars studiorum, prodita quaerimus.");
-        competency.setCourse(course);
-        return competencyRepo.save(competency);
+    public LearningGoal createLearningGoal(Course course) {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("Example Competency");
+        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
+        learningGoal.setCourse(course);
+        return learningGoalRepo.save(learningGoal);
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -889,20 +889,20 @@ public class DatabaseUtilService {
         }).toList();
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
-            lectures.replaceAll(lecture -> addCompetencyToLectureUnits(lecture, Set.of(createCompetency(course))));
+            lectures.replaceAll(lecture -> addLearningGoalToLectureUnits(lecture, Set.of(createLearningGoal(course))));
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }
 
-    public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<Competency> competencies) {
-        Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
+    public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<LearningGoal> learningGoals) {
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
-            lectureUnit.setCompetencies(competencies);
+            lectureUnit.setLearningGoals(learningGoals);
             lectureUnitRepository.save(lectureUnit);
         });
         return l;

@@ -67,18 +67,18 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e
             FROM Exercise e
-                LEFT JOIN FETCH e.competencies
+                LEFT JOIN FETCH e.learningGoals
             WHERE e.id = :exerciseId
             """)
-    Optional<Exercise> findByIdWithCompetencies(@Param("exerciseId") Long exerciseId);
+    Optional<Exercise> findByIdWithLearningGoals(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT e FROM Exercise e
-                LEFT JOIN FETCH e.competencies c
-                LEFT JOIN FETCH c.exercises
+                LEFT JOIN FETCH e.learningGoals lg
+                LEFT JOIN FETCH lg.exercises
             WHERE e.id = :exerciseId
             """)
-    Optional<Exercise> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);
+    Optional<Exercise> findByIdWithLearningGoalsBidirectional(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT e FROM Exercise e
@@ -388,13 +388,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return all exercises that should be part of the summary (email)
      */
     @Query("""
-            SELECT e
-            FROM Exercise e
-            WHERE e.releaseDate IS NOT NULL
-                AND e.releaseDate < :now
-                AND e.releaseDate > :daysAgo
-                AND ((e.dueDate IS NOT NULL AND e.dueDate > :now)
-                    OR e.dueDate IS NULL)
+            SELECT exercise
+            FROM Exercise exercise
+            WHERE exercise.releaseDate IS NOT NULL
+                AND exercise.releaseDate < :now
+                AND exercise.releaseDate > :daysAgo
+                AND ((exercise.dueDate IS NOT NULL AND exercise.dueDate > :now)
+                    OR exercise.dueDate IS NULL)
             """)
     Set<Exercise> findAllExercisesForSummary(@Param("now") ZonedDateTime now, @Param("daysAgo") ZonedDateTime daysAgo);
 
@@ -406,8 +406,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("""
             SELECT COUNT(DISTINCT p.student.id)
-            FROM Exercise e
-                JOIN e.studentParticipations p
+            FROM Exercise e JOIN e.studentParticipations p
             WHERE e.id = :exerciseId
             """)
     Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
@@ -444,13 +443,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     @NotNull
-    default Exercise findByIdWithCompetenciesElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findByIdWithCompetencies(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    default Exercise findByIdWithLearningGoalsElseThrow(Long exerciseId) throws EntityNotFoundException {
+        return findByIdWithLearningGoals(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     @NotNull
-    default Exercise findByIdWithCompetenciesBidirectionalElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findByIdWithCompetenciesBidirectional(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    default Exercise findByIdWithLearningGoalsBidirectionalElseThrow(Long exerciseId) throws EntityNotFoundException {
+        return findByIdWithLearningGoalsBidirectional(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**

@@ -46,8 +46,6 @@ import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -73,8 +71,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isLoading = false;
-
-    localVCEnabled = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -189,7 +185,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private profileService: ProfileService,
     ) {}
 
     /**
@@ -210,9 +205,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.accountService.identity().then((user: User) => (this.tutor = user));
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
-        });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 

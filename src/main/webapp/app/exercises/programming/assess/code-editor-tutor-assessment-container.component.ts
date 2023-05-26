@@ -36,8 +36,6 @@ import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -84,8 +82,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     loadingInitialSubmission = true;
     highlightDifferences = false;
 
-    localVCEnabled = false;
-
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
@@ -123,7 +119,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private profileService: ProfileService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -197,10 +192,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                 )
                 .subscribe();
-        });
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 

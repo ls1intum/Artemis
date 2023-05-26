@@ -58,8 +58,6 @@ public class ProgrammingExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ProfileService profileService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -88,6 +86,8 @@ public class ProgrammingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
+
     private final CourseRepository courseRepository;
 
     private final GitService gitService;
@@ -100,16 +100,17 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    public ProgrammingExerciseResource(ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
-            StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
-        this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -124,6 +125,7 @@ public class ProgrammingExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.courseRepository = courseRepository;
         this.gitService = gitService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
@@ -188,7 +190,6 @@ public class ProgrammingExerciseResource {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
-
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
@@ -352,7 +353,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsElseThrow(exerciseId);
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
@@ -570,11 +571,6 @@ public class ProgrammingExerciseResource {
     @PutMapping(UNLOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
-        // Locking and unlocking repositories is not supported when using the local version control system.
-        // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExerciseRepositoryService.unlockAllRepositories(exerciseId);
@@ -591,11 +587,6 @@ public class ProgrammingExerciseResource {
     @PutMapping(LOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
-        // Locking and unlocking repositories is not supported when using the local version control system.
-        // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-        if (profileService.isLocalVcsCi()) {
-            return ResponseEntity.badRequest().build();
-        }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExerciseRepositoryService.lockAllRepositories(exerciseId);

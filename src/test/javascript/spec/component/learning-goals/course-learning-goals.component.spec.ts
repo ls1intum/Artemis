@@ -95,7 +95,7 @@ describe('CourseLearningGoals', () => {
         // Mock a course that was already fetched in another component
         const course = new Course();
         course.id = 1;
-        course.competencies = [learningGoal];
+        course.learningGoals = [learningGoal];
         course.prerequisites = [learningGoal];
         courseStorageService.setCourses([course]);
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);

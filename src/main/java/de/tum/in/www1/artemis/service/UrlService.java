@@ -45,6 +45,7 @@ public class UrlService {
 
     /**
      * Gets the repository slug from the given URL
+     *
      * Example 1: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> RMEXERCISE-ga42xab
      * Example 2: https://ga63fup@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga63fup.git --> RMEXERCISE-ga63fup
      * Example 3: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> testadapter-exercise
@@ -60,7 +61,7 @@ public class UrlService {
         if (pathComponents.length < 2) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
-        // Note: pathComponents[0] = "" because the path always starts with "/"
+        // Note: pathComponents[] = "" because the path always starts with "/"
         // take the last element
         String repositorySlug = pathComponents[pathComponents.length - 1];
         // if the element includes ".git" ...
@@ -97,7 +98,7 @@ public class UrlService {
         if (pathComponents.length < 2) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
-        // Note: pathComponents[0] = "" because the path always starts with "/"
+        // Note: pathComponents[] = "" because the path always starts with "/"
         final var last = pathComponents.length - 1;
         return pathComponents[last - 1] + "/" + pathComponents[last].replace(".git", "");
     }
@@ -116,9 +117,7 @@ public class UrlService {
     /**
      * Gets the project key from the given URL
      *
-     * Examples:
-     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
-     * http://localhost:8080/git/TESTCOURSE1TESTEX1/testcourse1testex1-student1.git --> TESTCOURSE1TESTEX1
+     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
      *
      * @param url The complete repository url (including protocol, host and the complete path)
      * @return The project key
@@ -130,10 +129,10 @@ public class UrlService {
         if (pathComponents.length <= 2) {
             throw new VersionControlException("No project key could be found for " + url);
         }
-        // Note: pathComponents[0] = "" because the path always starts with "/"
+        // Note: pathComponents[] = "" because the path always starts with "/"
         var projectKey = pathComponents[1];
-        if ("scm".equals(pathComponents[1]) || "git".equals(pathComponents[1])) {
-            // special case for Bitbucket and local VC
+        if ("scm".equals(pathComponents[1])) {
+            // special case for Bitbucket
             projectKey = pathComponents[2];
         }
         return projectKey;

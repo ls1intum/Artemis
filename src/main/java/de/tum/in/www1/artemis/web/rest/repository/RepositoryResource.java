@@ -27,16 +27,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -54,8 +51,6 @@ public abstract class RepositoryResource {
 
     protected final Logger log = LoggerFactory.getLogger(RepositoryResource.class);
 
-    private final ProfileService profileService;
-
     protected final AuthorizationCheckService authCheckService;
 
     protected final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -72,22 +67,17 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    private final Optional<LocalCIConnectorService> localCIConnectorService;
-
-    public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalCIConnectorService> localCIConnectorService) {
-        this.profileService = profileService;
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.versionControlService = versionControlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.versionControlService = versionControlService;
         this.repositoryAccessService = repositoryAccessService;
-        this.localCIConnectorService = localCIConnectorService;
     }
 
     /**
@@ -263,12 +253,6 @@ public abstract class RepositoryResource {
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             repositoryService.commitChanges(repository, user);
-            // Trigger a build, and process the result. Only implemented for local CI.
-            // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
-            // that notify the CI system when the commit happens and thus trigger the build.
-            if (profileService.isLocalVcsCi()) {
-                localCIConnectorService.orElseThrow().processNewPush(null, repository);
-            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -344,8 +328,7 @@ public abstract class RepositoryResource {
         catch (FileNotFoundException ex) {
             throw new EntityNotFoundException("File not found");
         }
-        catch (GitAPIException | IOException | ContinuousIntegrationException ex) {
-            log.error("Exception during repository operation", ex);
+        catch (GitAPIException | IOException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;

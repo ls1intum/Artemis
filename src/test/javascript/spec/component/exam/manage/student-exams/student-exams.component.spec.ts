@@ -32,7 +32,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
@@ -170,7 +169,6 @@ describe('StudentExamsComponent', () => {
         { provide: AccountService, useClass: MockAccountService },
         { provide: TranslateService, useClass: MockTranslateService },
         { provide: JhiWebsocketService, useClass: MockWebsocketService },
-        MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
     ];
 
     beforeEach(() => {

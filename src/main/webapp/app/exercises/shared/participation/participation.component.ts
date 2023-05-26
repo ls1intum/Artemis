@@ -22,7 +22,6 @@ import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/share
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 
 enum FilterProp {
     ALL = 'all',
@@ -55,9 +54,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
-
-    // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
-    localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -157,7 +153,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }
             }

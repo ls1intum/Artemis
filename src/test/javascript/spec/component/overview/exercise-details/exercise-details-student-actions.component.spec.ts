@@ -306,7 +306,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should disable start exercise button before start date %s',
         fakeAsync((type: ExerciseType) => {
-            comp.exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
+            const exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
+            comp.exercise = exercise;
 
             fixture.detectChanges();
             tick();

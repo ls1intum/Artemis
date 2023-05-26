@@ -47,7 +47,7 @@ export class LearningGoalProgress {
 }
 
 export class CourseLearningGoalProgress {
-    competencyId?: number;
+    learningGoalId?: number;
     numberOfStudents?: number;
     numberOfMasteredStudents?: number;
     averageStudentScore?: number;
@@ -57,8 +57,8 @@ export class CourseLearningGoalProgress {
 
 export class LearningGoalRelation implements BaseEntity {
     public id?: number;
-    public tailCompetency?: LearningGoal;
-    public headCompetency?: LearningGoal;
+    public tailLearningGoal?: LearningGoal;
+    public headLearningGoal?: LearningGoal;
     public type?: string;
 
     constructor() {}

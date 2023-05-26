@@ -67,7 +67,6 @@ import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -192,7 +191,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route() },
-                MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
             ],
         })
             .compileComponents()

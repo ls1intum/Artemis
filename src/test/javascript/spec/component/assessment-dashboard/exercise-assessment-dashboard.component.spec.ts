@@ -67,7 +67,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -252,7 +251,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
-        MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
     ];
 
     beforeEach(() => {

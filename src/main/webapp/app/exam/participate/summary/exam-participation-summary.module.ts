@@ -31,7 +31,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         RouterModule,
         ArtemisSharedCommonModule,
         ArtemisSharedModule,
-        ArtemisSharedComponentModule,
         ArtemisQuizQuestionTypesModule,
         ArtemisModelingEditorModule,
         ArtemisFullscreenModule,

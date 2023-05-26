@@ -93,7 +93,7 @@ public class UserService {
 
     private final StudentScoreRepository studentScoreRepository;
 
-    private final CompetencyProgressRepository competencyProgressRepository;
+    private final LearningGoalProgressRepository learningGoalProgressRepository;
 
     private final CacheManager cacheManager;
 
@@ -124,11 +124,12 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, CompetencyProgressRepository competencyProgressRepository,
-            InstanceMessageSendService instanceMessageSendService, ExerciseHintActivationRepository exerciseHintActivationRepository,
-            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
-            SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository, PostRepository postRepository,
-            ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository, OneToOneChatRepository oneToOneChatRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
+            LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
+            ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
+            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository,
+            PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository,
+            OneToOneChatRepository oneToOneChatRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -141,7 +142,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
-        this.competencyProgressRepository = competencyProgressRepository;
+        this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
@@ -489,7 +490,7 @@ public class UserService {
         singleUserNotificationRepository.deleteByRecipientId(user.getId());
         notificationRepository.removeAuthor(user.getId());
         studentScoreRepository.deleteAllByUserId(user.getId());
-        competencyProgressRepository.deleteAllByUserId(user.getId());
+        learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
 
         deletePostsAndConversationRelatedObjects(user);

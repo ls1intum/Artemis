@@ -54,7 +54,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
 
         // === Setting attachmentUnit ===
         this.attachmentUnitToCreate.description = description;
-        this.attachmentUnitToCreate.competencies = learningGoals || [];
+        this.attachmentUnitToCreate.learningGoals = learningGoals || [];
 
         this.isLoading = true;
 

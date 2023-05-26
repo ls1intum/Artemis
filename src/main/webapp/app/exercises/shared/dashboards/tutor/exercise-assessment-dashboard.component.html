@@ -185,12 +185,9 @@
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
-            <a *ngIf="!localVCEnabled; else cloneRepoButton" jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUrl || ''">
+            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUrl || ''">
                 <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
             </a>
-            <ng-template #cloneRepoButton>
-                <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="programmingExercise.solutionParticipation?.repositoryUrl || ''"></jhi-clone-repo-button>
-            </ng-template>
         </div>
 
         <jhi-info-panel

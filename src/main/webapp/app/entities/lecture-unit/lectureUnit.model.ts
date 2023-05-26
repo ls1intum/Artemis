@@ -18,7 +18,7 @@ export abstract class LectureUnit implements BaseEntity {
     public name?: string;
     public releaseDate?: dayjs.Dayjs;
     public lecture?: Lecture;
-    public competencies?: LearningGoal[];
+    public learningGoals?: LearningGoal[];
     public type?: LectureUnitType;
     // calculated property
     public visibleToStudents?: boolean;

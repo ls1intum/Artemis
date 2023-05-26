@@ -48,8 +48,8 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     private setCourse(course?: Course) {
         this.course = course;
-        if (this.course && this.course.competencies && this.course.prerequisites) {
-            this.learningGoals = this.course.competencies;
+        if (this.course && this.course.learningGoals && this.course.prerequisites) {
+            this.learningGoals = this.course.learningGoals;
             this.prerequisites = this.course.prerequisites;
         } else {
             this.loadData();

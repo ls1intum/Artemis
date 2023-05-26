@@ -9,13 +9,6 @@ import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
-/**
- * This class represents repositories cloned from the VC system to Artemis to then be used in the online editor.
- * These repositories are cloned from the remote VCS and are saved in the folder defined in the application properties at artemis.repo-clone-path.
- * Note: This class does not represent local VCS repositories. The local VCS is treated as a remote VCS in code (like Bitbucket and GitLab) and is represented by the
- * {@link de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl} class.
- * Its repositories are saved as bare repositories in the folder defined in the application properties at artemis.version-control.local-vcs-repo-path.
- */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
     private ProgrammingExerciseParticipation participation;

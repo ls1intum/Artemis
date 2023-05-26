@@ -40,7 +40,7 @@ export class CreateTextUnitComponent implements OnInit {
         this.textUnitToCreate.name = name;
         this.textUnitToCreate.releaseDate = releaseDate;
         this.textUnitToCreate.content = content;
-        this.textUnitToCreate.competencies = learningGoals || [];
+        this.textUnitToCreate.learningGoals = learningGoals || [];
 
         this.isLoading = true;
 

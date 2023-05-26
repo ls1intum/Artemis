@@ -244,7 +244,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
+        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it

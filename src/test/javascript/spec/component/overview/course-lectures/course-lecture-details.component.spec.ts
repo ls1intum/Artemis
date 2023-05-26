@@ -124,7 +124,6 @@ describe('CourseLectureDetails', () => {
                         params: of({ lectureId: '1', courseId: '1' }),
                     },
                 },
-                MockProvider(Router),
             ],
             schemas: [],
         })
@@ -172,31 +171,6 @@ describe('CourseLectureDetails', () => {
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).toBeNull();
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
-    }));
-
-    it('should display manage button when user is at least tutor', fakeAsync(() => {
-        lecture.course!.isAtLeastTutor = true;
-        fixture.detectChanges();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).not.toBeNull();
-    }));
-
-    it('should not display manage button when user is a student', fakeAsync(() => {
-        lecture.course!.isAtLeastTutor = false;
-        fixture.detectChanges();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).toBeNull();
-    }));
-
-    it('should redirect to lecture management', fakeAsync(() => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
-
-        courseLecturesDetailsComponent.redirectToLectureManagement();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
     }));
 
     it('should check attachment release date', fakeAsync(() => {

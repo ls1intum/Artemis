@@ -40,7 +40,7 @@ describe('LearningGoalService', () => {
 
         defaultLearningGoals = [{ id: 0, title: 'title', description: 'description' } as LearningGoal];
         defaultLearningGoalProgress = { progress: 20, confidence: 50 } as LearningGoalProgress;
-        defaultLearningGoalCourseProgress = { competencyId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress;
+        defaultLearningGoalCourseProgress = { learningGoalId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress;
     });
 
     afterEach(() => {
@@ -152,7 +152,7 @@ describe('LearningGoalService', () => {
     }));
 
     it('should add a LearningGoal relation', fakeAsync(() => {
-        const returnedFromService = { tailCompetency: 1, headCompetency: 2, type: 'assumes' } as LearningGoalRelation;
+        const returnedFromService = { tailLearningGoal: 1, headLearningGoal: 2, type: 'assumes' } as LearningGoalRelation;
         let result: any;
         learningGoalService
             .createLearningGoalRelation(1, 2, 'assumes', 1)

@@ -53,7 +53,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should get learning goals from cache', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [new LearningGoal()] });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: [new LearningGoal()] });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 
         fixture.detectChanges();
@@ -68,7 +68,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should get learning goals from service', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: undefined });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new LearningGoal()] })));
 
         fixture.detectChanges();
@@ -82,7 +82,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should set disabled when error during loading', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: undefined });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
 
         fixture.detectChanges();
@@ -94,7 +94,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should be hidden when no learning goals', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: [] });
 
         fixture.detectChanges();
 
@@ -106,7 +106,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should select learning goals when value is written', () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as LearningGoal] });
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ learningGoals: [{ id: 1, title: 'test' } as LearningGoal] });
 
         fixture.detectChanges();
 

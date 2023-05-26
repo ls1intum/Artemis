@@ -50,7 +50,6 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -81,9 +80,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
-    // Used to hide links to repositories and build plans when the "localvc" profile is active.
-    // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
-    localVCEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -195,7 +191,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             );
                         }
                         this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     }
                 });
 

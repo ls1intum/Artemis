@@ -2,18 +2,12 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -24,7 +18,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
@@ -128,31 +121,5 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         for (Path javaFilesystemPath : jenkinsFilesystemPaths) {
             FileUtils.writeStringToFile(javaFilesystemPath.toFile(), content, Charset.defaultCharset());
         }
-    }
-
-    @Test
-    void testGetResourceFilePathFromJar() throws IOException, URISyntaxException {
-        ResourceLoader resourceLoader = mock(ResourceLoader.class);
-        Resource resource = mock(Resource.class);
-        URL resourceUrl = new URL("jar:file:/example.jar!/path/to/resource.txt");
-
-        // Mock the getResource() method.
-        doReturn(true).when(resource).exists();
-        doReturn(resourceUrl).when(resource).getURL();
-        doReturn(mock(InputStream.class)).when(resource).getInputStream();
-
-        // ResourcePatternResolver resourcePatternResolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
-        doReturn(resource).when(resourceLoader).getResource(anyString());
-
-        // Instantiate the class under test and invoke the method.
-        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader);
-        Path path = Paths.get("path", "to", "resource.txt");
-        Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
-
-        // Verify the temporary file was created.
-        assertThat(Files.exists(resourceFilePath)).isTrue();
-
-        // Clean up the temporary file.
-        Files.deleteIfExists(resourceFilePath);
     }
 }

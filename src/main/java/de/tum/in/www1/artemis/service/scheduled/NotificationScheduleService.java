@@ -8,15 +8,16 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("scheduling")
@@ -28,17 +29,17 @@ public class NotificationScheduleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ProfileService profileService;
+    private final Environment environment;
 
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, ProfileService profileService,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService) {
+    public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
+            Environment environment, SingleUserNotificationService singleUserNotificationService) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
-        this.profileService = profileService;
+        this.environment = environment;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
@@ -49,7 +50,8 @@ public class NotificationScheduleService {
     @PostConstruct
     public void scheduleRunningNotificationProcessesOnStartup() {
         try {
-            if (profileService.isDev()) {
+            Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;

@@ -42,7 +42,6 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,19 +52,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
-
-    private final Environment environment;
-
-    private final ProfileService profileService;
 
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
@@ -118,13 +111,11 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(Environment environment, ProfileService profileService, FileService fileService, ZipFileService zipFileService) {
-        this.profileService = profileService;
+    public GitService(FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.environment = environment;
         this.fileService = fileService;
         this.zipFileService = zipFileService;
     }
@@ -261,24 +252,7 @@ public class GitService {
         return getGitUri(vcsRepositoryUrl).toString();
     }
 
-    /**
-     * Get the URI for a {@link VcsRepositoryUrl}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
-     * used.
-     * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
-     * For Bitbucket and GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
-     * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
-     *
-     * @param vcsRepositoryUrl the {@link VcsRepositoryUrl} for which to get the URI
-     * @return the URI (SSH, HTTP(S), or local path)
-     * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
-     */
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        if (profileService.isLocalVcsCi()) {
-            // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
-            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);
-            String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
-            return localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toUri();
-        }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
 

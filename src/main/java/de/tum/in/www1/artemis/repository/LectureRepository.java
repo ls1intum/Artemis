@@ -57,23 +57,23 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             LEFT JOIN FETCH lecture.posts
             LEFT JOIN FETCH lecture.lectureUnits lu
             LEFT JOIN FETCH lu.completedUsers cu
-            LEFT JOIN FETCH lu.competencies
+            LEFT JOIN FETCH lu.learningGoals
             LEFT JOIN FETCH lu.exercise exercise
-            LEFT JOIN FETCH exercise.competencies
+            LEFT JOIN FETCH exercise.learningGoals
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.lectureUnits lu
-            LEFT JOIN FETCH lu.competencies
+            LEFT JOIN FETCH lu.learningGoals
             LEFT JOIN FETCH lu.exercise exercise
-            LEFT JOIN FETCH exercise.competencies
+            LEFT JOIN FETCH exercise.learningGoals
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithLectureUnitsAndCompetencies(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -134,13 +134,13 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndCompetencies(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
+        return findByIdWithLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull
-    default Lecture findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
-        return findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(Long lectureId) {
+        return findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull

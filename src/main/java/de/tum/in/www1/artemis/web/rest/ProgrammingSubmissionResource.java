@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -113,13 +112,7 @@ public class ProgrammingSubmissionResource {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-
-            Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
-            if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-                throw new EntityNotFoundException("Programming Exercise Participation", participationId);
-            }
-
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
+            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participationId, requestBody);
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setSubmissions(null);
             programmingMessagingService.notifyUserAboutSubmission(submission);
@@ -142,10 +135,6 @@ public class ProgrammingSubmissionResource {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
                     participationId, participationId, requestBody, ex);
             throw ex;
-        }
-        catch (VersionControlException ex) {
-            log.warn("User commited to the wrong branch for participation + " + participationId);
-            return ResponseEntity.status(HttpStatus.OK).build();
         }
 
         // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors

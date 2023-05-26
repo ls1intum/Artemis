@@ -269,7 +269,7 @@ public class QuizExerciseResource {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndLearningGoalsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);

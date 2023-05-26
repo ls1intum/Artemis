@@ -100,14 +100,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
+    void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var competency = database.createCompetency(lecture1.getCourse());
-        lectureUnit.setCompetencies(Set.of(competency));
+        var learningGoal = database.createLearningGoal(lecture1.getCourse());
+        lectureUnit.setLearningGoals(Set.of(learningGoal));
         lectureRepository.save(lecture1);
 
-        var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().get(0).getCompetencies()).isNotEmpty();
+        var lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().get(0).getLearningGoals()).isNotEmpty();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
@@ -156,11 +156,11 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(3);
         LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
+        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(2).noneMatch(Objects::isNull);
     }
 
@@ -210,7 +210,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
                 HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
@@ -221,7 +221,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
                 HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();

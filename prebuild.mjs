@@ -48,11 +48,11 @@ const args = process.argv.slice(2);
 const developFlag = args.includes('--develop');
 const environmentConfig = `// Don't change this file manually, it will be overwritten by the build process!
 export const __DEBUG_INFO_ENABLED__ = ${developFlag};
-export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
+export const __VERSION__ = ${JSON.stringify(process.env.APP_VERSION || inferVersion())};
 // The root URL for API calls, ending with a '/' - for example: \`"https://www.jhipster.tech:8081/myservice/"\`.
 // If you use an API server, in \`prod\` mode, you will need to enable CORS
 // (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
-export const I18N_HASH = '${languagesHash.hash}';
+export const I18N_HASH = ${JSON.stringify(languagesHash.hash)};
 `;
 fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'environments', 'environment.override.ts'), environmentConfig);
 
@@ -103,7 +103,7 @@ for (const group of groups) {
         const mergedContent = files.reduce((acc, file) => {
             const content = JSON.parse(fs.readFileSync(path.resolve(group.folder, file)).toString());
             return deepMerge(acc, content);
-        }, {});
+        });
 
         await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
     } catch (error) {

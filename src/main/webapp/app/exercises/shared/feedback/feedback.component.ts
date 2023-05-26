@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -134,8 +135,8 @@ export class FeedbackComponent implements OnInit {
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
 
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.commitHashURLTemplate = info?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl();
         });
     }

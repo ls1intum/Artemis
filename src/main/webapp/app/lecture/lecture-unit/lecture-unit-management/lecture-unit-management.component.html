@@ -58,7 +58,7 @@
                 <jhi-learning-goals-popover
                     *ngIf="lecture.course?.id && showLearningGoals"
                     [courseId]="lecture.course!.id!"
-                    [learningGoals]="lectureUnit.competencies || []"
+                    [learningGoals]="lectureUnit.learningGoals || []"
                     [navigateTo]="'learningGoalManagement'"
                 ></jhi-learning-goals-popover>
                 <div class="d-flex gap-1 w-100">

@@ -12,7 +12,6 @@ import java.util.Set;
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +20,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -33,17 +31,14 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     private EmailSummaryService weeklyEmailSummaryService;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
     private CourseRepository courseRepository;
 
-    private User userWithActivatedWeeklySummaries;
+    User userWithActivatedWeeklySummaries;
 
-    private User userWithDeactivatedWeeklySummaries;
+    User userWithDeactivatedWeeklySummaries;
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
@@ -111,14 +106,12 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      * Tests if the method/runnable prepareEmailSummaries correctly selects exercises that are suited for weekly summaries
      */
     @Test
-    @Disabled // we have to fix the TODO inside the test without using SpyBean
     void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
         var filteredUsers = weeklyEmailSummaryService.findRelevantUsersForSummary();
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
 
-        // TODO: make sure only exerciseReleasedYesterdayAndNotYetDue is returned by exerciseRepository.findAllExercisesForSummary() without using @SpyBean.
-        // Refer to the TODO in automaticCleanupBuildPlans() in ProgrammingExerciseTestService for more information.
+        when(exerciseRepository.findAllExercisesForSummary(any(), any())).thenReturn(Set.of(exerciseReleasedYesterdayAndNotYetDue));
 
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 

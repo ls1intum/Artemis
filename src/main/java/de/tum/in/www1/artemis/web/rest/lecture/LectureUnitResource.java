@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -45,16 +45,16 @@ public class LectureUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final LearningGoalProgressService learningGoalProgressService;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, LearningGoalProgressService learningGoalProgressService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
-        this.competencyProgressService = competencyProgressService;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -124,7 +124,7 @@ public class LectureUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
-        competencyProgressService.updateProgressByLearningObjectAsync(lectureUnit, user);
+        learningGoalProgressService.updateProgressByLearningObjectAsync(lectureUnit, user);
 
         return ResponseEntity.ok().build();
     }
@@ -140,7 +140,7 @@ public class LectureUnitResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
             throw new ConflictException("Lecture unit must be associated to a lecture of a course", "LectureUnit", "lectureOrCourseMissing");
         }

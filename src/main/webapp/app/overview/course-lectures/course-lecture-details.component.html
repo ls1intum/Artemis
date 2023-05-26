@@ -19,11 +19,6 @@
                     </span>
                 </h4>
             </div>
-            <div class="col-auto d-flex align-items-center" *ngIf="!!lecture?.course?.isAtLeastTutor">
-                <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
-                    {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-                </button>
-            </div>
         </div>
     </div>
     <!-- HEADER INFORMATION END -->
@@ -61,9 +56,9 @@
                 </div>
                 <div class="col-1 my-auto mx-auto">
                     <jhi-learning-goals-popover
-                        [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
+                        [hidden]="!lectureUnit.learningGoals || lectureUnit.learningGoals!.length === 0"
                         [courseId]="lecture!.course!.id!"
-                        [learningGoals]="lectureUnit.competencies || []"
+                        [learningGoals]="lectureUnit.learningGoals || []"
                         [navigateTo]="'courseLearningGoals'"
                     ></jhi-learning-goals-popover>
                 </div>
