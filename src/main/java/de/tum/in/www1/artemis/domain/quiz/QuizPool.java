@@ -75,7 +75,6 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
 
     @Override
     public void setQuestionParent(QuizQuestion quizQuestion) {
-        quizQuestion.setQuizPool(this);
     }
 
     @Override
