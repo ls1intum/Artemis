@@ -252,7 +252,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     confirmChange(): void {
         this.busy = true;
 
-        this.quizReEvaluateService.update(this.quizExercise, this.files).subscribe({
+        this.quizReEvaluateService.reevaluate(this.quizExercise, this.files).subscribe({
             next: () => {
                 this.busy = false;
                 this.successful = true;

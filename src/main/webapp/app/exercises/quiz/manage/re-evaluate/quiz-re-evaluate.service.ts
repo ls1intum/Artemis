@@ -10,8 +10,8 @@ export class QuizReEvaluateService {
 
     constructor(private http: HttpClient) {}
 
-    update(quizExercise: QuizExercise, files: Map<string, Blob>) {
-        const copy = QuizReEvaluateService.convert(quizExercise);
+    reevaluate(quizExercise: QuizExercise, files: Map<string, Blob>) {
+        const copy = this.convert(quizExercise);
         const formData = new FormData();
         formData.append('exercise', objectToJsonBlob(copy));
         files.forEach((file, fileName) => {
@@ -23,7 +23,7 @@ export class QuizReEvaluateService {
     /**
      * Copy the QuizExercise object
      */
-    private static convert(quizExercise: QuizExercise): QuizExercise {
+    private convert(quizExercise: QuizExercise): QuizExercise {
         const copy: QuizExercise = Object.assign({}, quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return copy;

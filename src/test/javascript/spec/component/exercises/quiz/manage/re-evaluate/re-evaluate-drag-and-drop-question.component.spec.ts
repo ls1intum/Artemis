@@ -26,8 +26,22 @@ describe('ReEvaluateDragAndDropQuestionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize component', () => {
+    it('should return files', () => {
         fixture.detectChanges();
-        expect(component).not.toBeNull();
+        component.dragAndDropQuestionEditComponent = {
+            newDragItemFiles: new Map<string, File>([
+                ['path/to/dIFile/test1.jpg', new File([], 'test1.jpg')],
+                ['path/to/dIFile/test2.jpg', new File([], 'test2.jpg')],
+            ]),
+            question: { backgroundFilePath: 'path/to/bGfile/test3.png' },
+            backgroundFile: new File([], 'test3.png'),
+        } as DragAndDropQuestionEditComponent;
+        expect(component.getFiles()).toEqual(
+            new Map<string, File>([
+                ['path/to/dIFile/test1.jpg', new File([], 'test1.jpg')],
+                ['path/to/dIFile/test2.jpg', new File([], 'test2.jpg')],
+                ['path/to/bGfile/test3.png', new File([], 'test3.png')],
+            ]),
+        );
     });
 });

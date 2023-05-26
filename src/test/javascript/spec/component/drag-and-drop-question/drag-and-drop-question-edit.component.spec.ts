@@ -406,7 +406,37 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question.correctMappings).toEqual([mapping, expectedMapping]);
     });
 
-    it('should get mapping for drag item', () => {
+    it('should get mapping index for mapping', () => {
+        const item1 = new DragItem();
+        const item2 = new DragItem();
+        const item3 = new DragItem();
+        const item4 = new DragItem();
+        const location1 = new DropLocation();
+        const location2 = new DropLocation();
+        const location3 = new DropLocation();
+        const location4 = new DropLocation();
+        const mapping1 = new DragAndDropMapping(item1, location1);
+        const mapping2 = new DragAndDropMapping(item2, location2);
+        const mapping3 = new DragAndDropMapping(item3, location3);
+        const mapping4 = new DragAndDropMapping(item4, location4); // unused mapping
+        component.question.correctMappings = [mapping1, mapping2, mapping3];
+
+        expect(component.getMappingIndex(mapping1)).toBe(1);
+        expect(component.getMappingIndex(mapping2)).toBe(2);
+        expect(component.getMappingIndex(mapping3)).toBe(3);
+        expect(component.getMappingIndex(mapping4)).toBe(0);
+    });
+
+    it('should get mappings for drop location', () => {
+        const item = new DragItem();
+        const location = new DropLocation();
+        const mapping = new DragAndDropMapping(item, location);
+        component.question.correctMappings = [mapping];
+
+        expect(component.getMappingsForDropLocation(location)).toEqual([mapping]);
+    });
+
+    it('should get mappings for drag item', () => {
         const item = new DragItem();
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
