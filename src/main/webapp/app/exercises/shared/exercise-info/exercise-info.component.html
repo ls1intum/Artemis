@@ -11,9 +11,9 @@
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.startDate' | artemisTranslate }}</div>
             <div class="col-4">{{ exercise.startDate | artemisDate }}</div>
         </div>
-        <div class="row mb-1" *ngIf="dueDate">
+        <div class="row mb-1">
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}</div>
-            <div class="col-4">{{ dueDate | artemisDate }}</div>
+            <div class="col-4">{{ dueDate ? (dueDate | artemisDate) : ('artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate) }}</div>
         </div>
         <div class="row mb-1" *ngIf="exercise.exampleSolutionPublicationDate">
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate' | artemisTranslate }}</div>
@@ -27,9 +27,9 @@
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}</div>
             <div class="col-4">{{ individualComplaintDeadline | artemisDate }}</div>
         </div>
-        <div class="row mb-1" *ngIf="canComplainLaterOn">
+        <div class="row mb-1" *ngIf="!individualComplaintDeadline">
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}</div>
-            <div class="col-4">{{ 'global.generic.yes' | artemisTranslate }}</div>
+            <div class="col-4">{{ (canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
         </div>
     </div>
 </div>
