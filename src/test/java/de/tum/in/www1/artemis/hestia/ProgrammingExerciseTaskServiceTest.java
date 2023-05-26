@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
