@@ -179,18 +179,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
     @Query("""
-                SELECT DISTINCT course
-                FROM Course course
-                    LEFT JOIN FETCH course.organizations organizations
-                    LEFT JOIN FETCH course.prerequisites prerequisites
-                WHERE (course.startDate IS NULL OR course.startDate <= :now)
-                    AND (course.endDate IS NULL OR course.endDate >= :now)
-                    AND course.onlineCourse = false
-                    AND course.enrollmentEnabled = true
-            """)
-    List<Course> findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
-
-    @Query("""
                 SELECT course
                 FROM Course course
                     LEFT JOIN FETCH course.organizations co
@@ -349,16 +337,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
         return findSingleWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-    }
-
-    /**
-     * Get all the courses to enroll with eagerly loaded organizations and prerequisites.
-     * Online courses are not included, as they are not meant to be enrolled in.
-     *
-     * @return the list of course entities
-     */
-    default List<Course> findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites() {
-        return findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**

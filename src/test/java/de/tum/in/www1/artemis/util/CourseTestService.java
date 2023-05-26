@@ -752,7 +752,7 @@ public class CourseTestService {
     }
 
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         Course course = courses.get(0);
         course.setEnrollmentEnabled(enrollmentEnabled);
         courseRepo.save(course);
