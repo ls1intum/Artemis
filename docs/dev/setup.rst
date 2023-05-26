@@ -42,7 +42,8 @@ following dependencies/tools on your machine:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
-   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
+   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready))
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -408,6 +409,7 @@ Other run / debug configurations
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artems (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,jira,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
   (see `Athene Service <#athene-service>`__).
 
@@ -589,6 +591,10 @@ instead of the TUM defaults:
 ------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/localci-localvc.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
