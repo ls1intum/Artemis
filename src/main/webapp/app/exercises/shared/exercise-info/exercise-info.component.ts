@@ -31,7 +31,7 @@ export class ExerciseInfoComponent implements OnInit {
         }
         // The student can either still submit or there is a submission where the student did not have the chance to complain yet
         this.canComplainLaterOn =
-            (dayjs().isBefore(this.dueDate) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
+            ((this.dueDate && dayjs().isBefore(this.dueDate)) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
             (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
     }
 }
