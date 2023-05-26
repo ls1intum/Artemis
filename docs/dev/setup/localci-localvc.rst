@@ -10,6 +10,7 @@ For now, this setup is only recommended for development and testing purposes.
 If you are setting Artemis up for the first time, these are the steps you should follow:
   - Install and run Docker: https://docs.docker.com/install/
   - Start the database: :ref:`Database Setup`
+  - :ref:`Configure Artemis`
   - (optional) :ref:`Configure Jira`
   - :ref:`Start Artemis`
   - :ref:`Test the Setup`
@@ -19,6 +20,7 @@ If you are setting Artemis up for the first time, these are the steps you should
     :depth: 1
 
 
+.. _Configure Artemis:
 
 Configure Artemis
 ^^^^^^^^^^^^^^^^^
@@ -40,6 +42,8 @@ When you start Artemis for the first time, it will automatically create an admin
 You can then use that admin user to create further users in Artemis' internal user management system.
 
 
+.. _Configure Jira:
+
 Configure Jira
 ^^^^^^^^^^^^^^
 
@@ -47,7 +51,7 @@ The local CI and local VC systems work fine without external user management con
 Setting up Jira allows you to run a script that sets up a number of users and groups for you.
 
 If you have already set up your system with Bamboo, Bitbucket, and Jira, you can keep using Jira for user management. Just stop the Bamboo and Bitbucket containers.
-If you want to use Jira for user management, but have not configured it yet, refer to the guide for the :ref:`Bamboo, Bitbucket and Jira Setup`.
+If you want to use Jira for user management, but have not configured it yet, refer to the guide for the :ref:`Bamboo Bitbucket and Jira Setup`.
 You can follow all steps to set up the entire Atlassian stack, or just get the license for Jira and only follow steps 1-3 leaving out the setup of the Bamboo and Bitbucket containers.
 You can stop and remove the Bamboo and Bitbucket containers or just stop them in case you want to set them up later on.
 
@@ -63,6 +67,7 @@ You also need to configure further settings in the ``src/main/resources/config/a
                        admin-group-name: instructors
 
 
+.. _Start Artemis:
 
 Start Artemis
 ^^^^^^^^^^^^^
@@ -79,6 +84,7 @@ Add ``jira`` to the list of profiles if you want to use Jira for user management
 Please read :ref:`Server Setup` for more details.
 
 
+.. _Test the Setup:
 
 Test the Setup
 ^^^^^^^^^^^^^^
