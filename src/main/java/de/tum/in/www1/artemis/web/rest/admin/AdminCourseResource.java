@@ -17,10 +17,13 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -40,6 +43,8 @@ public class AdminCourseResource {
 
     private final CourseService courseService;
 
+    private final ChannelService channelService;
+
     private final CourseRepository courseRepository;
 
     private final AuditEventRepository auditEventRepository;
@@ -49,13 +54,14 @@ public class AdminCourseResource {
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService) {
+            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -100,9 +106,11 @@ public class AdminCourseResource {
             course.setCourseIcon(pathString);
         }
 
-        Course result = courseRepository.save(course);
+        Course createdCourse = courseRepository.save(course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(createdCourse, channelType));
+
+        return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
 
     /**
@@ -115,7 +123,7 @@ public class AdminCourseResource {
     @EnforceAdmin
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -123,5 +131,22 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
+    }
+
+    /**
+     * Creates a default channel with the given name and adds all students, tutors and instructors as participants.
+     *
+     * @param course      the course, where the channel should be created
+     * @param channelType the default channel type
+     */
+    private void createDefaultChannel(Course course, DefaultChannelType channelType) {
+        Channel channelToCreate = new Channel();
+        channelToCreate.setName(channelType.getName());
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(null);
+        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
+        channelService.registerUsersToChannel(true, true, true, List.of(), course, createdChannel);
     }
 }

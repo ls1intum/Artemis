@@ -202,7 +202,7 @@ public class Course extends DomainObject {
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     @OrderBy("title")
-    private Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<Competency> competencies = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -225,7 +225,7 @@ public class Course extends DomainObject {
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
-    private Set<LearningGoal> prerequisites = new HashSet<>();
+    private Set<Competency> prerequisites = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "tutorial_groups_configuration_id")
@@ -613,22 +613,22 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
 
-    public Set<LearningGoal> getPrerequisites() {
+    public Set<Competency> getPrerequisites() {
         return prerequisites;
     }
 
-    public void setPrerequisites(Set<LearningGoal> prerequisites) {
+    public void setPrerequisites(Set<Competency> prerequisites) {
         this.prerequisites = prerequisites;
     }
 
-    public void addPrerequisite(LearningGoal learningGoal) {
-        this.prerequisites.add(learningGoal);
-        learningGoal.getConsecutiveCourses().add(this);
+    public void addPrerequisite(Competency competency) {
+        this.prerequisites.add(competency);
+        competency.getConsecutiveCourses().add(this);
     }
 
-    public void removePrerequisite(LearningGoal learningGoal) {
-        this.prerequisites.remove(learningGoal);
-        learningGoal.getConsecutiveCourses().remove(this);
+    public void removePrerequisite(Competency competency) {
+        this.prerequisites.remove(competency);
+        competency.getConsecutiveCourses().remove(this);
     }
 
     /*
@@ -722,12 +722,12 @@ public class Course extends DomainObject {
         return this.numberOfStudentsTransient;
     }
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     public boolean hasCourseArchive() {
