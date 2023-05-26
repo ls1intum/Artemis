@@ -23,7 +23,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     List<Channel> findChannelsByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-             SELECT DISTINCT channel
+             SELECT channel
              FROM Channel channel
              WHERE channel.lecture.id = :lectureId
             """)

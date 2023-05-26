@@ -160,7 +160,7 @@ export class LectureService {
     }
 
     protected convertLectureResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
+        if (res.body?.lecture) {
             res.body.lecture.startDate = convertDateFromServer(res.body.lecture.startDate);
             res.body.lecture.endDate = convertDateFromServer(res.body.lecture.endDate);
             if (res.body.lecture.lectureUnits) {

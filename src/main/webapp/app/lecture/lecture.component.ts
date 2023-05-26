@@ -73,13 +73,13 @@ export class LectureComponent implements OnInit {
                 this.lectureService
                     .import(this.courseId, result.id!)
                     .pipe(
-                        filter((res: HttpResponse<Lecture>) => res.ok),
-                        map((res: HttpResponse<Lecture>) => res.body),
+                        filter((res: HttpResponse<LectureDTO>) => res.ok),
+                        map((res: HttpResponse<LectureDTO>) => res.body),
                     )
                     .subscribe({
-                        next: (res: Lecture) => {
-                            this.lectures.push(res);
-                            this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
+                        next: (res: LectureDTO) => {
+                            this.lectures.push(res.lecture);
+                            this.router.navigate(['course-management', res.lecture.course!.id, 'lectures', res.lecture.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
@@ -121,7 +121,6 @@ export class LectureComponent implements OnInit {
             )
             .subscribe({
                 next: (res: LectureDTO[]) => {
-                    console.log(res);
                     this.lectures = res.map((lectureDTO) => {
                         const lecture = lectureDTO.lecture;
                         lecture.channelName = lectureDTO.channelName;

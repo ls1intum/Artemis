@@ -88,18 +88,17 @@ public class LectureResource {
      */
     @PostMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> createLecture(@RequestBody LectureDTO lectureDTO) throws URISyntaxException {
+    public ResponseEntity<LectureDTO> createLecture(@RequestBody LectureDTO lectureDTO) throws URISyntaxException {
         Lecture lecture = lectureDTO.lecture();
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
-        // lecture.setChannel(createdChannel);
         Lecture savedLecture = lectureRepository.save(lecture);
         channelService.createLectureChannel(savedLecture, lectureDTO.channelName());
-
-        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
+        LectureDTO result = new LectureDTO(savedLecture, lectureDTO.channelName());
+        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(result);
     }
 
     /**
@@ -205,14 +204,9 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<LectureDTO> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithChannel(lectureId);
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
-        if (lectureChannel != null) {
-            lectureChannel.setLecture(null);
-            lectureChannel.setCreator(null);
-        }
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
-        assert lectureChannel != null;
         LectureDTO lectureDTO = new LectureDTO(lecture, lectureChannel.getName());
         return ResponseEntity.ok(lectureDTO);
     }
@@ -230,7 +224,7 @@ public class LectureResource {
      */
     @PostMapping("/lectures/import/{sourceLectureId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
+    public ResponseEntity<LectureDTO> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
@@ -245,7 +239,10 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
+        Channel createdChannel = channelService.createLectureChannel(result, result.getTitle());
+
+        LectureDTO lectureDTO = new LectureDTO(result, createdChannel.getName());
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(lectureDTO);
     }
 
     /**

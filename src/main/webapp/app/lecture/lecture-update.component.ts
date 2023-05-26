@@ -79,11 +79,10 @@ export class LectureUpdateComponent implements OnInit {
         this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
-            const lecture = data['lecture'].lecture;
+            const lecture = data['lecture']?.lecture;
+            const channelName = data['lecture']?.channelName;
             this.lecture = lecture ?? new Lecture();
-
-            this.channelName = lecture ? data['lecture'].channelName : '';
-
+            this.channelName = channelName || '';
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
