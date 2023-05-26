@@ -99,6 +99,7 @@
                         "confirmationQuestion": "Are you sure you want to unenroll from",
                         "reenrollmentNotPossible": "The course does not allow you to enroll again. This is an irreversible action.",
                         "reenrollmentPossible": "If you change your mind, the course will allow you to enroll again until:",
+                        "confirmationInput": "Enter the title of the course:",
                         "cancelButton": "Cancel",
                         "acceptButton": "Yes, I want to unenroll.",
                         "unenrollmentSuccessful": "Unenrollment successful"

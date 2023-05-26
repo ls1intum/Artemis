@@ -97,6 +97,7 @@
                         "confirmationQuestion": "Bist du dir sicher, dass du dich von folgendem Kurs ausschreiben möchtest:",
                         "reenrollmentNotPossible": "Der Kurs erlaubt dir nicht, dich erneut einzuschreiben. Dies ist eine endgültige Entscheidung.",
                         "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut anzumelden:",
+                        "confirmationInput": "Gib den Titel des Kurses ein:",
                         "cancelButton": "Abbruch",
                         "acceptButton": "Ja, ich möchte mich ausschreiben.",
                         "unenrollmentSuccessful": "Ausschreibung erfolgreich"
