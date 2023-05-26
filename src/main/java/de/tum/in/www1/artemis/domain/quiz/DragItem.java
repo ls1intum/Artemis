@@ -123,6 +123,9 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         }
     }
 
+    /**
+     * This method is called when deleting this entity. It makes sure that the corresponding file is deleted as well.
+     */
     @PostRemove
     public void onDelete() {
         // delete old file if necessary

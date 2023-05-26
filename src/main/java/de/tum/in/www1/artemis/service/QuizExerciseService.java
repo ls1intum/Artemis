@@ -116,7 +116,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * @param quizExercise         the changed quiz exercise from the client
      * @param originalQuizExercise the original quiz exercise (with statistics)
-     * @Param files the files that were uploaded
+     * @param files                the files that were uploaded
      * @return the updated quiz exercise with the changed statistics
      */
     public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @Nonnull List<MultipartFile> files) throws IOException {
@@ -220,20 +220,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param files        the provided files
      */
     public void handleDndQuizFileCreation(QuizExercise quizExercise, List<MultipartFile> files) throws IOException {
-        files = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(quizExercise, files, true);
-        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+        List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
+        validateQuizExerciseFiles(quizExercise, nullsafeFiles, true);
+        Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
 
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap, null);
                 }
-                for (var dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null) {
-                        saveDndDragItemPicture(dragItem, fileMap, null);
-                    }
-                }
+                handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
+            }
+        }
+    }
+
+    private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
+        for (var dragItem : dragAndDropQuestion.getDragItems()) {
+            if (dragItem.getPictureFilePath() != null) {
+                saveDndDragItemPicture(dragItem, fileMap, null);
             }
         }
     }
@@ -247,8 +251,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param files            the provided files
      */
     public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
-        files = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(updatedExercise, files, false);
+        List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
+        validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
         // Find old drag items paths
         Set<String> oldDragItemPaths = originalExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
                 .flatMap(question -> ((DragAndDropQuestion) question).getDragItems().stream()).map(DragItem::getPictureFilePath).filter(Objects::nonNull)
@@ -261,35 +265,40 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // Init files to remove with all old paths
         Set<String> filesToRemove = new HashSet<>(oldPaths);
 
-        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+        Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
 
         for (var question : updatedExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                String newBackgroundPath = dragAndDropQuestion.getBackgroundFilePath();
-
-                // Don't do anything if the path is null because it's getting removed
-                if (newBackgroundPath != null) {
-                    if (oldPaths.contains(newBackgroundPath)) {
-                        // Path didn't change
-                        filesToRemove.remove(dragAndDropQuestion.getBackgroundFilePath());
-                    }
-                    else {
-                        // Path changed and file was provided
-                        saveDndQuestionBackground(dragAndDropQuestion, fileMap, question.getId());
-                    }
-                }
-
-                for (var dragItem : dragAndDropQuestion.getDragItems()) {
-                    String newDragItemPath = dragItem.getPictureFilePath();
-                    if (dragItem.getPictureFilePath() != null && !oldPaths.contains(newDragItemPath)) {
-                        // Path changed and file was provided
-                        saveDndDragItemPicture(dragItem, fileMap, question.getId());
-                    }
-                }
+                handleDndQuestionUpdate(dragAndDropQuestion, oldPaths, filesToRemove, fileMap, dragAndDropQuestion);
             }
         }
 
         fileService.deleteFiles(filesToRemove.stream().map(Paths::get).collect(Collectors.toList()));
+    }
+
+    private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Set<String> oldPaths, Set<String> filesToRemove, Map<String, MultipartFile> fileMap,
+            DragAndDropQuestion questionUpdate) throws IOException {
+        String newBackgroundPath = dragAndDropQuestion.getBackgroundFilePath();
+
+        // Don't do anything if the path is null because it's getting removed
+        if (newBackgroundPath != null) {
+            if (oldPaths.contains(newBackgroundPath)) {
+                // Path didn't change
+                filesToRemove.remove(dragAndDropQuestion.getBackgroundFilePath());
+            }
+            else {
+                // Path changed and file was provided
+                saveDndQuestionBackground(dragAndDropQuestion, fileMap, questionUpdate.getId());
+            }
+        }
+
+        for (var dragItem : dragAndDropQuestion.getDragItems()) {
+            String newDragItemPath = dragItem.getPictureFilePath();
+            if (dragItem.getPictureFilePath() != null && !oldPaths.contains(newDragItemPath)) {
+                // Path changed and file was provided
+                saveDndDragItemPicture(dragItem, fileMap, questionUpdate.getId());
+            }
+        }
     }
 
     /**

@@ -173,13 +173,14 @@ public class QuizExerciseResource {
     /**
      * PUT /quiz-exercises/:exerciseId : Updates an existing quizExercise.
      *
+     * @param exerciseId       the id of the quizExercise to save
      * @param quizExercise     the quizExercise to update
      * @param files            the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
      */
-    @PutMapping(value = "/quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // TODO: Move in client
+    @PutMapping(value = "/quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
@@ -582,6 +583,7 @@ public class QuizExerciseResource {
      *
      * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise   the quizExercise to re-evaluate
+     * @param files          the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
@@ -607,9 +609,9 @@ public class QuizExerciseResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
 
-        files = files == null ? new ArrayList<>() : files;
+        List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
 
-        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, files);
+        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, nullsafeFiles);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         quizExercise.validateScoreSettings();
@@ -640,8 +642,8 @@ public class QuizExerciseResource {
      * entities will get cloned and assigned a new id.
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                             imported exercise, s.a. the title or difficulty
+     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param files            the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
      *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
@@ -668,14 +670,14 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        files = files != null ? files : new ArrayList<>();
+        List<MultipartFile> nullsafeFiles = files != null ? files : new ArrayList<>();
 
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
-        quizExerciseService.validateQuizExerciseFiles(importedExercise, files, false);
+        quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
+        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, nullsafeFiles);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }

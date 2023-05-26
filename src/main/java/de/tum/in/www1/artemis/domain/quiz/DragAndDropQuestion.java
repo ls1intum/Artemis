@@ -157,6 +157,9 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
     }
 
+    /**
+     * This method is called when deleting the entity. It makes sure that the corresponding file is deleted as well.
+     */
     @PostRemove
     public void onDelete() {
         // delete old file if necessary

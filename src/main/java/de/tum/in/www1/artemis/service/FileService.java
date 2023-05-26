@@ -504,6 +504,7 @@ public class FileService implements DisposableBean {
      *
      * @param originalFilename the original filename of the file (needed to determine the file type)
      * @param targetFolder     the folder where the new file should be created
+     * @param keepFileName     if true, the original filename will be kept, otherwise a new filename will be generated
      * @return the newly created file
      * @throws IOException if the file can't be generated.
      */
