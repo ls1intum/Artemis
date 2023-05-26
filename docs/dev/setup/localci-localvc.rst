@@ -75,7 +75,7 @@ You also need to configure further settings in the ``src/main/resources/config/a
 Start Artemis
 ^^^^^^^^^^^^^
 
-Start Artemis with the profiles ``localci``and ``localvc`` so that the correct adapters will be used,
+Start Artemis with the profiles ``localci`` and ``localvc`` so that the correct adapters will be used,
 e.g.:
 
 ::
