@@ -233,10 +233,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     get canUnenroll(): boolean {
-        if (!this.course || this.course.unenrollmentEnabled == undefined) {
-            return false;
-        }
-        return this.course.unenrollmentEnabled && dayjs().isBefore(this.course.unenrollmentEndDate);
+        return !!this.course?.unenrollmentEnabled && dayjs().isBefore(this.course?.unenrollmentEndDate);
     }
 
     /**
