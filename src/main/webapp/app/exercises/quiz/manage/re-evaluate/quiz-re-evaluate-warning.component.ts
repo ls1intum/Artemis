@@ -34,6 +34,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     quizExercise: QuizExercise;
     backUpQuiz: QuizExercise;
 
+    files: Map<string, File>;
+
     // Icons
     faBan = faBan;
     faSpinner = faSpinner;
@@ -250,7 +252,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     confirmChange(): void {
         this.busy = true;
 
-        this.quizReEvaluateService.update(this.quizExercise).subscribe({
+        this.quizReEvaluateService.update(this.quizExercise, this.files).subscribe({
             next: () => {
                 this.busy = false;
                 this.successful = true;

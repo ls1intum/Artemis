@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 @Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
@@ -9,9 +10,14 @@ export class QuizReEvaluateService {
 
     constructor(private http: HttpClient) {}
 
-    update(quizExercise: QuizExercise) {
+    update(quizExercise: QuizExercise, files: Map<string, Blob>) {
         const copy = QuizReEvaluateService.convert(quizExercise);
-        return this.http.put<QuizExercise>(this.resourceUrl + quizExercise.id + '/re-evaluate', copy, { observe: 'response' });
+        const formData = new FormData();
+        formData.append('exercise', objectToJsonBlob(copy));
+        files.forEach((file, fileName) => {
+            formData.append('files', file, fileName);
+        });
+        return this.http.put<QuizExercise>(this.resourceUrl + quizExercise.id + '/re-evaluate', formData, { observe: 'response' });
     }
 
     /**

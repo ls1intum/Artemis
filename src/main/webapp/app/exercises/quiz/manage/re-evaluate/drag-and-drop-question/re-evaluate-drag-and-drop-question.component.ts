@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 
 @Component({
     selector: 'jhi-re-evaluate-drag-and-drop-question',
@@ -27,6 +28,9 @@ export class ReEvaluateDragAndDropQuestionComponent {
      onMoveDown: '&'
      */
 
+    @ViewChild(DragAndDropQuestionEditComponent)
+    dragAndDropQuestionEditComponent: DragAndDropQuestionEditComponent;
+
     @Input()
     question: DragAndDropQuestion;
     @Input()
@@ -42,4 +46,12 @@ export class ReEvaluateDragAndDropQuestionComponent {
     questionMoveDown = new EventEmitter();
 
     constructor() {}
+
+    public getFiles(): Map<string, File> {
+        const files = this.dragAndDropQuestionEditComponent.newDragItemFiles;
+        if (this.dragAndDropQuestionEditComponent.question.backgroundFilePath && this.dragAndDropQuestionEditComponent.backgroundFile) {
+            files.set(this.dragAndDropQuestionEditComponent.question.backgroundFilePath, this.dragAndDropQuestionEditComponent.backgroundFile);
+        }
+        return files;
+    }
 }

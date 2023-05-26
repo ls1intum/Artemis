@@ -27,13 +27,13 @@ export class QuizQuestionListEditComponent {
     @Output() onQuestionDeleted = new EventEmitter<QuizQuestion>();
 
     @ViewChildren('editMultipleChoice')
-    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent>;
+    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent> = new QueryList<MultipleChoiceQuestionEditComponent>();
 
     @ViewChildren('editDragAndDrop')
-    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent>;
+    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent> = new QueryList<DragAndDropQuestionEditComponent>();
 
     @ViewChildren('editShortAnswer')
-    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
+    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent> = new QueryList<ShortAnswerQuestionEditComponent>();
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;

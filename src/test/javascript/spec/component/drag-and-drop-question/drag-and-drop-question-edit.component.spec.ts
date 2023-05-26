@@ -355,7 +355,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             const uploadFileSpy = jest.spyOn(uploadService, 'uploadFile');
             uploadFileSpy.mockReturnValue(mockReturnValue);
 
-            component.uploadDragItem();
+            component.createImageDragItem();
             tick();
 
             const expectedItem = component.question.dragItems![0];
@@ -369,28 +369,13 @@ describe('DragAndDropQuestionEditComponent', () => {
             uploadFileSpy.mockReturnValue(mockReturnValue);
             component.dragItemFile = new File([], 'file');
 
-            component.uploadDragItem();
+            component.createImageDragItem();
             tick();
         } catch (error) {
             expect(component.isUploadingDragItemFile).toBeFalse();
             // Once because spy has been called in first execution of uploadDragItem()
             expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         }
-    }));
-
-    it('should picture for drag item', fakeAsync(() => {
-        component.dragItemFile = new File([], 'file');
-        const newPath = 'alwaysGoYourPath';
-        const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-
-        component.uploadPictureForDragItemChange();
-        tick();
-
-        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.dragItemPicture).toBe(newPath);
-        expect(component.isUploadingDragItemFile).toBeFalse();
     }));
 
     it('should delete drag item', () => {

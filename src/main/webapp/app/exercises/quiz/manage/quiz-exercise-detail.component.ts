@@ -398,11 +398,22 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
         Exercise.sanitize(this.quizExercise);
 
+        const files: Map<string, File> = new Map();
+
+        this.quizQuestionsEditComponent.editDragAndDropQuestionComponents.forEach((component) => {
+            if (component.backgroundFile && component.question.backgroundFilePath) {
+                files.set(component.question.backgroundFilePath, component.backgroundFile);
+            }
+            component.newDragItemFiles.forEach((file, filePath) => {
+                files.set(filePath, file);
+            });
+        });
+
         this.isSaving = true;
         this.quizQuestionsEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
-                this.quizExerciseService.import(this.quizExercise).subscribe({
+                this.quizExerciseService.import(this.quizExercise, files).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         if (quizExerciseResponse.body) {
                             this.onSaveSuccess(quizExerciseResponse.body);
@@ -417,7 +428,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }
-                this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe({
+                this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         this.notificationText = undefined;
                         if (quizExerciseResponse.body) {
@@ -430,7 +441,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 });
             }
         } else {
-            this.quizExerciseService.create(this.quizExercise).subscribe({
+            this.quizExerciseService.create(this.quizExercise, files).subscribe({
                 next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);
