@@ -41,7 +41,7 @@ describe('Course Admin Service', () => {
         course.lectures = undefined;
         course.startDate = undefined;
         course.endDate = undefined;
-        course.learningGoals = [];
+        course.competencies = [];
         course.prerequisites = [];
         returnedFromService = { ...course } as Course;
     });
