@@ -6,15 +6,17 @@
     }
 
     .card-heading {
+        position: relative;
+        opacity: 1;
+        filter: alpha(opacity = 100);
         transition: 0.15s;
+        background-color: var(--background-color-for-hover) !important;
 
         &:hover {
-            background-color: rgba(62, 137, 204, 0.8) !important;
+            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 10%) !important;
         }
-        position: relative;
         display: flex;
         cursor: pointer;
-        height: 100px;
 
         > div {
             flex: 0 1 auto;
