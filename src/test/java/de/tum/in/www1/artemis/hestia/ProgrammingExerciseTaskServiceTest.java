@@ -182,7 +182,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
             .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
         programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
 
-        String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
+        String[] testCaseNames = { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
             var testCase = new ProgrammingExerciseTestCase();
             testCase.setExercise(programmingExercise);
@@ -193,7 +193,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
         var testCase = new ProgrammingExerciseTestCase();
         testCase.setExercise(programmingExercise);
-        testCase.setTestName( "testWithBraces()");
+        testCase.setTestName("testWithBraces()");
         testCase.setActive(false);
         programmingExerciseTestCaseRepository.save(testCase);
 

@@ -126,10 +126,10 @@ public class ProgrammingExerciseTaskService {
      * @param exerciseId of the programming exercise
      * @return Set of all tasks and its test cases
      */
-    public Set<ProgrammingExerciseTask> getTasksWithoutInactive(long exerciseId) {
+    public Set<ProgrammingExerciseTask> getTasksWithoutInactiveTestCases(long exerciseId) {
         return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId)
             .stream()
-            .peek(task -> task.setTestCases(task.getTestCases().stream().filter(ProgrammingExerciseTestCase::isActive).collect(Collectors.toSet())))
+            .peek(task -> task.getTestCases().removeIf(Predicate.not(ProgrammingExerciseTestCase::isActive)))
             .collect(Collectors.toSet());
     }
 
