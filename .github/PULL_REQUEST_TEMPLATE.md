@@ -85,7 +85,7 @@ Prerequisites:
 <!-- The line coverage must be above 90% for changes files and you must use extensive and useful assertions for server tests and expect statements for client tests. -->
 <!-- Note: Use the table below and confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->
 <!--       You can use `supporting_script/generate_code_cov_table/generate_code_cov_table.py` to automatically generate one from the corresponding Bamboo build plan artefacts. -->
-<!--       Remove rows with only trivial changed from the table. -->
+<!--       Remove rows with only trivial changes from the table. -->
 <!--
 | Class/File | Line Coverage | Confirmation (assert/expect) |
 |------------|--------------:|-----------------------------:|
