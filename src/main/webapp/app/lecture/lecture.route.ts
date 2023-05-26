@@ -14,21 +14,20 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
-import { LectureDTO } from 'app/entities/lecture-dto.model';
 
 @Injectable({ providedIn: 'root' })
-export class LectureResolve implements Resolve<LectureDTO> {
+export class LectureResolve implements Resolve<Lecture> {
     constructor(private lectureService: LectureService) {}
 
-    resolve(route: ActivatedRouteSnapshot): Observable<LectureDTO> {
+    resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
         const lectureId = route.params['lectureId'];
         if (lectureId) {
             return this.lectureService.find(lectureId).pipe(
-                filter((response: HttpResponse<LectureDTO>) => response.ok),
-                map((lecture: HttpResponse<LectureDTO>) => lecture.body!),
+                filter((response: HttpResponse<Lecture>) => response.ok),
+                map((lecture: HttpResponse<Lecture>) => lecture.body!),
             );
         }
-        return of(new LectureDTO());
+        return of(new Lecture());
     }
 }
 

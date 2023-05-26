@@ -12,7 +12,6 @@ import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { LectureDTO } from 'app/entities/lecture-dto.model';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -73,13 +72,13 @@ export class LectureComponent implements OnInit {
                 this.lectureService
                     .import(this.courseId, result.id!)
                     .pipe(
-                        filter((res: HttpResponse<LectureDTO>) => res.ok),
-                        map((res: HttpResponse<LectureDTO>) => res.body),
+                        filter((res: HttpResponse<Lecture>) => res.ok),
+                        map((res: HttpResponse<Lecture>) => res.body),
                     )
                     .subscribe({
-                        next: (res: LectureDTO) => {
-                            this.lectures.push(res.lecture);
-                            this.router.navigate(['course-management', res.lecture.course!.id, 'lectures', res.lecture.id]);
+                        next: (res: Lecture) => {
+                            this.lectures.push(res);
+                            this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
@@ -116,16 +115,12 @@ export class LectureComponent implements OnInit {
         this.lectureService
             .findAllByCourseId(this.courseId)
             .pipe(
-                filter((res: HttpResponse<LectureDTO[]>) => res.ok),
-                map((res: HttpResponse<LectureDTO[]>) => res.body),
+                filter((res: HttpResponse<Lecture[]>) => res.ok),
+                map((res: HttpResponse<Lecture[]>) => res.body),
             )
             .subscribe({
-                next: (res: LectureDTO[]) => {
-                    this.lectures = res.map((lectureDTO) => {
-                        const lecture = lectureDTO.lecture;
-                        lecture.channelName = lectureDTO.channelName;
-                        return lecture as Lecture;
-                    });
+                next: (res: Lecture[]) => {
+                    this.lectures = res;
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

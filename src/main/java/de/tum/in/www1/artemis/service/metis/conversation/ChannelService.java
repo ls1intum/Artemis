@@ -280,6 +280,7 @@ public class ChannelService {
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(String.format("Channel for %s exercise: %s", exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle()));
+        channelToCreate.setExercise(exercise);
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
@@ -317,12 +318,12 @@ public class ChannelService {
      * @param originalExercise the original exercise
      * @param updatedExercise  the updated exercise
      */
-    public void updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
-        // if (originalExercise.getChannel() == null || updatedExercise.getChannel() == null) {
-        // return;
-        // }
-        // Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
-        // updatedExercise.setChannel(updatedChannel);
+    public Channel updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
+        if (updatedExercise.getChannelName() == null) {
+            return null;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(originalExercise.getId());
+        return updateChannelName(channel, updatedExercise.getChannelName());
     }
 
     /**

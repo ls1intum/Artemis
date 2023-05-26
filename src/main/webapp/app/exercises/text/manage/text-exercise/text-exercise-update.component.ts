@@ -106,11 +106,10 @@ export class TextExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.textExercise.id == undefined && this.textExercise.channel == undefined) {
-                            this.textExercise.channel = new Channel();
-                            this.textExercise.channel.name = '';
+                        if (this.textExercise.id == undefined && this.textExercise.channelName == undefined) {
+                            this.textExercise.channelName = '';
                         }
-                        this.channelName = this.textExercise.channel?.name;
+                        this.channelName = this.textExercise.channelName;
 
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
@@ -188,8 +187,8 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        if (!this.isExamMode && this.textExercise.channel !== undefined) {
-            this.textExercise.channel.name = this.channelName;
+        if (!this.isExamMode && this.textExercise.channelName !== undefined) {
+            this.textExercise.channelName = this.channelName;
         }
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)

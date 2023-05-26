@@ -8,10 +8,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { LectureDTO } from 'app/entities/lecture-dto.model';
 
-type EntityResponseType = HttpResponse<LectureDTO>;
-type EntityArrayResponseType = HttpResponse<LectureDTO[]>;
+type EntityResponseType = HttpResponse<Lecture>;
+type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
@@ -24,18 +23,14 @@ export class LectureService {
         private entityTitleService: EntityTitleService,
     ) {}
 
-    create(lecture: Lecture, channelName: string): Observable<EntityResponseType> {
+    create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http
-            .post<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
-    update(lecture: Lecture, channelName: string | undefined): Observable<EntityResponseType> {
+    update(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http
-            .put<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http.put<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
@@ -54,8 +49,8 @@ export class LectureService {
             map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.lecture.posts === undefined) {
-                        res.body.lecture.posts = [];
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
@@ -71,8 +66,8 @@ export class LectureService {
             map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.lecture.posts === undefined) {
-                        res.body.lecture.posts = [];
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
@@ -160,11 +155,11 @@ export class LectureService {
     }
 
     protected convertLectureResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body?.lecture) {
-            res.body.lecture.startDate = convertDateFromServer(res.body.lecture.startDate);
-            res.body.lecture.endDate = convertDateFromServer(res.body.lecture.endDate);
-            if (res.body.lecture.lectureUnits) {
-                res.body.lecture.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lecture.lectureUnits);
+        if (res.body) {
+            res.body.startDate = convertDateFromServer(res.body.startDate);
+            res.body.endDate = convertDateFromServer(res.body.endDate);
+            if (res.body.lectureUnits) {
+                res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
             }
         }
         return res;
@@ -172,8 +167,8 @@ export class LectureService {
 
     protected convertLectureArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.map((lectureDTO: LectureDTO) => {
-                return this.convertLectureDatesFromServer(lectureDTO.lecture);
+            res.body.map((lecture: Lecture) => {
+                return this.convertLectureDatesFromServer(lecture);
             });
         }
         return res;
@@ -181,8 +176,8 @@ export class LectureService {
 
     private setAccessRightsLectureEntityArrayResponseType<ERT extends EntityArrayResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.forEach((lectureDTO: LectureDTO) => {
-                this.setAccessRightsLecture(lectureDTO.lecture);
+            res.body.forEach((lecture: Lecture) => {
+                this.setAccessRightsLecture(lecture);
             });
         }
         return res;

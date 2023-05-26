@@ -128,7 +128,7 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' }, 'test1');
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
     }));
 
     it('should create lecture in wizard mode', () => {
@@ -169,7 +169,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: '' }, '');
+        expect(createSpy).toHaveBeenCalledWith({ title: '', channelName: '' });
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(onLectureCreationSucceededSpy).toHaveBeenCalledOnce();
@@ -201,7 +201,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponentFixture.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' }, 'test1Updated');
+        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
     }));
 
     it('should switch to wizard mode', fakeAsync(() => {
@@ -279,7 +279,7 @@ describe('LectureUpdateComponent', () => {
         tick();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' }, 'test1');
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
         expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
 

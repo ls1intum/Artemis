@@ -56,12 +56,10 @@ public class TextExerciseImportService extends ExerciseImportService {
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
 
-        // if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
-        // Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
-        // newExercise.setChannel(createdChannel);
-        // }
-
-        textExerciseRepository.save(newExercise);
+        TextExercise newTextExercise = textExerciseRepository.save(newExercise);
+        if (newExercise.isCourseExercise()) {
+            channelService.createExerciseChannel(newTextExercise, importedExercise.getChannelName());
+        }
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }

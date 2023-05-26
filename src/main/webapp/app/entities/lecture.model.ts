@@ -4,7 +4,6 @@ import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export class Lecture implements BaseEntity {
     id?: number;
@@ -15,11 +14,11 @@ export class Lecture implements BaseEntity {
     attachments?: Attachment[];
     posts?: Post[];
 
-    channelName?: string;
     lectureUnits?: LectureUnit[];
     course?: Course;
 
     // helper attribute
+    channelName?: string;
     isAtLeastEditor?: boolean;
     isAtLeastInstructor?: boolean;
 
