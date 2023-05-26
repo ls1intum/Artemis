@@ -416,6 +416,10 @@
         {
             "fullName": "Rizky Riyaldhi",
             "photoDirectory": "public/images/about/Rizky_Riyaldhi.jpg"
+        },
+        {
+            "fullName": "Santiago Berrezueta, PhD.",
+            "photoDirectory": "public/images/about/Santiago_Berrezueta.jpg"
         }
     ]
 }
