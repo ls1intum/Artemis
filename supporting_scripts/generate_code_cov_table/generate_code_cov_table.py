@@ -57,7 +57,7 @@ def get_code_cov_report_url(username, password, key):
     try:
         return data["artifacts"]["artifact"][1]["link"]["href"] # second artifact is the code coverage report
     except IndexError:
-        logging.info(f"Code coverage report not found for {key}, please wait for the tests to finish and try again")
+        logging.warning(f"Code coverage report not found for {key}, please wait for the tests to finish and try again")
         sys.exit(1)
 
 
