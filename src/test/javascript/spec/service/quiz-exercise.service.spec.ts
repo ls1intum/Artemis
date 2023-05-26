@@ -62,7 +62,7 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined)));
+        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined), new Map<string, Blob>()));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -83,7 +83,7 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.update(expected));
+        const result = firstValueFrom(service.update(1, expected, new Map<string, Blob>()));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);

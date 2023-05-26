@@ -35,6 +35,8 @@ describe('DragAndDropQuestionEditComponent', () => {
     let component: DragAndDropQuestionEditComponent;
     let uploadService: FileUploaderService;
     let modalService: NgbModal;
+    let createObjectURLStub: jest.SpyInstance;
+    let questionUpdatedSpy: jest.SpyInstance;
 
     const question1 = new DragAndDropQuestion();
     question1.id = 1;
@@ -42,6 +44,28 @@ describe('DragAndDropQuestionEditComponent', () => {
     const question2 = new DragAndDropQuestion();
     question2.id = 2;
     question2.backgroundFilePath = '';
+    const question3 = new DragAndDropQuestion();
+    question3.id = 3;
+    question3.backgroundFilePath = 'this/is/a/fake/path/1/image.jpg';
+    question3.dragItems = [
+        { id: 1, pictureFilePath: 'this/is/a/fake/path/2/image.jpg', text: undefined } as DragItem,
+        { id: 2, pictureFilePath: 'this/is/a/fake/path/3/image.jpg', text: undefined } as DragItem,
+        { id: 3, pictureFilePath: 'this/is/a/fake/path/4/image.jpg', text: undefined } as DragItem,
+    ];
+    const question4 = new DragAndDropQuestion();
+    question4.id = 3;
+    question4.backgroundFilePath = 'this/is/a/fake/path/1/image.jpg';
+    question4.dragItems = [
+        { id: 1, pictureFilePath: undefined, text: 'Text1' } as DragItem,
+        { id: 2, pictureFilePath: undefined, text: 'Text2' } as DragItem,
+        { id: 3, pictureFilePath: undefined, text: 'Text3' } as DragItem,
+    ];
+
+    const createObjectURLBackup = window.URL.createObjectURL;
+
+    beforeAll(() => {
+        window.URL.createObjectURL = jest.fn();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -67,10 +91,14 @@ describe('DragAndDropQuestionEditComponent', () => {
         component = fixture.componentInstance;
         uploadService = TestBed.inject(FileUploaderService);
         modalService = TestBed.inject(NgbModal);
+        questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        createObjectURLStub = jest.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
+            return 'some/client/dependent/path/' + file.name;
+        });
     });
 
     beforeEach(fakeAsync(() => {
-        component.question = question1;
+        component.question = clone(question1);
         component.questionIndex = 1;
         component.reEvaluationInProgress = false;
 
@@ -82,14 +110,18 @@ describe('DragAndDropQuestionEditComponent', () => {
         jest.restoreAllMocks();
     });
 
+    afterAll(() => {
+        window.URL.createObjectURL = createObjectURLBackup;
+    });
+
     it('should initialize', () => {
         expect(component.isQuestionCollapsed).toBeFalse();
-        expect(component.isUploadingDragItemFile).toBeFalse();
+        expect(component.newDragItemFiles).toEqual(new Map<string, File>());
+        expect(component.dragItemFilesPreviewPath).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
     });
 
     it('should detect changes and update component', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         triggerChanges(component, { property: 'question', currentValue: question2, previousValue: question1 });
 
         fixture.detectChanges();
@@ -113,42 +145,17 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should set background file', () => {
-        const file1 = { name: 'newFile1' };
-        const file2 = { name: 'newFile2' };
+        const file1 = { name: 'newFile1.jpg' };
+        const file2 = { name: 'newFile2.png' };
         const event = { target: { files: [file1, file2] } };
-        const newPath = 'alwaysGoYourPath';
-        const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
 
         component.setBackgroundFile(event);
 
         expect(component.backgroundFile).toEqual(file1);
-        expect(component.backgroundFileName).toBe(file1.name);
-
-        component.uploadBackground();
+        expect(component.backgroundFilePath).toEndWith(file1.name);
+        expect(component.question.backgroundFilePath).toEndWith('.jpg');
+        expect(createObjectURLStub).toHaveBeenCalledOnceWith(file1);
     });
-
-    it('should upload file', fakeAsync(() => {
-        const file1 = { name: 'newFile1' };
-        const file2 = { name: 'newFile2' };
-        const event = { target: { files: [file1, file2] } };
-
-        component.setBackgroundFile(event);
-
-        expect(component.backgroundFile).toEqual(file1);
-        expect(component.backgroundFileName).toBe(file1.name);
-
-        const newPath = 'alwaysGoYourPath';
-        const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
-
-        component.uploadBackground();
-        tick();
-
-        expect(component.backgroundFile).toBeUndefined();
-        expect(component.question.backgroundFilePath).toBe(newPath);
-        expect(component.isUploadingBackgroundFile).toBeFalse();
-    }));
 
     it('should move the mouse in different situations', () => {
         const event1 = { pageX: 10, pageY: 10 };
@@ -212,8 +219,6 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should move mouse up', () => {
         component.draggingState = DragState.MOVE;
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-
         component.mouseUp();
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
@@ -323,60 +328,37 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should add text item', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-        const dragItem = new DragItem();
-        dragItem.text = 'Text';
-
         component.addTextDragItem();
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        const firstDragItemOfQuestion = component.question.dragItems![0];
-        expect(firstDragItemOfQuestion.text).toBe('Text');
+        expect(component.question.dragItems).toBeArrayOfSize(1);
+        const newDragItemOfQuestion = component.question.dragItems![0];
+        expect(newDragItemOfQuestion.text).toBe('Text');
+        expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
+        expect(component.dragItemFilesPreviewPath.size).toBe(0);
+        expect(component.newDragItemFiles.size).toBe(0);
     });
 
-    it('should set drag item text', () => {
-        const file1 = { name: 'newDragFile1' };
-        const file2 = { name: 'newDragFile2' };
-        const event = { target: { files: [file1, file2] } };
+    it('should create image item', () => {
+        const extension = 'png';
+        const fileName = 'testFile.' + extension;
+        const expectedPath = 'some/client/dependent/path/' + fileName;
+        const file = new File([], fileName);
 
-        component.setDragItemFile(event);
+        component.createImageDragItem({ target: { files: [file] } });
 
-        expect(component.dragItemFile).toEqual(file1);
-        expect(component.dragItemFileName).toBe('newDragFile1');
+        // expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.question.dragItems).toBeArrayOfSize(1);
+        const newDragItemOfQuestion = component.question.dragItems![0];
+        expect(newDragItemOfQuestion.text).toBeUndefined();
+        expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
+        expect(newDragItemOfQuestion.pictureFilePath).toEndWith('.' + extension);
+        const filePath = newDragItemOfQuestion.pictureFilePath!;
+        expect(component.dragItemFilesPreviewPath.size).toBe(1);
+        expect(component.dragItemFilesPreviewPath.get(filePath)).toBe(expectedPath);
+        expect(component.newDragItemFiles.size).toBe(1);
+        expect(component.newDragItemFiles.get(filePath)).toBe(file);
     });
-
-    it('should upload drag item', fakeAsync(() => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-        try {
-            component.dragItemFile = new File([], 'file');
-
-            const newPath = 'alwaysGoYourPath';
-            let mockReturnValue = Promise.resolve({ path: newPath });
-            const uploadFileSpy = jest.spyOn(uploadService, 'uploadFile');
-            uploadFileSpy.mockReturnValue(mockReturnValue);
-
-            component.createImageDragItem();
-            tick();
-
-            const expectedItem = component.question.dragItems![0];
-            expect(expectedItem!.pictureFilePath).toBe('alwaysGoYourPath');
-            expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-            expect(component.dragItemFileName).toBe('');
-            expect(component.dragItemFile).toBeUndefined();
-            jest.restoreAllMocks();
-
-            mockReturnValue = Promise.reject({ path: newPath });
-            uploadFileSpy.mockReturnValue(mockReturnValue);
-            component.dragItemFile = new File([], 'file');
-
-            component.createImageDragItem();
-            tick();
-        } catch (error) {
-            expect(component.isUploadingDragItemFile).toBeFalse();
-            // Once because spy has been called in first execution of uploadDragItem()
-            expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        }
-    }));
 
     it('should delete drag item', () => {
         const item = new DragItem();
@@ -403,7 +385,6 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should drop a drag item on a drop location', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         const location = new DropLocation();
         const item = new DragItem();
         item.id = 2;
@@ -435,30 +416,64 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should change picture drag item to text drag item', () => {
-        const item = new DragItem();
-        const componentClone = clone(component);
+        component.question = question3;
+        component.ngOnInit();
+        component.ngAfterViewInit();
 
-        component.changeToTextDragItem(item);
+        component.changeToTextDragItem(component.question.dragItems![1]);
 
-        expect(component).toStrictEqual(componentClone);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.dragItemFilesPreviewPath.size).toBe(2);
+        expect(component.newDragItemFiles.size).toBe(0);
+        expect(component.question.dragItems![0]).toContainAllEntries([
+            ['id', 1],
+            ['pictureFilePath', 'this/is/a/fake/path/2/image.jpg'],
+            ['text', undefined],
+        ]);
+        expect(component.question.dragItems![1]).toContainAllEntries([
+            ['id', 2],
+            ['pictureFilePath', undefined],
+            ['text', 'Text'],
+        ]);
+        expect(component.question.dragItems![2]).toContainAllEntries([
+            ['id', 3],
+            ['pictureFilePath', 'this/is/a/fake/path/4/image.jpg'],
+            ['text', undefined],
+        ]);
     });
 
-    it('should change text drag item to picture drag item', fakeAsync(() => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
-        const newPath = 'alwaysGoYourPath';
-        const mockReturnValue = Promise.resolve({ path: newPath } as FileUploadResponse);
-        jest.spyOn(uploadService, 'uploadFile').mockReturnValue(mockReturnValue);
-        const item = new DragItem();
-        component.dragItemFile = new File([], 'file');
-        component.dragItemPicture = 'picturePath';
+    it('should change text drag item to picture drag item', () => {
+        component.question = question4;
+        component.ngOnInit();
+        component.ngAfterViewInit();
 
-        component.changeToPictureDragItem(item);
-        tick();
+        const extension = 'png';
+        const fileName = 'testFile.' + extension;
+        const expectedPath = 'some/client/dependent/path/' + fileName;
+        const file = new File([], fileName);
 
-        expect(component.dragItemPicture).toBe(newPath);
+        component.changeToPictureDragItem(component.question.dragItems![1], { target: { files: [file] } });
+
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.isUploadingDragItemFile).toBeFalse();
-    }));
+        expect(component.question.dragItems![0]).toContainAllEntries([
+            ['id', 1],
+            ['pictureFilePath', undefined],
+            ['text', 'Text1'],
+        ]);
+        expect(component.question.dragItems![2]).toContainAllEntries([
+            ['id', 3],
+            ['pictureFilePath', undefined],
+            ['text', 'Text3'],
+        ]);
+        expect(component.question.dragItems![1].text).toBeUndefined();
+        expect(component.question.dragItems![1].pictureFilePath).toBeDefined();
+        expect(component.question.dragItems![1].pictureFilePath).toEndWith('.' + extension);
+        const filePath = component.question.dragItems![1].pictureFilePath!;
+        expect(component.dragItemFilesPreviewPath.size).toBe(1);
+        expect(component.dragItemFilesPreviewPath.get(filePath)).toBe(expectedPath);
+        expect(component.newDragItemFiles.size).toBe(1);
+        expect(component.newDragItemFiles.get(filePath)).toBe(file);
+    });
 
     it('should change question title', () => {
         const title = 'backupQuestionTitle';
@@ -547,7 +562,6 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should detect changes in markdown and edit accordingly', () => {
-        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         component.question = new DragAndDropQuestion();
         component.question.text = 'should be removed';
 

@@ -46,17 +46,13 @@ describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
-    let examManagementService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
-    let fileUploaderService: FileUploaderService;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let router: Router;
     let alertService: AlertService;
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     let shortAnswerQuestionUtil: ShortAnswerQuestionUtil;
-    let changeDetector: ChangeDetectorRef;
-    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -170,17 +166,13 @@ describe('QuizExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
-        fileUploaderService = TestBed.inject(FileUploaderService);
         alertService = fixture.debugElement.injector.get(AlertService);
         dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
         shortAnswerQuestionUtil = fixture.debugElement.injector.get(ShortAnswerQuestionUtil);
-        changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
     };
 
     describe('onInit', () => {
@@ -996,12 +988,14 @@ describe('QuizExercise Management Detail Component', () => {
         describe('saving', () => {
             let quizExerciseServiceCreateStub: jest.SpyInstance;
             let quizExerciseServiceUpdateStub: jest.SpyInstance;
-            let exerciseStub: jest.SpyInstance;
+            let exerciseSanitizeSpy: jest.SpyInstance;
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
-                comp.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
-                jest.spyOn(comp.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
+                if (comp.courseId) {
+                    comp.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
+                    jest.spyOn(comp.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
+                }
                 comp.save();
             };
 
@@ -1015,13 +1009,15 @@ describe('QuizExercise Management Detail Component', () => {
             };
 
             beforeEach(() => {
+                comp.course = course;
+                comp.courseId = course.id!;
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 quizExerciseServiceCreateStub = jest.spyOn(quizExerciseService, 'create');
                 quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceUpdateStub = jest.spyOn(quizExerciseService, 'update');
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                exerciseStub = jest.spyOn(Exercise, 'sanitize');
+                exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
             });
 
             afterEach(() => {
@@ -1031,7 +1027,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should call create if valid and quiz exercise no id', () => {
                 comp.quizExercise.id = undefined;
                 saveQuizWithPendingChangesCache();
-                expect(exerciseStub).toHaveBeenCalledWith(comp.quizExercise);
+                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
             });
@@ -1040,7 +1036,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise.testRunParticipationsExist = true;
                 comp.isExamMode = true;
                 saveQuizWithPendingChangesCache();
-                expect(exerciseStub).not.toHaveBeenCalledWith(comp.quizExercise);
+                expect(exerciseSanitizeSpy).not.toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalledWith(comp.quizExercise, {});
@@ -1048,17 +1044,16 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should update if valid and quiz exercise has id', () => {
                 saveQuizWithPendingChangesCache();
-                expect(exerciseStub).toHaveBeenCalledWith(comp.quizExercise);
+                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledOnce();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise, {});
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledOnceWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), {});
             });
 
             it('should not save if not valid', () => {
                 comp.quizIsValid = false;
                 comp.pendingChangesCache = true;
                 comp.save();
-                expect(exerciseStub).not.toHaveBeenCalled();
+                expect(exerciseSanitizeSpy).not.toHaveBeenCalled();
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
             });
@@ -1066,7 +1061,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should call update with notification text if there is one', () => {
                 comp.notificationText = 'test';
                 saveQuizWithPendingChangesCache();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise, { notificationText: 'test' });
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), { notificationText: 'test' });
             });
 
             it('should call alert service if response has no body on update', () => {
