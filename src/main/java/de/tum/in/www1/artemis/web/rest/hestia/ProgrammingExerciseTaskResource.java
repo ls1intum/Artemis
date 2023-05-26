@@ -55,7 +55,7 @@ public class ProgrammingExerciseTaskResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithoutInactive(exerciseId);
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithoutInactiveTestCases(exerciseId);
 
         return ResponseEntity.ok(tasks);
     }

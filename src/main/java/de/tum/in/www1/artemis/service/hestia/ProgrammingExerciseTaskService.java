@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -127,10 +128,8 @@ public class ProgrammingExerciseTaskService {
      * @return Set of all tasks and its test cases
      */
     public Set<ProgrammingExerciseTask> getTasksWithoutInactiveTestCases(long exerciseId) {
-        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId)
-            .stream()
-            .peek(task -> task.getTestCases().removeIf(Predicate.not(ProgrammingExerciseTestCase::isActive)))
-            .collect(Collectors.toSet());
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId).stream()
+                .peek(task -> task.getTestCases().removeIf(Predicate.not(ProgrammingExerciseTestCase::isActive))).collect(Collectors.toSet());
     }
 
     /**

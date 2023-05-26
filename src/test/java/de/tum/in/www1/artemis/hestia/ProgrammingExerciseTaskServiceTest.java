@@ -177,7 +177,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getTasksWithoutInactiveFiltersOutInactive() {
         programmingExercise = programmingExerciseRepository
-            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
         programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
@@ -196,13 +196,13 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         programmingExerciseTestCaseRepository.save(testCase);
 
         programmingExercise = programmingExerciseRepository
-            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
 
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
                 """);
 
-        var actualTasks = programmingExerciseTaskService.getTasksWithoutInactive(programmingExercise.getId());
+        var actualTasks = programmingExerciseTaskService.getTasksWithoutInactiveTestCases(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
 
         var actualTestCases = actualTasks.stream().findFirst().get().getTestCases();
