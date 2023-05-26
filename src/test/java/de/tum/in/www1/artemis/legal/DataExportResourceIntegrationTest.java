@@ -247,7 +247,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectExamContent() throws Exception {
-        prepareExamDataForDataExportCreation("shortExam");
+        prepareExamDataForDataExportCreation("exam");
         var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         var dataExport = request.putWithResponseBody("/api/" + userForExport.getId() + "/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -258,7 +258,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         // extract zip file and check content
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "shortExam");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false));
