@@ -206,9 +206,9 @@ public class CourseResource {
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
 
-        courseUpdate.validateRegistrationConfirmationMessage();
+        courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
-        courseUpdate.validateOnlineCourseAndRegistrationEnabled();
+        courseUpdate.validateOnlineCourseAndEnrollmentEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         if (!courseUpdate.isValidStartAndEndDate()) {
@@ -285,20 +285,20 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
+     * POST /courses/{courseId}/enroll : Enroll in an existing course. This method enrolls the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
      * database.
      *
      * @param courseId to find the course
-     * @return response entity for user who has been registered to the course
+     * @return response entity for user who has been enrolled in the course
      */
-    @PostMapping("courses/{courseId}/register")
+    @PostMapping("courses/{courseId}/enroll")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<User> enrollInCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
-        courseService.registerUserForCourseOrThrow(user, course);
+        log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
+        courseService.enrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -375,41 +375,41 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/{courseId}/for-registration : get a course by id if the course allows registration and is currently active.
+     * GET /courses/{courseId}/for-enrollment : get a course by id if the course allows enrollment and is currently active.
      *
      * @param courseId the id of the course to retrieve
      * @return the active course
      */
-    @GetMapping("courses/{courseId}/for-registration")
+    @GetMapping("courses/{courseId}/for-enrollment")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
-        log.debug("REST request to get a currently active course for registration");
+    public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
+        log.debug("REST request to get a currently active course for enrollment");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+        authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
     }
 
     /**
-     * GET /courses/for-registration : get all courses that the current user can register to.
-     * Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-enrollment : get all courses that the current user can enroll in.
+     * Decided by the start and end date and if the enrollmentEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
-    @GetMapping("courses/for-registration")
+    @GetMapping("courses/for-enrollment")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForRegistration() {
+    public List<Course> getAllCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
-        Set<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
-        // check whether registration is actually possible for each of the courses
-        return allCoursesToPotentiallyRegister.stream().filter(course -> {
-            boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
-            return authCheckService.isUserAllowedToSelfRegisterForCourse(user, course) && !isAlreadyInCourse;
+        Set<Course> allEnrolledCourses = courseService.findAllActiveForUser(user);
+        List<Course> allCoursesToPotentiallyEnroll = courseRepository.findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites();
+        // check whether enrollment is actually possible for each of the courses
+        return allCoursesToPotentiallyEnroll.stream().filter(course -> {
+            boolean isAlreadyInCourse = allEnrolledCourses.contains(course);
+            return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
         }).toList();
     }
 
@@ -431,16 +431,16 @@ public class CourseResource {
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user, refresh);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            // user might be allowed to register for the course
-            // We need the course with organizations so that we can check if the user is allowed to register
+            // user might be allowed to enroll in the course
+            // We need the course with organizations so that we can check if the user is allowed to enroll
             course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
-                // suppress error alert with skipAlert: true so that the client can redirect to the registration page
-                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
-                        "noAccessButCouldRegister", true);
+            if (authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)) {
+                // suppress error alert with skipAlert: true so that the client can redirect to the enrollment page
+                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
+                        "noAccessButCouldEnroll", true);
             }
             else {
-                // user is not even allowed to self-register
+                // user is not even allowed to self-enroll
                 // just normally throw the access forbidden exception
                 throw new AccessForbiddenException(ENTITY_NAME, courseId);
             }

@@ -50,7 +50,7 @@ describe('LectureAttachmentsComponent', () => {
             endDate: dayjs('2019-06-15T16:11:14+02:00'),
             onlineCourse: false,
             color: '#691b0b',
-            registrationEnabled: false,
+            enrollmentEnabled: false,
         },
     } as Lecture;
 
