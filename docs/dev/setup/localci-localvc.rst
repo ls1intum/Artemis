@@ -48,7 +48,7 @@ You can then use that admin user to create further users in Artemis' internal us
 Configure Jira
 ^^^^^^^^^^^^^^
 
-The local CI and local VC systems work fine without external user management configured so this step is optional.
+The local CI and local VC systems work fine without external user management configured so this step is **optional**.
 Setting up Jira allows you to run a script that sets up a number of users and groups for you.
 
 If you have already set up your system with Bamboo, Bitbucket, and Jira, you can keep using Jira for user management. Just stop the Bamboo and Bitbucket containers.
