@@ -105,7 +105,10 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         <span *ngIf="value">
-                            <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
+                            <a *ngIf="!localVCEnabled; else copyUrlButton" href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
+                            <ng-template #copyUrlButton>
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(row, value)"></jhi-clone-repo-button>
+                            </ng-template>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>
@@ -119,9 +122,12 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-row="row">
                         <span *ngIf="row">
-                            <a href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
+                            <a *ngIf="!localVCEnabled; else plainBuildPlanId" href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
                                 {{ row.buildPlanId }}
                             </a>
+                            <ng-template #plainBuildPlanId>
+                                {{ row.buildPlanId }}
+                            </ng-template>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>
