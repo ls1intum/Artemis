@@ -179,7 +179,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
+        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).get();
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
@@ -188,7 +188,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
+        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).get();
         var newTutorialGroup = new TutorialGroup();
         newTutorialGroup.setCourse(course);
         newTutorialGroup.setTitle(generateRandomTitle());
