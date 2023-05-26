@@ -13,12 +13,12 @@ import { Overlay } from '@angular/cdk/overlay';
 export class ExerciseChatbotComponent implements OnDestroy {
     public chatAccepted = 'false';
     public buttonDisabled = false;
-    private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
-    private chatOpen = false;
+    dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
+    chatOpen = false;
     // Icons
     faCommentDots = faCommentDots;
 
-    constructor(private dialog: MatDialog, private overlay: Overlay) {}
+    constructor(public dialog: MatDialog, private overlay: Overlay) {}
 
     ngOnDestroy() {
         if (this.dialogRef) {
@@ -27,7 +27,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
     }
 
     handleButtonClick() {
-        if (this.chatOpen) {
+        if (this.chatOpen && this.dialogRef) {
             this.dialogRef!.close();
             this.chatOpen = false;
         } else if (this.chatAccepted === 'true') {
