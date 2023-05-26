@@ -9,13 +9,14 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
+
 /**
  * A data export for user data
  **/
 @Entity
 @Table(name = "data_export")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DataExport extends DomainObject {
 

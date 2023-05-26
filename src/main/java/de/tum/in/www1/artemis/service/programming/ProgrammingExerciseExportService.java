@@ -509,9 +509,9 @@ public class ProgrammingExerciseExportService {
     /**
      * Zip the participations of programming exercises of a requested list of students separately.
      *
-     * @param programmingExercise     The programming exercise
-     * @param participations          Participations that should be exported
-     * @param repositoryExportOptions The options that should be used for the export
+     * @param programmingExercise     the programming exercise
+     * @param participations          participations that should be exported
+     * @param repositoryExportOptions the options that should be used for the export
      * @param workingDir              The directory used to clone the repositories
      * @param outputDir               The directory used for store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
@@ -601,8 +601,8 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir               The directory used for storing the zip file
      * @param workingDir              The directory used to clone the repository
+     * @param outputDir               The directory where the zip file is stored
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */

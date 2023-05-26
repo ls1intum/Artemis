@@ -11,8 +11,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
@@ -22,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
@@ -63,7 +62,7 @@ public class DataExportService {
 
     private long userId;
 
-    @Value("${artemis.data-export-path}")
+    @Value("${artemis.data-export-path:./data-exports}")
     private Path dataExportPath;
 
     @Value("${artemis.repo-download-clone-path}")
@@ -91,8 +90,8 @@ public class DataExportService {
 
     private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
 
-    // nullable in the constructor (implies optional dependency) because otherwise the application doesn't start if the apollon profile is not set.
-    private final ApollonConversionService apollonConversionService;
+    // Optional because otherwise the application doesn't start if the apollon profile is not set
+    private final Optional<ApollonConversionService> apollonConversionService;
 
     private Path workingDirectory;
 
@@ -111,7 +110,7 @@ public class DataExportService {
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
             QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, @Nullable ApollonConversionService apollonConversionService,
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
@@ -160,7 +159,6 @@ public class DataExportService {
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport = dataExportRepository.save(dataExport);
         return dataExport;
-
     }
 
     /**
@@ -169,8 +167,10 @@ public class DataExportService {
      * @param userId       the id of the user for which to download the data export
      * @param dataExportId the id of the data export to download
      * @return the file path where the data export is stored
+     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
+     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    public String downloadDataExport(long userId, long dataExportId) {
+    public Path downloadDataExport(long userId, long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         var user = userRepository.findByIdElseThrow(userId);
         // check data export belongs to specified user
@@ -186,8 +186,7 @@ public class DataExportService {
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
-        return dataExport.getFilePath();
-
+        return Path.of(dataExport.getFilePath());
     }
 
     /**
@@ -197,9 +196,7 @@ public class DataExportService {
      * @param user the user for which to create the data export
      * @return the path to the created data export
      **/
-
     private Path createDataExport(User user) throws IOException {
-        this.userId = user.getId();
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
         var posts = postRepository.findPostsByAuthorId(userId);
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
@@ -230,7 +227,6 @@ public class DataExportService {
         }
         addGeneralUserInformation(user);
         return createDataExportZipFile(user.getLogin());
-
     }
 
     private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
@@ -371,7 +367,7 @@ public class DataExportService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
         List<String> exportRepoErrors = new ArrayList<>();
-        var tempRepoWorkingDir = Files.createTempDirectory(repoClonePath, "repo");
+        var tempRepoWorkingDir = fileService.getUniquePath(repoClonePath.toString());
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, exportRepoErrors);
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
@@ -489,11 +485,14 @@ public class DataExportService {
                 int start = matcher.start();
                 int end = matcher.end();
                 String replacement;
-                if (entry.getValue().isIsCorrect()) {
+                if (entry.getValue().isIsCorrect() != null && entry.getValue().isIsCorrect()) {
                     replacement = entry.getValue().getText() + " (Correct)";
                 }
-                else {
+                else if (entry.getValue().isIsCorrect() != null && !entry.getValue().isIsCorrect()) {
                     replacement = entry.getValue().getText() + " (Incorrect)";
+                }
+                else {
+                    replacement = entry.getValue().getText();
                 }
                 stringBuilder.replace(start, end, replacement);
                 matcher = pattern.matcher(stringBuilder);
@@ -513,13 +512,15 @@ public class DataExportService {
     }
 
     private void createCommunicationExport(List<Post> posts, List<AnswerPost> answerPosts, List<Reaction> reactions, long courseId, Path courseDir) throws IOException {
-        var postsInCourse = posts.stream().filter(post -> courseId == post.getCoursePostingBelongsTo().getId()).toList();
-        var answerPostsInCourse = answerPosts.stream().filter(answerPost -> courseId == answerPost.getCoursePostingBelongsTo().getId()).toList();
-        var postReactionsInCourse = reactions.stream().filter(reaction -> reaction.getPost() != null)
+        var postsInCourse = posts.stream().filter(post -> post.getCoursePostingBelongsTo() != null).filter(post -> courseId == post.getCoursePostingBelongsTo().getId()).toList();
+        var answerPostsInCourse = answerPosts.stream().filter(post -> post.getCoursePostingBelongsTo() != null)
+                .filter(answerPost -> courseId == answerPost.getCoursePostingBelongsTo().getId()).toList();
+        var postReactionsInCourse = reactions.stream().filter(reaction -> reaction.getPost() != null).filter(reaction -> reaction.getPost().getCoursePostingBelongsTo() != null)
                 .filter(reaction -> courseId == reaction.getPost().getCoursePostingBelongsTo().getId()).toList();
         var answerPostReactionsInCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
+                .filter(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo() != null)
                 .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
-        String[] headers = { "content/emoji", "creation date" };
+        String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.println();
@@ -534,17 +535,17 @@ public class DataExportService {
             printer.println();
             printer.println();
             for (var answerPost : answerPostsInCourse) {
-                printer.printRecord(answerPost.getContent(), answerPost.getCreationDate());
+                printer.printRecord(answerPost.getContent(), answerPost.getCreationDate(), answerPost.getPost().getContent());
             }
             printer.println();
             printer.print("Reactions");
             printer.println();
             printer.println();
             for (var reaction : postReactionsInCourse) {
-                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
+                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate(), reaction.getPost().getContent());
             }
             for (var reaction : answerPostReactionsInCourse) {
-                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
+                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate(), reaction.getAnswerPost().getContent());
             }
 
             printer.flush();
@@ -558,12 +559,12 @@ public class DataExportService {
             log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
             return;
         }
-        if (apollonConversionService == null) {
+        if (apollonConversionService.isEmpty()) {
             log.warn("Cannot include modeling submission content in data export because apollon profile is not active");
             return;
         }
 
-        try (var modelAsPdf = apollonConversionService.convertModel(modelingSubmission.getModel())) {
+        try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
             Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
         }
 
@@ -583,8 +584,11 @@ public class DataExportService {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
-                resultScoreAndFeedbacks.append("Score of submission: ").append(result.getScore()).append("%").append(" ")
-                        .append(result.getScore() * submission.getParticipation().getExercise().getMaxPoints() / 100).append(" Points").append("\n");
+                var score = result.getScore();
+                if (score != null) {
+                    resultScoreAndFeedbacks.append("Score of submission: ").append(score).append("%").append(" ")
+                            .append(score * submission.getParticipation().getExercise().getMaxPoints() / 100).append(" Points").append("\n");
+                }
                 if (submission instanceof ProgrammingSubmission && result.getPassedTestCaseCount() != null && result.getTestCaseCount() != null && result.getTestCaseCount() > 0) {
                     resultScoreAndFeedbacks.append("Passed test cases: ").append(result.getPassedTestCaseCount()).append("/").append(result.getTestCaseCount()).append("\n");
                 }
@@ -691,19 +695,10 @@ public class DataExportService {
 
     private Stream<?> getSubmissionStreamToPrint(Submission submission) {
         var builder = Stream.builder();
-        builder.add(submission.getId()).add(submission.getSubmissionDate()).add(submission.getType()).add(submission.getDurationInMinutes());
+        builder.add(submission.getId()).add(submission.getSubmissionDate());
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
             builder.add(programmingSubmission.getCommitHash());
 
-        }
-        else if (submission instanceof TextSubmission textSubmission) {
-            builder.add(textSubmission.getText());
-        }
-        else if (submission instanceof ModelingSubmission modelingSubmission) {
-            builder.add(modelingSubmission.getModel());
-        }
-        else if (submission instanceof QuizSubmission quizSubmission) {
-            builder.add(quizSubmission.getScoreInPoints());
         }
         return builder.build();
     }

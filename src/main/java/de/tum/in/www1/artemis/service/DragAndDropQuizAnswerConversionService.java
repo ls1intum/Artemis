@@ -40,16 +40,20 @@ public class DragAndDropQuizAnswerConversionService {
         this.fileService = fileService;
     }
 
+    /**
+     * Generates a pdf file of the submitted answer for a drag and drop quiz question.
+     *
+     * @param dragAndDropSubmittedAnswer the submitted answer
+     * @param outputDir                  the directory where the pdf file will be stored
+     */
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
         BufferedImage backgroundImage = ImageIO.read(new File(fileService.actualPathForPublicPath(backgroundFilePath)));
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer);
-        Path dndSubmissionPathImg = outputDir.resolve(
-                "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".png");
-        Path dndSubmissionPathPdf = Path.of(dndSubmissionPathImg.toString().replace(".png", ".pdf"));
-        // ImageIO.write(backgroundImage, "PNG", dndSubmissionPathImg.toFile());
+        Path dndSubmissionPathPdf = outputDir.resolve(
+                "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".pdf");
         storeSubmissionAsPdf(backgroundImage, dndSubmissionPathPdf);
     }
 
@@ -97,14 +101,13 @@ public class DragAndDropQuizAnswerConversionService {
             graphics.drawRect(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
 
             graphics.setColor(Color.BLACK);
-            int dropLocationMidX = dropLocationX + dropLocationWidth / 3;
             int dropLocationMidY = dropLocationY + dropLocationHeight / 2;
             Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
             for (var mapping : mappings) {
                 if (dropLocation.equals(mapping.getDropLocation())) {
                     if (mapping.getDragItem().getPictureFilePath() == null) {
                         graphics.setFont(new Font("Arial", Font.PLAIN, 20));
-                        graphics.drawString(mapping.getDragItem().getText(), dropLocationMidX, dropLocationMidY);
+                        graphics.drawString(mapping.getDragItem().getText(), dropLocationX + 2, dropLocationMidY);
                     }
                     else {
                         BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));

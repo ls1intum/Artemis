@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
@@ -51,7 +50,7 @@ public class DataExportResource {
         }
         catch (Exception e) {
             log.error("Could not create data export", e);
-            throw new InternalServerErrorException("Could not create data export");
+            throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
         }
 
     }
@@ -67,7 +66,7 @@ public class DataExportResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId, @PathVariable long dataExportId) {
         var dataExportPath = dataExportService.downloadDataExport(userId, dataExportId);
-        var finalZipFile = new File(dataExportPath);
+        var finalZipFile = dataExportPath.toFile();
         InputStreamResource resource;
         try {
             resource = new InputStreamResource(new FileInputStream(finalZipFile));
