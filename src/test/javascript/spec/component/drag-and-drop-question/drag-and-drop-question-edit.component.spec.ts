@@ -11,7 +11,7 @@ import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-q
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -33,7 +33,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
-    let uploadService: FileUploaderService;
     let modalService: NgbModal;
     let createObjectURLStub: jest.SpyInstance;
     let questionUpdatedSpy: jest.SpyInstance;
@@ -89,7 +88,6 @@ describe('DragAndDropQuestionEditComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
-        uploadService = TestBed.inject(FileUploaderService);
         modalService = TestBed.inject(NgbModal);
         questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         createObjectURLStub = jest.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
