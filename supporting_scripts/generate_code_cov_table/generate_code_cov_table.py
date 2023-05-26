@@ -72,10 +72,10 @@ def get_branch_name():
     return repo.active_branch.name
 
 
-def get_changed_files(branch_name):
+def get_changed_files(branch_name, base_branch_name="origin/develop"):
     repo = git.Repo(repo_path)
     branch_head = repo.commit(branch_name)
-    branch_base = repo.merge_base(branch_name, "origin/develop")[0]
+    branch_base = repo.merge_base(branch_name, base_branch_name)[0]
     diff_index = branch_head.diff(branch_base, create_patch=False)
     file_names = [item.a_path for item in diff_index]
 
@@ -145,7 +145,7 @@ def coverage_to_table(covs, exclude_urls=False):
         filename_only = cov[0].rsplit("/", 1)[1]
         class_file = filename_only if exclude_urls else f"[{filename_only}]({cov[1]})"
         line_coverage = "N/A" if cov[2] is None else cov[2]
-        confirmation = "❌" if cov[2] is None else "✅❌"
+        confirmation = "\u274C" if cov[2] is None else "\u2705\u274C"
         table_data.append(f"| {class_file} | {line_coverage}% | {confirmation} |")
 
     table = "\n".join([header] + table_data)
@@ -166,7 +166,10 @@ def main(argv):
         **environ_or_required("BAMBOO_PASSWORD")
     )
     parser.add_argument(
-        "--branch-name", default=None, help="Name of the Git branch you want to compare against develop (will checkout the branch)",
+        "--branch-name", default=None, help="Name of the Git branch you want to compare with the base branch (default: origin/develop)"
+    )
+    parser.add_argument(
+        "--base-branch-name", default="origin/develop", help="Name of the Git base branch (default: origin/develop)"
     )
     parser.add_argument(
         "--build-id", default=None, help="Build ID of the Bamboo build (ARTEMIS-TESTS{BUILD_ID}-JAVATEST-{BUILD_NUMBER})"
@@ -206,7 +209,7 @@ def main(argv):
     server_key = f"{project_key}{args.build_id}-JAVATEST-{args.build_number}"
     client_key = f"{project_key}{args.build_id}-TSTEST-{args.build_number}"
 
-    file_names = get_changed_files(args.branch_name)
+    file_names = get_changed_files(args.branch_name, args.base_branch_name)
     client_file_names, server_file_names = filter_files(file_names)
 
     client_cov = [
@@ -227,7 +230,7 @@ def main(argv):
     if server_file_names:
         result += f"#### Server\n\n{server_table}\n\n"
 
-    logging.info("Info: ✅❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
+    logging.info("Info: \u2705\u274C in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
     logging.info("") # newline
 
     if args.print_results:
