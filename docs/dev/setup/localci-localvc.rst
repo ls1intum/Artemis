@@ -27,12 +27,13 @@ Configure Artemis
 
 Modify ``src/main/resources/config/application-local.yml`` to include the correct URLs and directories:
 
-   .. code:: yaml
-           artemis:
-               user-management:
-                   use-external: false # if you do not wish to use Jira for user management
-               version-control:
-                   url: http://localhost:8080
+.. code:: yaml
+
+       artemis:
+           user-management:
+               use-external: false # if you do not wish to use Jira for user management
+           version-control:
+               url: http://localhost:8080
 
 .. HINT::
    If you are running Artemis in Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri`` with the value ``tcp://localhost:2375``.
@@ -56,15 +57,17 @@ You can follow all steps to set up the entire Atlassian stack, or just get the l
 You can stop and remove the Bamboo and Bitbucket containers or just stop them in case you want to set them up later on.
 
 You also need to configure further settings in the ``src/main/resources/config/application-local.yml`` properties:
-   .. code:: yaml
-           artemis:
-               user-management:
-                   use-external: true
-                   external:
-                       url: http://localhost:8081
-                       user:  <jira-admin-user> # insert the admin user you created in Jira
-                       password: <jira-admin-password> # insert the admin user's password
-                       admin-group-name: instructors
+
+.. code:: yaml
+
+       artemis:
+           user-management:
+               use-external: true
+               external:
+                   url: http://localhost:8081
+                   user:  <jira-admin-user> # insert the admin user you created in Jira
+                   password: <jira-admin-password> # insert the admin user's password
+                   admin-group-name: instructors
 
 
 .. _Start Artemis:
