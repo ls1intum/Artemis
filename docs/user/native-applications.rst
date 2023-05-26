@@ -30,7 +30,7 @@ The Android application supports the following features:
     #. Register in new courses
     #. View courses you have already registered for
 #. View the exercises of your courses:
-    #. View exercise details and problem state
+    #. View exercise details and problem statement
     #. View submission feedback
     #. Participate in text exercises (view, edit and submit submissions)
 #. Participate in quizzes:
@@ -71,20 +71,20 @@ If the client could connect successfully to Artemis, the "Set custom instance" b
 
 Push Notifications
 ^^^^^^^^^^^^^^^^^^
-Users may receive push notifications on their Android clients. When first logging in into an Artemis instance, users will be asked if they want to receive push notifications on that device.
+Users may receive push notifications on their Android clients. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
 
   .. image:: native-applications/android/initial_login_notification_configuration.png
-            :width: 400
+            :width: 300
 
 When logged in, users can navigate to the application settings to change their push notification settings:
 
   .. image:: native-applications/android/settings_push.png
-            :width: 400
+            :width: 300
 
 In this screen, users can choose which notification types to receive as push notifications, and can enable/disable push notifications for this device.
 
   .. image:: native-applications/android/settings_push_detail.png
-            :width: 400
+            :width: 300
 
 Problems
 ^^^^^^^^
@@ -92,10 +92,10 @@ Problems
 Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-android>`_.
 
 .. |server-selection-overview| image:: native-applications/android/server_selection_overview.png
-    :width: 400
+    :width: 300
 
 .. |custom-server-entered| image:: native-applications/android/custom_server_entered.png
-    :width: 400
+    :width: 300
 
 iOS Application
 ---------------
