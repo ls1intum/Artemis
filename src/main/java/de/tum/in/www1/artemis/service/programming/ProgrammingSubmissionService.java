@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -92,21 +93,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * This method gets called if a new commit was pushed to the VCS
      *
-     * @param participationId The ID to the Participation, where the push happened
-     * @param requestBody     the body of the post request by the VCS.
+     * @param participation The Participation, where the push happened
+     * @param requestBody   the body of the post request by the VCS.
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
+     * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation).
      */
-    public ProgrammingSubmission processNewProgrammingSubmission(Long participationId, Object requestBody)
+    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Object requestBody)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
         ZonedDateTime submissionDate = ZonedDateTime.now();
-        Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            throw new EntityNotFoundException("Programming Exercise Participation", participationId);
-        }
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -119,33 +117,33 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     commit.getBranch());
         }
         catch (Exception ex) {
-            log.error("Commit could not be parsed for submission from participation {}", programmingExerciseParticipation, ex);
+            log.error("Commit could not be parsed for submission from participation {}", participation, ex);
             throw new IllegalArgumentException(ex);
         }
 
-        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingExerciseParticipation);
+        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(participation);
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
-            throw new IllegalStateException(
-                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
+            throw new VersionControlException(
+                    "Submission for participation id " + participation.getId() + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
         }
         if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
                 && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
             // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
-            throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
         }
 
-        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
-                || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation
+                && (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+            participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) participation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
-                continuousIntegrationTriggerService.get().triggerBuild(programmingExerciseParticipation);
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
             }
             catch (ContinuousIntegrationException ex) {
                 // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
@@ -153,24 +151,25 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participationId, commit.getCommitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
+                commit.getCommitHash());
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + commit.getCommitHash() + " already exists!");
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.getCommitHash() + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participationId);
+        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participation.getId());
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
-        programmingExerciseParticipation.addSubmission(programmingSubmission);
+        checkForIllegalExamSubmission(participation, programmingSubmission);
+        participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-        updateGitDiffReport(programmingExerciseParticipation);
+        updateGitDiffReport(participation);
 
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;

@@ -12,7 +12,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
@@ -45,7 +45,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
-    studentSubmission: QuizSubmission;
+    studentSubmission: AbstractQuizSubmission;
 
     @Input() exercise: QuizExercise;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
