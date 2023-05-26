@@ -141,6 +141,7 @@ public class DataExportService {
      * @return the created DataExport object
      **/
     public DataExport requestDataExport(User user) throws IOException {
+        this.userId = user.getId();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setUser(user);
