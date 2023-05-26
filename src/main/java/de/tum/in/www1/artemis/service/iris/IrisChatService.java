@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 
 /**
  * Service to handle the chat subsystem of Iris.
@@ -43,6 +44,7 @@ public class IrisChatService {
         irisModelService.requestResponse(fullSession).handleAsync((irisMessage, throwable) -> {
             if (throwable != null) {
                 log.error("Error while getting response from Iris model", throwable);
+                irisWebsocketService.sendException(fullSession, throwable);
             }
             else if (irisMessage != null) {
                 var irisMessageSaved = irisMessageService.saveMessage(irisMessage, fullSession, IrisMessageSender.LLM);
@@ -50,6 +52,7 @@ public class IrisChatService {
             }
             else {
                 log.error("No response from Iris model");
+                irisWebsocketService.sendException(fullSession, new IrisNoResponseException());
             }
             return null;
         });

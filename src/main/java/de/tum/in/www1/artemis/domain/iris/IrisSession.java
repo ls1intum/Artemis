@@ -60,6 +60,6 @@ public class IrisSession extends DomainObject {
 
     @Override
     public String toString() {
-        return "IrisSession{" + "exercise=" + (exercise == null ? "null" : exercise.getId()) + ", user=" + (user == null ? "null" : user.getName()) + '}';
+        return "IrisSession{" + "id=" + getId() + "exercise=" + (exercise == null ? "null" : exercise.getId()) + ", user=" + (user == null ? "null" : user.getName()) + '}';
     }
 }
