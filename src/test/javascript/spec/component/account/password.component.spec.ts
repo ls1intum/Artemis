@@ -118,7 +118,7 @@ describe('Password Component Tests', () => {
         it('sets user on init', fakeAsync(() => {
             fixture.detectChanges();
             tick(1000);
-            const expectedUser = { id: 99 } as User;
+            const expectedUser = { id: 99, login: 'admin' } as User;
             expect(comp.user).toEqual(expectedUser);
         }));
     });
