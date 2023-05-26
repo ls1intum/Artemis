@@ -36,10 +36,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.util.FileUtils;
@@ -79,6 +76,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     @MockBean
     private ApollonConversionService apollonConversionService;
