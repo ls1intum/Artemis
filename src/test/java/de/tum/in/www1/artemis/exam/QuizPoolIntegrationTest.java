@@ -54,7 +54,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolSuccessful() throws Exception {
         QuizGroup quizGroup0 = new QuizGroup();
-        quizGroup0.setName("Encapsulaltion");
+        quizGroup0.setName("Encapsulation");
         QuizGroup quizGroup1 = new QuizGroup();
         quizGroup1.setName("Inheritance");
         QuizGroup quizGroup2 = new QuizGroup();
@@ -73,6 +73,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         mcQuizQuestion1.setQuizGroup(quizGroup0);
         dndQuizQuestion0.setQuizGroup(quizGroup1);
         dndQuizQuestion1.setQuizGroup(quizGroup2);
+        quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
 
         QuizPool responseQuizPool = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class,
@@ -96,6 +97,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         saQuizQuestion3.setTitle("SA 3");
         saQuizQuestion1.setQuizGroup(quizGroup2);
         saQuizQuestion2.setQuizGroup(quizGroup3);
+        responseQuizPool.setQuizGroups(List.of(responseQuizPool.getQuizGroups().get(0), responseQuizPool.getQuizGroups().get(2), quizGroup3));
         responseQuizPool.setQuizQuestions(List.of(responseQuizPool.getQuizQuestions().get(0), responseQuizPool.getQuizQuestions().get(1),
                 responseQuizPool.getQuizQuestions().get(2), saQuizQuestion1, saQuizQuestion2, saQuizQuestion3));
         responseQuizPool.getQuizQuestions().get(2).setQuizGroup(quizGroup3);
@@ -181,6 +183,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         saQuizQuestion.setTitle("SA");
         mcQuizQuestion.setQuizGroup(quizGroup0);
         dndQuizQuestion.setQuizGroup(quizGroup1);
+        quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion, dndQuizQuestion, saQuizQuestion));
         QuizPool savedQuizPool = quizPoolService.update(exam.getId(), quizPool);
 

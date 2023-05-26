@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -12,6 +10,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,7 +41,11 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
     @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
 
+    @Transient
+    private List<QuizGroup> quizGroups;
+
     public QuizPool() {
+        this.quizGroups = new ArrayList<>();
         this.quizQuestions = new ArrayList<>();
     }
 
@@ -84,21 +87,14 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
         this.quizQuestions = quizQuestions;
     }
 
-    /**
-     * Returns list of quiz groups of all quiz questions belong to the quiz pool
-     *
-     * @return list of quiz groups
-     */
     @JsonProperty(value = "quizGroups", access = JsonProperty.Access.READ_ONLY)
     public List<QuizGroup> getQuizGroups() {
-        Map<String, QuizGroup> quizGroupMap = new HashMap<>();
-        for (QuizQuestion quizQuestion : quizQuestions) {
-            QuizGroup quizGroup = quizQuestion.getQuizGroup();
-            if (quizGroup != null) {
-                quizGroupMap.put(quizGroup.getName(), quizGroup);
-            }
-        }
-        return new ArrayList<>(quizGroupMap.values());
+        return quizGroups;
+    }
+
+    @JsonProperty(value = "quizGroups", access = JsonProperty.Access.WRITE_ONLY)
+    public void setQuizGroups(List<QuizGroup> quizGroups) {
+        this.quizGroups = quizGroups;
     }
 
     /**

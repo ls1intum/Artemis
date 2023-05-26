@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,15 +60,31 @@ public class QuizPoolService extends QuizService<QuizPool> {
         }
 
         List<QuizGroup> savedQuizGroups = quizGroupRepository.saveAllAndFlush(quizPool.getQuizGroups());
-        quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).ifPresent(existingQuizPool -> removeUnusedQuizGroup(existingQuizPool.getQuizGroups(), savedQuizGroups));
+        quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).ifPresent(existingQuizPool -> {
+            List<Long> existingQuizGroupIds = existingQuizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
+            removeUnusedQuizGroup(existingQuizGroupIds, savedQuizGroups);
+        });
 
-        reassignQuizQuestion(quizPool, savedQuizGroups);
+        Map<String, Long> quizGroupNameIdMap = savedQuizGroups.stream().collect(Collectors.toMap(QuizGroup::getName, QuizGroup::getId));
+        for (QuizQuestion quizQuestion : quizPool.getQuizQuestions()) {
+            quizQuestion.setQuizPool(quizPool);
+            if (quizQuestion.getQuizGroup() != null) {
+                quizQuestion.setQuizGroupId(quizGroupNameIdMap.get(quizQuestion.getQuizGroup().getName()));
+            }
+            else {
+                quizQuestion.setQuizGroupId(null);
+            }
+        }
         quizPool.reconnectJSONIgnoreAttributes();
 
         log.debug("Save quiz pool to database: {}", quizPool);
         super.save(quizPool);
 
-        return findByExamId(examId);
+        QuizPool savedQuizPool = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
+        savedQuizPool.setQuizGroups(savedQuizGroups);
+        reassignQuizQuestion(savedQuizPool, savedQuizGroups);
+
+        return savedQuizPool;
     }
 
     /**
@@ -77,7 +94,13 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * @return quiz pool that belongs to the given exam id
      */
     public QuizPool findByExamId(Long examId) {
-        return quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
+        QuizPool quizPool = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
+        List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
+        ;
+        List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
+        quizPool.setQuizGroups(quizGroups);
+        reassignQuizQuestion(quizPool, quizGroups);
+        return quizPool;
     }
 
     /**
@@ -87,11 +110,11 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * @param quizGroups the list of quiz group to be reset
      */
     private void reassignQuizQuestion(QuizPool quizPool, List<QuizGroup> quizGroups) {
-        Map<String, QuizGroup> savedQuizGroupIndexMap = quizGroups.stream().collect(Collectors.toMap(QuizGroup::getName, quizGroup -> quizGroup));
+        Map<Long, QuizGroup> idQuizGroupMap = quizGroups.stream().collect(Collectors.toMap(QuizGroup::getId, quizGroup -> quizGroup));
         for (QuizQuestion quizQuestion : quizPool.getQuizQuestions()) {
             quizQuestion.setQuizPool(quizPool);
-            if (quizQuestion.getQuizGroup() != null) {
-                quizQuestion.setQuizGroup(savedQuizGroupIndexMap.get(quizQuestion.getQuizGroup().getName()));
+            if (quizQuestion.getQuizGroupId() != null) {
+                quizQuestion.setQuizGroup(idQuizGroupMap.get(quizQuestion.getQuizGroupId()));
             }
         }
     }
@@ -99,12 +122,12 @@ public class QuizPoolService extends QuizService<QuizPool> {
     /**
      * Remove existing groups that do not exist anymore in the updated quiz pool
      *
-     * @param existingQuizGroups the list of existing quiz group of the quiz pool
-     * @param usedQuizGroups     the list of quiz group that are still exists in the updated quiz pool
+     * @param existingQuizGroupIds the list of existing quiz group id of the quiz pool
+     * @param usedQuizGroups       the list of quiz group that are still exists in the updated quiz pool
      */
-    private void removeUnusedQuizGroup(List<QuizGroup> existingQuizGroups, List<QuizGroup> usedQuizGroups) {
+    private void removeUnusedQuizGroup(List<Long> existingQuizGroupIds, List<QuizGroup> usedQuizGroups) {
         Set<Long> usedQuizGroupIds = usedQuizGroups.stream().map(QuizGroup::getId).collect(Collectors.toSet());
-        List<Long> ids = existingQuizGroups.stream().map(QuizGroup::getId).filter(id -> !usedQuizGroupIds.contains(id)).toList();
+        Set<Long> ids = existingQuizGroupIds.stream().filter(id -> !usedQuizGroupIds.contains(id)).collect(Collectors.toSet());
         quizGroupRepository.deleteAllById(ids);
     }
 
