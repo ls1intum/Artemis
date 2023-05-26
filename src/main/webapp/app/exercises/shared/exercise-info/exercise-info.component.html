@@ -27,7 +27,7 @@
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}</div>
             <div class="col-4">{{ individualComplaintDeadline | artemisDate }}</div>
         </div>
-        <div class="row mb-1" *ngIf="!individualComplaintDeadline">
+        <div class="row mb-1" *ngIf="dueDate && !individualComplaintDeadline">
             <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}</div>
             <div class="col-4">{{ (canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
         </div>
