@@ -15,6 +15,8 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -55,6 +57,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -145,6 +148,9 @@ public class CourseTestService {
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Autowired
     private ConversationRepository conversationRepository;
@@ -465,6 +471,42 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateCourseWithDefaultChannels() throws Exception {
+
+        Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course1.setShortName("testdefaultchannels");
+        course1.setRegistrationEnabled(true);
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
+
+        var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").get();
+        mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getDefaultStudentGroupName(), false);
+
+        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").get();
+        mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course1.getDefaultInstructorGroupName(), false);
+
+        var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
+        course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
+        CountDownLatch latch1 = new CountDownLatch(1);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/students/" + userPrefix + "student1", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/instructors/" + userPrefix + "instructor1", null, HttpStatus.OK, null);
+        latch1.await(5, TimeUnit.SECONDS);
+        // Check if all default channels are created
+        var channels = channelRepository.findChannelsByCourseId(course1.getId());
+        assertThat(channels).hasSize(DefaultChannelType.values().length);
+        channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
+        // Check if newly added instructor and student was added to default channels
+        channels.forEach(channel -> {
+            var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            assertThat(participants).hasSize(2); // 1 instructor and 1 student
+        });
+
+    }
+
+    // Test
     public void testUpdateCourseIsEmpty() throws Exception {
         Course course = ModelFactory.generateCourse(1042001L, null, null, new HashSet<>());
         request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
@@ -493,21 +535,21 @@ public class CourseTestService {
 
         Set<Organization> organizations = course.getOrganizations();
 
-        Set<LearningGoal> learningGoals = new HashSet<>();
-        learningGoals.add(database.createLearningGoal(course));
-        course.setLearningGoals(learningGoals);
+        Set<Competency> competencies = new HashSet<>();
+        competencies.add(database.createCompetency(course));
+        course.setCompetencies(competencies);
         course = courseRepo.save(course);
 
-        Set<LearningGoal> prerequisites = new HashSet<>();
-        prerequisites.add(database.createLearningGoal(database.createCourse()));
+        Set<Competency> prerequisites = new HashSet<>();
+        prerequisites.add(database.createCompetency(database.createCourse()));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
         request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
-        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(course.getId());
+        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
-        assertThat(updatedCourse.getLearningGoals()).containsExactlyElementsOf(learningGoals);
+        assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
     }
 
@@ -671,7 +713,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
                 CourseForDashboardDTO.class);
         Course receivedCourse = receivedCourseForDashboard.course();
@@ -681,7 +723,7 @@ public class CourseTestService {
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
         // Test that the received course has two competencies
-        assertThat(receivedCourse.getLearningGoals()).as("Two competencies are returned").hasSize(2);
+        assertThat(receivedCourse.getCompetencies()).as("Two competencies are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -710,7 +752,7 @@ public class CourseTestService {
     }
 
     private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         Course course = courses.get(0);
         course.setRegistrationEnabled(registrationEnabled);
         courseRepo.save(course);

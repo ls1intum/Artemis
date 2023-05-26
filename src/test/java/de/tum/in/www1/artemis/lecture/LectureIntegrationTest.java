@@ -275,7 +275,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_NullInListOfLectureUnits_shouldDeleteLecture() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         List<LectureUnit> lectureUnits = lecture.getLectureUnits();
         assertThat(lectureUnits).hasSize(4);
         ArrayList<LectureUnit> lectureUnitsWithNulls = new ArrayList<>();
@@ -286,7 +286,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.getLectureUnits().clear();
         lecture.getLectureUnits().addAll(lectureUnitsWithNulls);
         lectureRepository.saveAndFlush(lecture);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         lectureUnits = lecture.getLectureUnits();
         assertThat(lectureUnits).hasSize(8);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
