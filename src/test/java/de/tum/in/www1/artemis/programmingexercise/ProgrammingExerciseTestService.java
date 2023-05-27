@@ -1702,12 +1702,13 @@ public class ProgrammingExerciseTestService {
 
         // the local repo should exist before startExercise()
         assertThat(teamLocalPath).exists();
+
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
                 .matches(exception -> !exception.getMessage().isEmpty());
+
         // the directory of the repo should be deleted
         assertThat(teamLocalPath).doesNotExist();
-        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
     }
 
     @NotNull
@@ -1761,7 +1762,7 @@ public class ProgrammingExerciseTestService {
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
                 .matches(exception -> !exception.getMessage().isEmpty());
-        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
+
     }
 
     // TEST

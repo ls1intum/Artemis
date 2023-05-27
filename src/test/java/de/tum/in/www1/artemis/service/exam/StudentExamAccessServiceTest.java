@@ -79,8 +79,10 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testExamExists() {
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), -1L, student1, false, true));
+
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1.getId()));
+
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1, student1));
     }

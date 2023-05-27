@@ -70,7 +70,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         var savedGradingScale = gradingScaleRepository.save(gradingScale);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, savedGradingScale.getId()))
-                .withMessage("Grade percentages must be greater than 0").matches(ex -> ex.getEntityName().equals("gradeStep") && ex.getErrorKey().equals("invalidGradePercentage"));
+                .withMessage("Grade percentages must be greater than 0")
+                .matches(exception -> "gradeStep".equals(exception.getEntityName()) && "invalidGradePercentage".equals(exception.getErrorKey()));
 
     }
 
@@ -82,7 +83,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testMatchPercentageToGradeStepNoValidMapping() {
         gradeSteps = database.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
-        long id = gradingScaleRepository.save(gradingScale).getId();
+        Long id = gradingScaleRepository.save(gradingScale).getId();
 
         double percentage = 85;
 
@@ -128,7 +129,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleService.saveGradingScale(gradingScale))
                 .withMessage("Not all grade steps are following the correct format.")
-                .matches(exception -> exception.getEntityName().equals("gradeStep") && exception.getErrorKey().equals("invalidGradeStepFormat"));
+                .matches(exception -> "gradeStep".equals(exception.getEntityName()) && "invalidGradeStepFormat".equals(exception.getErrorKey()));
     }
 
     /**
@@ -168,7 +169,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleService.saveGradingScale(gradingScale))
                 .withMessage("Grade step set can't match to a valid grading scale.")
-                .matches(exception -> exception.getEntityName().equals("gradeStep") && exception.getErrorKey().equals("invalidGradeStepAdjacency"));
+                .matches(exception -> "gradeStep".equals(exception.getEntityName()) && "invalidGradeStepAdjacency".equals(exception.getErrorKey()));
     }
 
     /**
