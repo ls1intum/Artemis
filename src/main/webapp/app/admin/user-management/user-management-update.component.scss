@@ -30,7 +30,7 @@
 }
 
 ::ng-deep .group-panel {
-    background-color: var(--text-editor-background);
-    color: var(--text-editor-color);
+    background-color: var(bs-body-bg);
+    color: var(bs-body-color);
     border: 1px solid gray;
 }
