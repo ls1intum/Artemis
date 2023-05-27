@@ -69,8 +69,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        course1.setRegistrationEnabled(true);
-        course2.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
+        course2.setEnrollmentEnabled(true);
         course1.setOrganizations(organizations);
 
         course1 = courseRepo.save(course1);
@@ -78,7 +78,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
 
-        List<Course> coursesToRegister = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
+        List<Course> coursesToRegister = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(coursesToRegister).contains(course1).contains(course2);
     }
 
@@ -105,8 +105,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
 
-        course1.setRegistrationEnabled(true);
-        course2.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
+        course2.setEnrollmentEnabled(true);
         course1.setOrganizations(organizations);
         course3.setOrganizations(otherOrganizations);
 
@@ -124,13 +124,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
+        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
 
-        updatedStudent = request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.OK);
+        updatedStudent = request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course2.getStudentGroupName());
 
-        request.postWithResponseBody("/api/courses/" + course3.getId() + "/register", null, User.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + course3.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);
     }
 
     /**
