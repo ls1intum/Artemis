@@ -150,7 +150,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
 
         // Verify the temporary file was created.
-        assertThat(Files.exists(resourceFilePath)).isTrue();
+        assertThat(resourceFilePath).exists();
 
         // Clean up the temporary file.
         Files.deleteIfExists(resourceFilePath);

@@ -99,7 +99,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(testRepo.localRepoFile + "/" + key)).exists();
         }
     }
 
@@ -113,7 +113,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + key))).isTrue();
+            assertThat((Path.of(testRepo.localRepoFile + "/" + key))).exists();
         }
     }
 
@@ -125,7 +125,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         params.add("file", currentLocalFileName);
         var file = request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
 
@@ -134,10 +134,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFile"))).isFalse();
+        assertThat(Path.of(testRepo.localRepoFile + "/newFile")).doesNotExist();
         params.add("file", "newFile");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.isRegularFile(Path.of(testRepo.localRepoFile + "/newFile"))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/newFile")).isRegularFile();
     }
 
     @Test
@@ -145,7 +145,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFile"))).isFalse();
+        assertThat((Path.of(testRepo.localRepoFile + "/newFile"))).doesNotExist();
         params.add("file", "newFile");
 
         doReturn(Optional.of(true)).when(gitService).getFileByName(any(), any());
@@ -157,7 +157,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testCreateFile_invalidRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFile"))).isFalse();
+        assertThat((Path.of(testRepo.localRepoFile + "/newFile"))).doesNotExist();
         params.add("file", "newFile");
 
         Repository mockRepository = mock(Repository.class);
@@ -172,23 +172,23 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFolder"))).isFalse();
+        assertThat(Path.of(testRepo.localRepoFile + "/newFolder")).doesNotExist();
         params.add("folder", "newFolder");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/folder", HttpStatus.OK, params);
-        assertThat(Files.isDirectory(Path.of(testRepo.localRepoFile + "/newFolder"))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/newFolder")).isDirectory();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat((Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).exists();
         String newLocalFileName = "newFileName";
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFileName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFileName)).exists();
     }
 
     @Test
@@ -219,8 +219,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     private FileMove createRenameFileMove() {
         String newLocalFileName = "newFileName";
 
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFileName)).doesNotExist();
 
         return new FileMove(currentLocalFileName, newLocalFileName);
     }
@@ -229,13 +229,13 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName)).exists();
         String newLocalFolderName = "newFolderName";
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isFalse();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName)).doesNotExist();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName)).exists();
     }
 
     @Test
@@ -243,10 +243,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
     }
 
     @Test
@@ -254,7 +254,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testDeleteFile_notFound() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
 
         doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
@@ -267,7 +267,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testDeleteFile_invalidFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
 
         doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
@@ -284,7 +284,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testDeleteFile_validFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
 
         File mockFile = mock(File.class);
@@ -326,7 +326,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
         Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
@@ -337,7 +337,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFilesAndCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
 
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
@@ -379,8 +379,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         Files.createFile(filePath);
 
         // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
-        assertThat(Files.exists(Path.of(testRepo.originRepoFile + "/" + fileName))).isTrue();
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + fileName))).isFalse();
+        assertThat(Path.of(testRepo.originRepoFile + "/" + fileName)).exists();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).doesNotExist();
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
@@ -394,7 +394,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
         assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
-        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + fileName))).isTrue();
+        assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).exists();
     }
 
     @Test

@@ -1701,11 +1701,11 @@ public class ProgrammingExerciseTestService {
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
-        assertThat(Files.exists(teamLocalPath)).isTrue();
+        assertThat(teamLocalPath).exists();
         // Start participation
         var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
         // the directory of the repo should be deleted
-        assertThat(Files.exists(teamLocalPath)).isFalse();
+        assertThat(teamLocalPath).doesNotExist();
         // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
         assertThat(exception.getMessage()).isNotEmpty();
     }
