@@ -1,17 +1,17 @@
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
+import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender } from 'app/entities/iris/iris.model';
 import { IrisMessageStore } from 'app/iris/message-store.service';
+import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { ActiveConversationMessageLoadedAction, ActiveConversationMessageLoadedErrorAction, StudentMessageSentAction } from 'app/iris/message-store.model';
+import { ActiveConversationMessageLoadedErrorAction, StudentMessageSentAction } from 'app/iris/message-store.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
-    providers: [IrisHttpMessageService],
+    providers: [IrisHttpMessageService, IrisWebsocketService],
 })
 export class ExerciseChatWidgetComponent implements OnInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
@@ -27,8 +27,17 @@ export class ExerciseChatWidgetComponent implements OnInit {
     error = ''; // TODO: error object
     dots = 1;
 
-    constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private irisHttpMessageService: IrisHttpMessageService) {
+    constructor(
+        private dialog: MatDialog,
+        @Inject(MAT_DIALOG_DATA) public data: any,
+        private irisHttpMessageService: IrisHttpMessageService,
+        private irisWebsocketService: IrisWebsocketService,
+    ) {
         this.messageStore = data.messageStore;
+
+        this.irisWebsocketService = irisWebsocketService;
+        this.irisWebsocketService.setMessageStore(data.messageStore);
+        this.irisWebsocketService.setCallbacks(() => this.scrollToBottom());
     }
 
     // Icons
@@ -58,12 +67,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
             const message = this.newUserMessage(this.newMessage);
             this.messageStore.dispatch(
                 new StudentMessageSentAction(message, {
-                    next: (res: HttpResponse<IrisServerMessage>) => {
-                        this.messageStore.dispatch(new ActiveConversationMessageLoadedAction(res.body!));
-                        this.scrollToBottom();
-                    },
-                    error: (error: HttpErrorResponse) => {
-                        // this.messageStore.dispatch(new ActiveConversationMessageLoadedErrorAction(res.body!));
+                    error: () => {
                         this.messageStore.dispatch(new ActiveConversationMessageLoadedErrorAction('Something went wrong. Please try again later!'));
                     },
                 }),
