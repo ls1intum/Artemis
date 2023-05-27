@@ -178,7 +178,7 @@
                         id="unlockAllRepositoriesButton"
                         class="btn btn-danger btn-sm me-1"
                         (click)="handleUnlockAllRepositories()"
-                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.isAtLeastInstructor && !localVCEnabled"
                         [disabled]="lockingOrUnlockingRepositories"
                     >
                         <span *ngIf="lockingOrUnlockingRepositories" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -189,7 +189,7 @@
                         id="lockAllRepositoriesButton"
                         class="btn btn-danger btn-sm me-1"
                         (click)="handleLockAllRepositories()"
-                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.isAtLeastInstructor && !localVCEnabled"
                         [disabled]="lockingOrUnlockingRepositories"
                     >
                         <span *ngIf="lockingOrUnlockingRepositories" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -297,7 +297,10 @@
                     </div>
                 </dt>
                 <dd>
-                    <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
+                    <div
+                        class="d-flex align-items-center"
+                        *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl && !localVCEnabled"
+                    >
                         <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
                             programmingExercise.templateParticipation.repositoryUrl
                         }}</a>
@@ -315,7 +318,10 @@
                     </div>
                 </dt>
                 <dd>
-                    <div class="d-flex align-items-center" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
+                    <div
+                        class="d-flex align-items-center"
+                        *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl && !localVCEnabled"
+                    >
                         <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
                             programmingExercise.solutionParticipation.repositoryUrl
                         }}</a>
@@ -333,7 +339,7 @@
                     </div>
                 </dt>
                 <dd>
-                    <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl">
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl && !localVCEnabled">
                         <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
                     </div>
                 </dd>
@@ -381,17 +387,23 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId">
-                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation.buildPlanUrl }}">
+                        <a *ngIf="!localVCEnabled; else noLinkBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation.buildPlanUrl }}">
                             {{ programmingExercise.templateParticipation.buildPlanId }}
                         </a>
+                        <ng-template #noLinkBuildPlanId>
+                            {{ programmingExercise.templateParticipation.buildPlanId }}
+                        </ng-template>
                     </span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
-                        <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation.buildPlanUrl }}">
+                        <a *ngIf="!localVCEnabled; else noLinkBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation.buildPlanUrl }}">
                             {{ programmingExercise.solutionParticipation.buildPlanId }}
                         </a>
+                        <ng-template #noLinkBuildPlanId>
+                            {{ programmingExercise.solutionParticipation.buildPlanId }}
+                        </ng-template>
                     </span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>

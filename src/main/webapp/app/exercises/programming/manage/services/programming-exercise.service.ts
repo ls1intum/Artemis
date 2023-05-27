@@ -419,8 +419,12 @@ export class ProgrammingExerciseService {
      * @param repositoryType
      * @param auxiliaryRepositoryId
      */
-    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType, auxiliaryRepositoryId: number): Observable<HttpResponse<Blob>> {
-        if (repositoryType === 'AUXILIARY') {
+    exportInstructorRepository(
+        exerciseId: number,
+        repositoryType: ProgrammingExerciseInstructorRepositoryType,
+        auxiliaryRepositoryId: number | undefined,
+    ): Observable<HttpResponse<Blob>> {
+        if (repositoryType === 'AUXILIARY' && auxiliaryRepositoryId !== undefined) {
             return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
                 observe: 'response',
                 responseType: 'blob',
