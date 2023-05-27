@@ -1,19 +1,19 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.util.Objects;
-
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
+import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
 
 /**
  * Service for managing Iris sessions.
@@ -23,36 +23,18 @@ public class IrisSessionService {
 
     private final UserRepository userRepository;
 
-    private final IrisChatService irisChatService;
+    private final IrisChatSessionService irisChatSessionService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final IrisHestiaSessionService irisHestiaSessionService;
 
-    private final IrisSessionRepository irisSessionRepository;
+    private final IrisChatSessionRepository irisChatSessionRepository;
 
-    public IrisSessionService(UserRepository userRepository, IrisChatService irisChatService, AuthorizationCheckService authCheckService,
-            IrisSessionRepository irisSessionRepository) {
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
+            IrisChatSessionRepository irisChatSessionRepository) {
         this.userRepository = userRepository;
-        this.irisChatService = irisChatService;
-        this.authCheckService = authCheckService;
-        this.irisSessionRepository = irisSessionRepository;
-    }
-
-    /**
-     * Checks if the user has access to the Iris session.
-     * A user has access if they have access to the exercise and the session belongs to them.
-     * If the user is null, the user is fetched from the database.
-     *
-     * @param session The session to check
-     * @param user    The user to check
-     */
-    public void checkHasAccessToIrisSession(IrisSession session, User user) {
-        if (user == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
-        if (!Objects.equals(session.getUser(), user)) {
-            throw new AccessForbiddenException("Iris Session", session.getId());
-        }
+        this.irisChatSessionService = irisChatSessionService;
+        this.irisHestiaSessionService = irisHestiaSessionService;
+        this.irisChatSessionRepository = irisChatSessionRepository;
     }
 
     /**
@@ -63,15 +45,29 @@ public class IrisSessionService {
      * @param user     The user the session belongs to
      * @return The created session
      */
-    public IrisSession createSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        if (irisSessionRepository.findByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()) {
+    public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+        if (irisChatSessionRepository.findByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()) {
             throw new BadRequestException("Iris Session already exists for exercise " + exercise.getId() + " and user " + user.getId());
         }
 
-        var irisSession = new IrisSession();
+        var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
-        return irisSessionRepository.save(irisSession);
+        return irisChatSessionRepository.save(irisSession);
+    }
+
+    /**
+     * Checks if the user has access to the Iris session.
+     * If the user is null, the user is fetched from the database.
+     *
+     * @param session The session to check
+     * @param user    The user to check
+     */
+    public void checkHasAccessToIrisSession(IrisSession session, User user) {
+        if (user == null) {
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        getIrisSessionSubService(session).checkHasAccessToIrisSession(session, user);
     }
 
     /**
@@ -82,7 +78,18 @@ public class IrisSessionService {
      * @param session The session to get a message for
      */
     public void requestMessageFromIris(IrisSession session) {
-        // TODO: Future: Switch between different session types
-        irisChatService.requestAndHandleResponse(session);
+        getIrisSessionSubService(session).requestAndHandleResponse(session);
+    }
+
+    private IrisSessionSubServiceInterface getIrisSessionSubService(IrisSession session) {
+        if (session instanceof IrisChatSession) {
+            return irisChatSessionService;
+        }
+        else if (session instanceof IrisHestiaSession) {
+            return irisHestiaSessionService;
+        }
+        else {
+            throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+        }
     }
 }

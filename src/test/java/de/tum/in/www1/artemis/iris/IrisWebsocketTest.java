@@ -48,7 +48,7 @@ class IrisWebsocketTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
-        var irisSession = irisSessionService.createSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
