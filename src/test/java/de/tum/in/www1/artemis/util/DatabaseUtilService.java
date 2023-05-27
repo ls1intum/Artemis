@@ -4179,6 +4179,12 @@ public class DatabaseUtilService {
         quizExerciseRepository.save(quizExercise);
     }
 
+    /**
+     * sets the quiz exercise of quiz batch and saves the batch into the repository
+     *
+     * @param batch        quiz batch that should get saved
+     * @param quizExercise quiz exercise to be added to the batch
+     */
     public void setQuizBatchExerciseAndSave(QuizBatch batch, QuizExercise quizExercise) {
         batch.setQuizExercise(quizExercise);
         quizBatchRepository.save(batch);
