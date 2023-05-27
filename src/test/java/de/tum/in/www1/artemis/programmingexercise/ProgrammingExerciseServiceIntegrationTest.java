@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -191,22 +190,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
-        testCourseAndExamFilters(withSCA);
+        testCourseAndExamFilters(withSCA, "testCourseAndExamFiltersAsInstructor" + withSCA);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin(boolean withSCA) throws Exception {
-        testCourseAndExamFilters(withSCA);
+        testCourseAndExamFilters(withSCA, "testCourseAndExamFiltersAsAdmin" + withSCA);
     }
 
-    private void testCourseAndExamFilters(boolean withSCA) throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString, withSCA);
-        database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
-        testSCAFilter(randomString, withSCA);
+    private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", programmingExerciseTitle);
+        testSCAFilter(programmingExerciseTitle, withSCA);
     }
 
     private void testSCAFilter(String searchTerm, boolean expectSca) throws Exception {
