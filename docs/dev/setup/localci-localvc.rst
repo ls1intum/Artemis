@@ -1,7 +1,7 @@
 .. _Local CI and local VC Setup:
 
 Local CI and local VC setup
---------------------------------
+---------------------------
 
 This section describes how to set up a programming exercise environment based on the local CI and local VC systems.
 These two systems are integrated into the Artemis server application and thus the setup is greatly simplified compared to the external options.
