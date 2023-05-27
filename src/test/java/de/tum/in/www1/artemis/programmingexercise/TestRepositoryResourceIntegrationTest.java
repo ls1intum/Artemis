@@ -330,7 +330,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
         Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(filePath).hasContent("updatedFileContent");
     }
 
     @Test
@@ -348,7 +348,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(filePath).hasContent("updatedFileContent");
 
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);

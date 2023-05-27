@@ -563,7 +563,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testSaveFiles() throws Exception {
         assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).exists();
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 
     @Test
@@ -579,7 +579,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(studentFilePath).hasContent("updatedFileContent");
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
@@ -984,7 +984,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Stash changes
         gitService.stashChanges(localRepo);
         // Local repo has no unsubmitted changes
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(studentFilePath).hasContent("initial commit");
     }
 
     @Test
@@ -1009,7 +1009,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Stash changes using service
         programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(studentFilePath).hasContent("initial commit");
     }
 
     @Test
@@ -1102,11 +1102,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Do initial commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), expectedStatus);
         // Check repo
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(studentFilePath).hasContent("initial commit");
 
         // Save file, without commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
         // Check repo
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 }
