@@ -8,12 +8,13 @@ These two systems are integrated into the Artemis server application and thus th
 This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
 For now, this setup is only recommended for development and testing purposes.
 If you are setting Artemis up for the first time, these are the steps you should follow:
-  - Install and run Docker: https://docs.docker.com/install/
-  - Start the database: :ref:`Database Setup`
-  - :ref:`Configure Artemis`
-  - (optional) :ref:`Configure Jira`
-  - :ref:`Start Artemis`
-  - :ref:`Test the Setup`
+
+- Install and run Docker: https://docs.docker.com/install/
+- Start the database: :ref:`Database Setup`
+- :ref:`Configure Artemis`
+- (optional) :ref:`Configure Jira`
+- :ref:`Start Artemis`
+- :ref:`Test the Setup`
 
 .. contents:: Content of this section
     :local:
