@@ -94,6 +94,7 @@ Test the Setup
 ^^^^^^^^^^^^^^
 
 You can now test the setup:
-  - Create a course and a programming exercise.
-  - Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
-  - Make sure that the result of your submission is displayed in the Artemis UI.
+
+- Create a course and a programming exercise.
+- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
+- Make sure that the result of your submission is displayed in the Artemis UI.
