@@ -5,6 +5,7 @@ import {
     MessageStoreAction,
     MessageStoreState,
     isActiveConversationMessageLoadedAction,
+    isActiveConversationMessageLoadedErrorAction,
     isHistoryMessageLoadedAction,
     isSessionIdReceivedAction,
     isStudentMessageSentAction,
@@ -19,6 +20,8 @@ export class IrisMessageStore implements OnDestroy {
     private readonly initialState: MessageStoreState = {
         messages: [],
         sessionId: null,
+        isLoading: false,
+        error: '',
     };
 
     private readonly action = new Subject<MessageStoreAction>();
@@ -76,22 +79,36 @@ export class IrisMessageStore implements OnDestroy {
 
         if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
             return {
-                messages: [action.message, ...state.messages],
+                messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
+                isLoading: false,
+                error: '',
+            };
+        }
+        if (isActiveConversationMessageLoadedErrorAction(action)) {
+            return {
+                messages: state.messages,
+                sessionId: state.sessionId,
+                isLoading: false,
+                error: action.errorMessage,
             };
         }
         if (isSessionIdReceivedAction(action)) {
             return {
                 messages: [],
                 sessionId: action.sessionId,
+                isLoading: state.isLoading,
+                error: state.error,
             };
         }
         if (isStudentMessageSentAction(action)) {
             // if sessionId is null then we have either an error or another action type
-            this.httpMessageService.createMessage(<number>state.sessionId, action.message);
+            this.httpMessageService.createMessage(<number>state.sessionId, action.message).subscribe(action.callbacks);
             return {
-                messages: [action.message, ...state.messages],
+                messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
+                isLoading: true,
+                error: state.error,
             };
         }
 

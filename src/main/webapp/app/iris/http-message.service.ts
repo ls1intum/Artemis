@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisClientMessage, IrisMessage } from 'app/entities/iris/iris.model';
+import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris.model';
 
 type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
@@ -22,7 +22,7 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityResponseType>}
      */
     createMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
-        return this.httpClient.post<IrisClientMessage>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
+        return this.httpClient.post<IrisServerMessage>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
     }
 
     /**

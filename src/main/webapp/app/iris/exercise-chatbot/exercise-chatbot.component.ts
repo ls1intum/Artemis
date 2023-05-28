@@ -2,7 +2,8 @@ import { Component, OnDestroy } from '@angular/core';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
-import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { IrisMessageStore } from 'app/iris/message-store.service';
 import { Overlay } from '@angular/cdk/overlay';
 
 @Component({
@@ -13,11 +14,12 @@ import { Overlay } from '@angular/cdk/overlay';
 export class ExerciseChatbotComponent implements OnDestroy {
     public chatAccepted = 'false';
     public buttonDisabled = false;
-    dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
-    chatOpen = false;
+    private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
+    private chatOpen = false;
     // Icons
     faCommentDots = faCommentDots;
 
+    constructor(private dialog: MatDialog, private overlay: Overlay, private messageStore: IrisMessageStore) {}
     constructor(public dialog: MatDialog, private overlay: Overlay) {}
 
     ngOnDestroy() {
@@ -53,8 +55,10 @@ export class ExerciseChatbotComponent implements OnDestroy {
             this.chatOpen = true;
             this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
                 hasBackdrop: false,
-                scrollStrategy: this.overlay.scrollStrategies.noop(),
                 position: { bottom: '0px', right: '0px' },
+                data: {
+                    messageStore: this.messageStore,
+                },
             });
             this.dialogRef.afterClosed().subscribe(() => {
                 this.buttonDisabled = false;

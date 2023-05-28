@@ -45,6 +45,15 @@
     margin-bottom: 10px;
 }
 
+.client-chat-error {
+    background-color: #fdf1f0;
+    color: dimgrey;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ed6951;
+    margin-bottom: 10px;
+}
+
 .my-chat {
     width: fit-content;
     margin-left: auto;
@@ -82,4 +91,20 @@
 .btn-circle:hover,
 .btn-circle:active {
     background-color: #3e913e;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.blinking-dots {
+    animation: blink 1s infinite;
 }
