@@ -46,6 +46,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Autowired
     private ResultRepository resultRepository;
 
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     private ProgrammingExercise programmingExercise;
 
     private Participation programmingExerciseParticipation;
