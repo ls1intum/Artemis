@@ -12,7 +12,7 @@ import { Overlay } from '@angular/cdk/overlay';
     styleUrls: ['./exercise-chatbot.component.scss'],
 })
 export class ExerciseChatbotComponent implements OnDestroy {
-    public chatAccepted = 'false';
+    public chatAccepted = 'true';
     public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;

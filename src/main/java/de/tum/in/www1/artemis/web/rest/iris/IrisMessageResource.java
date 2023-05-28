@@ -2,18 +2,24 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -39,8 +45,12 @@ public class IrisMessageResource {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository) {
+    private final SimpMessageSendingOperations messagingTemplate;
+
+    public IrisMessageResource(IrisSessionRepository irisSessionRepository,
+            IrisSessionService irisSessionService, IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository,
+            SimpMessageSendingOperations messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
@@ -72,12 +82,32 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
-        var session = irisSessionRepository.findByIdElseThrow(sessionId);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
-        var savedMessage = irisMessageService.saveNewMessage(message, session, IrisMessageSender.USER);
+        // HERE
+        // var session = irisSessionRepository.findByIdElseThrow(sessionId);
+        // irisSessionService.checkHasAccessToIrisSession(session, null);
+        // var savedMessage = irisMessageService.saveNewMessage(message, session, IrisMessageSender.USER);
 
-        var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
-        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
+        System.out.println("DEBUG");
+        var uriString = "/api/iris/sessions/" + 1 + "/messages/" + 1;
+
+        Random random = new Random();
+        int randomNumber = random.nextInt();
+
+        var content = new IrisMessageContent();
+        content.setTextContent("I have received your message. Your message is: " + message.getContent().get(0).getTextContent());
+        var content2 = new IrisMessageContent();
+        content2.setTextContent(
+                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.");
+
+        var mockMessage = new IrisMessage();
+        mockMessage.setContent(Arrays.asList(content, content2));
+        mockMessage.setSender(IrisMessageSender.LLM);
+
+        // Send socket
+        String destination = "/topic/iris/sessions/1";
+        messagingTemplate.convertAndSendToUser("ge86lew", destination, mockMessage);
+
+        return ResponseEntity.created(new URI(uriString)).body(message);
     }
 
     /**

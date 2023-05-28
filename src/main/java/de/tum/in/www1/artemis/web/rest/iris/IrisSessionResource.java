@@ -55,13 +55,15 @@ public class IrisSessionResource {
     @GetMapping("programming-exercises/{exerciseId}/sessions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        // ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // var user = userRepository.getUserWithGroupsAndAuthorities();
+        // authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var session = irisSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        return ResponseEntity.ok(session);
+        // var session = irisSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        // irisSessionService.checkHasAccessToIrisSession(session, user);
+        var mockSession = new IrisSession();
+        mockSession.setId(Long.valueOf(1));
+        return ResponseEntity.ok(mockSession);
     }
 
     /**
