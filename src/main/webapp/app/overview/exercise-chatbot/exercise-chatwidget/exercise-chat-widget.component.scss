@@ -8,7 +8,7 @@
     right: 60px;
     width: 300px;
     height: 400px;
-    background-color: white;
+    background-color: var(--iris-chat-widget-background);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
 }
 
@@ -16,7 +16,7 @@
     display: flex;
     justify-content: space-between;
     height: 50px;
-    background-color: #212529;
+    background-color: var(--artemis-dark);
     color: white;
     font-weight: bold;
     padding: 10px;
@@ -25,7 +25,7 @@
 .header-icon {
     border: none;
     background: transparent;
-    color: grey;
+    color: var(--secondary);
 }
 
 .chat-body {
@@ -38,8 +38,8 @@
 
 .client-chat {
     width: fit-content;
-    background-color: #f2f2f2;
-    color: dimgrey;
+    background-color: var(--iris-client-chat-background);
+    color: var(--bs-body-color);
     padding: 10px;
     border-radius: 10px;
     margin-bottom: 10px;
@@ -48,8 +48,8 @@
 .my-chat {
     width: fit-content;
     margin-left: auto;
-    background-color: #b7dfb9;
-    color: dimgrey;
+    background-color: var(--iris-my-chat-background);
+    color: var(--bs-body-color);
     padding: 10px;
     border-radius: 10px;
     margin-bottom: 10px;
@@ -60,14 +60,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px;
-    background-color: #f2f2f2;
+    background-color: var(--iris-client-chat-input);
 }
 
 .chat-input input {
     flex: 1;
     margin-right: 10px;
     padding: 5px 15px;
-    border: 1px solid lightgray;
+    border: 1px solid var(--gray-300);
     border-radius: 20px;
 }
 
@@ -75,11 +75,11 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #4caf50;
+    background-color: var(--green);
     border: none;
 }
 
 .btn-circle:hover,
 .btn-circle:active {
-    background-color: #3e913e;
+    background-color: var(--iris-btn-circle-hover);
 }

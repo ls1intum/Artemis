@@ -15,17 +15,13 @@ describe('ExerciseChatWidgetComponent', () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
             declarations: [ExerciseChatWidgetComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe)],
-        }).compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
-
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     it('should add user message on send', () => {

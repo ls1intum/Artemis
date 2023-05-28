@@ -596,3 +596,10 @@ $learning-goal-rings-green: $green;
 $learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
 $learning-goal-rings-blue: $blue;
 $learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);
+
+// Iris Chatbot
+$iris-chat-widget-background: var(--bs-body-bg);
+$iris-client-chat-background: var(--gray-700);
+$iris-client-chat-input: var(--gray-700);
+$iris-my-chat-background: #008462;
+$iris-btn-circle-hover: #008462;

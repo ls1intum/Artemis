@@ -117,47 +117,6 @@ html {
     border-color: $gray-300;
 }
 
-.chat-widget {
-    background-color: rgb(24, 26, 24) !important;
-}
-
-.chat-header {
-    background-color: var(--artemis-dark) !important;
-}
-
-.chat-body {
-    border: 1px solid rgb(24, 26, 24) !important;
-}
-
-.chat-body::-webkit-scrollbar {
-    background-color: #262626 !important;
-    width: 10px !important;
-}
-
-.chat-body::-webkit-scrollbar-thumb {
-    background-color: #363735 !important;
-}
-
-.client-chat {
-    color: white !important;
-    background-color: #363735 !important;
-}
-
-.my-chat {
-    color: white !important;
-    background-color: #357a38 !important;
-}
-
-.chat-input {
-    background-color: #262626 !important;
-}
-
-.chat-input input {
-    color: white !important;
-    background-color: #363735 !important;
-    border: 1px solid dimgray !important;
-}
-
 .ngx-datatable.bootstrap .datatable-body .datatable-body-row.datatable-row-even {
     background: rgba(255, 255, 255, 0.05);
 }
