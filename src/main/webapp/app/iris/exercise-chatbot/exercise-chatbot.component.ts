@@ -2,7 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
-import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 
 @Component({

@@ -1,7 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import { faExpand } from '@fortawesome/free-solid-svg-icons';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({
