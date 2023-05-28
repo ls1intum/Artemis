@@ -12,6 +12,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
  */
 export enum ProfileToggle {
     LECTURE = 'lecture',
+    QUIZ = 'quiz',
     DECOUPLING = 'decoupling',
 }
 export type ActiveProfileToggles = Array<ProfileToggle>;

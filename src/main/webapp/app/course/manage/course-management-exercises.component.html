@@ -46,6 +46,7 @@
     </jhi-course-exercise-card>
 
     <jhi-course-exercise-card
+        [jhiProfileToggleHide]="ProfileToggle.QUIZ"
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         headingJhiTranslate="artemisApp.course.quizExercises"
         [hidden]="shouldHideExerciseCard('quiz')"
