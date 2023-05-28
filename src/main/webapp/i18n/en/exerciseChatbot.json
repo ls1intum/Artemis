@@ -1,0 +1,12 @@
+{
+    "artemisApp": {
+        "exerciseChatbot": {
+            "welcome": "Welcome",
+            "popUpMessage": "After you accept the regulations, your chat with IrisBot will start and your data will be shared with the third-party servers. Please decline if you do not wish to chat.",
+            "inputMessage": "Write a message...",
+            "accept": "Accept",
+            "decline": "Decline",
+            "buttonTooltip": "Start chatting with Iris!"
+        }
+    }
+}

@@ -8,10 +8,9 @@
     <div class="tab-bar tab-bar-exercise-details ps-3 pe-3 justify-content-end">
         <jhi-exercise-details-student-actions
             class="col"
-            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult }"
+            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
             [courseId]="courseId"
             [exercise]="exercise"
-            [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
 
@@ -251,4 +250,5 @@
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>
+    <jhi-exercise-chatbot *ngIf="exercise.type === PROGRAMMING"></jhi-exercise-chatbot>
 </div>
