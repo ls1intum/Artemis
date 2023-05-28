@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -63,15 +64,17 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitViaOnlineEditor() throws Exception {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
         request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 1, false);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitViaOnlineEditor_wrongProjectType() throws Exception {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
         // Submit from the online editor with the wrong project type set on the programming exercise.
         // This tests that an internal error is caught properly in the processNewPush() method and the "/commit" endpoint returns 500 in that case.
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
@@ -88,7 +91,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testNoParticipationWhenPushingToTestsRepository() throws Exception {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // When pushing to the tests repository, the local VC filters do not fetch the participation, as there is no participation for the tests repository.
         // However, the local CI system will trigger builds of the solution and template repositories, which the participations are needed for and the processNewPush method will
         // throw an exception in case there is no participation.
@@ -145,14 +151,20 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitHashNull() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // Should still work because in that case the latest commit should be retrieved from the repository.
         localCIConnectorService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testNoExceptionWhenResolvingWrongCommitHash() {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // Call processNewPush with a wrong commit hash. This should throw an exception.
         LocalCIException exception = assertThrows(LocalCIException.class,
                 () -> localCIConnectorService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository()));
@@ -160,7 +172,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testProjectTypeIsNull() {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         programmingExercise.setProjectType(null);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -188,7 +203,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCannotRetrieveCommitHash() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // An IO Exception happens when trying to retrieve the commit hash for the test repository. This should lead to a build result that indicates a failed build.
 
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
@@ -209,7 +227,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCannotFindResults() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // Should return a build result that indicates that the build failed.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches("/repositories/test-repository/build/test-results/test");
@@ -222,7 +243,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIOExceptionWhenParsingTestResults() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches("/repositories/test-repository/build/test-results/test");
@@ -241,7 +265,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFaultyResultFiles() throws IOException {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH);
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should notify the user.

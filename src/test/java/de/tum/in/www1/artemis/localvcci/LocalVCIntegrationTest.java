@@ -20,8 +20,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -106,7 +108,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_offlineIDENotAllowed() {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         programmingExercise.setAllowOfflineIde(false);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -154,7 +159,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToDeleteBranch() throws GitAPIException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // ":" prefix in the refspec means delete the branch in the remote repository.
         RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
@@ -165,7 +173,9 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToForcePush() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Create a second local repository, push a file from there, and then try to force push from the original local repository.
@@ -193,7 +203,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+
         // Users can create new branches, but pushing to them should not result in a new submission. A warning message should be returned.
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
