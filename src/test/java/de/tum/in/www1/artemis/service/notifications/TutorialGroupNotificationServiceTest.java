@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsS
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -74,7 +73,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         Course course = this.database.createCourse();
         student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        tutorialGroup = createAndSaveTutorialGroup(course.getId(), new SecureRandom().nextInt(1000000000) + "", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
+        tutorialGroup = createAndSaveTutorialGroup(course.getId(), "title" + course.getId(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
                 userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get(),
                 IntStream.range(1, StudentCount + 1).mapToObj((studentId) -> userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).get()).collect(Collectors.toSet()));
 
