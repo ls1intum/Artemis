@@ -118,8 +118,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
-            verify(programmingExerciseStudentParticipationRepository, timeout(timeoutInMs).times(callCount)).updateLockedById(programmingExerciseStudentParticipation.getId(),
-                    true);
+            verify(participationRepository, timeout(timeoutInMs).times(callCount)).updateLockedById(programmingExerciseStudentParticipation.getId(), true);
         }
     }
 

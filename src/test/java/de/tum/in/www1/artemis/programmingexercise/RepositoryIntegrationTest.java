@@ -97,6 +97,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     private ProgrammingExercise programmingExercise;
 
     private final String currentLocalFileName = "currentFileName";
