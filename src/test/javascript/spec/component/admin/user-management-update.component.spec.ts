@@ -312,7 +312,7 @@ describe('User Management Update Component', () => {
         comp.removeOrganizationFromUser(org1);
         expect(comp.user.organizations).toEqual([org0]);
     });
-    
+
     it('should add the selected group from autocomplete panel to user', () => {
         const newGroup = 'nicegroup';
         comp.user = { groups: [] } as any as User;
@@ -343,7 +343,7 @@ describe('User Management Update Component', () => {
         expect(comp.user.groups).toEqual([]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
     });
-    
+
     it('should remove group from user', () => {
         const group1 = 'nicegroup';
         const group2 = 'badgroup';
