@@ -1,17 +1,15 @@
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
 import { IrisMessageStore } from 'app/iris/message-store.service';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { ActiveConversationMessageLoadedAction, ActiveConversationMessageLoadedErrorAction, StudentMessageSentAction } from 'app/iris/message-store.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
-    providers: [IrisHttpMessageService],
 })
 export class ExerciseChatWidgetComponent implements OnInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
@@ -20,16 +18,13 @@ export class ExerciseChatWidgetComponent implements OnInit {
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.SERVER;
 
-    messageStore: IrisMessageStore;
     messages: IrisMessage[] = [];
-    newMessage = '';
+    newMessageTextContent = '';
     isLoading: boolean;
     error = ''; // TODO: error object
     dots = 1;
 
-    constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private irisHttpMessageService: IrisHttpMessageService) {
-        this.messageStore = data.messageStore;
-    }
+    constructor(private dialog: MatDialog, private readonly messageStore: IrisMessageStore) {}
 
     // Icons
     faPaperPlane = faPaperPlane;
@@ -54,8 +49,8 @@ export class ExerciseChatWidgetComponent implements OnInit {
     }
 
     onSend(): void {
-        if (this.newMessage) {
-            const message = this.newUserMessage(this.newMessage);
+        if (this.newMessageTextContent) {
+            const message = this.newUserMessage(this.newMessageTextContent);
             this.messageStore.dispatch(
                 new StudentMessageSentAction(message, {
                     next: (res: HttpResponse<IrisServerMessage>) => {
@@ -68,7 +63,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
                     },
                 }),
             );
-            this.newMessage = '';
+            this.newMessageTextContent = '';
         }
         this.scrollToBottom();
     }

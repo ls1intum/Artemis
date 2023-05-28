@@ -9,9 +9,10 @@ import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
+import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 
 @NgModule({
-    declarations: [ChatbotPopupComponent, ExerciseChatWidgetComponent],
+    declarations: [ChatbotPopupComponent, ExerciseChatWidgetComponent, ExerciseChatbotComponent],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule],
     providers: [IrisMessageStore, IrisWebsocketService, IrisSessionService],
 })

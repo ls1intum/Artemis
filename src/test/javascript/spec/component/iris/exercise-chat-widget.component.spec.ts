@@ -29,7 +29,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should add user message on send', () => {
-        component.newMessage = 'Hello';
+        component.newMessageTextContent = 'Hello';
 
         component.onSend();
 
@@ -37,10 +37,10 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should clear newMessage on send', () => {
-        component.newMessage = 'Hello';
+        component.newMessageTextContent = 'Hello';
 
         component.onSend();
 
-        expect(component.newMessage).toBe('');
+        expect(component.newMessageTextContent).toBe('');
     });
 });
