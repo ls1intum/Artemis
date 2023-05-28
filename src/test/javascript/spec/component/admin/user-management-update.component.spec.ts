@@ -20,7 +20,7 @@ import { MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
@@ -312,8 +312,18 @@ describe('User Management Update Component', () => {
         comp.removeOrganizationFromUser(org1);
         expect(comp.user.organizations).toEqual([org0]);
     });
+    
+    it('should add the selected group from autocomplete panel to user', () => {
+        const newGroup = 'nicegroup';
+        comp.user = { groups: [] } as any as User;
+        comp.allGroups = [newGroup];
+        const option = { viewValue: newGroup };
+        const event = { option } as any as MatAutocompleteSelectedEvent;
+        comp.onSelected(event);
+        expect(comp.user.groups).toEqual([newGroup]);
+    });
 
-    it('should add users to groups', () => {
+    it('should add group to user', () => {
         const newGroup = 'nicegroup';
         comp.allGroups = [newGroup];
         comp.user = { groups: [] } as any as User;
@@ -323,7 +333,7 @@ describe('User Management Update Component', () => {
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
     });
 
-    it('should not add users to groups', () => {
+    it('should not add groups to user', () => {
         const newGroup1 = 'nicegroup';
         const newGroup2 = 'badgroup';
         comp.allGroups = [newGroup1];
@@ -332,5 +342,13 @@ describe('User Management Update Component', () => {
         comp.onGroupAdd(comp.user, event);
         expect(comp.user.groups).toEqual([]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+    });
+    
+    it('should remove group from user', () => {
+        const group1 = 'nicegroup';
+        const group2 = 'badgroup';
+        comp.user = { groups: [group1, group2] } as any as User;
+        comp.onGroupRemove(comp.user, group1);
+        expect(comp.user.groups).toEqual([group2]);
     });
 });
