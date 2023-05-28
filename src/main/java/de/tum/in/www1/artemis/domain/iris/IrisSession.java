@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisSession extends DomainObject {
 
+    private Long id;
+
     @ManyToOne
     @JsonIgnore
     private ProgrammingExercise exercise;
@@ -56,5 +58,13 @@ public class IrisSession extends DomainObject {
 
     public List<IrisMessage> getMessages() {
         return messages;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }
