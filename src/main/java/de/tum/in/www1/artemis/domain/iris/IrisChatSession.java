@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
- * An IrisSession represents a conversation between a user and an Artemis bot.
+ * An IrisChatSession represents a conversation between a user and an Artemis bot.
  * Currently, IrisSessions are only used to help students with programming exercises.
  */
 @Entity

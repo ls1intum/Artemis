@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 
 /**
- * An IrisSession represents a conversation between a user and an Artemis bot.
- * Currently, IrisSessions are only used to help students with programming exercises.
+ * An Iris session for a hestia code hint.
+ * Currently used to generate descriptions for code hints.
  */
 @Entity
 @DiscriminatorValue("HESTIA")

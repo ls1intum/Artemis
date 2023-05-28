@@ -3,6 +3,10 @@ package de.tum.in.www1.artemis.service.iris.session;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 
+/**
+ * Interface for Iris session sub services.
+ * Each iris session sub service handles a specific type of Iris session.
+ */
 public interface IrisSessionSubServiceInterface {
 
     /**

@@ -22,6 +22,9 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisModelService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+/**
+ * Service to handle the Hestia integration of Iris.
+ */
 @Service
 public class IrisHestiaSessionService implements IrisSessionSubServiceInterface {
 
@@ -53,6 +56,14 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         this.irisSessionRepository = irisSessionRepository;
     }
 
+    /**
+     * Generates the description and content for a code hint.
+     * It does not directly save the code hint, but instead returns it with the generated description and content.
+     * This way the instructor can still modify the code hint before saving it or discard the changes.
+     *
+     * @param codeHint The code hint to generate the description and content for
+     * @return The code hint with the generated description and content
+     */
     public CodeHint generateDescription(CodeHint codeHint) {
         var irisSession = new IrisHestiaSession();
         irisSession.setCodeHint(codeHint);
@@ -125,11 +136,22 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         return irisMessage;
     }
 
+    /**
+     * Not supported for Iris Hestia sessions.
+     *
+     * @param irisSession The session to get a message for
+     */
     @Override
     public void requestAndHandleResponse(IrisSession irisSession) {
         throw new BadRequestException("Iris Hestia Session not supported");
     }
 
+    /**
+     * Checks if the user has at least the given role for the exercise of the code hint.
+     *
+     * @param irisSession The Iris session to check the access for
+     * @param user        The user to check the access for
+     */
     @Override
     public void checkHasAccessToIrisSession(IrisSession irisSession, User user) {
         var hestiaSession = castToSessionType(irisSession, IrisHestiaSession.class);

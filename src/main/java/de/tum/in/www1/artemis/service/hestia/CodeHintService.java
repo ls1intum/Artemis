@@ -185,6 +185,13 @@ public class CodeHintService {
         codeHintRepository.save(hint);
     }
 
+    /**
+     * Generates a description and content for a code hint using the Iris subsystem.
+     * See {@link IrisHestiaSessionService#generateDescription(CodeHint)} for more information.
+     *
+     * @param codeHint The code hint to be generated
+     * @return The code hint with description and content
+     */
     public CodeHint generateDescriptionWithIris(CodeHint codeHint) {
         return irisHestiaSessionService.generateDescription(codeHint);
     }

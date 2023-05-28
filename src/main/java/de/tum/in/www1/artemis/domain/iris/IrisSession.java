@@ -15,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
- * An IrisSession represents a conversation between a user and an Artemis bot.
- * Currently, IrisSessions are only used to help students with programming exercises.
+ * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
+ * See {@link IrisChatSession} and {@link IrisHestiaSession} for concrete implementations.
  */
 @Entity
 @Table(name = "iris_session")
