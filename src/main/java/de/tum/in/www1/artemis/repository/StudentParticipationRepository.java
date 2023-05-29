@@ -84,6 +84,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     List<StudentParticipation> findByTeamId(Long teamId);
 
+    Optional<StudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
+
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
 
@@ -115,6 +117,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.testRun = :#{#testRun}
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
+            @Param("testRun") boolean testRun);
+
+    @Query("""
+            SELECT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.student.login = :#{#username}
+            AND p.testRun = :#{#testRun}
+            """)
+    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
             @Param("testRun") boolean testRun);
 
     @Query("""

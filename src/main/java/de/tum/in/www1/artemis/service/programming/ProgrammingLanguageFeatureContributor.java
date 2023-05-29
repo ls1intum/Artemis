@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({ "bamboo", "jenkins", "gitlabci" })
+@Profile({ "bamboo", "jenkins", "gitlabci", "localci" })
 public class ProgrammingLanguageFeatureContributor implements InfoContributor {
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
