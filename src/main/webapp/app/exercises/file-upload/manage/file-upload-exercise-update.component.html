@@ -14,7 +14,12 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="fileUploadExercise.id" readonly />
         </div>
-        <jhi-title-channel-name [(title)]="fileUploadExercise.title" [(channelName)]="channelName" channelNamePrefix="exercise-" [minTitleLength]="3"></jhi-title-channel-name>
+        <jhi-title-channel-name
+            [(title)]="fileUploadExercise.title"
+            [(channelName)]="fileUploadExercise.channelName"
+            channelNamePrefix="exercise-"
+            [minTitleLength]="3"
+        ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>

@@ -125,7 +125,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         if (result.isCourseExercise()) {
-            channelService.createExerciseChannel(result, result.getChannelName());
+            channelService.createExerciseChannel(result, fileUploadExercise.getChannelName());
         }
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
@@ -305,7 +305,9 @@ public class FileUploadExerciseResource {
 
         if (exercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
-            exercise.setChannelName(channel.getName());
+            if (channel != null) {
+                exercise.setChannelName(channel.getName());
+            }
         }
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);

@@ -32,7 +32,7 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "channel", "learningGoals", "exampleSubmissions.submission.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "learningGoals", "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndLearningGoalsById(@Param("exerciseId") Long exerciseId);
 
     @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig where modelingExercise.id = :#{#exerciseId}")
