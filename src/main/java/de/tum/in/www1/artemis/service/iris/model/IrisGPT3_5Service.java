@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
@@ -83,7 +84,7 @@ public class IrisGPT3_5Service implements IrisModel {
     @Value("${artemis.iris.models.gpt3_5.stop-sequences}")
     private String[] stopSequences;
 
-    public IrisGPT3_5Service(RestTemplate restTemplate) {
+    public IrisGPT3_5Service(@Qualifier("gpt35RestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

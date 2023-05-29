@@ -1,8 +1,4 @@
-// These constants are injected via webpack environment variables.
-// If you change the values in the webpack config files, you need to re-run webpack to update the application
-
-declare const __DEBUG_INFO_ENABLED__: boolean;
-declare const __VERSION__: string;
+import { __DEBUG_INFO_ENABLED__, __VERSION__ } from 'app/environments/environment';
 
 export const VERSION = __VERSION__;
 export const DEBUG_INFO_ENABLED = __DEBUG_INFO_ENABLED__;
@@ -22,3 +18,5 @@ export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
 export const ARTEMIS_VERSION_HEADER = 'Content-Version';
+
+export const PROFILE_LOCALVC = 'localvc';

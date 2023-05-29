@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
@@ -26,7 +25,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
-class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irismessageintegration";
 
@@ -65,6 +64,9 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
         messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
+
+        gpt35RequestMockProvider.mockResponse("Hello World");
+
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertEquals(IrisMessageSender.USER, irisMessage.getSender());
         assertNull(irisMessage.getHelpful());
@@ -73,6 +75,8 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
         var irisSessionFromDb = irisSessionRepository.findByIdWithMessages(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage));
+
+        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
     }
 
     @Test
