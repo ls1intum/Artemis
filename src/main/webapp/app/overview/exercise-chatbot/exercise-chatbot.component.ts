@@ -12,7 +12,7 @@ import { Overlay } from '@angular/cdk/overlay';
     styleUrls: ['./exercise-chatbot.component.scss'],
 })
 export class ExerciseChatbotComponent implements OnDestroy {
-    public chatAccepted = 'false';
+    public chatAccepted = false;
     public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;
@@ -31,7 +31,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
         if (this.chatOpen && this.dialogRef) {
             this.dialogRef!.close();
             this.chatOpen = false;
-        } else if (this.chatAccepted === 'true') {
+        } else if (this.chatAccepted) {
             this.openChat();
         } else {
             this.openDialog();
@@ -42,8 +42,8 @@ export class ExerciseChatbotComponent implements OnDestroy {
         const dialogRef = this.dialog.open(ChatbotPopupComponent, {});
 
         dialogRef.afterClosed().subscribe((result) => {
-            this.chatAccepted = result;
-            if (this.chatAccepted === 'true') {
+            this.chatAccepted = result == 'true';
+            if (this.chatAccepted) {
                 this.openChat();
             }
         });
@@ -54,6 +54,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
             this.chatOpen = true;
             this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
                 hasBackdrop: false,
+                scrollStrategy: this.overlay.scrollStrategies.noop(),
                 position: { bottom: '0px', right: '0px' },
                 data: {
                     messageStore: this.messageStore,

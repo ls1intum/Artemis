@@ -38,23 +38,19 @@ describe('ExerciseChatbotComponent', () => {
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
             ],
-        }).compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ExerciseChatbotComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
-
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     it('should open dialog when chat not accepted', () => {
         jest.spyOn(component, 'openDialog');
 
-        component.chatAccepted = 'false';
+        component.chatAccepted = false;
         component.handleButtonClick();
 
         expect(component.openDialog).toHaveBeenCalled();
@@ -63,7 +59,7 @@ describe('ExerciseChatbotComponent', () => {
     it('should open chat when chat accepted', () => {
         jest.spyOn(component, 'openChat');
 
-        component.chatAccepted = 'true';
+        component.chatAccepted = true;
         component.handleButtonClick();
 
         expect(component.openChat).toHaveBeenCalled();
