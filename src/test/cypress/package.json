@@ -8,8 +8,8 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.3",
-        "@types/node": "18.16.2",
-        "cypress": "12.11.0",
+        "@types/node": "20.2.1",
+        "cypress": "12.12.0",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "1.7.2",
         "typescript": "4.9.5",

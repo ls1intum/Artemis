@@ -27,5 +27,4 @@ public interface IrisModel {
      * @return Initial system message
      */
     String getInitialSystemMessageTemplate();
-
 }
