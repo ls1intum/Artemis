@@ -32,8 +32,6 @@ public class TextExerciseUtilService {
     @Autowired
     private UserRepository userRepository;
 
-    private final Random random = new Random();
-
     /**
      * Generate a set of specified size containing TextBlocks with dummy Text
      *
@@ -60,7 +58,7 @@ public class TextExerciseUtilService {
     public Set<TextBlock> generateTextBlocksWithIdenticalTexts(int count) {
         Set<TextBlock> textBlocks = new HashSet<>();
         TextBlock textBlock;
-        String text = "TextBlock" + random.nextInt();
+        String text = "TextBlock";
 
         for (int i = 0; i < count; i++) {
             String blockId = sha1Hex("id" + i + text);
@@ -74,7 +72,7 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Create n TextClusters and randomly assign TextBlocks to new clusters.
+     * Create n TextClusters and assign TextBlocks to new clusters.
      *
      * @param textBlocks   TextBlocks to fake cluster
      * @param clusterSizes Number of new clusters
@@ -88,18 +86,19 @@ public class TextExerciseUtilService {
 
         List<TextCluster> clusters = createClustersForExercise(clusterSizes, textExercise);
 
-        // Add all textblocks to a random cluster
-        textBlocks.forEach(textBlock -> {
-            int clusterIndex;
+        // Add all textblocks to a cluster
+        int clusterIndex = 0;
+        for (var textBlock : textBlocks) {
             // as long as cluster is full select another cluster
             do {
-                clusterIndex = random.nextInt(clusterSizes.length);
+                clusterIndex = (clusterIndex + 1) % clusterSizes.length;
             }
             while (clusterSizes[clusterIndex] == 0);
 
             clusterSizes[clusterIndex]--;
             clusters.get(clusterIndex).addBlocks(textBlock);
-        });
+        }
+
         return clusters;
     }
 

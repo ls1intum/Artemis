@@ -43,10 +43,10 @@
                                 <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
                             </td>
                             <td>
-                                <ngb-highlight [result]="course.title!"></ngb-highlight>
+                                <span>{{ course.title }}</span>
                             </td>
                             <td>
-                                <ngb-highlight [result]="course.shortName"></ngb-highlight>
+                                <span>{{ course.shortName }}</span>
                             </td>
                         </tr>
                     </tbody>
