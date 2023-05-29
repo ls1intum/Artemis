@@ -247,8 +247,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     describe('course mode', () => {
         const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedProgrammingExercise.course = course;
-        expectedProgrammingExercise.channel = new Channel();
-        expectedProgrammingExercise.channel.name = '';
+        expectedProgrammingExercise.channelName = '';
 
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
