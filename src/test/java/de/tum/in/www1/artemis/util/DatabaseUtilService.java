@@ -76,7 +76,9 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -128,7 +130,7 @@ public class DatabaseUtilService {
     private LectureRepository lectureRepo;
 
     @Autowired
-    private LearningGoalRepository learningGoalRepo;
+    private CompetencyRepository competencyRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -321,6 +323,12 @@ public class DatabaseUtilService {
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
+    @Autowired
+    private ReactionRepository reactionRepository;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
@@ -765,12 +773,12 @@ public class DatabaseUtilService {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
-    public LearningGoal createLearningGoal(Course course) {
-        LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("Example Competency");
-        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
-        learningGoal.setCourse(course);
-        return learningGoalRepo.save(learningGoal);
+    public Competency createCompetency(Course course) {
+        Competency competency = new Competency();
+        competency.setTitle("Example Competency");
+        competency.setDescription("Magna pars studiorum, prodita quaerimus.");
+        competency.setCourse(course);
+        return competencyRepo.save(competency);
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -881,20 +889,20 @@ public class DatabaseUtilService {
         }).toList();
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(String userPrefix, boolean withParticipations, boolean withFiles,
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
-            lectures.replaceAll(lecture -> addLearningGoalToLectureUnits(lecture, Set.of(createLearningGoal(course))));
+            lectures.replaceAll(lecture -> addCompetencyToLectureUnits(lecture, Set.of(createCompetency(course))));
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }
 
-    public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<LearningGoal> learningGoals) {
-        Lecture l = lectureRepo.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
+    public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<Competency> competencies) {
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
-            lectureUnit.setLearningGoals(learningGoals);
+            lectureUnit.setCompetencies(competencies);
             lectureUnitRepository.save(lectureUnit);
         });
         return l;
@@ -1164,6 +1172,56 @@ public class DatabaseUtilService {
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix));
 
+        return posts;
+    }
+
+    public List<Post> createPostsWithAnswersAndReactionsAndConversation(Course course, User student1, User student2, int numberOfPosts, String userPrefix) {
+        var chat = new OneToOneChat();
+        chat.setCourse(course);
+        chat.setCreator(student1);
+        chat.setCreationDate(ZonedDateTime.now());
+        chat.setLastMessageDate(ZonedDateTime.now());
+        chat = oneToOneChatRepository.save(chat);
+        var participant1 = new ConversationParticipant();
+        participant1.setConversation(chat);
+        participant1.setUser(student1);
+        participant1.setUnreadMessagesCount(0L);
+        participant1.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipantRepository.save(participant1);
+        var participant2 = new ConversationParticipant();
+        participant2.setConversation(chat);
+        participant2.setUser(student2);
+        participant2.setUnreadMessagesCount(0L);
+        participant2.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipantRepository.save(participant2);
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+
+        var posts = new ArrayList<Post>();
+        for (int i = 0; i < numberOfPosts; i++) {
+            var post = new Post();
+            post.setAuthor(student1);
+            post.setDisplayPriority(DisplayPriority.NONE);
+            post.setConversation(chat);
+            post = postRepository.save(post);
+            posts.add(post);
+        }
+
+        // add many answers for all posts in conversation
+        for (var post : posts) {
+            post.setAnswers(createBasicAnswers(post, userPrefix));
+            postRepository.save(post);
+        }
+
+        // add many reactions for all posts in conversation
+        for (var post : posts) {
+            Reaction reaction = new Reaction();
+            reaction.setEmojiId("smiley");
+            reaction.setPost(post);
+            reaction.setUser(student1);
+            reactionRepository.save(reaction);
+            post.setReactions(Set.of(reaction));
+            postRepository.save(post);
+        }
         return posts;
     }
 

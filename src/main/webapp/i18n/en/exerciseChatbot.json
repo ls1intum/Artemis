@@ -2,7 +2,7 @@
     "artemisApp": {
         "exerciseChatbot": {
             "welcome": "Welcome",
-            "popUpMessage": "After you accept the regulations, your chat with IrisBot will start and your data will be shared with the third-party servers. Please decline if you do not wish to chat.",
+            "popUpMessage": "By choosing to continue, you agree that your interactions with IrisBot will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'.",
             "inputMessage": "Write a message...",
             "accept": "Accept",
             "decline": "Decline",

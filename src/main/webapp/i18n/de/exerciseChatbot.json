@@ -2,11 +2,11 @@
     "artemisApp": {
         "exerciseChatbot": {
             "welcome": "Willkommen",
-            "popUpMessage": "Nachdem Sie die Bestimmungen akzeptiert haben, beginnt Ihr Chat mit IrisBot und Ihre Daten werden an die Server Dritter weitergegeben. Bitte lehnen Sie ab, wenn Sie nicht chatten möchten.",
-            "inputMessage": "Schreiben Sie eine Nachricht...",
+            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit IrisBot von Microsoft und OpenAI verarbeitet werden, wobei die Datenübertragung außerhalb unseres Universitätsrechenzentrums erfolgt. Wenn du mit diesen Bedingungen nicht einverstanden bist, wähle bitte 'Ablehnen'. Um dies zu bestätigen und deinen Chat mit IrisBot zu beginnen, klick auf 'Akzeptieren'.",
+            "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
-            "buttonTooltip": "Beginnen Sie mit Iris zu chatten!"
+            "buttonTooltip": "Beginne mit Iris zu chatten!"
         }
     }
 }

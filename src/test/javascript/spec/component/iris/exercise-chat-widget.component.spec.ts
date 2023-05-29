@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
-import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
+import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { ChatbotPopupComponent } from 'app/overview/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -15,21 +15,17 @@ describe('ExerciseChatWidgetComponent', () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
             declarations: [ExerciseChatWidgetComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe)],
-        }).compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
-
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
     it('should add user message on send', () => {
-        component.newMessageTextContent = 'Hello';
+        component.newMessage = 'Hello';
 
         component.onSend();
 
@@ -37,10 +33,10 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should clear newMessage on send', () => {
-        component.newMessageTextContent = 'Hello';
+        component.newMessage = 'Hello';
 
         component.onSend();
 
-        expect(component.newMessageTextContent).toBe('');
+        expect(component.newMessage).toBe('');
     });
 });
