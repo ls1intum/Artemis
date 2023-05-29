@@ -110,7 +110,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_offlineIDENotAllowed() {
-        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         programmingExercise.setAllowOfflineIde(false);
         programmingExerciseRepository.save(programmingExercise);
@@ -161,7 +161,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToDeleteBranch() throws GitAPIException {
-        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // ":" prefix in the refspec means delete the branch in the remote repository.
         RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
@@ -175,7 +175,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToForcePush() throws Exception {
-        localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Create a second local repository, push a file from there, and then try to force push from the original local repository.
@@ -205,7 +205,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login, projectKey1);
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Users can create new branches, but pushing to them should not result in a new submission. A warning message should be returned.
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();

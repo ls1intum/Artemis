@@ -92,7 +92,15 @@ public class LocalVCLocalCITestService {
         return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
     }
 
-    public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, String userLogin, String projectKey) {
+    /**
+     * Create a participation for a given user in a given programming exercise.
+     *
+     * @param programmingExercise the programming exercise.
+     * @param userLogin           the user login.
+     * @return the participation.
+     */
+    public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, String userLogin) {
+        String projectKey = programmingExercise.getProjectKey();
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         participation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
