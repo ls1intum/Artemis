@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
@@ -8,6 +10,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
@@ -84,5 +89,28 @@ public class IrisSessionService {
     public void requestMessageFromIris(IrisSession session) {
         // TODO: Future: Switch between different session types
         irisChatService.requestAndHandleResponse(session);
+    }
+
+    /**
+     * Creates the initial system message for the session and set LLM
+     *
+     * @param session The session to generate the initial system message for
+     * @return The created IrisMessage for storing in the database
+     * @throws BadRequestException if no LLM is set thus no initial system message could be generated
+     */
+    public IrisMessage createInitialSystemMessage(IrisSession session) {
+        String initialSystemMessage = irisChatService.requestInitialSystemMessage();
+        if (initialSystemMessage == null) {
+            throw new BadRequestException("There is no IrisModel set.");
+        }
+        // TODO: add exercise-specific content to initial system message
+        var messageContent = new IrisMessageContent();
+        messageContent.setTextContent(initialSystemMessage);
+        var message = new IrisMessage();
+        message.setContent(List.of(messageContent));
+        message.setSender(IrisMessageSender.ARTEMIS);
+        message.setSentAt(ZonedDateTime.now());
+        message.setSession(session);
+        return message;
     }
 }

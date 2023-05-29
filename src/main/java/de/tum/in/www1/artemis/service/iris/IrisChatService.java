@@ -54,4 +54,13 @@ public class IrisChatService {
             return null;
         });
     }
+
+    /**
+     * Requests the initial system message for the used LLM
+     *
+     * @return The initial system message for the used LLM, if no LLM is set, returns null
+     */
+    public String requestInitialSystemMessage() {
+        return irisModelService.requestInitialSystemMessage().orElse(null);
+    }
 }

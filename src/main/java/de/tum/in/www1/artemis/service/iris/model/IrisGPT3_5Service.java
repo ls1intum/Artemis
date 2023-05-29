@@ -118,6 +118,16 @@ public class IrisGPT3_5Service implements IrisModel {
     }
 
     /**
+     * Returns a format string used as the initial system prompt for storing in the database
+     *
+     * @return Initial system message for this LLM as format string
+     */
+    @Override
+    public String getInitialSystemMessageTemplate() {
+        return "This will be the initial system prompt...";
+    }
+
+    /**
      * Converts the response from the GPT-3.5 API into an {@link IrisMessage} object.
      *
      * @param message the response from the GPT-3.5 API
