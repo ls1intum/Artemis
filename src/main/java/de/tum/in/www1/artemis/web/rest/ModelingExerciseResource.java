@@ -18,9 +18,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -84,12 +86,14 @@ public class ModelingExerciseResource {
 
     private final ChannelService channelService;
 
+    private final ChannelRepository channelRepository;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -106,6 +110,7 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -138,15 +143,11 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if (modelingExercise.isCourseExercise() && modelingExercise.getChannel() != null) {
-        // Channel createdChannel = channelService.createExerciseChannel(modelingExercise, modelingExercise.getChannel().getName());
-        // modelingExercise.setChannel(createdChannel);
-        // }
-        // else {
-        // modelingExercise.setChannel(null);
-        // }
-
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        if (result.isCourseExercise()) {
+            channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        }
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 
@@ -206,8 +207,7 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
-        // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
+        Channel updatedChannel = channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -218,7 +218,9 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
-
+        if (updatedChannel != null) {
+            updatedModelingExercise.setChannelName(updatedChannel.getName());
+        }
         return ResponseEntity.ok(updatedModelingExercise);
     }
 
@@ -259,6 +261,13 @@ public class ModelingExerciseResource {
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
+
+        if (modelingExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(modelingExercise.getId());
+            if (channel != null) {
+                modelingExercise.setChannelName(channel.getName());
+            }
+        }
 
         return ResponseEntity.ok().body(modelingExercise);
     }

@@ -271,7 +271,9 @@ public class TextExerciseResource {
         }
         if (textExercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(textExercise.getId());
-            textExercise.setChannelName(channel.getName());
+            if (channel != null) {
+                textExercise.setChannelName(channel.getName());
+            }
         }
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
