@@ -1,6 +1,3 @@
-import { IrisMessageStore } from 'app/iris/message-store.service';
-import { IrisWebsocketService } from 'app/iris/websocket.service';
-import { IrisSessionService } from 'app/iris/session.service';
 import { NgModule } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
@@ -14,6 +11,7 @@ import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-cha
 @NgModule({
     declarations: [ChatbotPopupComponent, ExerciseChatWidgetComponent, ExerciseChatbotComponent],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule],
-    providers: [IrisMessageStore, IrisWebsocketService, IrisSessionService],
+    providers: [],
+    exports: [ExerciseChatbotComponent],
 })
 export class IrisModule {}

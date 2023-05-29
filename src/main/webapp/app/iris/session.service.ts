@@ -1,37 +1,42 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { IrisSession } from 'app/entities/iris/iris.model';
+import { IrisStateStore } from 'app/iris/state-store.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/message-store.model';
+import { IrisHttpSessionService } from 'app/iris/http-session.service';
 
-type EntityResponseType = HttpResponse<IrisSession>;
-
-/**
- * Provides a singleton instance of http client to manage IRIS sessions
- */
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class IrisSessionService {
-    public resourceUrl = 'api/iris/';
+    constructor(private readonly stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService) {}
 
-    constructor(protected http: HttpClient) {
-        this.http = http;
+    getCurrentSessionOrCreate(exerciseId: number): void {
+        this.httpSessionService.getCurrentSession(exerciseId).subscribe({
+            next: (irisSessionResponse: HttpResponse<IrisSession>) => {
+                this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.body!.id, []));
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 404) {
+                    this.createNewSession(exerciseId);
+                } else {
+                    this.dispatchError('Could not fetch session details');
+                }
+            },
+        });
     }
 
-    /**
-     * gets the current session by the exerciseId
-     * @param {number} exerciseId of the exercise
-     * @return {Observable<EntityResponseType>} an Observable of the HTTP response
-     */
-    getCurrentSession(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<IrisSession>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, { observe: 'response' });
+    createNewSession(exerciseId: number): void {
+        this.httpSessionService.createSessionForProgrammingExercise(exerciseId).subscribe({
+            next: (irisSessionResponse: HttpResponse<IrisSession>) => {
+                this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.body!.id, []));
+            },
+            error: () => {
+                this.dispatchError('Could not create a new session');
+            },
+        });
+        this.stateStore.dispatch(new SessionReceivedAction(5, []));
     }
 
-    /**
-     * creates a session for a programming exercise
-     * @param {number} exerciseId of the session in which the message should be created
-     * @param {IrisSession} session the iris session to be created
-     * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
-     */
-    createSessionForProgrammingExercise(exerciseId: number, session: IrisSession): Observable<EntityResponseType> {
-        return this.http.post<IrisSession>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, session, { observe: 'response' });
+    private dispatchError(error: string): void {
+        this.stateStore.dispatch(new ConversationErrorOccurredAction(error)); // TODO in messages.json
     }
 }

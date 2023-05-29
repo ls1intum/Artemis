@@ -1,19 +1,19 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { IrisMessageStore } from 'app/iris/message-store.service';
+import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ActiveConversationMessageLoadedAction, SessionIdReceivedAction } from 'app/iris/message-store.model';
+import { ActiveConversationMessageLoadedAction, SessionReceivedAction } from 'app/iris/message-store.model';
 import { mockServerMessage } from '../../helpers/sample/iris-sample-data';
 
 describe('IrisWebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
     let jhiWebsocketService: JhiWebsocketService;
-    let irisMessageStore: IrisMessageStore;
+    let irisMessageStore: IrisStateStore;
 
     const channel = 'topic/iris/sessions/0';
     const newMessageObservable = of(mockServerMessage);
@@ -21,11 +21,11 @@ describe('IrisWebsocketService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisWebsocketService, MockProvider(JhiWebsocketService), IrisMessageStore, { provide: AccountService, useClass: MockAccountService }],
+            providers: [IrisWebsocketService, MockProvider(JhiWebsocketService), IrisStateStore, { provide: AccountService, useClass: MockAccountService }],
         });
         irisWebsocketService = TestBed.inject(IrisWebsocketService);
         jhiWebsocketService = TestBed.inject(JhiWebsocketService);
-        irisMessageStore = TestBed.inject(IrisMessageStore);
+        irisMessageStore = TestBed.inject(IrisStateStore);
     });
 
     afterEach(() => {
@@ -42,7 +42,7 @@ describe('IrisWebsocketService', () => {
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(newMessageObservable);
         const dispatchSpy = jest.spyOn(irisMessageStore, 'dispatch');
 
-        irisMessageStore.dispatch(new SessionIdReceivedAction(0));
+        irisMessageStore.dispatch(new SessionReceivedAction(0, []));
 
         tick();
 
@@ -60,9 +60,9 @@ describe('IrisWebsocketService', () => {
         jest.spyOn(jhiWebsocketService, 'subscribe');
         jest.spyOn(jhiWebsocketService, 'unsubscribe');
         jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(newMessageObservable);
-        irisMessageStore.dispatch(new SessionIdReceivedAction(0));
+        irisMessageStore.dispatch(new SessionReceivedAction(0, []));
         tick();
-        irisMessageStore.dispatch(new SessionIdReceivedAction(null));
+        irisMessageStore.dispatch(new SessionReceivedAction(2, []));
         tick();
         expect(jhiWebsocketService.unsubscribe).toHaveBeenCalledWith(channel);
     }));

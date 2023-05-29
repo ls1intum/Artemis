@@ -1,10 +1,10 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { MatDialog } from '@angular/material/dialog';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
-import { IrisMessageStore } from 'app/iris/message-store.service';
-import { ActiveConversationMessageLoadedAction, ActiveConversationMessageLoadedErrorAction, StudentMessageSentAction } from 'app/iris/message-store.model';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender } from 'app/entities/iris/iris.model';
+import { IrisStateStore } from 'app/iris/state-store.service';
+import { StudentMessageSentAction } from 'app/iris/message-store.model';
+import { IrisHttpMessageService } from 'app/iris/http-message.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -17,6 +17,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
 
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.SERVER;
+    readonly stateStore: IrisStateStore;
 
     messages: IrisMessage[] = [];
     newMessageTextContent = '';
@@ -24,7 +25,9 @@ export class ExerciseChatWidgetComponent implements OnInit {
     error = ''; // TODO: error object
     dots = 1;
 
-    constructor(private dialog: MatDialog, private readonly messageStore: IrisMessageStore) {}
+    constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, httpMessageService: IrisHttpMessageService) {
+        this.stateStore = this.data.stateStore;
+    }
 
     // Icons
     faPaperPlane = faPaperPlane;
@@ -35,7 +38,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     ngOnInit() {
         this.scrollToBottom('auto');
         this.animateDots();
-        this.messageStore.getState().subscribe((state) => {
+        this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
             this.error = state.error;
@@ -51,18 +54,15 @@ export class ExerciseChatWidgetComponent implements OnInit {
     onSend(): void {
         if (this.newMessageTextContent) {
             const message = this.newUserMessage(this.newMessageTextContent);
-            this.messageStore.dispatch(
-                new StudentMessageSentAction(message, {
-                    next: (res: HttpResponse<IrisServerMessage>) => {
-                        this.messageStore.dispatch(new ActiveConversationMessageLoadedAction(res.body!));
-                        this.scrollToBottom();
-                    },
-                    error: (error: HttpErrorResponse) => {
-                        // this.messageStore.dispatch(new ActiveConversationMessageLoadedErrorAction(res.body!));
-                        this.messageStore.dispatch(new ActiveConversationMessageLoadedErrorAction('Something went wrong. Please try again later!'));
-                    },
-                }),
-            );
+            this.stateStore
+                .dispatchAndThen(new StudentMessageSentAction(message))
+                .then(() => {
+                    // this.httpMessageService TODO
+                    this.scrollToBottom();
+                })
+                .catch((error) => {
+                    this.error = error;
+                });
             this.newMessageTextContent = '';
         }
         this.scrollToBottom();

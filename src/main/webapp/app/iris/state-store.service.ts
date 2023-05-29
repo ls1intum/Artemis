@@ -1,22 +1,23 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import {
     MessageStoreAction,
     MessageStoreState,
     isActiveConversationMessageLoadedAction,
-    isActiveConversationMessageLoadedErrorAction,
+    isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
-    isSessionIdReceivedAction,
+    isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/message-store.model';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
+
+type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: string) => void };
 
 /**
- * Provides a component level store to manage message-related state data and dispatch actions.
+ * Provides a store to manage message-related state data and dispatch actions. Is valid only inside CourseExerciseDetailsComponent
  */
 @Injectable()
-export class IrisMessageStore implements OnDestroy {
+export class IrisStateStore implements OnDestroy {
     private readonly initialState: MessageStoreState = {
         messages: [],
         sessionId: null,
@@ -24,15 +25,21 @@ export class IrisMessageStore implements OnDestroy {
         error: '',
     };
 
-    private readonly action = new Subject<MessageStoreAction>();
+    private readonly action = new Subject<ResolvableAction>();
     private readonly state = new BehaviorSubject<MessageStoreState>(this.initialState);
     private readonly subscription: Subscription;
 
-    constructor(private httpMessageService: IrisHttpMessageService) {
+    constructor() {
         this.subscription = this.action
             .pipe(
-                tap((action: MessageStoreAction) => {
-                    this.state.next(this.storeReducer(this.state.getValue(), action));
+                tap((resolvableAction: ResolvableAction) => {
+                    const newState = this.storeReducer(this.state.getValue(), resolvableAction.action);
+                    this.state.next(newState);
+                    if (newState.error) {
+                        resolvableAction.reject(newState.error);
+                    } else {
+                        resolvableAction.resolve();
+                    }
                 }),
             )
             .subscribe();
@@ -47,9 +54,29 @@ export class IrisMessageStore implements OnDestroy {
     /**
      * Dispatches an action to update the message store state.
      * @param action The action to dispatch.
+     * @return promise Promise to handle consecutive cases
+     */
+    dispatchAndThen(action: MessageStoreAction): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.action.next({
+                action: action,
+                resolve: resolve,
+                reject: reject,
+            });
+        });
+    }
+
+    /**
+     * Dispatches an action to update the message store state.
+     * @param action The action to dispatch.
+     * @return void
      */
     dispatch(action: MessageStoreAction): void {
-        this.action.next(action);
+        this.action.next({
+            action: action,
+            resolve: () => {},
+            reject: () => {},
+        });
     }
 
     /**
@@ -65,7 +92,7 @@ export class IrisMessageStore implements OnDestroy {
      * @returns An observable of the actions dispatched to the message store.
      */
     getActionObservable(): Observable<MessageStoreAction> {
-        return this.action.asObservable();
+        return this.action.asObservable().pipe(map((resolvableAction: ResolvableAction) => resolvableAction.action));
     }
 
     private static exhaustiveCheck(action: never): void {
@@ -73,8 +100,13 @@ export class IrisMessageStore implements OnDestroy {
     }
 
     private storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
-        if (state.sessionId == null && !isSessionIdReceivedAction(action)) {
-            throw new Error('You are trying to append messages to a conversation with an empty session id!');
+        if (state.sessionId == null && !isSessionReceivedAction(action)) {
+            return {
+                messages: [...state.messages],
+                sessionId: state.sessionId,
+                isLoading: false,
+                error: 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.', // TODO translate to German
+            };
         }
 
         if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
@@ -85,7 +117,7 @@ export class IrisMessageStore implements OnDestroy {
                 error: '',
             };
         }
-        if (isActiveConversationMessageLoadedErrorAction(action)) {
+        if (isConversationErrorOccurredAction(action)) {
             return {
                 messages: state.messages,
                 sessionId: state.sessionId,
@@ -93,26 +125,24 @@ export class IrisMessageStore implements OnDestroy {
                 error: action.errorMessage,
             };
         }
-        if (isSessionIdReceivedAction(action)) {
+        if (isSessionReceivedAction(action)) {
             return {
                 messages: [],
                 sessionId: action.sessionId,
                 isLoading: state.isLoading,
-                error: state.error,
+                error: '',
             };
         }
         if (isStudentMessageSentAction(action)) {
-            // if sessionId is null then we have either an error or another action type
-            this.httpMessageService.createMessage(<number>state.sessionId, action.message).subscribe(action.callbacks);
             return {
                 messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
                 isLoading: true,
-                error: state.error,
+                error: '',
             };
         }
 
-        IrisMessageStore.exhaustiveCheck(action);
+        IrisStateStore.exhaustiveCheck(action);
         return state;
     }
 }

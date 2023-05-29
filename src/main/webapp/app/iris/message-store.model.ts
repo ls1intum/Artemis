@@ -3,9 +3,9 @@ import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/
 export enum ActionType {
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',
     ACTIVE_CONVERSATION_MESSAGE_LOADED = 'active-conversation-message-loaded',
-    ACTIVE_CONVERSATION_MESSAGE_LOADED_ERROR = 'active-conversation-message-loaded-error',
+    CONVERSATION_ERROR_OCCURRED = 'conversation-error-occurred',
     STUDENT_MESSAGE_SENT = 'student-message-sent',
-    SESSION_ID_CHANGED = 'session-id-changed',
+    SESSION_CHANGED = 'session-changed',
 }
 
 export class HistoryMessageLoadedAction {
@@ -24,37 +24,36 @@ export class ActiveConversationMessageLoadedAction {
     }
 }
 
-export class ActiveConversationMessageLoadedErrorAction {
+export class ConversationErrorOccurredAction {
     readonly type: ActionType;
 
     public constructor(public readonly errorMessage: string) {
-        this.type = ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED_ERROR;
+        this.type = ActionType.CONVERSATION_ERROR_OCCURRED;
     }
 }
 
 export class StudentMessageSentAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessage, public readonly callbacks = {}) {
+    public constructor(public readonly message: IrisClientMessage) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
-        this.callbacks = callbacks;
     }
 }
 
-export class SessionIdReceivedAction {
+export class SessionReceivedAction {
     readonly type: ActionType;
 
-    public constructor(public readonly sessionId: number | null) {
-        this.type = ActionType.SESSION_ID_CHANGED;
+    public constructor(public readonly sessionId: number, public readonly messages: ReadonlyArray<IrisMessage>) {
+        this.type = ActionType.SESSION_CHANGED;
     }
 }
 
 export type MessageStoreAction =
     | HistoryMessageLoadedAction
     | ActiveConversationMessageLoadedAction
-    | ActiveConversationMessageLoadedErrorAction
+    | ConversationErrorOccurredAction
     | StudentMessageSentAction
-    | SessionIdReceivedAction;
+    | SessionReceivedAction;
 
 export function isHistoryMessageLoadedAction(action: MessageStoreAction): action is HistoryMessageLoadedAction {
     return action.type === ActionType.HISTORY_MESSAGE_LOADED;
@@ -64,16 +63,16 @@ export function isActiveConversationMessageLoadedAction(action: MessageStoreActi
     return action.type === ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
 }
 
-export function isActiveConversationMessageLoadedErrorAction(action: MessageStoreAction): action is ActiveConversationMessageLoadedErrorAction {
-    return action.type === ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED_ERROR;
+export function isConversationErrorOccurredAction(action: MessageStoreAction): action is ConversationErrorOccurredAction {
+    return action.type === ActionType.CONVERSATION_ERROR_OCCURRED;
 }
 
 export function isStudentMessageSentAction(action: MessageStoreAction): action is StudentMessageSentAction {
     return action.type === ActionType.STUDENT_MESSAGE_SENT;
 }
 
-export function isSessionIdReceivedAction(action: MessageStoreAction): action is SessionIdReceivedAction {
-    return action.type === ActionType.SESSION_ID_CHANGED;
+export function isSessionReceivedAction(action: MessageStoreAction): action is SessionReceivedAction {
+    return action.type === ActionType.SESSION_CHANGED;
 }
 
 export class MessageStoreState {

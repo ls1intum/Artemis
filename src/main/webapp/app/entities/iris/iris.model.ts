@@ -40,3 +40,11 @@ export class IrisMessageContent {
     type: IrisMessageContentType.TEXT;
     textContent: string;
 }
+
+export function isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
+    return message.sender === IrisSender.SYSTEM || message.sender === IrisSender.SERVER;
+}
+
+export function isStudentSentMessage(message: IrisMessage): message is IrisServerMessage {
+    return message.sender === IrisSender.USER;
+}
