@@ -86,15 +86,13 @@
     flex: 1;
     margin-right: 10px;
     padding: 5px 15px;
-    border: 1px solid var(--gray-300);
-    border-radius: 20px;
 }
 
 .btn-circle {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: var(--green);
+    background-color: var(--iris-btn-circle);
     border: none;
 }
 
