@@ -1,9 +1,10 @@
-package de.tum.in.www1.artemis.service.iris;
+package de.tum.in.www1.artemis.service.iris.model;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.scheduling.annotation.Async;
 
+import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 
 /**
@@ -19,6 +20,6 @@ public interface IrisModel {
      * @return A CompletableFuture that will be completed with the response.
      */
     @Async
-    CompletableFuture<String> getResponse(IrisSession session);
+    CompletableFuture<IrisMessage> getResponse(IrisSession session);
 
 }

@@ -20,16 +20,16 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 @Service
 public class IrisMessageService {
 
+    private final IrisSessionRepository irisSessionRepository;
+
     private final IrisMessageRepository irisMessageRepository;
 
     private final IrisMessageContentRepository irisMessageContentRepository;
 
-    private final IrisSessionRepository irisSessionRepository;
-
-    public IrisMessageService(IrisMessageRepository irisMessageRepository, IrisMessageContentRepository irisMessageContentRepository, IrisSessionRepository irisSessionRepository) {
+    public IrisMessageService(IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository, IrisMessageContentRepository irisMessageContentRepository) {
+        this.irisSessionRepository = irisSessionRepository;
         this.irisMessageRepository = irisMessageRepository;
         this.irisMessageContentRepository = irisMessageContentRepository;
-        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
@@ -41,7 +41,7 @@ public class IrisMessageService {
      * @param sender  The sender of the message
      * @return The saved message
      */
-    public IrisMessage saveNewMessage(IrisMessage message, IrisSession session, IrisMessageSender sender) {
+    public IrisMessage saveMessage(IrisMessage message, IrisSession session, IrisMessageSender sender) {
         if (message.getContent().isEmpty()) {
             throw new BadRequestException("Message must have at least one content element");
         }
@@ -66,7 +66,6 @@ public class IrisMessageService {
         }
         message.getContent().addAll(contents);
         savedMessage = irisMessageRepository.save(message);
-        // TODO: Send to LLM
 
         return savedMessage;
     }
