@@ -42,7 +42,7 @@ export class CreateVideoUnitComponent implements OnInit {
         this.videoUnitToCreate.releaseDate = releaseDate || undefined;
         this.videoUnitToCreate.description = description || undefined;
         this.videoUnitToCreate.source = source || undefined;
-        this.videoUnitToCreate.learningGoals = learningGoals || [];
+        this.videoUnitToCreate.competencies = learningGoals || [];
 
         this.isLoading = true;
 

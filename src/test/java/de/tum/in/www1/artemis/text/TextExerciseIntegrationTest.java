@@ -793,23 +793,22 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetResultsFromOwningCoursesNotEmpty() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        String randomString2 = UUID.randomUUID().toString();
+        String courseBaseTitle1 = "testInstructorGetResultsFromOwningCoursesNotEmpty 1";
+        String courseBaseTitle2 = "testInstructorGetResultsFromOwningCoursesNotEmpty 2";
 
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        database.addCourseWithOneReleasedTextExercise(randomString2 + " Bachelor");
-        database.addCourseWithOneReleasedTextExercise(randomString2 + "Master");
+        database.addCourseWithOneReleasedTextExercise(courseBaseTitle1);
+        database.addCourseWithOneReleasedTextExercise(courseBaseTitle2 + "Bachelor");
+        database.addCourseWithOneReleasedTextExercise(courseBaseTitle2 + "Master");
 
-        final var searchText = database.configureSearch(randomString);
+        final var searchText = database.configureSearch(courseBaseTitle1);
         final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
-        final var searchEssay = database.configureSearch(randomString2);
+        final var searchEssay = database.configureSearch(courseBaseTitle2);
         final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
-        String randomString3 = UUID.randomUUID().toString();
-        final var searchNon = database.configureSearch(randomString3);
+        final var searchNon = database.configureSearch("No course has this name");
         final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
@@ -817,20 +816,19 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        testCourseAndExamFilters();
+        testCourseAndExamFilters("testCourseAndExamFiltersAsInstructor");
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        testCourseAndExamFilters();
+        testCourseAndExamFilters("testCourseAndExamFiltersAsAdmin");
     }
 
-    private void testCourseAndExamFilters() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", randomString);
+    private void testCourseAndExamFilters(String courseTitle) throws Exception {
+        database.addCourseWithOneReleasedTextExercise(courseTitle);
+        database.addCourseExamExerciseGroupWithOneTextExercise(courseTitle + "-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", courseTitle);
     }
 
     @Test
@@ -872,23 +870,22 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetResultsFromOwningExamsNotEmpty() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        String randomString2 = UUID.randomUUID().toString();
+        String exerciseBaseTitle1 = "testInstructorGetResultsFromOwningExamsNotEmpty 1";
+        String exerciseBaseTitle2 = "testInstructorGetResultsFromOwningExamsNotEmpty 2";
 
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString);
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString2 + "Bachelor");
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString2 + "Master");
+        database.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle1);
+        database.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Bachelor");
+        database.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Master");
 
-        final var searchText = database.configureSearch(randomString);
+        final var searchText = database.configureSearch(exerciseBaseTitle1);
         final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
-        final var searchEssay = database.configureSearch(randomString2);
+        final var searchEssay = database.configureSearch(exerciseBaseTitle2);
         final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
-        String randomString3 = UUID.randomUUID().toString();
-        final var searchNon = database.configureSearch(randomString3);
+        final var searchNon = database.configureSearch("No exam has this name");
         final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
@@ -896,14 +893,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
-        String randomString = UUID.randomUUID().toString();
+        String courseTitle = "testAdminGetsResultsFromAllCourses";
 
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        Course otherInstructorsCourse = database.addCourseWithOneReleasedTextExercise(randomString);
+        database.addCourseWithOneReleasedTextExercise(courseTitle);
+        Course otherInstructorsCourse = database.addCourseWithOneReleasedTextExercise(courseTitle);
         otherInstructorsCourse.setInstructorGroupName("other-instructors");
         courseRepository.save(otherInstructorsCourse);
 
-        final var search = database.configureSearch(randomString);
+        final var search = database.configureSearch(courseTitle);
         final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
@@ -961,7 +958,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         sourceExercise = textExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName("testImportTextExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
 
         var exerciseToBeImported = new TextExercise();

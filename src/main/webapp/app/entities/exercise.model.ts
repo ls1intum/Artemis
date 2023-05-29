@@ -88,7 +88,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
-    public learningGoals?: LearningGoal[];
+    public competencies?: LearningGoal[];
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;

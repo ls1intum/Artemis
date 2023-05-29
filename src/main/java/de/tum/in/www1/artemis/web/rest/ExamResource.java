@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -75,6 +76,8 @@ public class ExamResource {
 
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
+
+    private final ProfileService profileService;
 
     private final UserRepository userRepository;
 
@@ -118,6 +121,7 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
             ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository,
             ChannelService channelService, ChannelRepository channelRepository) {
+        this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -164,13 +168,6 @@ public class ExamResource {
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
-        // if (!exam.isTestExam()) {
-        // Channel createdChannel = channelService.createExamChannel(exam, exam.getChannel().getName());
-        // exam.setChannel(createdChannel);
-        // }
-        // else {
-        // exam.setChannel(null);
-        // }
         Exam savedExam = examRepository.save(exam);
 
         if (savedExam.isMonitoring()) {
@@ -882,6 +879,12 @@ public class ExamResource {
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (profileService.isLocalVcsCi()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to unlock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -903,6 +906,12 @@ public class ExamResource {
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (profileService.isLocalVcsCi()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to lock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

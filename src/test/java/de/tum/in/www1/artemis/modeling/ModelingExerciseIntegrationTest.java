@@ -607,22 +607,21 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesTitle() throws Exception {
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        testSearchTermMatchesTitle();
+        testSearchTermMatchesTitle(TEST_PREFIX + "testInstructorSearchTermMatchesTitle");
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesTitle() throws Exception {
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        testSearchTermMatchesTitle();
+        testSearchTermMatchesTitle(TEST_PREFIX + "testAdminSearchTermMatchesTitle");
     }
 
-    private void testSearchTermMatchesTitle() throws Exception {
+    private void testSearchTermMatchesTitle(String exerciseTitle) throws Exception {
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         ModelingExercise exercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
-        String title = "LoremIpsum" + UUID.randomUUID();
-        exercise.setTitle(title);
+        exercise.setTitle(exerciseTitle);
         exercise = modelingExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch(exercise.getTitle());
@@ -633,14 +632,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        final String uuid = UUID.randomUUID().toString();
-        database.addCourseWithOneModelingExercise("ClassDiagram" + uuid);
-        database.addCourseWithOneModelingExercise("Activity Diagram" + uuid);
-        final var searchClassDiagram = database.configureSearch("ClassDiagram" + uuid);
+        final String titleExtension = "testInstructorGetsResultsFromOwningCoursesNotEmpty";
+        database.addCourseWithOneModelingExercise("ClassDiagram" + titleExtension);
+        database.addCourseWithOneModelingExercise("Activity Diagram" + titleExtension);
+        final var searchClassDiagram = database.configureSearch("ClassDiagram" + titleExtension);
         final var resultClassDiagram = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchClassDiagram));
         assertThat(resultClassDiagram.getResultsOnPage()).hasSize(1);
 
-        final var searchActivityDiagram = database.configureSearch("Activity Diagram" + uuid);
+        final var searchActivityDiagram = database.configureSearch("Activity Diagram" + titleExtension);
         final var resultActivityDiagram = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchActivityDiagram));
         assertThat(resultActivityDiagram.getResultsOnPage()).hasSize(1);
     }
@@ -648,8 +647,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
-        final String uuid = UUID.randomUUID().toString();
-        String searchTerm = "ClassDiagram" + uuid;
+        String searchTerm = "ClassDiagram testAdminGetsResultsFromAllCourses";
         final var search = database.configureSearch(searchTerm);
         final var oldResult = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         database.addCourseInOtherInstructionGroupAndExercise(searchTerm);
@@ -660,20 +658,19 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        testCourseAndExamFilters();
+        testCourseAndExamFilters("testCourseAndExamFiltersAsInstructor");
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        testCourseAndExamFilters();
+        testCourseAndExamFilters("testCourseAndExamFiltersAsAdmin");
     }
 
-    private void testCourseAndExamFilters() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
-        database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", randomString);
+    private void testCourseAndExamFilters(String title) throws Exception {
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge(title);
+        database.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", title);
     }
 
     @Test
@@ -728,7 +725,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         sourceExercise = modelingExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName(TEST_PREFIX + "testImport_individual_modeChange");
         teamRepository.save(sourceExercise, team);
 
         var exerciseToBeImported = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
