@@ -598,6 +598,7 @@ $learning-goal-rings-blue: $blue;
 $learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);
 
 // Iris Chatbot
+// TODO: Use standard colors
 $iris-chat-widget-background: var(--bs-body-bg);
 $iris-client-chat-background: var(--gray-700);
 $iris-client-chat-input: var(--gray-700);
