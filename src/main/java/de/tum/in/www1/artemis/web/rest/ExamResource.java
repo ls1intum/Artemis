@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -170,13 +171,17 @@ public class ExamResource {
         // else {
         // exam.setChannel(null);
         // }
-        Exam result = examRepository.save(exam);
+        Exam savedExam = examRepository.save(exam);
 
-        if (result.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+        if (savedExam.isMonitoring()) {
+            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId())).body(result);
+        if (!savedExam.isTestExam()) {
+            channelService.createExamChannel(savedExam, exam.getChannelName());
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
     /**
@@ -213,24 +218,24 @@ public class ExamResource {
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
 
-        channelService.updateExamChannel(originalExam, updatedExam);
+        Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
-        Exam result = examRepository.save(updatedExam);
+        Exam savedExam = examRepository.save(updatedExam);
 
         if (updatedExam.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
         }
         else {
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(savedExam.getId());
         }
-        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), updatedExam.isMonitoring());
+        examMonitoringScheduleService.notifyMonitoringUpdate(savedExam.getId(), updatedExam.isMonitoring());
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -238,11 +243,15 @@ public class ExamResource {
 
         if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok(result);
+        if (updatedChannel != null) {
+            savedExam.setChannelName(updatedExam.getChannelName());
+        }
+
+        return ResponseEntity.ok(savedExam);
     }
 
     /**
@@ -453,7 +462,12 @@ public class ExamResource {
         }
 
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
+            Exam exam = examRepository.findByIdElseThrow(examId);
+            Channel channel = channelRepository.findChannelByExamId(exam.getId());
+            if (channel != null) {
+                exam.setChannelName(channel.getName());
+            }
+            return ResponseEntity.ok(exam);
         }
 
         if (withExerciseGroups) {

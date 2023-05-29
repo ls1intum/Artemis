@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -742,11 +741,7 @@ public class ModelFactory {
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
         exam.setCourse(course);
-        if (channelName != null) {
-            Channel examChannel = new Channel();
-            examChannel.setName(channelName);
-            // exam.setChannel(examChannel);
-        }
+        exam.setChannelName(channelName);
         return exam;
     }
 

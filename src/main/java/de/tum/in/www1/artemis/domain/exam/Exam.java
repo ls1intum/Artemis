@@ -148,6 +148,12 @@ public class Exam extends DomainObject {
     @Transient
     private Long numberOfExamUsersTransient;
 
+    /**
+     * It is defined here for transferring the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
+
     public String getTitle() {
         return title;
     }
@@ -471,6 +477,14 @@ public class Exam extends DomainObject {
 
     public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
+    }
+
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
     }
 
     /**

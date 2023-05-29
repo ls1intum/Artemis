@@ -16,7 +16,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -24,7 +23,6 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 })
 export class ExamUpdateComponent implements OnInit {
     exam: Exam;
-    channelName?: string;
     course: Course;
     isSaving: boolean;
     // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
@@ -62,12 +60,9 @@ export class ExamUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
 
-            if (this.exam.id == undefined && this.exam.channel == undefined) {
-                this.exam.channel = new Channel();
-                this.exam.channel.name = '';
+            if (this.exam.id == undefined) {
+                this.exam.channelName = '';
             }
-            this.channelName = this.exam.channel?.name;
-
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
 
@@ -110,10 +105,6 @@ export class ExamUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-
-        if (this.exam.channel !== undefined) {
-            this.exam.channel.name = this.channelName;
-        }
 
         if (this.isImport) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam

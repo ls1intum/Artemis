@@ -298,6 +298,7 @@ public class ChannelService {
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription("Channel for exam: " + exam.getTitle());
+        channelToCreate.setExam(exam);
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
@@ -332,12 +333,12 @@ public class ChannelService {
      * @param originalExam the original exam
      * @param updatedExam  the updated exam
      */
-    public void updateExamChannel(Exam originalExam, Exam updatedExam) {
-        // if (originalExam.getChannel() == null || updatedExam.getChannel() == null) {
-        // return;
-        // }
-        // Channel updatedChannel = updateChannelName(originalExam.getChannel().getId(), Objects.requireNonNull(updatedExam.getChannel().getName()));
-        // updatedExam.setChannel(updatedChannel);
+    public Channel updateExamChannel(Exam originalExam, Exam updatedExam) {
+        if (updatedExam.getChannelName() == null) {
+            return null;
+        }
+        Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        return updateChannelName(channel, updatedExam.getChannelName());
     }
 
     /**
