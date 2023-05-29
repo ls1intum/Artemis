@@ -1,9 +1,9 @@
 <div class="card-second-header" [hidden]="!steps?.length">
     <div class="stepwizard">
+        <div class="stepwizard-title">
+            {{ 'artemisApp.programmingExercise.problemStatement.tasksOfExercise' | artemisTranslate }}
+        </div>
         <div class="stepwizard-row">
-            <div class="stepwizard-title">
-                {{ 'artemisApp.programmingExercise.problemStatement.tasksOfExercise' | artemisTranslate }}
-            </div>
             <div *ngFor="let step of steps; index as i" class="stepwizard-step">
                 <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
                 <div
