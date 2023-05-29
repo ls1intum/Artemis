@@ -61,7 +61,7 @@ public class IrisSessionService {
      *
      * @param programmingExercise The programming exercise to check
      */
-    public void checkIrisActivated(ProgrammingExercise programmingExercise) {
+    public void checkIsIrisActivated(ProgrammingExercise programmingExercise) {
         if (!programmingExercise.isIrisActivated()) {
             throw new BadRequestException("Iris not activated for Programming Exercise: " + programmingExercise.getId());
         }

@@ -56,7 +56,7 @@ public class IrisSessionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSessionService.checkIrisActivated(exercise);
+        irisSessionService.checkIsIrisActivated(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
@@ -75,7 +75,7 @@ public class IrisSessionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSessionService.checkIrisActivated(exercise);
+        irisSessionService.checkIsIrisActivated(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         var session = irisSessionService.createSessionForProgrammingExercise(exercise, user);
