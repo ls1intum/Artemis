@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
@@ -153,18 +154,14 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if (quizExercise.isCourseExercise() && quizExercise.getChannel() != null) {
-        // Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
-        // quizExercise.setChannel(createdChannel);
-        // }
-        // else {
-        // quizExercise.setChannel(null);
-        // }
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
-        quizExercise = quizExerciseService.save(quizExercise);
+        if (result.isCourseExercise()) {
+            channelService.createExerciseChannel(result, quizExercise.getChannelName());
+        }
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -217,12 +214,14 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
 
-        // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateExerciseChannel(originalQuiz, quizExercise);
+        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
+        if (updatedChannel != null) {
+            quizExercise.setChannelName(updatedChannel.getName());
+        }
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -295,6 +294,12 @@ public class QuizExerciseResource {
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
+        }
+        if (quizExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
+            if (channel != null) {
+                quizExercise.setChannelName(channel.getName());
+            }
         }
         setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);

@@ -351,6 +351,7 @@ public class ChannelService {
 
         // Update channel name if necessary
         if (!newChannelName.equals(channel.getName())) {
+            this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
             channel.setName(newChannelName);
             this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
             return channelRepository.save(channel);
