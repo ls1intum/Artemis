@@ -96,7 +96,7 @@ describe(`ArtemisVersionInterceptor`, () => {
         expect(checkForUpdateSpy).toHaveBeenCalledOnce();
 
         mockHandler = {
-            handle: jest.fn(() => of(new HttpResponse({ status: 200, body: {}, headers: new HttpHeaders({ [ARTEMIS_VERSION_HEADER]: '0.0.0' }) }))),
+            handle: jest.fn(() => of(new HttpResponse({ status: 200, body: {}, headers: new HttpHeaders({ [ARTEMIS_VERSION_HEADER]: 'x.y.z' }) }))),
         };
         intercept.intercept(requestMock, mockHandler).subscribe();
         expect(checkForUpdateSpy).toHaveBeenCalledTimes(2);
