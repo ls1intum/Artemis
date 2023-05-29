@@ -26,6 +26,7 @@ import { NotificationPopupComponent } from 'app/shared/notification/notification
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ThemeModule } from 'app/core/theme/theme.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -47,6 +48,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         UserSettingsModule,
         ThemeModule,
         ArtemisSharedComponentModule,
+        MatDialogModule,
     ],
     declarations: [
         JhiMainComponent,
@@ -62,5 +64,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         LoadingNotificationComponent,
     ],
     bootstrap: [JhiMainComponent],
+    providers: [MatDialog],
 })
 export class ArtemisAppModule {}

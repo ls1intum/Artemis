@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -115,6 +116,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'lti',
                     loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
+                },
+                {
+                    path: 'chat',
+                    component: ExerciseChatWidgetComponent,
+                    pathMatch: 'full',
                 },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },

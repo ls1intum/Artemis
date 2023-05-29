@@ -1,14 +1,14 @@
 <div class="container">
     <!-- chat box -->
-    <div class="chat-widget">
+    <div [class]="componentClass">
         <!-- client -->
         <div class="client">
             <div class="chat-header">
-                <button class="header-icon">
+                <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="openComponentInNewWindow()" class="header-icon">
                     <fa-icon size="lg" [icon]="faExpand"></fa-icon>
                 </button>
-                <h2>Iris</h2>
-                <button (click)="closeChat()" class="header-icon">
+                <h2 style="text-align: center">Iris</h2>
+                <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="closeChat()" class="header-icon">
                     <fa-icon size="lg" [icon]="faXmark"></fa-icon>
                 </button>
             </div>
