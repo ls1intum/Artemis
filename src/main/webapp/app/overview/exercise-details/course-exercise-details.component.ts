@@ -196,8 +196,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
             this.plagiarismCaseInfo = res.body ?? undefined;
         });
-        this.sessionService.getCurrentSession(this.exerciseId).subscribe((session: HttpResponse<IrisSession>) => {
-            this.messageStore.dispatch(new SessionIdReceivedAction(session.body!.id));
+        this.sessionService.getCurrentSession(this.exerciseId).subscribe({
+            next: (session: HttpResponse<IrisSession>) => {
+                this.messageStore.dispatch(new SessionIdReceivedAction(session.body!.id));
+            },
+            error: () => {
+                this.sessionService.createSessionForProgrammingExercise(this.exerciseId, new IrisSession()).subscribe({
+                    next: (session: HttpResponse<IrisSession>) => {
+                        this.messageStore.dispatch(new SessionIdReceivedAction(session.body!.id));
+                    },
+                    error: () => (console.log("TODO: handle errors")),
+                });
+            },
         });
     }
 
