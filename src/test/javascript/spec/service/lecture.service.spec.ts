@@ -40,6 +40,7 @@ describe('Lecture Service', () => {
         elemDefault.id = 1;
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
+        elemDefault.channelName = 'lecture-default';
     });
 
     afterEach(() => {
@@ -51,7 +52,7 @@ describe('Lecture Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .create(elemDefault, 'lecture-default')
+                .create(elemDefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
@@ -66,7 +67,7 @@ describe('Lecture Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .update(elemDefault, 'lecture-default')
+                .update(elemDefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({

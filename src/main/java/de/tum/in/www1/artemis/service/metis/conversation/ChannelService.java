@@ -307,6 +307,7 @@ public class ChannelService {
      *
      * @param originalLecture the original lecture
      * @param channelName     the new channel name
+     * @return the updated channel
      */
     public Channel updateLectureChannel(Lecture originalLecture, String channelName) {
         if (channelName == null) {
@@ -321,6 +322,7 @@ public class ChannelService {
      *
      * @param originalExercise the original exercise
      * @param updatedExercise  the updated exercise
+     * @return the updated channel
      */
     public Channel updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
         if (updatedExercise.getChannelName() == null) {
@@ -335,6 +337,7 @@ public class ChannelService {
      *
      * @param originalExam the original exam
      * @param updatedExam  the updated exam
+     * @return the updated channel
      */
     public Channel updateExamChannel(Exam originalExam, Exam updatedExam) {
         if (updatedExam.getChannelName() == null) {
