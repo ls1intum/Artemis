@@ -1,6 +1,6 @@
 # Sorting Testdata
 
-# Secret Tests
+# Public Tests
 PROGRAM_test {add 2020-03-31} {}
 PROGRAM_test {add 2020-03-30} {}
 PROGRAM_test {add 2020-04-01} {}
