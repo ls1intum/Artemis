@@ -2049,6 +2049,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.setShortName(uniqueExerciseTitle);
         programmingExercise.setTitle(uniqueExerciseTitle);
+        programmingExercise.setChannelName("pe-test");
         if (expectedStatus == HttpStatus.CREATED) {
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());

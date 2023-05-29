@@ -378,7 +378,9 @@ public class ProgrammingExerciseResource {
         }
         if (programmingExercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(programmingExercise.getId());
-            programmingExercise.setChannelName(channel.getName());
+            if (channel != null) {
+                programmingExercise.setChannelName(channel.getName());
+            }
         }
 
         return ResponseEntity.ok().body(programmingExercise);

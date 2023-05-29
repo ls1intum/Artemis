@@ -413,7 +413,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                                 });
                                 // Set empty channel name for new programming exercise
-                                if (this.programmingExercise.id === undefined) {
+                                if (this.programmingExercise.id === undefined && this.programmingExercise.channelName === undefined) {
                                     this.programmingExercise.channelName = '';
                                 }
                             });
