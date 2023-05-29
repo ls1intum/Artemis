@@ -90,6 +90,7 @@
                     [participationIdList]="participation ? [participation!.id!] : []"
                 ></jhi-programming-assessment-repo-export>
                 <a
+                    *ngIf="!localVCEnabled"
                     class="ms-2 me-5"
                     href="{{ participation?.userIndependentRepositoryUrl }}"
                     target="_blank"
@@ -107,6 +108,7 @@
                 [isBuilding]="false"
                 [participation]="participation"
                 [exercise]="exercise"
+                [short]="false"
                 class="me-1 my-1"
             ></jhi-result>
         </ng-template>

@@ -27,6 +27,7 @@
             "noCourseIcon": "No course icon available",
             "showMore": "Show more",
             "showLess": "Show less",
+            "manage": "Manage",
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
@@ -103,7 +104,7 @@
                 "yourPoints": "Your points: {{ number }}",
                 "reachablePoints": "Attainable points: {{ number }} ({{ relative }}%)",
                 "totalPoints": "Overall points: {{ number }} ({{ relative }}%)",
-                "presentationScore": "Presentation score: {{ number }}",
+                "presentationScore": "Presentations: {{ number }}",
                 "noStatistics": "No statistics available for this course.",
                 "bonusPointTooltip": "Bonus Exercise: Points count as bonus points towards your course score!",
                 "notIncludedTooltip": "Not Included Exercise: Points do NOT count towards your course score!",

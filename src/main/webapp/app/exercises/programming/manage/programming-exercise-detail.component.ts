@@ -50,6 +50,7 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -80,6 +81,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+    // Used to hide links to repositories and build plans when the "localvc" profile is active.
+    // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
+    localVCEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -97,13 +101,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faTable = faTable;
+    faEraser = faEraser;
     faExclamationTriangle = faExclamationTriangle;
     faFileSignature = faFileSignature;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
-    faEraser = faEraser;
     faUsers = faUsers;
     faEye = faEye;
 
@@ -191,6 +195,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             );
                         }
                         this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     }
                 });
 
@@ -272,41 +277,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     disableTranslation: true,
                 });
             },
-        });
-    }
-
-    /**
-     * Deletes the template and solution build plans and recreates them from scratch.
-     */
-    recreateBuildPlans() {
-        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: res,
-                    disableTranslation: true,
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Cleans up programming exercise
-     * @param event contains additional checks from the dialog
-     */
-    cleanupProgrammingExercise(event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe({
-            next: () => {
-                if (event.deleteRepositories) {
-                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
-                } else {
-                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
-                }
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 

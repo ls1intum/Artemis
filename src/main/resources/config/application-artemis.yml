@@ -4,6 +4,7 @@
 
 artemis:
     course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
+    legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
     repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
     bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
@@ -36,7 +37,11 @@ artemis:
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
             cleanup-time-minutes: 60 # The amount of time until non-activated accounts are deleted automatically
         accept-terms: false     # whether users have to accept terms before they can log in, from a privacy point of view this is not needed during education, therefore the default value is false
-        course-registration:                    # the whole section is optional: whether there is a restriction for the self-registration of students in courses
+        course-registration: # Deprecated: replaced by 'course-enrollment'
+            # If both 'course-registration' and 'course-enrollment' are configured, the system will favorize the values specified under 'course-enrollment'
+            # the whole section is optional: whether there is a restriction for the self-registration of students in courses
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
+        course-enrollment: # the whole section is optional: whether there is a restriction for the self-registration of students in courses
             allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
         login:
             account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"

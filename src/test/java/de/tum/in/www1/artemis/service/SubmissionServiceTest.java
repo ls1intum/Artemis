@@ -655,7 +655,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         assertThat(newFeedbacks.get(0).isPositive()).isTrue();
         assertThat(newFeedbacks.get(1).isPositive()).isTrue();
         assertThat(newFeedbacks.get(2).isPositive()).isTrue();
-        assertThat(newFeedbacks.get(2).getCredits()).isEqualTo(0.);
+        assertThat(newFeedbacks.get(2).getCredits()).isZero();
         assertThat(newFeedbacks.get(3).isPositive()).isFalse();
     }
 }

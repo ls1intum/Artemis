@@ -2,7 +2,6 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -11,6 +10,7 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -38,6 +38,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     repositoryPassword: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
+    localVCEnabled = false;
     user: User;
     cloneHeadline: string;
     wasCopied = false;
@@ -63,14 +64,15 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         });
 
         // Get ssh information from the user
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.sshKeysUrl = info.sshKeysURL;
-            this.sshTemplateUrl = info.sshCloneURLTemplate;
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.sshKeysUrl = profileInfo.sshKeysURL;
+            this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
             this.sshEnabled = !!this.sshTemplateUrl;
-            if (info.versionControlUrl) {
-                this.versionControlUrl = info.versionControlUrl;
+            if (profileInfo.versionControlUrl) {
+                this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.versionControlAccessTokenRequired = info.versionControlAccessToken;
+            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
+            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;

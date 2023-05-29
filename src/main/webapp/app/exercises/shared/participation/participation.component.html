@@ -105,7 +105,10 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         <span *ngIf="value">
-                            <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
+                            <a *ngIf="!localVCEnabled; else copyUrlButton" href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
+                            <ng-template #copyUrlButton>
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(row, value)"></jhi-clone-repo-button>
+                            </ng-template>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>
@@ -119,9 +122,12 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-row="row">
                         <span *ngIf="row">
-                            <a href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
+                            <a *ngIf="!localVCEnabled; else plainBuildPlanId" href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
                                 {{ row.buildPlanId }}
                             </a>
+                            <ng-template #plainBuildPlanId>
+                                {{ row.buildPlanId }}
+                            </ng-template>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>
@@ -226,7 +232,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="presentationScore" *ngIf="this.presentationScoreEnabled" [minWidth]="150" [width]="150">
+                <ngx-datatable-column prop="presentationScore" *ngIf="this.basicPresentationEnabled" [minWidth]="150" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('presentationScore')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationScore"> Presentation Score </span>
@@ -235,6 +241,28 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span>{{ value ? value : 0 }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="presentationScore" *ngIf="this.gradedPresentationEnabled" [minWidth]="150" [width]="150">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('presentationScore')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationGrade"> Presentation Grade </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('presentationScore')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-row="row">
+                        <input
+                            name="presentationGrade"
+                            id="field_presentationGrade"
+                            type="number"
+                            min="0"
+                            max="100"
+                            required
+                            class="form-control input-number-short"
+                            [(ngModel)]="row.presentationScore"
+                            (ngModelChange)="changeGradedPresentation(row)"
+                        />
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -312,12 +340,28 @@
                                 >
                                     <fa-icon [icon]="faEraser"></fa-icon>
                                 </button>
-                                <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm me-1">
+                                <button
+                                    *ngIf="this.basicPresentationEnabled && value.presentationScore !== 1"
+                                    (click)="addBasicPresentation(value)"
+                                    class="btn btn-info btn-sm me-1"
+                                >
                                     <fa-icon [icon]="faFilePowerpoint"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
-                                    *ngIf="this.presentationScoreEnabled && value.presentationScore === 1"
+                                    *ngIf="this.gradedPresentationEnabled && (hasGradedPresentationChanged(value) || !value.presentationScore)"
+                                    [disabled]="!hasGradedPresentationChanged(value) || value.presentationScore < 0 || value.presentationScore > 100"
+                                    (click)="addGradedPresentation(value)"
+                                    class="btn btn-info btn-sm me-1"
+                                >
+                                    <fa-icon [icon]="faFilePowerpoint"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.savePresentation.label">Save presentation</span>
+                                </button>
+                                <button
+                                    *ngIf="
+                                        (this.basicPresentationEnabled && value.presentationScore === 1) ||
+                                        (this.gradedPresentationEnabled && !hasGradedPresentationChanged(value) && value.presentationScore)
+                                    "
                                     (click)="removePresentation(value)"
                                     class="btn btn-danger btn-sm me-1"
                                 >

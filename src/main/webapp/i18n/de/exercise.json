@@ -28,6 +28,7 @@
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "embeddedFilesWarning": "Alle eingebetteten Dateien sind erst nach dem Import in der Aufgabenstellung verfügbar.",
                 "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
                 "searchInCourses": "Suche in Kursen?",
@@ -39,7 +40,12 @@
                     "exam": "Klausur",
                     "examQuestion": "Klausuraufgabe",
                     "doImport": "Importieren"
-                }
+                },
+                "tabTitle": "Von dieser Instanz"
+            },
+            "importFromFile": {
+                "notSupportedExerciseType": "Der Import von Dateien wird für den Aufgabentyp {{ exerciseType }} nicht unterstützt.",
+                "tabTitle": "Aus einer Datei"
             },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",

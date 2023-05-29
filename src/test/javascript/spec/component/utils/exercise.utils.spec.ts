@@ -150,7 +150,7 @@ describe('ExerciseUtils', () => {
         [{ type: ExerciseType.MODELING } as Exercise, true],
         [{ type: ExerciseType.MODELING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
         [{ type: ExerciseType.MODELING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],
-        [{ type: ExerciseType.PROGRAMMING } as Exercise, false],
+        [{ type: ExerciseType.PROGRAMMING } as Exercise, true],
         [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
         [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour'), assessmentType: AssessmentType.AUTOMATIC } as Exercise, false],
         [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().add(1, 'hour') } as Exercise, false],

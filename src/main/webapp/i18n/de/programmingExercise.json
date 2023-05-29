@@ -25,7 +25,21 @@
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studierenden-Repositories und Studierenden-Build-Pläne gelöscht werden."
+                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "deleteBuildPlans": {
+                    "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
+                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
+                },
+                "deleteRepositories": {
+                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
+                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
+                },
+                "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfen Sie sorgfältig, ob dies die gewünschte Aktion ist, bevor Sie den Vorgang fortsetzen.",
+                "recreateBuildPlans": "Erstelle Build-Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "successMessage": "Das Zurücksetzen war erfolgreich.",
+                "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
             "detail": {
                 "title": "Programmieraufgabe",
@@ -123,6 +137,16 @@
                 "title": "Aktualisiere Template",
                 "description": "Durch Aktivierung dieser Option werden die Template-Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
             },
+            "importFromFile": {
+                "title": "Programmieraufgabe aus Datei importieren",
+                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
+                "uploadForImport": "Programmieraufgabe für den Import hochladen",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine .json-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
+                "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
+                "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
+            },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
@@ -177,6 +201,11 @@
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
                 "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden."
+            },
+            "tasksAnalysis": {
+                "issues": "Aufgabenprobleme.",
+                "ok": "Aufgaben ok.",
+                "numOfTasks": "Die Anzahl der Aufgaben sollte {{limit}} nicht überschreiten. Derzeit gibt es {{number}} Aufgaben."
             },
             "hintsAnalysis": {
                 "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",

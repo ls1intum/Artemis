@@ -124,7 +124,7 @@
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",
-                "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units.",
+                "lectureFileToolTip": "Please select to enable the automatic separation of lecture units.",
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
                 "removeBreakSlide": "Remove Break slide",
@@ -147,7 +147,8 @@
                     "releaseDate": "Release Date",
                     "startPage": "Start Page",
                     "endPage": "End Page"
-                }
+                },
+                "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
             },
             "createAttachmentUnit": {
                 "title": "Create Attachment Unit",
@@ -165,6 +166,7 @@
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
                 "chooseFile": "Choose File",
+                "fileTooBig": "File is too big!",
                 "fileLimitation": "Max. file size 20 MB",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },

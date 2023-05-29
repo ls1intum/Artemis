@@ -1,15 +1,22 @@
 <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ng-container *ngIf="isImport">
-        <ngb-alert [dismissible]="false">
-            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
-            ><span>{{ 'artemisApp.exercise.import.markdownWarning' | artemisTranslate }}</span>
-        </ngb-alert>
-        <jhi-programming-exercise-instructions [exercise]="programmingExercise" [participation]="programmingExercise.templateParticipation!" [personalParticipation]="false">
-        </jhi-programming-exercise-instructions>
-    </ng-container>
+    <ngb-alert *ngIf="isImportFromExistingExercise || isImportFromFile" [dismissible]="false">
+        <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
+        ><span>{{
+            isImportFromExistingExercise
+                ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
+                : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
+        }}</span>
+    </ngb-alert>
+    <jhi-programming-exercise-instructions
+        *ngIf="isImportFromExistingExercise"
+        [exercise]="programmingExercise"
+        [participation]="programmingExercise.templateParticipation!"
+        [personalParticipation]="false"
+    ></jhi-programming-exercise-instructions>
+
     <jhi-programming-exercise-editable-instructions
-        *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImport"
+        *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImportFromExistingExercise"
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"
@@ -24,7 +31,7 @@
         id="learning-goals"
         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
         [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
-        [(ngModel)]="programmingExercise.learningGoals"
+        [(ngModel)]="programmingExercise.competencies"
         name="learningGoals"
     ></jhi-learning-goal-selection>
 </div>
@@ -154,7 +161,7 @@
         </label>
     </div>
 </div>
-<div *ngIf="isImport" class="form-group mb-0">
+<div *ngIf="isImportFromExistingExercise" class="form-group mb-0">
     <div class="form-check">
         <label class="form-check-label" for="field_recreateBuildPlans">
             <input
@@ -170,7 +177,10 @@
         </label>
     </div>
 </div>
-<div class="form-group mb-0" *ngIf="isImport && programmingExercise.projectType !== ProjectType.PLAIN_GRADLE && programmingExercise.projectType !== ProjectType.GRADLE_GRADLE">
+<div
+    class="form-group mb-0"
+    *ngIf="isImportFromExistingExercise && programmingExercise.projectType !== ProjectType.PLAIN_GRADLE && programmingExercise.projectType !== ProjectType.GRADLE_GRADLE"
+>
     <div class="form-check">
         <label class="form-check-label" for="field_updateTemplateFiles">
             <input

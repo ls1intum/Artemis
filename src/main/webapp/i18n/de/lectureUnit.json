@@ -147,7 +147,8 @@
                     "startPage": "Startseite",
                     "endPage": "Letzte Seite"
                 },
-                "lectureFileToolTip": "Bitte klicken, um mit der automatischen Trennung von Vorlesungseinheiten fortzufahren."
+                "lectureFileToolTip": "Bitte auswählen, um die automatischen Trennung von Vorlesungseinheiten zu aktivieren.",
+                "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Bitte haben Sie etwas Geduld."
             },
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",
@@ -165,6 +166,7 @@
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
+                "fileTooBig": "Die Datei ist zu groß!",
                 "fileLimitation": "Max. Dateigröße 20 MB",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },

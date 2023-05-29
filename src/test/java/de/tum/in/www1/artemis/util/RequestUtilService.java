@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -65,7 +66,12 @@ public class RequestUtilService {
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json)).andExpect(status().is(expectedStatus.value())).andReturn();
+        var builder = MockMvcRequestBuilders.multipart(new URI(path));
+        if (file != null) {
+            builder = builder.file(file);
+        }
+        builder.file(json);
+        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
@@ -205,7 +211,7 @@ public class RequestUtilService {
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
-        if (res == null) {
+        if (res == null || res.isEmpty() || res.trim().isEmpty()) {
             return null;
         }
         return mapper.readValue(res, responseType);
@@ -295,7 +301,8 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
+            LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
@@ -304,7 +311,10 @@ public class RequestUtilService {
             return request;
         });
         if (file != null) {
-            builder = builder.file(file);
+            builder.file(file);
+        }
+        if (params != null) {
+            builder.params(params);
         }
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
@@ -343,8 +353,8 @@ public class RequestUtilService {
         if (responseType == String.class) {
             return (R) res.getResponse().getContentAsString();
         }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        // default encoding is iso-8859-1 since v5.2.0, but we want utf-8
+        return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
     }
 
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
@@ -465,7 +475,8 @@ public class RequestUtilService {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
-        final var contentAsString = res.getResponse().getContentAsString();
+        // default charset is iso-8859-1 since v5.2.0 but we want utf-8
+        final var contentAsString = res.getResponse().getContentAsString(StandardCharsets.UTF_8);
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")
                     && !res.getResponse().getContentType().equals("application/octet-stream")) {

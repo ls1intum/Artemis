@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
-import { catchError, map, take, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Submission } from 'app/entities/submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
@@ -14,7 +14,6 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -70,7 +69,6 @@ export class ParticipationSubmissionComponent implements OnInit {
         private textAssessmentService: TextAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         private eventManager: EventManager,
-        private translate: TranslateService,
         private profileService: ProfileService,
     ) {}
 
@@ -115,7 +113,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                         solutionParticipation.programmingExercise = this.exercise;
                     } else {
                         // Should not happen
-                        alert(this.translate.instant('artemisApp.participation.noParticipation'));
+                        alert(this.translateService.instant('artemisApp.participation.noParticipation'));
                     }
                     this.isLoading = false;
                 });
@@ -130,13 +128,9 @@ export class ParticipationSubmissionComponent implements OnInit {
         });
 
         // Get active profiles, to distinguish between Bitbucket and GitLab
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                take(1),
-                tap((info: ProfileInfo) => (this.commitHashURLTemplate = info?.commitHashURLTemplate)),
-            )
-            .subscribe();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
+        });
     }
 
     fetchParticipationAndSubmissionsForStudent() {
@@ -177,9 +171,9 @@ export class ParticipationSubmissionComponent implements OnInit {
         if (this.participation?.type === ParticipationType.STUDENT || this.participation?.type === ParticipationType.PROGRAMMING) {
             return (this.participation as StudentParticipation).student?.name || (this.participation as StudentParticipation).team?.name;
         } else if (this.participation?.type === ParticipationType.SOLUTION) {
-            return this.translate.instant('artemisApp.participation.solutionParticipation');
+            return this.translateService.instant('artemisApp.participation.solutionParticipation');
         } else if (this.participation?.type === ParticipationType.TEMPLATE) {
-            return this.translate.instant('artemisApp.participation.templateParticipation');
+            return this.translateService.instant('artemisApp.participation.templateParticipation');
         }
         return 'N/A';
     }

@@ -5,7 +5,6 @@ import { CourseManagementService } from '../course/manage/course-management.serv
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, Subscription, catchError, map, of, takeUntil, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -21,6 +20,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -44,6 +44,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
+    // Subscription for the course fetching
+    private loadCourseSubscription?: Subscription;
     // Subscription to listen to changes on the control configuration
     private controlsSubscription?: Subscription;
     // Subscription to listen for the ng-container for controls to be mounted
@@ -69,7 +71,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     constructor(
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
@@ -89,7 +91,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
 
         await this.loadCourse().toPromise();
         await this.initAfterCourseLoad();
@@ -214,15 +216,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Fetch the course from the server including all exercises, lectures, exams and learning goals
+     * Fetch the course from the server including all exercises, lectures, exams and competencies
      * @param refresh Whether this is a force refresh (displays loader animation)
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse = refresh;
-        return this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
+        const observable = this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
             map((res: HttpResponse<Course>) => {
-                this.courseCalculationService.updateCourse(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
+                if (res.body) {
+                    this.course = res.body;
+                }
 
                 this.setUpConversationService();
 
@@ -248,6 +251,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 return throwError(() => error);
             }),
         );
+        // Start fetching, even if we don't subscribe to the result.
+        // This enables just calling this method to refresh the course, without subscribing to it:
+        this.loadCourseSubscription?.unsubscribe();
+        this.loadCourseSubscription = observable.subscribe();
+        return observable;
     }
 
     ngOnDestroy() {
@@ -257,6 +265,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.quizExercisesChannel) {
             this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
         }
+        this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
@@ -296,10 +305,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Check if the course has any learning goals or prerequisites
+     * Check if the course has any competencies or prerequisites
      */
     hasLearningGoals(): boolean {
-        return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);
+        return !!(this.course?.competencies?.length || this.course?.prerequisites?.length);
     }
 
     /**
