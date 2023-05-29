@@ -35,18 +35,17 @@ public class Client {
 
     private static CommandRunResult runCommand(final Command command) {
         if (command instanceof Command.AddCommand addCommand) {
-            context.addValues(addCommand.values());
+            context.addDates(addCommand.values());
         } else if (command instanceof Command.SortCommand) {
             // policy.configure();
             context.sort();
         } else if (command instanceof Command.ClearCommand) {
-            context.clearValues();
-        } else if (command instanceof Command.HelpCommand helpCommand()) {
+            context.clearDates();
+        } else if (command instanceof Command.HelpCommand helpCommand) {
             System.out.println(helpCommand.helpMessage());
         } else if (command instanceof Command.PrintCommand) {
             System.out.println(context.getDates());
-        }
-        else if (command instanceof Command.QuitCommand) {
+        } else if (command instanceof Command.QuitCommand) {
             return CommandRunResult.QUIT;
         } else {
             // can never happen since all cases of the sealed interface are

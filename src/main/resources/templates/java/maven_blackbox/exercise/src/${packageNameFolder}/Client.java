@@ -1,7 +1,5 @@
 package ${packageName};
 
-import org.apache.commons.lang3.RandomUtils;
-
 import java.text.*;
 import java.util.*;
 
