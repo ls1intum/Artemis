@@ -23,9 +23,11 @@ import org.springframework.web.servlet.ModelAndView;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -55,6 +57,8 @@ public class ProgrammingExerciseResource {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
+
+    private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -113,7 +117,7 @@ public class ProgrammingExerciseResource {
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelService channelService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelService channelService, ChannelRepository channelRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -136,6 +140,7 @@ public class ProgrammingExerciseResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -371,6 +376,11 @@ public class ProgrammingExerciseResource {
         else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
+        if (programmingExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(programmingExercise.getId());
+            programmingExercise.setChannelName(channel.getName());
+        }
+
         return ResponseEntity.ok().body(programmingExercise);
     }
 

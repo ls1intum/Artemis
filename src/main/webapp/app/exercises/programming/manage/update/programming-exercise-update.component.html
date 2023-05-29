@@ -14,7 +14,7 @@
         [gradingStepInputs]="getGradingStepInputs()"
         [problemStepInputs]="getProblemStepInputs()"
         [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
-        [(channelName)]="channelName"
+        [(channelName)]="programmingExercise.channelName"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
@@ -56,7 +56,7 @@
                 [programmingExercise]="programmingExercise"
                 [infoInputs]="getInfoStepInputs()"
                 [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
-                [(channelName)]="channelName"
+                [(channelName)]="programmingExercise.channelName"
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty

@@ -71,7 +71,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
-    channelName: string | undefined;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -413,16 +412,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     },
                                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                                 });
+                                // Set empty channel name for new programming exercise
+                                if (this.programmingExercise.id === undefined) {
+                                    this.programmingExercise.channelName = '';
+                                }
                             });
                         }
-                    }
-
-                    if (!this.isExamMode && this.programmingExercise.course?.id) {
-                        if (this.programmingExercise.id == undefined && this.programmingExercise.channel == undefined) {
-                            this.programmingExercise.channel = new Channel();
-                            this.programmingExercise.channel.name = '';
-                        }
-                        this.channelName = this.programmingExercise.channel?.name;
                     }
 
                     // Set submit button text depending on component state
@@ -550,9 +545,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (!this.isExamMode && this.programmingExercise.channel !== undefined) {
-            this.programmingExercise.channel.name = this.channelName;
-        }
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
@@ -779,6 +771,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (forStep >= 1) {
             this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseChannelName(validationErrorReasons);
             this.validateExerciseShortName(validationErrorReasons);
             this.validateExerciseAuxiliryRepositories(validationErrorReasons);
         }
@@ -810,6 +803,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateExerciseChannelName(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.channelName === '') {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
                 translateValues: {},
             });
         }

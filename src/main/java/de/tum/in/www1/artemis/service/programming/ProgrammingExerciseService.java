@@ -221,12 +221,16 @@ public class ProgrammingExerciseService {
         programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
 
         // Save programming exercise to prevent transient exception
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        setupBuildPlansForNewExercise(programmingExercise);
+        setupBuildPlansForNewExercise(savedProgrammingExercise);
 
         // save to get the id required for the webhook
-        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+
+        if (savedProgrammingExercise.isCourseExercise()) {
+            channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
+        }
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
