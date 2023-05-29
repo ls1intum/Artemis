@@ -75,6 +75,12 @@ public class RestTemplateConfiguration {
         return createRestTemplate();
     }
 
+    @Bean
+    @Profile("iris-gpt3_5")
+    public RestTemplate gpt35RestTemplate() {
+        return createRestTemplate();
+    }
+
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
     // it is recommended to keep the timeout settings constant per rest template
 
