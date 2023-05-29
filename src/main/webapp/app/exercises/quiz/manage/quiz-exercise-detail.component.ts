@@ -70,7 +70,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
     shortAnswerFilterEnabled: boolean;
-    channelName: string | undefined;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -220,17 +219,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
             if (!this.isExamMode) {
-                if (this.quizExercise.id == undefined && this.quizExercise.channel == undefined) {
-                    this.quizExercise.channel = new Channel();
-                    this.quizExercise.channel.name = '';
+                if (this.quizExercise.id == undefined && this.quizExercise.channelName == undefined) {
+                    this.quizExercise.channelName = '';
                 }
-                this.channelName = this.quizExercise.channel?.name;
             }
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
-            if (!this.isExamMode) {
-                this.channelName = this.quizExercise?.channel?.name;
-            }
         }
 
         if (this.isImport || this.isExamMode) {
@@ -411,10 +405,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         Exercise.sanitize(this.quizExercise);
 
         this.isSaving = true;
-        if (!this.isExamMode && this.quizExercise.channel !== undefined) {
-            this.quizExercise.channel.name = this.channelName;
-        }
-
         this.quizQuestionsEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
