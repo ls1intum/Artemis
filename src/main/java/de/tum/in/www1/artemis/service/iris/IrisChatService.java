@@ -40,13 +40,13 @@ public class IrisChatService {
      */
     public void requestAndHandleResponse(IrisSession session) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        irisModelService.requestResponse(fullSession).handleAsync((irisMessageOptional, throwable) -> {
+        irisModelService.requestResponse(fullSession).handleAsync((irisMessage, throwable) -> {
             if (throwable != null) {
                 log.error("Error while getting response from Iris model", throwable);
             }
-            else if (irisMessageOptional.isPresent()) {
-                var irisMessage = irisMessageService.saveMessage(irisMessageOptional.get(), fullSession, IrisMessageSender.LLM);
-                irisWebsocketService.sendMessage(irisMessage);
+            else if (irisMessage != null) {
+                var irisMessageSaved = irisMessageService.saveMessage(irisMessage, fullSession, IrisMessageSender.LLM);
+                irisWebsocketService.sendMessage(irisMessageSaved);
             }
             else {
                 log.error("No response from Iris model");
