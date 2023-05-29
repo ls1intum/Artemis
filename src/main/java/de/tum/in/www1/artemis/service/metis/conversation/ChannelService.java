@@ -308,9 +308,12 @@ public class ChannelService {
      * @param originalLecture the original lecture
      * @param channelName     the new channel name
      */
-    public void updateLectureChannel(Lecture originalLecture, String channelName) {
+    public Channel updateLectureChannel(Lecture originalLecture, String channelName) {
+        if (channelName == null) {
+            return null;
+        }
         Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
-        updateChannelName(channel, channelName);
+        return updateChannelName(channel, channelName);
     }
 
     /**

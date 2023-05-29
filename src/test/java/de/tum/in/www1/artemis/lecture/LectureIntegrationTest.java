@@ -148,14 +148,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        originalLecture.setChannelName("updated");
-
+        originalLecture.setChannelName("test");
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
         Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
 
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isNotEqualTo("test");
+        assertThat(channel.getName()).isEqualTo("test");
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }
