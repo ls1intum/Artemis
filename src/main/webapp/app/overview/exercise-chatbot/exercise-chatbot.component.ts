@@ -1,5 +1,5 @@
 import { Component, OnDestroy } from '@angular/core';
-import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
@@ -17,6 +17,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
     chatOpen = false;
     // Icons
     faCommentDots = faCommentDots;
+    faChevronDown = faChevronDown;
 
     constructor(public dialog: MatDialog, private overlay: Overlay) {}
 
