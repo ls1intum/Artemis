@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.iris.IrisSession;
 /**
  * Represents a service that can be used to communicate with an AI model.
  */
+@FunctionalInterface
 public interface IrisModel {
 
     /**
@@ -20,12 +21,5 @@ public interface IrisModel {
      */
     @Async
     CompletableFuture<IrisMessage> getResponse(IrisSession session);
-
-    /**
-     * Returns the initial system message for the respective LLM
-     *
-     * @return Initial system message
-     */
-    String getInitialSystemMessageTemplate();
 
 }

@@ -96,14 +96,11 @@ public class IrisSessionService {
      *
      * @param session The session to generate the initial system message for
      * @return The created IrisMessage for storing in the database
-     * @throws BadRequestException if no LLM is set thus no initial system message could be generated
      */
     public IrisMessage createInitialSystemMessage(IrisSession session) {
-        String initialSystemMessage = irisChatService.requestInitialSystemMessage();
-        if (initialSystemMessage == null) {
-            throw new BadRequestException("There is no IrisModel set.");
-        }
-        // TODO: add exercise-specific content to initial system message
+        String initialSystemMessage = getInitialSystemMessageTemplate();
+        // TODO: Fill initialSystemMessage with content
+
         var messageContent = new IrisMessageContent();
         messageContent.setTextContent(initialSystemMessage);
         var message = new IrisMessage();
@@ -112,5 +109,11 @@ public class IrisSessionService {
         message.setSentAt(ZonedDateTime.now());
         message.setSession(session);
         return message;
+    }
+
+    private String getInitialSystemMessageTemplate() {
+        return """
+                This will be the initial system message %s as template string.
+                """;
     }
 }

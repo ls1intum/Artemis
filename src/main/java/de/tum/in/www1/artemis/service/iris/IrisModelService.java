@@ -34,14 +34,4 @@ public class IrisModelService {
         }
         return CompletableFuture.failedFuture(new IllegalStateException("No Iris model available"));
     }
-
-    /**
-     * Returns the initial system message for the LLM
-     * This method will be extended in the future to support multiple models and should switch between them using the strategy pattern.
-     *
-     * @return Optional either containing the initial system message or empty Optional if no model is available
-     */
-    public Optional<String> requestInitialSystemMessage() {
-        return irisGPT3_5Service.map(IrisModel::getInitialSystemMessageTemplate);
-    }
 }
