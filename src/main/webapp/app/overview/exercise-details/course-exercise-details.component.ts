@@ -217,7 +217,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.hasSubmissionPolicy = true;
             });
             this.irisActivated = programmingExercise.irisActivated || false;
-            console.log('programming-exercise ' + programmingExercise);
         }
 
         this.showIfExampleSolutionPresent(newExercise);

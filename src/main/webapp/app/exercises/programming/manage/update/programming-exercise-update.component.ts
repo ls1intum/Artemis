@@ -70,7 +70,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
-    irisActivated: boolean;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -116,6 +115,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
+    public irisActivated: boolean;
 
     // Additional options for import
     public recreateBuildPlans = false;

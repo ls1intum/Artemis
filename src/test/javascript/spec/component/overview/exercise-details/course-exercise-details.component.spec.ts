@@ -313,6 +313,7 @@ describe('CourseExerciseDetailsComponent', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: true,
             numberOfAssessmentsOfCorrectionRounds: [],
+            irisActivated: true,
         } as ProgrammingExercise;
 
         const childComponent = {} as DiscussionSectionComponent;
@@ -327,6 +328,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.hasSubmissionPolicy).toBeTrue();
+        expect(comp.irisActivated).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
