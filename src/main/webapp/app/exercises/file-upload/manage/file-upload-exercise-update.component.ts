@@ -103,11 +103,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channel == undefined) {
-                            this.fileUploadExercise.channel = new Channel();
-                            this.fileUploadExercise.channel.name = '';
+                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channelName == undefined) {
+                            this.fileUploadExercise.channelName = '';
                         }
-                        this.channelName = this.fileUploadExercise.channel?.name;
+                        this.channelName = this.fileUploadExercise.channelName;
                     }
                     this.handleExerciseSettings();
                     this.handleImport(params);
@@ -170,8 +169,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        if (!this.isExamMode && this.fileUploadExercise.channel !== undefined) {
-            this.fileUploadExercise.channel.name = this.channelName;
+        if (!this.isExamMode && this.fileUploadExercise.channelName !== undefined) {
+            this.fileUploadExercise.channelName = this.channelName;
         }
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService)

@@ -106,9 +106,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(long id);
 
-    @EntityGraph(type = LOAD, attributePaths = { "channel" })
-    Optional<Exam> findWithChannelById(long id);
-
     @Query("""
             SELECT DISTINCT e
             FROM Exam e
@@ -252,11 +249,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
         return findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-    }
-
-    @NotNull
-    default Exam findByIdWithChannelElseThrow(long examId) throws EntityNotFoundException {
-        return findWithChannelById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**

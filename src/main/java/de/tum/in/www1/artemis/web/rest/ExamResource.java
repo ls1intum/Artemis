@@ -453,7 +453,7 @@ public class ExamResource {
         }
 
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdWithChannelElseThrow(examId));
+            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
         }
 
         if (withExerciseGroups) {
