@@ -124,7 +124,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // General assertions
         assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
-        assertThat(quizExercise.getDuration()).as("Quiz duration was correctly set").isEqualTo(10);
+        assertThat(quizExercise.getDuration()).as("Quiz duration was correctly set").isEqualTo(3600);
         assertThat(quizExercise.getDifficulty()).as("Quiz difficulty was correctly set").isEqualTo(DifficultyLevel.MEDIUM);
 
         // Quiz type specific assertions
@@ -562,6 +562,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.createCourse();
 
         QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate, quizMode);
+        quizExercise.setDuration(3600);
 
         quizExercise.setChannelName(CHANNEL_NAME + UUID.randomUUID().toString().substring(0, 8));
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);

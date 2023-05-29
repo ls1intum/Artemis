@@ -115,12 +115,12 @@ public class ExamResource {
 
     private final ChannelService channelService;
 
-    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
-            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
-            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
-            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
-            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository,
-            ChannelService channelService, ChannelRepository channelRepository) {
+    public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
+            ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
+            SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
+            TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
+            StudentExamRepository studentExamRepository, ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService,
+            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;

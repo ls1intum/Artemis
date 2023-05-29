@@ -476,7 +476,6 @@ public class CourseTestService {
 
         Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course1.setShortName("testdefaultchannels");
-        course1.setRegistrationEnabled(true);
         course1.setEnrollmentEnabled(true);
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultTeachingAssistantGroupName());
