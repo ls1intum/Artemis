@@ -31,13 +31,15 @@ describe('TitleChannelNameComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const titleInput = fixture.debugElement.query(By.css('#field_title'));
-        expect(titleInput).not.toBeNull();
-        expect(titleInput.nativeElement.value).toEqual(component.title);
+        fixture.whenStable().then(() => {
+            const titleInput = fixture.debugElement.query(By.css('#field_title'));
+            expect(titleInput).not.toBeNull();
+            expect(titleInput.nativeElement.value).toBe(component.title);
 
-        const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
-        expect(channelNameInput).not.toBeNull();
-        expect(channelNameInput.nativeElement.value).toEqual(component.channelName);
+            const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
+            expect(channelNameInput).not.toBeNull();
+            expect(channelNameInput.nativeElement.value).toBe(component.channelName);
+        });
     }));
 
     it('should only display title input field for undefined title', () => {
