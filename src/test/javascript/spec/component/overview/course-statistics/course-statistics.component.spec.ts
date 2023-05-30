@@ -322,7 +322,7 @@ describe('CourseStatisticsComponent', () => {
     course.teachingAssistantGroupName = 'artemis-dev';
     course.instructorGroupName = 'artemis-dev';
     course.onlineCourse = false;
-    course.registrationEnabled = false;
+    course.enrollmentEnabled = false;
     course.exercises = [];
     course.presentationScore = 1;
 
