@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -50,14 +49,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
         // Add registration number to student 3
         User student3 = userRepository.findOneByLogin(testPrefix + "student3").get();
-        // random number with maximal 20 digits
-        student3.setRegistrationNumber(new SecureRandom().nextInt(1000000000) + "");
+        student3.setRegistrationNumber("3");
         userRepository.save(student3);
 
         // Add registration number to student 4
         User student4 = userRepository.findOneByLogin(testPrefix + "student4").get();
-        // random number with maximal 20 digits
-        student4.setRegistrationNumber(new SecureRandom().nextInt(1000000000) + "");
+        student4.setRegistrationNumber("4");
         userRepository.save(student4);
 
         var course = this.database.createCourse();
