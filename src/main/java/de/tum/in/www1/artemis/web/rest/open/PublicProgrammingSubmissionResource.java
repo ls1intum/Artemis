@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -40,12 +44,15 @@ public class PublicProgrammingSubmissionResource {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final ParticipationRepository participationRepository;
+
     public PublicProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
-            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService) {
+            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.versionControlService = versionControlService;
         this.programmingTriggerService = programmingTriggerService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -65,7 +72,13 @@ public class PublicProgrammingSubmissionResource {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participationId, requestBody);
+
+            Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
+            if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+                throw new EntityNotFoundException("Programming Exercise Participation", participationId);
+            }
+
+            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setSubmissions(null);
             programmingMessagingService.notifyUserAboutSubmission(submission);
@@ -88,6 +101,10 @@ public class PublicProgrammingSubmissionResource {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
                     participationId, participationId, requestBody, ex);
             throw ex;
+        }
+        catch (VersionControlException ex) {
+            log.warn("User committed to the wrong branch for participation + " + participationId);
+            return ResponseEntity.status(HttpStatus.OK).build();
         }
 
         // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors

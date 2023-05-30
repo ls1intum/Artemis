@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -30,12 +29,12 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -74,6 +73,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+
+    @Autowired
+    private ExerciseService exerciseService;
 
     private QuizExercise quizExercise;
 
@@ -828,37 +830,36 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var exerciseId = exercise.getId();
 
         final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
+        final var searchResult = request.getSearchResult("/api/quiz-exercises", HttpStatus.OK, QuizExercise.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(quizExercise -> (Objects.equals(quizExercise.getId(), exerciseId)))).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        String exerciseTitle = setupFilterTestCase(TEST_PREFIX + "testCourseAndExamFiltersAsInstructor");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", exerciseTitle);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        String exerciseTitle = setupFilterTestCase(TEST_PREFIX + "testCourseAndExamFiltersAsAdmin");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", exerciseTitle);
     }
 
-    private String setupFilterTestCase() {
-        String randomString = UUID.randomUUID().toString();
+    private String setupFilterTestCase(String exerciseTitle) {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle(randomString + "-Morpork");
+        quizExercise.setTitle(exerciseTitle + "-Morpork");
         quizExerciseRepository.save(quizExercise);
 
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
-        exercise.setTitle(randomString);
+        exercise.setTitle(exerciseTitle);
         quizExerciseRepository.save(exercise);
-        return randomString;
+        return exerciseTitle;
     }
 
     @Test
@@ -1651,17 +1652,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.TEAM, changedQuiz.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), changedQuiz.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), changedQuiz.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+        assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(changedQuiz.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(changedQuiz.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
-        assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, quizExercise.getMode());
-        assertNull(quizExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+        assertThat(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(quizExercise.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).isEmpty();
     }
 
     /**
@@ -1684,7 +1685,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         quizExercise = quizExerciseService.save(quizExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName(TEST_PREFIX + "testImportQuizExercise_individual_modeChange");
         teamRepository.save(quizExercise, team);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -1695,15 +1696,15 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, changedQuiz.getMode());
-        assertNull(changedQuiz.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+        assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(changedQuiz.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
-        assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.TEAM, quizExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+        assertThat(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).hasSize(1);
     }
 
     /**
@@ -1764,7 +1765,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         question.setExplanation("0".repeat(validityThreshold));
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        assertThat(response).isNotNull();
     }
 
     /**
@@ -1795,7 +1796,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        assertThat(response).isNotNull();
     }
 
     /**
@@ -1834,6 +1835,23 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             assertThat(quizQuestion.isInvalid()).as("Quiz Question invalid flag has been set to false").isFalse();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFilterForCourseDashboard_QuizSubmissionButNoParticipation() {
+        Course course = database.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
+        database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+
+        quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student1", quizSubmission);
+
+        exerciseService.filterForCourseDashboard(quizExercise, List.of(), TEST_PREFIX + "student1", true);
+
+        assertThat(quizExercise.getStudentParticipations()).hasSize(1);
+        assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {

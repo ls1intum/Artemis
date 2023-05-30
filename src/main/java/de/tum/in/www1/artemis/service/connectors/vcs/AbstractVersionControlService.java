@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -37,7 +39,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private final ApplicationContext applicationContext;
 
-    private final GitService gitService;
+    protected final GitService gitService;
 
     protected final UrlService urlService;
 
@@ -45,13 +47,17 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    protected final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -117,7 +123,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | VersionControlException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
             try {
                 if (targetRepo != null) {
@@ -163,6 +169,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Override
     public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBranch() == null) {
+            if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
+            }
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
             programmingExercise.setBranch(branch);
             programmingExerciseRepository.save(programmingExercise);
