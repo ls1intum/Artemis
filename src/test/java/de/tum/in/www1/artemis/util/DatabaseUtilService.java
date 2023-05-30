@@ -2067,6 +2067,7 @@ public class DatabaseUtilService {
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setBranch(DEFAULT_BRANCH);
         return participation;
     }
 

@@ -273,8 +273,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<String> paths = new HashSet<>();
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                paths.add(dragAndDropQuestion.getBackgroundFilePath());
-                paths.addAll(dragAndDropQuestion.getDragItems().stream().map(DragItem::getPictureFilePath).collect(Collectors.toSet()));
+                if (dragAndDropQuestion.getBackgroundFilePath() != null) {
+                    paths.add(dragAndDropQuestion.getBackgroundFilePath());
+                }
+                paths.addAll(dragAndDropQuestion.getDragItems().stream().map(DragItem::getPictureFilePath).filter(Objects::nonNull).collect(Collectors.toSet()));
             }
         }
         return paths;
