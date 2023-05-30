@@ -24,6 +24,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -50,6 +51,7 @@ describe('LearningGoalManagementComponent', () => {
                 MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(NgbPanel),
             ],
