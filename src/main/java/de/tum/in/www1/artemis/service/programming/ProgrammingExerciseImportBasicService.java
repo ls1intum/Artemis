@@ -129,12 +129,6 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.setTeamAssignmentConfig(null);
         }
 
-        // Create exercise channel only if the exercise is a course exercise
-        // if (newExercise.isCourseExercise() && templateExercise.getChannel() != null) {
-        // Channel createdChannel = channelService.createExerciseChannel(newExercise, newExercise.getChannel().getName());
-        // newExercise.setChannel(createdChannel);
-        // }
-
         importSubmissionPolicy(newExercise);
 
         // Re-adding auxiliary repositories
@@ -147,6 +141,9 @@ public class ProgrammingExerciseImportBasicService {
         }
 
         programmingExerciseRepository.save(newExercise);
+        if (newExercise.isCourseExercise() && newExercise.getChannelName() != null) {
+            channelService.createExerciseChannel(newExercise, newExercise.getChannelName());
+        }
 
         return newExercise;
     }
