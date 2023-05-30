@@ -103,7 +103,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
         prepareCourseDataForDataExportCreation();
         var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var dataExport = request.putWithResponseBody("/api/" + userForExport.getId() + "/data-export", null, DataExport.class, HttpStatus.OK);
+        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -250,7 +250,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void testDataExportCreationSuccess_containsCorrectExamContent() throws Exception {
         prepareExamDataForDataExportCreation("exam");
         var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var dataExport = request.putWithResponseBody("/api/" + userForExport.getId() + "/data-export", null, DataExport.class, HttpStatus.OK);
+        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -271,7 +271,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void resultsPublicationDateInTheFuture_noResultsLeaked() throws Exception {
         prepareExamDataWithResultPublicationDateInTheFuture();
         var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var dataExport = request.putWithResponseBody("/api/" + userForExport.getId() + "/data-export", null, DataExport.class, HttpStatus.OK);
+        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));

@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -106,25 +107,29 @@ public class DataExportService {
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
-            ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
-            QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
-            Optional<ApollonConversionService> apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository) {
+            ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
+            QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
+            StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
+        this.examService = examService;
         this.dataExportRepository = dataExportRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
         this.apollonConversionService = apollonConversionService;
+        this.studentExamRepository = studentExamRepository;
         this.fileService = fileService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.reactionRepository = reactionRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
     /**
@@ -199,6 +204,7 @@ public class DataExportService {
      */
     private Path createDataExport(User user) throws IOException {
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
+        var userId = user.getId();
         var posts = postRepository.findPostsByAuthorId(userId);
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
         var reactions = reactionRepository.findReactionsByUserId(userId);
@@ -210,10 +216,10 @@ public class DataExportService {
                     user.getId());
             for (var exercise : exercises) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    createProgrammingExerciseExport(programmingExercise, courseDir);
+                    createProgrammingExerciseExport(programmingExercise, courseDir, userId);
                 }
                 else {
-                    createNonProgrammingExerciseExport(exercise, courseDir);
+                    createNonProgrammingExerciseExport(exercise, courseDir, userId);
                 }
             }
             createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
@@ -230,17 +236,16 @@ public class DataExportService {
                 var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + exam.getId()));
                 createStudentExamExport(studentExam.get(), examWorkingDir);
             }
-
         }
     }
 
     private void createStudentExamExport(StudentExam studentExam, Path examWorkingDir) throws IOException {
         for (var exercise : studentExam.getExercises()) {
             if (exercise instanceof ProgrammingExercise programmingExercise) {
-                createProgrammingExerciseExport(programmingExercise, examWorkingDir);
+                createProgrammingExerciseExport(programmingExercise, examWorkingDir, studentExam.getUser().getId());
             }
             else {
-                createNonProgrammingExerciseExport(exercise, examWorkingDir);
+                createNonProgrammingExerciseExport(exercise, examWorkingDir, studentExam.getUser().getId());
             }
         }
         // leave out the results if the results are not published yet to avoid leaking information through the data export
@@ -260,7 +265,6 @@ public class DataExportService {
                 csvFormat)) {
             printer.printRecord(examResults);
             printer.flush();
-
         }
     }
 
@@ -297,7 +301,6 @@ public class DataExportService {
             printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
                     studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
             printer.flush();
-
         }
     }
 
@@ -311,7 +314,7 @@ public class DataExportService {
         }
     }
 
-    private void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path courseDir) throws IOException {
+    private void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path courseDir, long userId) throws IOException {
         Path exerciseDir = courseDir.resolve(programmingExercise.getSanitizedExerciseTitle());
         if (!Files.exists(exerciseDir)) {
             Files.createDirectory(exerciseDir);
@@ -336,6 +339,7 @@ public class DataExportService {
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
         // --> we can delete it after use
         fileService.scheduleForDirectoryDeletion(tempRepoWorkingDir, 5);
+        createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, userId);
 
     }
 
@@ -510,9 +514,7 @@ public class DataExportService {
             for (var reaction : answerPostReactionsInCourse) {
                 printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate(), reaction.getAnswerPost().getContent());
             }
-
             printer.flush();
-
         }
 
     }
@@ -574,17 +576,17 @@ public class DataExportService {
 
     }
 
-    private void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir) throws IOException {
+    private void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir, long userId) throws IOException {
         Path exercisePath = courseDir.resolve(exercise.getSanitizedExerciseTitle());
         if (!Files.exists(exercisePath)) {
             Files.createDirectory(exercisePath);
         }
         createSubmissionsResultsExport(exercise, exercisePath);
-        createPlagiarismCaseInfoExport(exercise, exercisePath);
+        createPlagiarismCaseInfoExport(exercise, exercisePath, userId);
 
     }
 
-    private void createPlagiarismCaseInfoExport(Exercise exercise, Path exercisePath) throws IOException {
+    private void createPlagiarismCaseInfoExport(Exercise exercise, Path exercisePath, long userId) throws IOException {
         var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
         List<String> headers = new ArrayList<>();
         var dataStreamBuilder = Stream.builder();
@@ -618,7 +620,6 @@ public class DataExportService {
                 csvFormat)) {
             printer.printRecord(dataStreamBuilder.build());
             printer.flush();
-
         }
 
     }

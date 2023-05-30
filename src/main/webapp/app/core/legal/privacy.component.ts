@@ -11,13 +11,13 @@ import { AccountService } from 'app/core/auth/account.service';
     template: `
         <h3 jhiTranslate="legal.privacy.title">Datenschutzerklärung</h3>
         <div [innerHTML]="privacyStatement"></div>
-        <a *ngIf="isAdmin" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-export']"> </a>
+        <a *ngIf="isAuthenticated" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-export']"> </a>
     `,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     privacyStatement: string;
     private languageChangeSubscription?: Subscription;
-    isAdmin: boolean;
+    isAuthenticated: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -30,7 +30,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
      */
     ngOnInit(): void {
-        this.isAdmin = this.accountService.isAdmin();
+        this.isAuthenticated = this.accountService.isAuthenticated();
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
             this.privacyStatementService.getPrivacyStatement(lang as PrivacyStatementLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
