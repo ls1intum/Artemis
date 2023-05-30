@@ -65,7 +65,7 @@ Furthermore, users have the option to select a custom instance. To do this, scro
 
 |server-selection-overview|
 
-Then, enter the url of the server as you would enter it into the browser:
+Then, enter the URL of the server as you would enter it into the browser:
 
 |custom-server-entered|
 
