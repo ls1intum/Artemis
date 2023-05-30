@@ -63,6 +63,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -83,6 +84,8 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
+ * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
+ * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
 @Service
 public class ProgrammingExerciseTestService {
@@ -159,7 +162,7 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private UrlService urlService;
 
-    @Autowired // can be used as SpyBean
+    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
@@ -450,6 +453,29 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, HttpStatus.OK);
     }
 
+    void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        Path fileSystemPathEmbeddedFile1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
+        Path fileSystemPathEmbeddedFile2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        // clean up to make sure the test doesn't pass because it has passed previously
+        if (Files.exists(fileSystemPathEmbeddedFile1)) {
+            Files.delete(fileSystemPathEmbeddedFile1);
+        }
+        if (Files.exists(fileSystemPathEmbeddedFile2)) {
+            Files.delete(fileSystemPathEmbeddedFile2);
+        }
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import-embedded-files.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(Path.of(FilePathService.getMarkdownFilePath())).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
+                .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
+
+    }
+
     void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
@@ -734,15 +760,15 @@ public class ProgrammingExerciseTestService {
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
-        assertEquals(TEAM, exerciseToBeImported.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(TEAM);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
-        assertNull(sourceExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(sourceExercise.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
     // TEST
@@ -761,7 +787,7 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName("testImportProgrammingExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
         database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
@@ -776,13 +802,13 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
-        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        assertEquals(TEAM, sourceExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getMode()).isEqualTo(TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
     }
 
     // TEST
@@ -1204,7 +1230,11 @@ public class ProgrammingExerciseTestService {
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
-
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        // delete the files to not only make a test pass because a previous test run succeeded
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
         // Recursively unzip the exported file, to make sure there is no erroneous content
         zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
         String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
@@ -1215,7 +1245,8 @@ public class ProgrammingExerciseTestService {
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
-                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
+                    .anyMatch((filename) -> filename.toString().equals(embeddedFileName1)).anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
         }
     }
 
@@ -1229,7 +1260,6 @@ public class ProgrammingExerciseTestService {
 
     java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
-
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
@@ -1249,7 +1279,18 @@ public class ProgrammingExerciseTestService {
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
     }
 
-    private void generateProgrammingExerciseForExport() {
+    private void generateProgrammingExerciseForExport() throws IOException {
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        exercise.setProblemStatement(String.format("""
+                Problem statement
+                ![mountain.jpg](/api/files/markdown/%s)
+                ![matterhorn.jpg](/api/files/markdown/%s)
+                """, embeddedFileName1, embeddedFileName2));
+        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
+                new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
+        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
+                new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
@@ -1785,9 +1826,13 @@ public class ProgrammingExerciseTestService {
         participation7b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7b.getId());
         participation8b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation8b.getId());
 
-        // only return the relevant participations (cleanup service would otherwise return too much
-        when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
-                participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
+        // TODO: only return participations 1a - 8b from findAllWithBuildPlanIdWithResults().
+        // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below, causing an AssertionError.
+        // The previous solution was to use a @SpyBean to spy on the programmingExerciseStudentParticipationRepository and then the commented lines below provided the correct mock.
+        // However, because of a bug in Mockito, these spy beans lead to issues for other tests and the solution either needs to find some other way to mock the returned
+        // participations or refactor the test such that only those participations are returned.
+        // when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
+        // participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
 
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
@@ -1959,7 +2004,7 @@ public class ProgrammingExerciseTestService {
     void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
 
         if (isStudent) {
-            assertEquals(userPrefix + studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");
+            assertThat(username).as("The setup is done according to studentLogin value, another username may not work as expected").isEqualTo(userPrefix + studentLogin);
         }
 
         // Utility function to avoid duplication
