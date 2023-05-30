@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -1679,7 +1677,7 @@ class ProgrammingExerciseIntegrationTestService {
             // it is random which of the following two exists, but one of them must be part of the zip file
             var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
             var json2 = zipFile.getEntry("Submission-1.java-Submission-2.java.json");
-            assertTrue(json1 != null || json2 != null);
+            assertThat(json1 != null || json2 != null).isTrue();
         }
     }
 
@@ -2043,13 +2041,12 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        String uniqueExerciseTitle = String.format("Title%d%d", System.nanoTime(), ThreadLocalRandom.current().nextInt(100));
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
-        programmingExercise.setShortName(uniqueExerciseTitle);
-        programmingExercise.setTitle(uniqueExerciseTitle);
+        programmingExercise.setShortName("ExerciseTitle");
+        programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
