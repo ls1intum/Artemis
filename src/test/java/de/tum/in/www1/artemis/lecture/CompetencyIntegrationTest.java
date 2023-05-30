@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -171,7 +170,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private void createCompetency() {
         Course course = courseRepository.findWithEagerCompetenciesById(idOfCourse).get();
         Competency competency = new Competency();
-        competency.setTitle("Competency" + new Random().nextInt());
+        competency.setTitle("Competency" + idOfCourse);
         competency.setDescription("This is an example competency");
         competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency.setCourse(course);
