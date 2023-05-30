@@ -113,8 +113,8 @@
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "Offline IDE",
-            "irisActivated": "Iris Chatbot",
-            "irisActivatedTooltip": "Activate this option to enable Iris chatbot for students.",
+            "irisActivated": "Allow Iris Chatbot",
+            "irisActivatedTooltip": "Activate this option to enable Iris chatbot for students. This will allow students to talk to LLM e.g. chatgpt, which can help them with questions about the exercise but would not provide solution directly.",
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
