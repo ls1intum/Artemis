@@ -9,7 +9,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
 import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
@@ -47,6 +48,7 @@ export interface LearningGoalFormData {
     id?: number;
     title?: string;
     description?: string;
+    dueDate?: dayjs.Dayjs;
     taxonomy?: LearningGoalTaxonomy;
     masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
@@ -63,6 +65,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         id: undefined,
         title: undefined,
         description: undefined,
+        dueDate: undefined,
         taxonomy: undefined,
         masteryThreshold: undefined,
         connectedLectureUnits: undefined,
@@ -97,6 +100,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     suggestedTaxonomies: string[] = [];
 
     faTimes = faTimes;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private fb: FormBuilder,
@@ -111,6 +115,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     get descriptionControl() {
         return this.form.get('description');
+    }
+
+    get dueDateControl() {
+        return this.form.get('dueDate');
     }
 
     get masteryThresholdControl() {
@@ -143,6 +151,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
                 [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
+            dueDate: [undefined],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
         });

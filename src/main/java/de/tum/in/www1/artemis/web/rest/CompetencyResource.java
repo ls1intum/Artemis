@@ -170,6 +170,7 @@ public class CompetencyResource {
 
         existingCompetency.setTitle(competency.getTitle());
         existingCompetency.setDescription(competency.getDescription());
+        existingCompetency.setDueDate(competency.getDueDate());
         existingCompetency.setTaxonomy(competency.getTaxonomy());
         existingCompetency.setMasteryThreshold(competency.getMasteryThreshold());
         var persistedCompetency = competencyRepository.save(existingCompetency);
@@ -205,6 +206,7 @@ public class CompetencyResource {
         Competency competencyToCreate = new Competency();
         competencyToCreate.setTitle(competency.getTitle().trim());
         competencyToCreate.setDescription(competency.getDescription());
+        competencyToCreate.setDueDate(competency.getDueDate());
         competencyToCreate.setTaxonomy(competency.getTaxonomy());
         competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToCreate.setCourse(course);

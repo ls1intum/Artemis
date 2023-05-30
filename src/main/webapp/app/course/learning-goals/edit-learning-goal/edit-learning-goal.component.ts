@@ -88,10 +88,11 @@ export class EditLearningGoalComponent implements OnInit {
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
-        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
+        const { title, description, dueDate, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoal.title = title;
         this.learningGoal.description = description;
+        this.learningGoal.dueDate = dueDate;
         this.learningGoal.taxonomy = taxonomy;
         this.learningGoal.masteryThreshold = masteryThreshold;
         this.learningGoal.lectureUnits = connectedLectureUnits;

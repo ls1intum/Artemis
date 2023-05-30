@@ -13,9 +13,10 @@ import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
 import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule],
+    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule, FormDateTimePickerModule],
     declarations: [
         LearningGoalFormComponent,
         LearningGoalRingsComponent,

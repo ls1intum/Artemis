@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -28,6 +29,7 @@ export class LearningGoal implements BaseEntity {
     public id?: number;
     public title?: string;
     public description?: string;
+    public dueDate?: dayjs.Dayjs;
     public taxonomy?: LearningGoalTaxonomy;
     public masteryThreshold?: number;
     public course?: Course;

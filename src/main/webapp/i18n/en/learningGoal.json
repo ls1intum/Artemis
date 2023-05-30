@@ -61,6 +61,8 @@
                 "titleUniqueValidationError": "There already exists a competency with this title in the course",
                 "descriptionPlaceholder": "What do you expect students to learn? Example: \"You can explain the difference between call-by-value and call-by-reference.\"",
                 "descriptionMaxLengthValidationError": "A competency description is limited to 10 000 characters",
+                "dueDate": "Expected due date",
+                "dueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
                 "suggestedTaxonomy": "Suggested",
                 "averageStudentScore": "Current average confidence",
                 "connectWithLectureUnits": "Link the competency with lecture units",

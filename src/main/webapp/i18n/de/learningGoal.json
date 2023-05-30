@@ -62,6 +62,8 @@
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
                 "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal 10 000 Symbole beschränkt",
+                "dueDate": "Erwartetes Fälligkeitsdatum",
+                "dueDateHint": "Empfehlen sie einen Zeitpunkt zu dem Student*innen diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "suggestedTaxonomy": "Vorschlag",
                 "averageStudentScore": "Aktuelle durchschnittliche Konfidenz",
                 "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten",
