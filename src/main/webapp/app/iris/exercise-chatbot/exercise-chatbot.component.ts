@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
@@ -21,7 +21,10 @@ export class ExerciseChatbotComponent implements OnDestroy, OnInit {
     private chatOpen = false;
     private exerciseId: number;
     // Icons
+    faCircle = faCircle;
     faCommentDots = faCommentDots;
+
+    isUnread = true; // TODO
 
     constructor(
         private dialog: MatDialog,
