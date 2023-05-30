@@ -4410,9 +4410,6 @@ public class DatabaseUtilService {
         var mapping5 = new DragAndDropMapping().dragItem(dragItem5).dropLocation(dropLocation5);
         dnd.addCorrectMapping(mapping5);
         dnd.setExplanation("Explanation");
-        // invoke some util methods
-        System.out.println("DnD: " + dnd);
-        System.out.println("DnD.hashCode: " + dnd.hashCode());
         return dnd;
     }
 
