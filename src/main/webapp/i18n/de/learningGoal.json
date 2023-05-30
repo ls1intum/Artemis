@@ -106,8 +106,7 @@
                 "noUnitsConnected": "Die Kompetenz ist mit keinen Vorlesungseinheiten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
-                "expectedUntil": "Erwartet bis",
-                "dueDatePassed": "Das erwartete Fälligkeitsdatum war am"
+                "dueDate": "Erwartet"
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Verbundene Kompetenzen",
