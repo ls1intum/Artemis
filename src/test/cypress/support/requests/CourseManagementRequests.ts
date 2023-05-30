@@ -138,10 +138,7 @@ export class CourseManagementRequests {
             title,
             shortName: programmingShortName,
             packageName,
-            channel: {
-                type: 'channel',
-                name: 'exercise-' + titleLowercase(title),
-            },
+            channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
@@ -398,10 +395,7 @@ export class CourseManagementRequests {
         const template = {
             ...textExerciseTemplate,
             title,
-            channel: {
-                type: 'channel',
-                name: 'exercise-' + titleLowercase(title),
-            },
+            channelName: 'exercise-' + titleLowercase(title),
         };
         const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
@@ -433,10 +427,7 @@ export class CourseManagementRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
-            channel: {
-                type: 'channel',
-                name: 'exercise-' + titleLowercase(title),
-            },
+            channelName: 'exercise-' + titleLowercase(title),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
@@ -509,10 +500,7 @@ export class CourseManagementRequests {
             title,
             quizQuestions,
             duration,
-            channel: {
-                type: 'channel',
-                name: 'exercise-' + titleLowercase(title),
-            },
+            channelName: 'exercise-' + titleLowercase(title),
         };
         let newQuizExercise;
         const dates = {
@@ -686,6 +674,7 @@ export class ExamBuilder {
         this.template.startDate = dayjsToString(day().add(1, 'day'));
         this.template.endDate = dayjsToString(day().add(2, 'day'));
         this.template.workingTime = 86400;
+        this.template.channelName = titleLowercase(this.template.title);
     }
 
     /**

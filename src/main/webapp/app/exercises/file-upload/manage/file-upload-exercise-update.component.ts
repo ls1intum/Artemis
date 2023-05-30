@@ -20,7 +20,6 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -39,7 +38,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     EditorMode = EditorMode;
     notificationText?: string;
-    channelName: string | undefined;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     isImport: boolean;
@@ -103,11 +101,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channel == undefined) {
-                            this.fileUploadExercise.channel = new Channel();
-                            this.fileUploadExercise.channel.name = '';
+                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channelName == undefined) {
+                            this.fileUploadExercise.channelName = '';
                         }
-                        this.channelName = this.fileUploadExercise.channel?.name;
                     }
                     this.handleExerciseSettings();
                     this.handleImport(params);
@@ -170,9 +166,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        if (!this.isExamMode && this.fileUploadExercise.channel !== undefined) {
-            this.fileUploadExercise.channel.name = this.channelName;
-        }
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.fileUploadExercise, this.isExamMode, this.notificationText)

@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -62,9 +61,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         channel.setIsPublic(true);
         channel.setIsArchived(false);
         channel.setName("test");
-        channel = channelRepository.save(channel);
-        lecture.setChannel(channel);
+        lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(lecture);
+        channel.setLecture(this.lecture1);
+        channelRepository.save(channel);
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
@@ -119,18 +119,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.setTitle("loremIpsum");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
-        LectureDTO lectureDTO = new LectureDTO(lecture, lecture.getTitle());
-        Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.CREATED);
+        lecture.setChannelName("loremipsum");
+        Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.CREATED);
 
-        Optional<Channel> channel = channelRepository.findById(returnedLecture.getChannel().getId());
+        Channel channel = channelRepository.findChannelByLectureId(returnedLecture.getId());
 
         assertThat(returnedLecture).isNotNull();
         assertThat(returnedLecture.getId()).isNotNull();
         assertThat(returnedLecture.getTitle()).isEqualTo(lecture.getTitle());
         assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.getCourse().getId());
         assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
-        assertThat(channel).isPresent();
-        assertThat(channel.get().getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
 
     @Test
@@ -138,26 +138,23 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
         Lecture lecture = new Lecture();
         lecture.setId(1L);
-        LectureDTO lectureDTO = new LectureDTO(lecture, "test");
-        request.postWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.BAD_REQUEST);
+        lecture.setChannelName("test");
+        request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithChannel(lecture1.getId());
+        Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        LectureDTO lectureDTO = new LectureDTO(originalLecture, "updated");
+        originalLecture.setChannelName("test");
+        Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
-        assertThat(originalLecture.getChannel()).isNotNull();
+        Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
 
-        Lecture updatedLecture = request.putWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.OK);
-
-        Optional<Channel> channel = channelRepository.findById(originalLecture.getChannel().getId());
-
-        assertThat(channel).isPresent();
-        assertThat(channel.get().getName()).isNotEqualTo("test");
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo("test");
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }
@@ -167,9 +164,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         originalLecture.setId(null);
-        LectureDTO lectureDTO = new LectureDTO(originalLecture, "test");
+        originalLecture.setChannelName("test");
 
-        request.putWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -236,11 +233,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     private void testGetLecture(Long lectureId) throws Exception {
-        Lecture receivedLecture = request.get("/api/lectures/" + lectureId, HttpStatus.OK, Lecture.class);
-        assertThat(receivedLecture.getId()).isEqualTo(lectureId);
+        Lecture originalLecture = request.get("/api/lectures/" + lectureId, HttpStatus.OK, Lecture.class);
+        assertThat(originalLecture.getId()).isEqualTo(lectureId);
         // should not fetch lecture units or posts
-        assertThat(receivedLecture.getLectureUnits()).isNullOrEmpty();
-        assertThat(receivedLecture.getPosts()).isNullOrEmpty();
+        assertThat(originalLecture.getLectureUnits()).isNullOrEmpty();
+        assertThat(originalLecture.getPosts()).isNullOrEmpty();
     }
 
     @Test
@@ -305,7 +302,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_NullInListOfLectureUnits_shouldDeleteLecture() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         List<LectureUnit> lectureUnits = lecture.getLectureUnits();
         assertThat(lectureUnits).hasSize(4);
         ArrayList<LectureUnit> lectureUnitsWithNulls = new ArrayList<>();
@@ -316,7 +313,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.getLectureUnits().clear();
         lecture.getLectureUnits().addAll(lectureUnitsWithNulls);
         lectureRepository.saveAndFlush(lecture);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         lectureUnits = lecture.getLectureUnits();
         assertThat(lectureUnits).hasSize(8);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
@@ -401,13 +398,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void testImport() throws Exception {
         Course course2 = this.database.addEmptyCourse();
 
-        Lecture lecture2 = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
+        Lecture lecture = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
 
         // Assert that all lecture units (except exercise units) were copied
-        assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
+        assertThat(lecture.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
 
-        assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
+        assertThat(lecture.getAttachments().stream().map(Attachment::getName).toList())
                 .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
     }
 }

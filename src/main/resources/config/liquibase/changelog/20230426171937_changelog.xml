@@ -1,41 +1,41 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet author="keller" id="20230426171937-01">
-        <addColumn tableName="lecture">
-            <column name="channel_id" type="BIGINT"/>
+        <addColumn tableName="conversation">
+            <column name="lecture_id" type="BIGINT"/>
         </addColumn>
-        <addForeignKeyConstraint baseColumnNames="channel_id"
-                                 baseTableName="lecture"
-                                 constraintName="fk_lecture_channel"
+        <addForeignKeyConstraint baseColumnNames="lecture_id"
+                                 baseTableName="conversation"
+                                 constraintName="fk_lecture"
                                  deferrable="false"
                                  initiallyDeferred="false"
                                  referencedColumnNames="id"
-                                 referencedTableName="conversation"
+                                 referencedTableName="lecture"
                                  onDelete="SET NULL"/>
-        <addColumn tableName="exercise">
-            <column name="channel_id" type="BIGINT"/>
+        <addColumn tableName="conversation">
+            <column name="exercise_id" type="BIGINT"/>
         </addColumn>
-        <addForeignKeyConstraint baseColumnNames="channel_id"
-                                 baseTableName="exercise"
-                                 constraintName="fk_exercise_channel"
+        <addForeignKeyConstraint baseColumnNames="exercise_id"
+                                 baseTableName="conversation"
+                                 constraintName="fk_exercise"
                                  deferrable="false"
                                  initiallyDeferred="false"
                                  referencedColumnNames="id"
-                                 referencedTableName="conversation"
+                                 referencedTableName="exercise"
                                  onDelete="SET NULL"/>
         <modifyDataType tableName="conversation" columnName="name" newDataType="varchar(30)"/>
     </changeSet>
     <changeSet author="baboci" id="20230426171937-02">
-        <addColumn tableName="exam">
-            <column name="channel_id" type="BIGINT"/>
+        <addColumn tableName="conversation">
+            <column name="exam_id" type="BIGINT"/>
         </addColumn>
-        <addForeignKeyConstraint baseColumnNames="channel_id"
-                                 baseTableName="exam"
+        <addForeignKeyConstraint baseColumnNames="exam_id"
+                                 baseTableName="conversation"
                                  constraintName="fk_exam_channel"
                                  deferrable="false"
                                  initiallyDeferred="false"
                                  referencedColumnNames="id"
-                                 referencedTableName="conversation"
+                                 referencedTableName="exam"
                                  onDelete="SET NULL"/>
     </changeSet>
 </databaseChangeLog>

@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 /**
  * A Lecture.
@@ -56,9 +55,11 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "channel_id")
-    private Channel channel;
+    /**
+     * It is defined here for transferring the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
 
     public String getTitle() {
         return title;
@@ -155,11 +156,11 @@ public class Lecture extends DomainObject {
         }
     }
 
-    public Channel getChannel() {
-        return channel;
+    public String getChannelName() {
+        return channelNameTransient;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
     }
 }

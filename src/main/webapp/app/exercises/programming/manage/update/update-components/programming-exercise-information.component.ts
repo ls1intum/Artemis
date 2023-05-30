@@ -12,7 +12,7 @@ export class ProgrammingExerciseInformationComponent {
     @Input() isExamMode: boolean;
     @Input() isEdit: boolean;
     @Input() programmingExercise: ProgrammingExercise;
-    @Input() channelName?: string;
+    @Input() channelName: string | undefined;
     @Input() shouldHidePreview = false;
     @Input() infoInputs: InfoStepInputs;
     @Input() auxiliaryRepositoriesSupported = false;

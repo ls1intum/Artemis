@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -66,16 +71,19 @@ public class Channel extends Conversation {
     @NotNull
     private Boolean isArchived;
 
-    @OneToOne(mappedBy = "channel")
-    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "lecture_id")
+    @JsonIgnoreProperties("channel")
     private Lecture lecture;
 
-    @OneToOne(mappedBy = "channel")
-    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "exercise_id")
+    @JsonIgnoreProperties("channel")
     private Exercise exercise;
 
-    @OneToOne(mappedBy = "channel")
-    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "exam_id")
+    @JsonIgnoreProperties("channel")
     private Exam exam;
 
     @Nullable

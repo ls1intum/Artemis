@@ -21,7 +21,6 @@ function getExerciseGroups(equalPoints: boolean) {
                     numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
                     studentAssignedTeamIdComputed: false,
                     secondCorrectionEnabled: false,
-                    channel: {},
                 },
                 {
                     id: 2,
@@ -29,7 +28,6 @@ function getExerciseGroups(equalPoints: boolean) {
                     numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
                     studentAssignedTeamIdComputed: false,
                     secondCorrectionEnabled: false,
-                    channel: {},
                 },
             ],
         },
@@ -236,7 +234,6 @@ describe('ExamChecklistService', () => {
                         numberOfAssessmentsOfCorrectionRounds: [{ inTime: 0, late: 0, total: 0 }],
                         studentAssignedTeamIdComputed: false,
                         secondCorrectionEnabled: false,
-                        channel: {},
                     },
                 ],
             };

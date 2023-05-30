@@ -579,7 +579,7 @@ public class ModelFactory {
         course.setEndDate(endDate);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
-        course.setRegistrationEnabled(false);
+        course.setEnrollmentEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
@@ -691,6 +691,17 @@ public class ModelFactory {
     }
 
     /**
+     * Generates a real exam without student review dates set and attaches a channel
+     *
+     * @param course      the associated course
+     * @param channelName the channel name
+     * @return the created exam
+     */
+    public static Exam generateExam(Course course, String channelName) {
+        return generateExamHelper(course, false, channelName);
+    }
+
+    /**
      * Generates an exam
      *
      * @param course      the associated course
@@ -701,6 +712,21 @@ public class ModelFactory {
      * @return the created exam
      */
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
+        return generateExam(course, visibleDate, startDate, endDate, testExam, null);
+    }
+
+    /**
+     * Generates an exam with Channel
+     *
+     * @param course      the associated course
+     * @param visibleDate the visible date of the exam
+     * @param startDate   the start date of the exam
+     * @param endDate     the end date of the exam
+     * @param testExam    if the exam is a test exam
+     * @param channelName the channel name
+     * @return the created exam
+     */
+    public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, String channelName) {
         Exam exam = new Exam();
         exam.setTitle((testExam ? "Test" : "Real") + " exam 1");
         exam.setTestExam(testExam);
@@ -717,6 +743,7 @@ public class ModelFactory {
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
         exam.setCourse(course);
+        exam.setChannelName(channelName);
         return exam;
     }
 
@@ -731,15 +758,26 @@ public class ModelFactory {
     }
 
     /**
-     * Helper method to create an exam
+     * Helper method to create an exam without channel
      *
      * @param course   the associated course
      * @param testExam Boolean flag to determine whether it is a test exam
      * @return the created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
+        return generateExamHelper(course, testExam, null);
+    }
+
+    /**
+     * Helper method to create an exam with a channel
+     *
+     * @param course   the associated course
+     * @param testExam Boolean flag to determine whether it is a test exam
+     * @return the created Exam
+     */
+    private static Exam generateExamHelper(Course course, boolean testExam, String channelName) {
         ZonedDateTime currentTime = now();
-        return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam);
+        return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam, channelName);
     }
 
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {

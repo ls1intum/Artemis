@@ -79,10 +79,9 @@ export class LectureUpdateComponent implements OnInit {
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
+            const channelName = lecture?.channelName;
             this.lecture = lecture ?? new Lecture();
-
-            this.channelName = lecture ? this.lecture.channel?.name : '';
-
+            this.channelName = channelName || '';
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
@@ -112,11 +111,12 @@ export class LectureUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         this.isProcessing = true;
+        this.lecture.channelName = this.channelName;
         if (this.lecture.id !== undefined) {
-            this.subscribeToSaveResponse(this.lectureService.update(this.lecture, this.channelName));
+            this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {
             // Newly created lectures must have a channel name, which cannot be undefined
-            this.subscribeToSaveResponse(this.lectureService.create(this.lecture, this.channelName!));
+            this.subscribeToSaveResponse(this.lectureService.create(this.lecture));
         }
     }
 

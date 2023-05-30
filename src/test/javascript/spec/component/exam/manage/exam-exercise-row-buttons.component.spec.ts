@@ -63,7 +63,6 @@ describe('Exam Exercise Row Buttons Component', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
         numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
-        channel: {},
     };
     const programmingExercise = {
         id: 2,
@@ -72,7 +71,6 @@ describe('Exam Exercise Row Buttons Component', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
         numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
-        channel: {},
     };
     const modelingExercise = {
         id: 3,
@@ -81,7 +79,6 @@ describe('Exam Exercise Row Buttons Component', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
         numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
-        channel: {},
     };
     const textExercise = {
         id: 4,
@@ -90,7 +87,6 @@ describe('Exam Exercise Row Buttons Component', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
         numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
-        channel: {},
     };
     const quizExercise = {
         title: 'MyQuiz',
@@ -101,7 +97,6 @@ describe('Exam Exercise Row Buttons Component', () => {
         studentAssignedTeamIdComputed: false,
         numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
         quizQuestions,
-        channel: {},
     };
 
     let comp: ExamExerciseRowButtonsComponent;

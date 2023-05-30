@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
@@ -80,4 +81,18 @@ describe('ProgrammingExerciseInformationComponent', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
     }));
+
+    it('should update channelName', () => {
+        const newChannelName = 'New Channel Name';
+        let emittedChannelName: string | undefined;
+        comp.channelNameChange.subscribe((channelName: string) => {
+            emittedChannelName = channelName;
+        });
+
+        const titleChannelNameElement = fixture.debugElement.query(By.css('jhi-title-channel-name'));
+        titleChannelNameElement.triggerEventHandler('channelNameChange', newChannelName);
+
+        expect(comp.channelName).toBe(newChannelName);
+        expect(emittedChannelName).toBe(newChannelName);
+    });
 });

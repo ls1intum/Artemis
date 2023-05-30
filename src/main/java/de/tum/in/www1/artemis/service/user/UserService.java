@@ -94,7 +94,7 @@ public class UserService {
 
     private final StudentScoreRepository studentScoreRepository;
 
-    private final LearningGoalProgressRepository learningGoalProgressRepository;
+    private final CompetencyProgressRepository competencyProgressRepository;
 
     private final CacheManager cacheManager;
 
@@ -145,7 +145,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
-        this.learningGoalProgressRepository = learningGoalProgressRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
@@ -494,7 +494,7 @@ public class UserService {
         singleUserNotificationRepository.deleteByRecipientId(user.getId());
         notificationRepository.removeAuthor(user.getId());
         studentScoreRepository.deleteAllByUserId(user.getId());
-        learningGoalProgressRepository.deleteAllByUserId(user.getId());
+        competencyProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
 
         deletePostsAndConversationRelatedObjects(user);

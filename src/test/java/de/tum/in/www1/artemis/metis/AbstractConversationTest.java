@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -171,10 +170,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         return persistedCourse;
     }
 
-    ChannelDTO createChannel(boolean isPublicChannel) throws Exception {
-        return createChannel(isPublicChannel, RandomConversationNameGenerator.generateRandomConversationName());
-    }
-
     ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
         var channelDTO = new ChannelDTO();
         channelDTO.setName(name);
@@ -277,25 +272,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     void resetWebsocketMock() {
         reset(this.messagingTemplate);
-    }
-
-    public static class RandomConversationNameGenerator {
-
-        private static final String LOWERCASE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
-
-        private static final String NUMBERS = "0123456789";
-
-        private static final String ALL_CHARS = LOWERCASE_LETTERS + NUMBERS;
-
-        private static final SecureRandom RANDOM = new SecureRandom();
-
-        public static String generateRandomConversationName() {
-            var stringBuilder = new StringBuilder();
-            for (int i = 0; i < 10; i++) {
-                stringBuilder.append(ALL_CHARS.charAt(RANDOM.nextInt(ALL_CHARS.length())));
-            }
-            return stringBuilder.toString();
-        }
     }
 
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -40,6 +40,7 @@ describe('Lecture Service', () => {
         elemDefault.id = 1;
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
+        elemDefault.channelName = 'lecture-default';
     });
 
     afterEach(() => {
@@ -51,7 +52,7 @@ describe('Lecture Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .create(elemDefault, 'lecture-default')
+                .create(elemDefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
@@ -66,7 +67,7 @@ describe('Lecture Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .update(elemDefault, 'lecture-default')
+                .update(elemDefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({

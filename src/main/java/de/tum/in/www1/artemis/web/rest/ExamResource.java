@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -75,6 +76,8 @@ public class ExamResource {
 
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
+
+    private final ProfileService profileService;
 
     private final UserRepository userRepository;
 
@@ -112,12 +115,13 @@ public class ExamResource {
 
     private final ChannelService channelService;
 
-    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
-            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
-            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
-            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
-            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository,
-            ChannelService channelService, ChannelRepository channelRepository) {
+    public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
+            ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
+            SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
+            TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
+            StudentExamRepository studentExamRepository, ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService,
+            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository) {
+        this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -164,18 +168,18 @@ public class ExamResource {
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
-        if (!exam.isTestExam()) {
-            Channel createdChannel = channelService.createExamChannel(exam);
-            exam.setChannel(createdChannel);
+        Exam savedExam = examRepository.save(exam);
+
+        if (savedExam.isMonitoring()) {
+            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
+        }
+
+        if (!savedExam.isTestExam()) {
+            Channel createdChannel = channelService.createExamChannel(savedExam, exam.getChannelName());
             channelService.registerUsersToChannelAsynchronously(false, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
-        Exam result = examRepository.save(exam);
 
-        if (result.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
-        }
-
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
     /**
@@ -212,34 +216,24 @@ public class ExamResource {
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
 
-        if (originalExam.getChannel() != null) {
-            Channel originalChannel = channelRepository.findByIdElseThrow(originalExam.getChannel().getId());
-            if (!Objects.equals(originalExam.getTitle(), updatedExam.getTitle())) {
-                originalChannel.setName(updatedExam.getTitle().toLowerCase().replace(' ', '-'));
-                Channel updatedChannel = channelRepository.save(originalChannel);
-                updatedExam.setChannel(updatedChannel);
-            }
-            else {
-                updatedExam.setChannel(originalChannel);
-            }
-        }
+        Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
-        Exam result = examRepository.save(updatedExam);
+        Exam savedExam = examRepository.save(updatedExam);
 
         if (updatedExam.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
         }
         else {
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(savedExam.getId());
         }
-        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), updatedExam.isMonitoring());
+        examMonitoringScheduleService.notifyMonitoringUpdate(savedExam.getId(), updatedExam.isMonitoring());
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -247,11 +241,15 @@ public class ExamResource {
 
         if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok(result);
+        if (updatedChannel != null) {
+            savedExam.setChannelName(updatedExam.getChannelName());
+        }
+
+        return ResponseEntity.ok(savedExam);
     }
 
     /**
@@ -462,7 +460,12 @@ public class ExamResource {
         }
 
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
+            Exam exam = examRepository.findByIdElseThrow(examId);
+            Channel channel = channelRepository.findChannelByExamId(exam.getId());
+            if (channel != null) {
+                exam.setChannelName(channel.getName());
+            }
+            return ResponseEntity.ok(exam);
         }
 
         if (withExerciseGroups) {
@@ -879,6 +882,12 @@ public class ExamResource {
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (profileService.isLocalVcsCi()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to unlock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -900,6 +909,12 @@ public class ExamResource {
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (profileService.isLocalVcsCi()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to lock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

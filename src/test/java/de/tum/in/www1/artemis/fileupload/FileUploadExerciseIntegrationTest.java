@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -57,7 +56,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private List<GradingCriterion> gradingCriteria;
 
-    private final String creationFilePattern = "png, pdf, jPg      , r, DOCX";
+    private final String creationFilePattern = "png, pdf, jPg , r, DOCX";
 
     @BeforeEach
     void initTestCase() {
@@ -150,14 +149,12 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     void createFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
-        Channel channel = new Channel();
-        channel.setName("testChannel");
-        fileUploadExercise.setChannel(channel);
+        fileUploadExercise.setChannelName("testchannel");
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
 
-        Optional<Channel> channelFromDB = channelRepository.findById(receivedFileUploadExercise.getChannel().getId());
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedFileUploadExercise.getId());
 
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
@@ -174,8 +171,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
 
-        assertThat(channelFromDB).isPresent();
-        assertThat(channelFromDB.get().getName()).isEqualTo("testchannel");
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getName()).isEqualTo("testchannel");
     }
 
     @Test
@@ -187,7 +184,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
 
-        assertThat(createdFileUploadExercise.getChannel()).isNull(); // there should not be any channel for exam exercise
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(createdFileUploadExercise.getId());
+        assertThat(channelFromDB).isNull(); // there should not be any channel for exam exercise
 
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.getId()).isNotNull();
@@ -234,6 +232,14 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     void getFileUploadExercise() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("testchannel-" + fileUploadExercise.getId());
+        channel.setExercise(fileUploadExercise);
+        channelRepository.save(channel);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -296,6 +302,14 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
         feedbackRepository.save(feedback);
+
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("testchannel-" + fileUploadExercise.getId());
+        channel.setExercise(fileUploadExercise);
+        channelRepository.save(channel);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -618,9 +632,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        Channel channel = new Channel();
-        channel.setName("testChannel");
-        fileUploadExercise.setChannel(channel);
+
+        fileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 4));
         var result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
@@ -629,7 +642,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setDueDate(baseTime.plusHours(3));
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        fileUploadExercise.setChannel(null);
+        fileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
         result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
@@ -648,6 +661,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
         Course course2 = database.addEmptyCourse();
         expectedFileUploadExercise.setCourse(course2);
+        expectedFileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 8));
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
@@ -682,7 +696,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         FileUploadExercise exercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
-        String title = "LoremIpsum" + UUID.randomUUID();
+        String title = TEST_PREFIX + "testGetAllExercisesOnPageAsEditorSuccess";
         exercise.setTitle(title);
         exercise = fileUploadExerciseRepository.save(exercise);
         final var searchTerm = database.configureSearch(exercise.getTitle());

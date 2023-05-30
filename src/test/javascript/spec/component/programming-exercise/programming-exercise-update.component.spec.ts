@@ -61,7 +61,6 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -247,8 +246,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     describe('course mode', () => {
         const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedProgrammingExercise.course = course;
-        expectedProgrammingExercise.channel = new Channel();
-        expectedProgrammingExercise.channel.name = '';
+        expectedProgrammingExercise.channelName = '';
 
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -795,8 +793,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
         const entity = new ProgrammingExercise(new Course(), undefined);
         entity.id = 123;
-        entity.channel = new Channel();
-        entity.channel.name = 'notificationText';
+        entity.channelName = 'notificationText';
         comp.programmingExercise = entity;
         comp.programmingExercise.course = course;
         comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;

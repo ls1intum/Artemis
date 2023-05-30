@@ -16,7 +16,12 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
         </div>
-        <jhi-title-channel-name [(title)]="modelingExercise.title" [(channelName)]="channelName" channelNamePrefix="exercise-" [minTitleLength]="3"></jhi-title-channel-name>
+        <jhi-title-channel-name
+            [(title)]="modelingExercise.title"
+            [(channelName)]="modelingExercise.channelName"
+            channelNamePrefix="exercise-"
+            [minTitleLength]="3"
+        ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
@@ -226,7 +231,7 @@
                 id="learning-goals"
                 [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
-                [(ngModel)]="modelingExercise.learningGoals"
+                [(ngModel)]="modelingExercise.competencies"
                 name="learningGoals"
             ></jhi-learning-goal-selection>
         </div>

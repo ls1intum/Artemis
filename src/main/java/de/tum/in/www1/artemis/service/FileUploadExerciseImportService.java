@@ -47,13 +47,13 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
 
-        if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
-            newExercise.setChannel(createdChannel);
+        FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
+        if (newExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(newFileUploadExercise, importedExercise.getChannelName());
+            newFileUploadExercise.setChannelName(channel.getName());
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
-
-        return fileUploadExerciseRepository.save(newExercise);
+        return newFileUploadExercise;
     }
 
     /**

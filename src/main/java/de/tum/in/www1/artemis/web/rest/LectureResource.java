@@ -12,7 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -20,6 +23,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -44,8 +48,6 @@ public class LectureResource {
 
     private static final String ENTITY_NAME = "lecture";
 
-    private final ChannelService channelService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -64,10 +66,14 @@ public class LectureResource {
     private final ExerciseService exerciseService;
 
     private final ConversationService conversationService;
+  
+    private final ChannelService channelService;
+
+    private final ChannelRepository channelRepository;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ConversationService conversationService) {
+            ConversationService conversationService, ChannelRepository channelRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -77,45 +83,42 @@ public class LectureResource {
         this.exerciseService = exerciseService;
         this.channelService = channelService;
         this.conversationService = conversationService;
+        this.channelRepository = channelRepository;
     }
 
     /**
      * POST /lectures : Create a new lecture.
      *
-     * @param lectureDTO the lecture to create and a unique channel name
+     * @param lecture the lecture to create with a unique channel name
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> createLecture(@RequestBody LectureDTO lectureDTO) throws URISyntaxException {
-        Lecture lecture = lectureDTO.lecture();
+    public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
-
-        Channel createdChannel = channelService.createLectureChannel(lecture, lectureDTO.channelName());
-        channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
-
-        lecture.setChannel(createdChannel);
+      
         Lecture savedLecture = lectureRepository.save(lecture);
-
+        Channel createdChannel = channelService.createLectureChannel(savedLecture, lecture.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
+        savedLecture.setChannelName(lecture.getChannelName());
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
      * PUT /lectures : Updates an existing lecture.
      *
-     * @param lectureDTO the lecture to update and the updated channel name
+     * @param lecture the lecture to update and the updated channel name
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> updateLecture(@RequestBody LectureDTO lectureDTO) {
-        Lecture lecture = lectureDTO.lecture();
+    public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
@@ -128,10 +131,12 @@ public class LectureResource {
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
-        // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateLectureChannel(originalLecture, lecture, lectureDTO.channelName());
+        Channel channelUpdated = channelService.updateLectureChannel(lecture, lecture.getChannelName());
 
         Lecture result = lectureRepository.save(lecture);
+        if (channelUpdated != null) {
+            result.setChannelName(channelUpdated.getName());
+        }
         return ResponseEntity.ok().body(result);
     }
 
@@ -170,7 +175,6 @@ public class LectureResource {
         else {
             lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
-
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -205,13 +209,10 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithChannel(lectureId);
-        Channel lectureChannel = lecture.getChannel();
-        if (lectureChannel != null) {
-            lectureChannel.setLecture(null);
-            lectureChannel.setCreator(null);
-        }
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
+        lecture.setChannelName(lectureChannel.getName());
         return ResponseEntity.ok(lecture);
     }
 
@@ -243,6 +244,8 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
+        Channel createdChannel = channelService.createLectureChannel(result, "change-imported-lecture-" + result.getId());
+        result.setChannelName(createdChannel.getName());
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
@@ -256,7 +259,7 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -338,7 +341,7 @@ public class LectureResource {
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
                 // re-add the competencies already loaded with the exercise unit
-                ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
+                ((ExerciseUnit) lectureUnit).getExercise().setCompetencies(exercise.getCompetencies());
             }
         }).collect(Collectors.toCollection(ArrayList::new));
 

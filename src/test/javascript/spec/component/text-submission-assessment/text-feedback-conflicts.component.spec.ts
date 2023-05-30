@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -142,6 +142,24 @@ describe('TextFeedbackConflictsComponent', () => {
     ];
 
     beforeEach(() => {
+        const mockActivatedRoute = {
+            snapshot: {
+                paramMap: {
+                    get: (param: string) => {
+                        const params = {
+                            feedbackId: 1,
+                            submissionId: 2,
+                            participationId: 3,
+                        };
+                        return params[param];
+                    },
+                },
+            },
+            data: {
+                subscribe: jest.fn(),
+            },
+        };
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
@@ -156,7 +174,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(Router),

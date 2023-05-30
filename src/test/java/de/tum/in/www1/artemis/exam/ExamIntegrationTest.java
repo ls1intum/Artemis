@@ -336,7 +336,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         bitbucketRequestMockProvider.mockUpdateUserDetails(student5.getLogin(), student5.getEmail(), student5.getName());
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
-        var student99 = database.createAndSaveUser("student99");     // not registered for the course
+        var student99 = database.createAndSaveUser("student99"); // not registered for the course
         student99.setRegistrationNumber(registrationNumber99);
         userRepo.save(student99);
         bitbucketRequestMockProvider.mockUpdateUserDetails(student99.getLogin(), student99.getEmail(), student99.getName());
@@ -369,7 +369,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         studentDto8.setLogin(student8.getLogin());
         var studentDto9 = new StudentDTO();
         studentDto9.setLogin(student9.getLogin());
-        var studentDto10 = new StudentDTO();    // completely empty
+        var studentDto10 = new StudentDTO(); // completely empty
 
         var studentDto99 = new StudentDTO().registrationNumber(registrationNumber99);
         var studentDto111 = new StudentDTO().registrationNumber(registrationNumber111);
@@ -884,15 +884,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_asInstructor() throws Exception {
         // Test for bad request when exam id is already set.
-        Exam examA = ModelFactory.generateExam(course1);
+        Exam examA = ModelFactory.generateExam(course1, "examA");
         examA.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
         // Test for bad request when course is null.
-        Exam examB = ModelFactory.generateExam(course1);
+        Exam examB = ModelFactory.generateExam(course1, "examB");
         examB.setCourse(null);
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
         // Test for bad request when course deviates from course specified in route.
-        Exam examC = ModelFactory.generateExam(course1);
+        Exam examC = ModelFactory.generateExam(course1, "examC");
         request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
         // Test invalid dates
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
@@ -900,12 +900,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         }
         // Test for conflict when user tries to create an exam with exercise groups.
-        Exam examD = ModelFactory.generateExam(course1);
+        Exam examD = ModelFactory.generateExam(course1, "examD");
         examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
         // Test examAccessService.
-        Exam examE = ModelFactory.generateExam(course1);
-        examE.setTitle("          Exam 123              ");
+        Exam examE = ModelFactory.generateExam(course1, "examE");
+        examE.setTitle(" Exam 123 ");
         URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
@@ -1012,6 +1012,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
+        examB.setChannelName("examB");
         Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
         createdExamB.setTestExam(true);
         createdExamB.setNumberOfCorrectionRoundsInExam(0);
@@ -1023,7 +1024,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_asInstructor() throws Exception {
         // Create instead of update if no id was set
-        Exam exam = ModelFactory.generateExam(course1);
+        Exam exam = ModelFactory.generateExam(course1, "exam1");
         exam.setTitle("Over 9000");
         long examCountBefore = examRepository.count();
         Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
@@ -1558,7 +1559,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         instructor.setGroups(Collections.singleton("instructor"));
         userRepo.save(instructor);
 
-        var student99 = database.createAndSaveUser(TEST_PREFIX + "student99");     // not registered for the course
+        var student99 = database.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
         student99.setRegistrationNumber("1234");
         userRepo.save(student99);
         student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student99").get();
@@ -2189,7 +2190,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     }
                     case TEST_PREFIX + "student2" -> {
                         assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
-                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.5);  // 10.5 = 8 + 5 * 50% plagiarism point deduction.
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.5); // 10.5 = 8 + 5 * 50% plagiarism point deduction.
                         assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
                     }
                     case TEST_PREFIX + "student3" -> {

@@ -161,21 +161,18 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setId(null);
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName("new-text-exercise");
-        textExercise.setChannel(channelToCreate);
-
+        textExercise.setChannelName("new-text-exercise");
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
 
-        Optional<Channel> channel = channelRepository.findById(newTextExercise.getChannel().getId());
+        Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
-        assertThat(channel).as("channel was created").isPresent();
-        assertThat(channel.get().getName()).as("channel name was set correctly").isEqualTo("new-text-exercise");
+        assertThat(channel).as("channel was created").isNotNull();
+        assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("new-text-exercise");
     }
 
     @Test
@@ -219,10 +216,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         DifficultyLevel difficulty = DifficultyLevel.HARD;
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
-
+        textExercise.setChannelName("new-exam-text-exercise");
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
-
-        assertThat(newTextExercise.getChannel()).isNull(); // there should not be any channel for exam exercise
+        Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
+        assertThat(channel).isNull(); // there should not be any channel for exam exercise
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
@@ -404,7 +401,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setId(null);
-
+        textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
@@ -526,7 +523,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
-
+        textExercise.setChannelName("testchannel" + textExercise.getId());
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
@@ -536,8 +533,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
-        textExerciseRepository.save(textExercise);
-
+        textExercise = textExerciseRepository.save(textExercise);
+        textExercise.setChannelName("testchannel" + textExercise.getId());
         // Create example submission
         var exampleSubmission = database.generateExampleSubmission("Lorem Ipsum", textExercise, true);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
@@ -613,7 +610,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(course1);
         textExercise.setExerciseGroup(null);
-
+        textExercise.setChannelName("test" + textExercise.getId());
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
@@ -664,9 +661,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
 
-        textExerciseRepository.save(textExercise);
+        textExercise = textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
-
+        textExercise.setChannelName("test-" + textExercise.getId());
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the response").isNull();
 
@@ -708,7 +705,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void getTextExerciseAsTutor() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("testchannel-" + textExercise.getId());
+        channel.setExercise(textExercise);
+        channelRepository.save(channel);
         TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
 
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
@@ -752,6 +755,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
+        Channel channel = new Channel();
+        channel.setName("testchannel-" + textExercise.getId());
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setExercise(textExercise);
+        channelRepository.save(channel);
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         Feedback feedback = new Feedback();
@@ -783,23 +793,22 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetResultsFromOwningCoursesNotEmpty() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        String randomString2 = UUID.randomUUID().toString();
+        String courseBaseTitle1 = "testInstructorGetResultsFromOwningCoursesNotEmpty 1";
+        String courseBaseTitle2 = "testInstructorGetResultsFromOwningCoursesNotEmpty 2";
 
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        database.addCourseWithOneReleasedTextExercise(randomString2 + " Bachelor");
-        database.addCourseWithOneReleasedTextExercise(randomString2 + "Master");
+        database.addCourseWithOneReleasedTextExercise(courseBaseTitle1);
+        database.addCourseWithOneReleasedTextExercise(courseBaseTitle2 + "Bachelor");
+        database.addCourseWithOneReleasedTextExercise(courseBaseTitle2 + "Master");
 
-        final var searchText = database.configureSearch(randomString);
+        final var searchText = database.configureSearch(courseBaseTitle1);
         final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
-        final var searchEssay = database.configureSearch(randomString2);
+        final var searchEssay = database.configureSearch(courseBaseTitle2);
         final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
-        String randomString3 = UUID.randomUUID().toString();
-        final var searchNon = database.configureSearch(randomString3);
+        final var searchNon = database.configureSearch("No course has this name");
         final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
@@ -807,20 +816,19 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        testCourseAndExamFilters();
+        testCourseAndExamFilters("testCourseAndExamFiltersAsInstructor");
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        testCourseAndExamFilters();
+        testCourseAndExamFilters("testCourseAndExamFiltersAsAdmin");
     }
 
-    private void testCourseAndExamFilters() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", randomString);
+    private void testCourseAndExamFilters(String courseTitle) throws Exception {
+        database.addCourseWithOneReleasedTextExercise(courseTitle);
+        database.addCourseExamExerciseGroupWithOneTextExercise(courseTitle + "-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", courseTitle);
     }
 
     @Test
@@ -862,23 +870,22 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetResultsFromOwningExamsNotEmpty() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        String randomString2 = UUID.randomUUID().toString();
+        String exerciseBaseTitle1 = "testInstructorGetResultsFromOwningExamsNotEmpty 1";
+        String exerciseBaseTitle2 = "testInstructorGetResultsFromOwningExamsNotEmpty 2";
 
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString);
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString2 + "Bachelor");
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString2 + "Master");
+        database.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle1);
+        database.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Bachelor");
+        database.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Master");
 
-        final var searchText = database.configureSearch(randomString);
+        final var searchText = database.configureSearch(exerciseBaseTitle1);
         final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
-        final var searchEssay = database.configureSearch(randomString2);
+        final var searchEssay = database.configureSearch(exerciseBaseTitle2);
         final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
-        String randomString3 = UUID.randomUUID().toString();
-        final var searchNon = database.configureSearch(randomString3);
+        final var searchNon = database.configureSearch("No exam has this name");
         final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
@@ -886,14 +893,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
-        String randomString = UUID.randomUUID().toString();
+        String courseTitle = "testAdminGetsResultsFromAllCourses";
 
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        Course otherInstructorsCourse = database.addCourseWithOneReleasedTextExercise(randomString);
+        database.addCourseWithOneReleasedTextExercise(courseTitle);
+        Course otherInstructorsCourse = database.addCourseWithOneReleasedTextExercise(courseTitle);
         otherInstructorsCourse.setInstructorGroupName("other-instructors");
         courseRepository.save(otherInstructorsCourse);
 
-        final var search = database.configureSearch(randomString);
+        final var search = database.configureSearch(courseTitle);
         final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
@@ -917,6 +924,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseToBeImported.setCourse(course2);
         exerciseToBeImported.setMaxPoints(1.0);
+        exerciseToBeImported.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 3));
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
@@ -950,13 +958,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         sourceExercise = textExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName("testImportTextExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
 
         var exerciseToBeImported = new TextExercise();
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
         exerciseToBeImported.setMaxPoints(1.0);
+        exerciseToBeImported.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 3));
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
@@ -1246,6 +1255,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        textExercise.setChannelName("test");
 
         var result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
@@ -1255,7 +1265,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setDueDate(baseTime.plusHours(3));
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-
+        textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
         result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
@@ -1297,6 +1307,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
 
         textExercise.setCourse(course2);
+        textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
         var importedTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
 
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
@@ -1307,7 +1318,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // Copy and original should have the same data but not the same ids.
         assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
-        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull();  // To avoid infinite recursion when serializing to JSON.
+        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull(); // To avoid infinite recursion when serializing to JSON.
         assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
         assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
         assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());

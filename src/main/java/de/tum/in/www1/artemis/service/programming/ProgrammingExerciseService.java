@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
@@ -128,8 +127,6 @@ public class ProgrammingExerciseService {
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
-    private final ChannelRepository channelRepository;
-
     private final ChannelService channelService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
@@ -142,8 +139,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelRepository channelRepository,
-            ChannelService channelService) {
+            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -167,7 +163,6 @@ public class ProgrammingExerciseService {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.channelRepository = channelRepository;
         this.channelService = channelService;
     }
 
@@ -197,12 +192,6 @@ public class ProgrammingExerciseService {
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
-        // We have to save the channel first before setting up the programming exercise because the channel attached to it right now doesn't have an id
-        if (programmingExercise.isCourseExercise() && programmingExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(programmingExercise, programmingExercise.getChannel().getName());
-            programmingExercise.setChannel(createdChannel);
-            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
-        }
 
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
@@ -220,21 +209,25 @@ public class ProgrammingExerciseService {
         programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
 
         // Save programming exercise to prevent transient exception
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        setupBuildPlansForNewExercise(programmingExercise);
+        if (savedProgrammingExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
+            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
+        }
 
+        setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook
-        programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
 
-        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
-        versionControlService.get().addWebHooksForExercise(programmingExercise);
-        scheduleOperations(programmingExercise.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExercise(programmingExercise);
-        return programmingExercise;
+        versionControlService.get().addWebHooksForExercise(savedProgrammingExercise);
+        scheduleOperations(savedProgrammingExercise.getId());
+        groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
+        return savedProgrammingExercise;
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -437,7 +430,7 @@ public class ProgrammingExerciseService {
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
         // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        Channel channel = channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
@@ -446,6 +439,11 @@ public class ProgrammingExerciseService {
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(updatedProgrammingExercise.getId());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+
+        if (channel != null) {
+            savedProgrammingExercise.setChannelName(channel.getName());
+        }
+
         return savedProgrammingExercise;
     }
 
@@ -499,12 +497,6 @@ public class ProgrammingExerciseService {
         programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
 
         programmingExercise.validateDates();
-
-        if (programmingExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(programmingExerciseBeforeUpdate.getChannel().getId());
-            programmingExerciseBeforeUpdate.setChannel(originalChannel);
-        }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { InfoStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
@@ -14,4 +14,12 @@ export class ProgrammingExerciseUpdateWizardInformationComponent {
 
     @Input() infoStepInputs: InfoStepInputs;
     @Input() auxiliaryRepositoriesSupported: boolean;
+
+    @Input() channelName: string | undefined;
+    @Output() channelNameChange = new EventEmitter<string>();
+
+    updateChannelName(newChannelName: string) {
+        this.channelName = newChannelName;
+        this.channelNameChange.emit(newChannelName);
+    }
 }

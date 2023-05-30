@@ -4,7 +4,7 @@ import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
 import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, titleLowercase } from '../../support/utils';
 
 // Common primitives
 let courseName: string;
@@ -122,11 +122,11 @@ describe('Course messages', () => {
 
             it('check that channel is created, when an exam is created', () => {
                 cy.login(admin);
-                const examContent = new ExamBuilder(course).title('Test Exam').build();
+                const examContent = new ExamBuilder(course).build();
                 courseManagementRequest.createExam(examContent);
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 courseMessages.browseChannelsButton();
-                courseMessages.checkChannelsExists('test-exam');
+                courseMessages.checkChannelsExists(titleLowercase(examContent.title));
             });
         });
 

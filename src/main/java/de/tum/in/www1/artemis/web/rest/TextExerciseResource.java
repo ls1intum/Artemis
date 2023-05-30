@@ -101,6 +101,8 @@ public class TextExerciseResource {
 
     private final ConversationService conversationService;
 
+  private final ChannelRepository channelRepository;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -132,6 +134,7 @@ public class TextExerciseResource {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.conversationService = conversationService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -163,13 +166,11 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (textExercise.isCourseExercise() && textExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
-            textExercise.setChannel(createdChannel);
+        TextExercise result = textExerciseRepository.save(textExercise);
+        if (result.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(result, textExercise.getChannelName());
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
-
-        TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
@@ -213,8 +214,7 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
+        Channel updatedChannel = channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -223,6 +223,10 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
+
+        if (updatedChannel != null) {
+            updatedTextExercise.setChannelName(updatedChannel.getName());
+        }
         return ResponseEntity.ok(updatedTextExercise);
     }
 
@@ -260,7 +264,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(exerciseId)
+        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
@@ -271,6 +275,12 @@ public class TextExerciseResource {
             // in courses, also tutors can access the exercise
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
         }
+        if (textExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(textExercise.getId());
+            if (channel != null) {
+                textExercise.setChannelName(channel.getName());
+            }
+        }
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
@@ -278,7 +288,6 @@ public class TextExerciseResource {
         textExercise.setExampleSubmissions(exampleSubmissions);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
-
         return ResponseEntity.ok().body(textExercise);
     }
 

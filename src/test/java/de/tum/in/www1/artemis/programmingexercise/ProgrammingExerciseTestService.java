@@ -84,6 +84,8 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
+ * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
+ * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
 @Service
 public class ProgrammingExerciseTestService {
@@ -160,7 +162,7 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private UrlService urlService;
 
-    @Autowired // can be used as SpyBean
+    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
@@ -362,6 +364,7 @@ public class ProgrammingExerciseTestService {
     void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
         exercise.setSequentialTestRuns(true);
+        exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
@@ -370,6 +373,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
+        exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -382,6 +386,7 @@ public class ProgrammingExerciseTestService {
         }
         exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        exercise.setChannelName("testchannel-pe");
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -389,6 +394,7 @@ public class ProgrammingExerciseTestService {
     void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
         exercise.setBonusPoints(null);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        exercise.setChannelName("testchannel-pe");
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
         assertThat(generatedExercise.getBonusPoints()).isZero();
@@ -404,6 +410,7 @@ public class ProgrammingExerciseTestService {
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         var course = database.addEmptyCourse();
+        exercise.setChannelName("testchannel-pe");
         var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(importedExercise).isNotNull();
@@ -447,6 +454,7 @@ public class ProgrammingExerciseTestService {
         }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        exercise.setChannelName("testchannel-pe");
         request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
     }
@@ -467,6 +475,8 @@ public class ProgrammingExerciseTestService {
 
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import-embedded-files.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        exercise.setChannelName("testchannel-pe");
+
         request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(Path.of(FilePathService.getMarkdownFilePath())).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
@@ -518,6 +528,7 @@ public class ProgrammingExerciseTestService {
             exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        exercise.setChannelName("testchannel-pe");
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
 
         exercise.setId(generatedExercise.getId());
@@ -534,6 +545,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
+        exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, true);
         var programmingExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(programmingExercise).isNull();
@@ -585,6 +597,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        exercise.setChannelName("testchannel-pe");
         var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
@@ -627,6 +640,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
 
         // Import the exercise and load all referenced entities
+        exerciseToBeImported.setChannelName("testchannel-pe-import");
+
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
@@ -785,7 +800,7 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName("testImportProgrammingExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
         database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
@@ -933,6 +948,8 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        exercise.setChannelName("testchannel-pe");
+
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise, String.class,
                 HttpStatus.OK);
@@ -960,6 +977,7 @@ public class ProgrammingExerciseTestService {
         course.setTeachingAssistantGroupName(null);
         courseRepository.save(course);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        exercise.setChannelName("testchannel-pe");
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         validateProgrammingExercise(generatedExercise);
     }
@@ -1824,9 +1842,13 @@ public class ProgrammingExerciseTestService {
         participation7b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7b.getId());
         participation8b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation8b.getId());
 
-        // only return the relevant participations (cleanup service would otherwise return too much
-        when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
-                participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
+        // TODO: only return participations 1a - 8b from findAllWithBuildPlanIdWithResults().
+        // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below, causing an AssertionError.
+        // The previous solution was to use a @SpyBean to spy on the programmingExerciseStudentParticipationRepository and then the commented lines below provided the correct mock.
+        // However, because of a bug in Mockito, these spy beans lead to issues for other tests and the solution either needs to find some other way to mock the returned
+        // participations or refactor the test such that only those participations are returned.
+        // when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
+        // participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
 
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
@@ -1987,7 +2009,7 @@ public class ProgrammingExerciseTestService {
         exercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-
+        exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
 
         var result = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);

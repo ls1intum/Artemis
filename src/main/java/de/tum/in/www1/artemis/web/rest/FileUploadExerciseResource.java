@@ -127,13 +127,11 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise, fileUploadExercise.getChannel().getName());
-            fileUploadExercise.setChannel(createdChannel);
+        FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
+        if (result.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(result, fileUploadExercise.getChannelName());
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
-
-        FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
@@ -254,20 +252,17 @@ public class FileUploadExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (fileUploadExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(fileUploadExerciseBeforeUpdate.getChannel().getId());
-            fileUploadExercise.setChannel(originalChannel);
-        }
-
-        // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
+        Channel updatedChannel = channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
 
         var updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+
+        if (updatedChannel != null) {
+            updatedExercise.setChannelName(updatedChannel.getName());
+        }
         return ResponseEntity.ok(updatedExercise);
     }
 
@@ -303,7 +298,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
-        var exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(exerciseId)
+        var exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
         // If the exercise belongs to an exam, only editors or above are allowed to access it, otherwise also TA have access
         if (exercise.isExamExercise()) {
@@ -312,6 +307,14 @@ public class FileUploadExerciseResource {
         else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         }
+
+        if (exercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
+            if (channel != null) {
+                exercise.setChannelName(channel.getName());
+            }
+        }
+
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, exercise);

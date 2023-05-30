@@ -107,8 +107,15 @@
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                  the links are disabled--->
-                                <a href="{{ programmingExercise.templateParticipation!.repositoryUrl! }}" target="_blank">Template</a></span
-                            >
+                                <a *ngIf="!localVCEnabled; else downloadRepoLink" href="{{ programmingExercise.templateParticipation!.repositoryUrl! }}" target="_blank"
+                                    >Template</a
+                                >
+                                <ng-template #downloadRepoLink
+                                    ><a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TEMPLATE')"
+                                        ><fa-icon [icon]="faDownload"></fa-icon> Template</a
+                                    ></ng-template
+                                >
+                            </span>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.templateParticipation?.results?.length"
                                 [participationType]="templateParticipationType"
@@ -118,8 +125,15 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.solutionParticipation?.repositoryUrl"
-                                ><a href="{{ programmingExercise.solutionParticipation!.repositoryUrl! }}" target="_blank">Solution</a></span
-                            >
+                                ><a *ngIf="!localVCEnabled; else downloadRepoLink" href="{{ programmingExercise.solutionParticipation!.repositoryUrl! }}" target="_blank"
+                                    >Solution</a
+                                >
+                                <ng-template #downloadRepoLink
+                                    ><a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'SOLUTION')"
+                                        ><fa-icon [icon]="faDownload"></fa-icon> Solution</a
+                                    ></ng-template
+                                >
+                            </span>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.solutionParticipation?.results?.length"
                                 [participationType]="solutionParticipationType"
@@ -128,17 +142,31 @@
                             ></jhi-programming-exercise-instructor-status>
                         </div>
                         <div>
-                            <span *ngIf="programmingExercise.testRepositoryUrl"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span>
+                            <span *ngIf="programmingExercise.testRepositoryUrl"
+                                ><a *ngIf="!localVCEnabled; else downloadRepoLink" href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a
+                                ><ng-template #downloadRepoLink
+                                    ><a [routerLink]="" (click)="downloadRepository(programmingExercise.id, 'TESTS')"><fa-icon [icon]="faDownload"></fa-icon> Test</a></ng-template
+                                ></span
+                            >
                         </div>
                     </td>
                     <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
-                        <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
-                            <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
-                        </span>
-                        <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
-                            <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
-                        </span>
+                        <ng-container *ngIf="programmingExercise.templateParticipation?.buildPlanId">
+                            <span *ngIf="!localVCEnabled; else plainBuildPlanId">
+                                <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+                            </span>
+                            <ng-template #plainBuildPlanId>
+                                <span>{{ programmingExercise.templateParticipation!.buildPlanId }}</span>
+                            </ng-template>
+                        </ng-container>
+                        <ng-container *ngIf="programmingExercise.solutionParticipation?.buildPlanId">
+                            <span *ngIf="!localVCEnabled; else plainBuildPlanId">
+                                <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+                            </span>
+                            <ng-template #plainBuildPlanId>
+                                <span>{{ programmingExercise.solutionParticipation!.buildPlanId }}</span>
+                            </ng-template>
+                        </ng-container>
                     </td>
                     <td class="d-md-table-cell">
                         <div class="d-flex justify-content-between">

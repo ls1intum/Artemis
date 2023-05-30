@@ -4,6 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
@@ -36,8 +37,8 @@ export class Exam implements BaseEntity {
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
     public examUsers?: ExamUser[];
-
     public numberOfExamUsers?: number; // transient
+    public channelName?: string; // transient
 
     // helper attributes
     public visible?: boolean;

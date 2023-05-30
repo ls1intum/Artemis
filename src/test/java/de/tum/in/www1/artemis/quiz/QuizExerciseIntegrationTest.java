@@ -118,12 +118,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @EnumSource(QuizMode.class)
     void testCreateQuizExercise(QuizMode quizMode) throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
+        Channel channelDB = channelRepository.findChannelByExerciseId(quizExercise.getId());
 
-        assertThat(quizExercise.getChannel()).isNotNull();
-        Optional<Channel> channel = channelRepository.findById(quizExercise.getChannel().getId());
-
-        assertThat(channel).isPresent();
-        assertThat(channel.get().getName()).isEqualTo(CHANNEL_NAME);
+        assertThat(channelDB).isNotNull();
 
         // General assertions
         assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
@@ -195,7 +192,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testCreateQuizExerciseForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
 
-        assertThat(quizExercise.getChannel()).isNull();
+        Channel channelDB = channelRepository.findChannelByExerciseId(quizExercise.getId());
+
+        assertThat(channelDB).isNull();
 
         // General assertions
         assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
@@ -563,15 +562,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.createCourse();
 
         QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate, quizMode);
-        Channel channel = new Channel();
-        channel.setName(CHANNEL_NAME);
         quizExercise.setDuration(3600);
-        quizExercise.setChannel(channel);
+
+        quizExercise.setChannelName(CHANNEL_NAME + UUID.randomUUID().toString().substring(0, 8));
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseDatabase).isNotNull();
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
+
+        Channel channelDB = channelRepository.findChannelByExerciseId(quizExerciseDatabase.getId());
+        assertThat(channelDB).isNotNull();
 
         for (int i = 0; i < quizExercise.getQuizQuestions().size(); i++) {
             var question = quizExercise.getQuizQuestions().get(i);
@@ -669,6 +670,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUpdateNotExistingQuizExercise() throws Exception {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setChannelName("testchannel-quiz");
+
         QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertThat(quizExerciseServer.getId()).isNotNull();
         assertThat(quizExerciseServer.getQuizQuestions()).hasSize(quizExercise.getQuizQuestions().size());
@@ -683,6 +686,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = database.createCourse();
         // create QuizExercise that already started
         QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
+        startedQuizExercise.setChannelName("testchannel-quiz");
         QuizExercise startedQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", startedQuizExercise, QuizExercise.class, HttpStatus.CREATED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) startedQuizExerciseServer.getQuizQuestions().get(0);
@@ -851,30 +855,29 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        String exerciseTitle = setupFilterTestCase(TEST_PREFIX + "testCourseAndExamFiltersAsInstructor");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", exerciseTitle);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        String exerciseTitle = setupFilterTestCase(TEST_PREFIX + "testCourseAndExamFiltersAsAdmin");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", exerciseTitle);
     }
 
-    private String setupFilterTestCase() {
-        String randomString = UUID.randomUUID().toString();
+    private String setupFilterTestCase(String exerciseTitle) {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle(randomString + "-Morpork");
+        quizExercise.setTitle(exerciseTitle + "-Morpork");
         quizExerciseRepository.save(quizExercise);
 
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
-        exercise.setTitle(randomString);
+        exercise.setTitle(exerciseTitle);
         quizExerciseRepository.save(exercise);
-        return randomString;
+        return exerciseTitle;
     }
 
     @Test
@@ -1066,9 +1069,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
         // use the exact other scoring types to cover all combinations in the tests
-        quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // MC
-        quizExercise.getQuizQuestions().get(1).setScoringType(ScoringType.ALL_OR_NOTHING);              // DnD
-        quizExercise.getQuizQuestions().get(2).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // SA
+        quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY); // MC
+        quizExercise.getQuizQuestions().get(1).setScoringType(ScoringType.ALL_OR_NOTHING); // DnD
+        quizExercise.getQuizQuestions().get(2).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY); // SA
 
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -1509,6 +1512,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setTitle("New title");
         changedQuiz.setReleaseDate(now);
+        changedQuiz.setChannelName("testchannel-quiz");
+
         QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
         assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
@@ -1531,6 +1536,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(course2);
+        quizExercise.setChannelName("testchannel-quiz");
 
         QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
 
@@ -1589,6 +1595,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(course1);
         quizExercise.setExerciseGroup(null);
+        quizExercise.setChannelName("testchannel-quiz");
 
         request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
     }
@@ -1664,7 +1671,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         changedQuiz.setTeamAssignmentConfig(teamAssignmentConfig);
         changedQuiz.setCourse(course2);
         changedQuiz.setMaxPoints(1.0);
-
+        changedQuiz.setChannelName("testchannel-quiz");
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
         assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
@@ -1696,11 +1703,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         quizExercise.setTeamAssignmentConfig(teamAssignmentConfig);
-        quizExercise.setCourse(course1);  // remove line
+        quizExercise.setCourse(course1); // remove line
 
         quizExercise = quizExerciseService.save(quizExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName(TEST_PREFIX + "testImportQuizExercise_individual_modeChange");
         teamRepository.save(quizExercise, team);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -1708,7 +1715,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         changedQuiz.setMode(ExerciseMode.INDIVIDUAL);
         changedQuiz.setCourse(course2);
         changedQuiz.setMaxPoints(1.0);
-
+        changedQuiz.setChannelName("testchannel-quiz");
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
         assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
@@ -1737,6 +1744,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setQuizMode(QuizMode.INDIVIDUAL);
         changedQuiz.setReleaseDate(now);
+        changedQuiz.setChannelName("testchannel-quiz");
+
         QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
         assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
@@ -1778,6 +1787,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.setExplanation("0".repeat(validityThreshold));
+        quizExercise.setChannelName("testchannel-quiz");
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -1809,6 +1819,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = createMultipleChoiceQuizExerciseDummy();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
+        quizExercise.setChannelName("testchannel-quiz");
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();

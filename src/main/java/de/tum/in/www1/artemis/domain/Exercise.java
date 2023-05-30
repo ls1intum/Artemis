@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -72,7 +71,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
-    private Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<Competency> competencies = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -141,10 +140,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "channel_id")
-    private Channel channel;
-
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -187,6 +182,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Transient
     private Long numberOfRatingsTransient;
+
+    /**
+     * It is defined here for transferring the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
 
     @Override
     public boolean isCompletedFor(User user) {
@@ -398,12 +399,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     public Long getNumberOfParticipations() {
@@ -734,6 +735,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.numberOfRatingsTransient = numberOfRatings;
     }
 
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
+    }
+
     @Nullable
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
@@ -968,12 +977,4 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public abstract ExerciseType getExerciseType();
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
 }

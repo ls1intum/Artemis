@@ -150,11 +150,11 @@ public class Course extends DomainObject {
     @Column(name = "course_icon")
     private String courseIcon;
 
-    @Column(name = "registration_enabled")
-    private Boolean registrationEnabled;
+    @Column(name = "registration_enabled") // TODO: rename column in database
+    private Boolean enrollmentEnabled;
 
-    @Column(name = "registration_confirmation_message")
-    private String registrationConfirmationMessage;
+    @Column(name = "registration_confirmation_message") // TODO: rename column in database
+    private String enrollmentConfirmationMessage;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -187,7 +187,7 @@ public class Course extends DomainObject {
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     @OrderBy("title")
-    private Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<Competency> competencies = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -196,7 +196,7 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties(value = "course", allowSetters = true)
+    @JsonIgnoreProperties(value = "course")
     private Set<Exam> exams = new HashSet<>();
 
     @ManyToMany
@@ -210,7 +210,7 @@ public class Course extends DomainObject {
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
-    private Set<LearningGoal> prerequisites = new HashSet<>();
+    private Set<Competency> prerequisites = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "tutorial_groups_configuration_id")
@@ -464,20 +464,20 @@ public class Course extends DomainObject {
         this.courseIcon = courseIcon;
     }
 
-    public Boolean isRegistrationEnabled() {
-        return registrationEnabled;
+    public Boolean isEnrollmentEnabled() {
+        return enrollmentEnabled;
     }
 
-    public void setRegistrationEnabled(Boolean registrationEnabled) {
-        this.registrationEnabled = registrationEnabled;
+    public void setEnrollmentEnabled(Boolean enrollmentEnabled) {
+        this.enrollmentEnabled = enrollmentEnabled;
     }
 
-    public String getRegistrationConfirmationMessage() {
-        return registrationConfirmationMessage;
+    public String getEnrollmentConfirmationMessage() {
+        return enrollmentConfirmationMessage;
     }
 
-    public void setRegistrationConfirmationMessage(String registrationConfirmationMessage) {
-        this.registrationConfirmationMessage = registrationConfirmationMessage;
+    public void setEnrollmentConfirmationMessage(String enrollmentConfirmationMessage) {
+        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage;
     }
 
     public Integer getPresentationScore() {
@@ -538,22 +538,22 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
 
-    public Set<LearningGoal> getPrerequisites() {
+    public Set<Competency> getPrerequisites() {
         return prerequisites;
     }
 
-    public void setPrerequisites(Set<LearningGoal> prerequisites) {
+    public void setPrerequisites(Set<Competency> prerequisites) {
         this.prerequisites = prerequisites;
     }
 
-    public void addPrerequisite(LearningGoal learningGoal) {
-        this.prerequisites.add(learningGoal);
-        learningGoal.getConsecutiveCourses().add(this);
+    public void addPrerequisite(Competency competency) {
+        this.prerequisites.add(competency);
+        competency.getConsecutiveCourses().add(this);
     }
 
-    public void removePrerequisite(LearningGoal learningGoal) {
-        this.prerequisites.remove(learningGoal);
-        learningGoal.getConsecutiveCourses().remove(this);
+    public void removePrerequisite(Competency competency) {
+        this.prerequisites.remove(competency);
+        competency.getConsecutiveCourses().remove(this);
     }
 
     /*
@@ -610,7 +610,7 @@ public class Course extends DomainObject {
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
                 + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
-                + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -645,12 +645,12 @@ public class Course extends DomainObject {
         return this.numberOfStudentsTransient;
     }
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     public boolean hasCourseArchive() {
@@ -698,12 +698,11 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that only one of onlineCourse and registrationEnabled is selected
+     * Validates that only one of onlineCourse and enrollmentEnabled is selected
      */
-    public void validateOnlineCourseAndRegistrationEnabled() {
-        if (isOnlineCourse() && isRegistrationEnabled()) {
-            throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
-                    true);
+    public void validateOnlineCourseAndEnrollmentEnabled() {
+        if (isOnlineCourse() && isEnrollmentEnabled()) {
+            throw new BadRequestAlertException("Online course and enrollment enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseEnrollmentEnabledInvalid", true);
         }
     }
 
@@ -779,10 +778,9 @@ public class Course extends DomainObject {
         }
     }
 
-    public void validateRegistrationConfirmationMessage() {
-        if (getRegistrationConfirmationMessage() != null && getRegistrationConfirmationMessage().length() > 2000) {
-            throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
-                    true);
+    public void validateEnrollmentConfirmationMessage() {
+        if (getEnrollmentConfirmationMessage() != null && getEnrollmentConfirmationMessage().length() > 2000) {
+            throw new BadRequestAlertException("Confirmation enrollment message must be shorter than 2000 characters", ENTITY_NAME, "confirmationEnrollmentMessageInvalid", true);
         }
     }
 

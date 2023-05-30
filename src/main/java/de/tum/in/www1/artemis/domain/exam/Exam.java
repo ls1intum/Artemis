@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 @Entity
 @Table(name = "exam")
@@ -146,12 +145,14 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "channel_id")
-    private Channel channel;
-
     @Transient
     private Long numberOfExamUsersTransient;
+
+    /**
+     * It is defined here for transferring the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
 
     public String getTitle() {
         return title;
@@ -478,12 +479,12 @@ public class Exam extends DomainObject {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public String getChannelName() {
+        return channelNameTransient;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
     }
 
     /**

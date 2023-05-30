@@ -49,15 +49,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
 
-        if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
-            newExercise.setChannel(createdChannel);
+        QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
+        if (newExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(newQuizExercise, importedExercise.getChannelName());
+            newQuizExercise.setChannelName(channel.getName());
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
 
         copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);
-        return quizExerciseService.save(newExercise);
+        return newQuizExercise;
     }
 
     /**
