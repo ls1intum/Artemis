@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -32,5 +33,19 @@ describe('LectureWizardTitleComponent', () => {
     it('should initialize', () => {
         wizardTitleComponentFixture.detectChanges();
         expect(wizardTitleComponent).not.toBeNull();
+    });
+
+    it('should update channelName', () => {
+        const newChannelName = 'New Channel Name';
+        let emittedChannelName: string | undefined;
+        wizardTitleComponent.channelNameChange.subscribe((channelName: string) => {
+            emittedChannelName = channelName;
+        });
+
+        const titleChannelNameElement = wizardTitleComponentFixture.debugElement.query(By.css('jhi-title-channel-name'));
+        titleChannelNameElement.triggerEventHandler('channelNameChange', newChannelName);
+
+        expect(wizardTitleComponent.channelName).toBe(newChannelName);
+        expect(emittedChannelName).toBe(newChannelName);
     });
 });
