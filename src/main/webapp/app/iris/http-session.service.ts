@@ -10,7 +10,7 @@ type EntityResponseType = HttpResponse<IrisSession>;
  */
 @Injectable({ providedIn: 'root' })
 export class IrisHttpSessionService {
-    public resourceUrl = 'api/iris/';
+    public resourceUrl = 'api/iris';
 
     constructor(protected http: HttpClient) {
         this.http = http;
