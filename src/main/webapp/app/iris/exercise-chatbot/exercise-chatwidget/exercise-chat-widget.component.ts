@@ -56,14 +56,12 @@ export class ExerciseChatWidgetComponent implements OnInit {
     onSend(): void {
         if (this.newMessageTextContent) {
             const message = this.newUserMessage(this.newMessageTextContent);
-            this.stateStore
-                .dispatchAndThen(new StudentMessageSentAction(message))
-                .then(() => {
-                    this.httpMessageService.createMessage(<number>this.sessionId, message).subscribe(() => this.scrollToBottom());
-                })
-                .catch((error) => {
-                    this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
+            this.stateStore.dispatchAndThen(new StudentMessageSentAction(message)).then(() => {
+                this.httpMessageService.createMessage(<number>this.sessionId, message).subscribe({
+                    next: () => this.scrollToBottom(),
+                    error: () => this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!')),
                 });
+            });
             this.newMessageTextContent = '';
         }
         this.scrollToBottom();
