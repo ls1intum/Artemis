@@ -100,7 +100,7 @@ export class IrisStateStore implements OnDestroy {
     }
 
     private storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
-        if (state.sessionId == null && !isSessionReceivedAction(action)) {
+        if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
                 messages: [...state.messages],
                 sessionId: state.sessionId,
@@ -127,7 +127,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isSessionReceivedAction(action)) {
             return {
-                messages: [],
+                messages: action.messages,
                 sessionId: action.sessionId,
                 isLoading: state.isLoading,
                 error: '',

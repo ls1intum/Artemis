@@ -1,4 +1,4 @@
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
@@ -6,13 +6,14 @@ import { ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/i
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
 })
-export class ExerciseChatWidgetComponent implements OnInit {
+export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
 
@@ -20,6 +21,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     readonly SENDER_SERVER = IrisSender.LLM;
     readonly stateStore: IrisStateStore;
 
+    stateSubscription: Subscription;
     messages: IrisMessage[] = [];
     newMessageTextContent = '';
     isLoading: boolean;
@@ -40,12 +42,16 @@ export class ExerciseChatWidgetComponent implements OnInit {
     ngOnInit() {
         this.scrollToBottom('auto');
         this.animateDots();
-        this.stateStore.getState().subscribe((state) => {
+        this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
         });
+    }
+
+    ngOnDestroy() {
+        this.stateSubscription.unsubscribe();
     }
 
     animateDots() {

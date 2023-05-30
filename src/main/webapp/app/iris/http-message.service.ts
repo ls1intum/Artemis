@@ -31,7 +31,7 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityArrayResponseType>}
      */
     getMessages(sessionId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}${sessionId}/messages`, { observe: 'response' });
+        return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}/${sessionId}/messages`, { observe: 'response' });
     }
 
     /**
