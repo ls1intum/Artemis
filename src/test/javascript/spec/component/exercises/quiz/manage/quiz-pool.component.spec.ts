@@ -21,6 +21,7 @@ import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-ma
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 describe('QuizPoolComponent', () => {
     let fixture: ComponentFixture<QuizPoolComponent>;
@@ -35,7 +36,7 @@ describe('QuizPoolComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, NgbModule],
+            imports: [ArtemisTestModule, HttpClientTestingModule, NgbModule, FormsModule],
             declarations: [
                 QuizPoolComponent,
                 MockComponent(QuizPoolMappingComponent),
