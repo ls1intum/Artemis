@@ -41,8 +41,6 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     private final ComplaintRepository complaintRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -56,17 +54,15 @@ public class ResultService {
     private final FeedbackConflictRepository feedbackConflictRepository;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
-            FeedbackConflictRepository feedbackConflictRepository) {
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService,
+            ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository, FeedbackConflictRepository feedbackConflictRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
         this.websocketMessagingService = websocketMessagingService;
         this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
         this.participantScoreRepository = participantScoreRepository;

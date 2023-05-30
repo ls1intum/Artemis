@@ -63,8 +63,6 @@ public class ResultResource {
 
     private final ParticipationService participationService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
     private final ResultService resultService;
 
     private final ExamDateService examDateService;
@@ -97,18 +95,16 @@ public class ResultResource {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public ResultResource(ParticipationService participationService, ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService,
-            ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ResultRepository resultRepository, UserRepository userRepository, ExamDateService examDateService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ResultResource(ParticipationService participationService, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ResultRepository resultRepository, UserRepository userRepository, ExamDateService examDateService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
