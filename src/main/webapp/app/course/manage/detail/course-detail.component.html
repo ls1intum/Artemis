@@ -154,7 +154,7 @@
             </dd>
             <dt *ngIf="course.enrollmentEnabled"><span jhiTranslate="artemisApp.course.enrollmentEndDate">Enrollment End</span></dt>
             <dd *ngIf="course.enrollmentEnabled" id="course-enrollment-end-date">
-                <span>{{ course.enrollmentStartDate | artemisDate }}</span>
+                <span>{{ course.enrollmentEndDate | artemisDate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.unenrollmentEnabled.title">Student Course Unenrollment Enabled</span></dt>
             <dd *ngIf="course.enrollmentEnabled" id="course-unenrollment-enabled">
