@@ -8,6 +8,7 @@
             "title": "Competencies",
             "description": "Description",
             "taxonomy": "Taxonomy",
+            "dueDate": "Due Date",
             "masteryThreshold": "Mastery threshold",
             "course": "Course",
             "progress": "Progress",
