@@ -108,7 +108,7 @@
             },
             "offlineIde": "Offline-IDE",
             "irisActivated": "Iris Chatbot erlauben",
-            "irisActivatedTooltip": "Durch Aktivierung dieser Checkbox wird der Iris-Chatbot für Studierende freigeschaltet.",
+            "irisActivatedTooltip": "Durch Aktivierung dieser Checkbox wird der Iris-Chatbot für Studierende freigeschaltet. Das erlaubt Studierenden, mit einem Chatbot (z.B. GPT) zu kommunizieren, der ihnen bei Fragen zu der Aufgabe weiterhilft, aber keine Lösungen bereitstellt.",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
