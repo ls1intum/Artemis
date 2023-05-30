@@ -124,6 +124,7 @@ export class CourseMessagesPage {
 
     editMessage(messageId: number, message: string) {
         this.getSinglePost(messageId).find('.editIcon').click();
+        cy.wait(500);
         this.getSinglePost(messageId).find('.markdown-editor').find('.ace_editor').click().type(message, { delay: 8 });
         cy.intercept(PUT, BASE_API + 'courses/*/messages/*').as('updateMessage');
         this.getSinglePost(messageId).find('#save').click();

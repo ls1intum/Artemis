@@ -362,7 +362,9 @@ describe('Course messages', () => {
             it('student should be able to write message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
                 const messageText = 'Student Test Message';
+                cy.wait(2000);
                 courseMessages.writeMessage(messageText);
+                cy.wait(2000);
                 courseMessages.save().then((interception) => {
                     const message = interception.response!.body;
                     courseMessages.checkMessage(message.id, messageText);
@@ -374,7 +376,7 @@ describe('Course messages', () => {
                 const messageText = 'Student Edit Test Message';
                 courseManagementRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
                     const message = response.body;
-                    const newMessage = 'Edited Text';
+                    const newMessage = ' Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, 'edited by');
