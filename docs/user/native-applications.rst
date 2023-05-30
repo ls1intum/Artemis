@@ -83,7 +83,7 @@ When logged in, users can navigate to the application settings to change their p
   .. image:: native-applications/android/settings_push.png
             :width: 300
 
-In this screen, users can choose which notification types to receive as push notifications, and can enable/disable push notifications for this device.
+In this screen, users can enable/disable push notifications for this device and also choose which notification types they want to receive.
 
   .. image:: native-applications/android/settings_push_detail.png
             :width: 300
