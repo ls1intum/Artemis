@@ -69,7 +69,7 @@ Then, enter the URL of the server as you would enter it into the browser:
 
 |custom-server-entered|
 
-If the client could connect successfully to Artemis, the "Set custom instance" button will be enabled.
+The "Set custom instance" button will be enabled if the client could connect successfully to Artemis.
 
 Push Notifications
 ^^^^^^^^^^^^^^^^^^
