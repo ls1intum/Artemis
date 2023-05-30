@@ -175,7 +175,6 @@ const fileUploadExercise: FileUploadExercise = {
     dueDate: dayjs('2019-06-16T18:15:03+02:00'),
     assessmentDueDate: dayjs('2019-06-16T18:30:57+02:00'),
     maxPoints: 12.0,
-    channel: {},
     studentParticipations: [
         {
             id: 250,
@@ -220,7 +219,6 @@ const quizExercise: QuizExercise = {
     categories: [generateExerciseCategory(ExerciseType.QUIZ, 1)] as ExerciseCategory[],
     includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
     maxPoints: 3.0,
-    channel: {},
     studentParticipations: [
         {
             id: 251,
@@ -267,7 +265,6 @@ const programmingExercise: ProgrammingExercise = {
     dueDate: dayjs('2019-06-16T18:15:03+02:00'),
     assessmentDueDate: dayjs('2019-06-16T18:30:57+02:00'),
     maxPoints: 17.0,
-    channel: {},
     studentParticipations: [
         {
             id: 252,

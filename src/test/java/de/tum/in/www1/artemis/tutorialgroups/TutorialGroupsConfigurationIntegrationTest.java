@@ -179,6 +179,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         TextExercise textExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
         // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
         textExercise.setCourse(course);
+        textExercise.setChannelName("testchannelname");
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 

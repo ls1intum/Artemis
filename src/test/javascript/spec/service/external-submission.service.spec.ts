@@ -35,7 +35,6 @@ describe('External Submission Service', () => {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
-            channel: {},
         };
         const user: User = { internal: false, id: 2, login: 'ab12cde', guidedTourSettings: [] };
         const result: Result = { id: undefined };
