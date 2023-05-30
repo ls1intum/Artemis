@@ -17,6 +17,7 @@ import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -77,7 +78,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     getExercise(): Exercise {
-        return { id: this.exerciseId, type: ExerciseType.QUIZ } as Exercise;
+        const quizExercise = new QuizExercise(undefined, undefined);
+        quizExercise.id = this.exerciseId;
+        return quizExercise;
     }
 
     /**
