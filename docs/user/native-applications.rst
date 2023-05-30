@@ -14,7 +14,7 @@ Artemis supports native mobile applications available for both `Android <https:/
 
 Both apps use native user interface components and are adapted to their associated operating system. Therefore, they can differ in their usage.
 
-The mobile applications have been designed to be compatible with all Artemis instances. Therefore, users of all Artemis instances can use the mobile application provided by us. Nevertheless, it is possible to fork our repositories and to release your own versions of the native applications.
+The mobile applications have been designed to be compatible with all Artemis instances. Therefore, users of all Artemis instances can use the mobile application provided by us. Nevertheless, it is possible to fork our repositories and release your own versions of the native applications.
 
 Below, we only explain the functionalities of the native applications that differ or are not present in the web application. For all other features, which are supported by both the native applications and the web application, please refer to their associated documentation.
 
