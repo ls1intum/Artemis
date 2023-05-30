@@ -10,7 +10,7 @@
     <!-- HEADER INFORMATION START -->
     <div class="course-info-bar">
         <div class="row align-items-center">
-            <div class="col-11 general-info">
+            <div class="general-info" [ngClass]="getColClass()">
                 <h3 class="mb-0">
                     <fa-icon
                         *ngIf="learningGoal.taxonomy"
@@ -24,7 +24,11 @@
                 </h3>
                 <div *ngIf="learningGoal.description">{{ learningGoal.description }}</div>
             </div>
-            <div class="col-1">
+            <div *ngIf="learningGoal.dueDate" class="col-3" style="text-align: right">
+                <span> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
+                <span *ngIf="!dueDatePassed" class="badge" [ngClass]="getBadgeClass()"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
+            </div>
+            <div class="col-2">
                 <a
                     *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                     class="btn btn-sm btn-warning float-end"

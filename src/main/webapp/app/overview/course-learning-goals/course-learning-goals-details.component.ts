@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
@@ -83,6 +84,20 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
         return { progress: 0, confidence: 0 } as LearningGoalProgress;
     }
 
+    getColClass() {
+        if (this.learningGoal.dueDate) {
+            return 'col-7';
+        }
+        return 'col-10';
+    }
+
+    getBadgeClass() {
+        if (this.dueDatePassed) {
+            return 'bg-danger';
+        }
+        return 'bg-success';
+    }
+
     get progress(): number {
         // The percentage of completed lecture units and participated exercises
         return Math.round(this.getUserProgress().progress ?? 0);
@@ -122,5 +137,9 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    get dueDatePassed(): boolean {
+        return dayjs().isAfter(this.learningGoal.dueDate);
     }
 }
