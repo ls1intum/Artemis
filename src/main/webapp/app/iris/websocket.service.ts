@@ -5,7 +5,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/message-store.model';
-import { IrisMessage, IrisSender } from 'app/entities/iris/iris.model';
+import { IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
 
 @Injectable()
 export class IrisWebsocketService implements OnDestroy {
@@ -42,7 +42,7 @@ export class IrisWebsocketService implements OnDestroy {
      * @param sessionId which the iris service should subscribe to
      */
     private changeWebsocketSubscription(sessionId: number | null): void {
-        const channel = 'topic/iris/sessions/' + sessionId;
+        const channel = '/user/topic/iris/sessions/' + sessionId;
 
         // if channel subscription does not change, do nothing
         if (sessionId != null && this.subscriptionChannel === channel) {
@@ -56,8 +56,7 @@ export class IrisWebsocketService implements OnDestroy {
         // create new subscription
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisMessage) => {
-            if (newMessage.sender === IrisSender.USER) return;
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisServerMessage) => {
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(newMessage));
         });
     }

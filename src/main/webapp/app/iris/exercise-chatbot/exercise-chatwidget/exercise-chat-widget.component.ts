@@ -3,7 +3,7 @@ import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-sol
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender } from 'app/entities/iris/iris.model';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { StudentMessageSentAction } from 'app/iris/message-store.model';
+import { ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/iris/message-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 
 @Component({
@@ -22,11 +22,12 @@ export class ExerciseChatWidgetComponent implements OnInit {
     messages: IrisMessage[] = [];
     newMessageTextContent = '';
     isLoading: boolean;
+    sessionId: number;
     error = ''; // TODO: error object
     dots = 1;
 
-    constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, httpMessageService: IrisHttpMessageService) {
-        this.stateStore = this.data.stateStore;
+    constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
+        this.stateStore = data.stateStore;
     }
 
     // Icons
@@ -42,6 +43,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
             this.error = state.error;
+            this.sessionId = Number(state.sessionId);
         });
     }
 
@@ -57,11 +59,10 @@ export class ExerciseChatWidgetComponent implements OnInit {
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => {
-                    // this.httpMessageService TODO
-                    this.scrollToBottom();
+                    this.httpMessageService.createMessage(<number>this.sessionId, message).subscribe(() => this.scrollToBottom());
                 })
                 .catch((error) => {
-                    this.error = error;
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
                 });
             this.newMessageTextContent = '';
         }
