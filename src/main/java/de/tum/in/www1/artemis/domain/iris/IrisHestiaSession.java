@@ -32,6 +32,6 @@ public class IrisHestiaSession extends IrisSession {
 
     @Override
     public String toString() {
-        return "IrisHestiaSession{" + "id=" + getId() + "codeHint=" + (codeHint == null ? "null" : codeHint.getId()) + '}';
+        return "IrisHestiaSession{" + "id=" + getId() + ", codeHint=" + (codeHint == null ? "null" : codeHint.getId()) + '}';
     }
 }

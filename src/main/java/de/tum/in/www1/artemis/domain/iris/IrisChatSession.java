@@ -43,6 +43,6 @@ public class IrisChatSession extends IrisSession {
 
     @Override
     public String toString() {
-        return "IrisChatSession{" + "id=" + getId() + "exercise=" + (exercise == null ? "null" : exercise.getId()) + ", user=" + (user == null ? "null" : user.getName()) + '}';
+        return "IrisChatSession{" + "id=" + getId() + ", exercise=" + (exercise == null ? "null" : exercise.getId()) + ", user=" + (user == null ? "null" : user.getName()) + '}';
     }
 }
