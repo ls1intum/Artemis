@@ -77,6 +77,7 @@ export class EditLearningGoalComponent implements OnInit {
                     this.formData = {
                         id: this.learningGoal.id,
                         title: this.learningGoal.title,
+                        dueDate: this.learningGoal.dueDate,
                         description: this.learningGoal.description,
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                         taxonomy: this.learningGoal.taxonomy,
