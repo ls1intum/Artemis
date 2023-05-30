@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
@@ -46,5 +47,9 @@ export class LearningGoalCardComponent {
 
     get isMastered(): boolean {
         return this.mastery >= 100;
+    }
+
+    get dueDatePassed(): boolean {
+        return dayjs().isAfter(this.learningGoal.dueDate);
     }
 }

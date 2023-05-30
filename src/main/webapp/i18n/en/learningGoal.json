@@ -105,7 +105,9 @@
                 "progressUnavailable": "Progress calculation is currently only available for competencies linked to lecture units.",
                 "noUnitsConnected": "This competency is not linked to any lecture units",
                 "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
-                "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"
+                "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
+                "expectedUntil": "Expected until",
+                "dueDatePassed": "Expected due date was "
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Linked Competencies",
