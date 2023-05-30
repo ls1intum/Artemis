@@ -253,6 +253,9 @@ public abstract class BaseExercise extends DomainObject {
      * @return the sanitized exercise title
      **/
     public String getSanitizedExerciseTitle() {
-        return title != null ? title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "") : "exercise";
+        if (title == null) {
+            return "exercise";
+        }
+        return title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
     }
 }
