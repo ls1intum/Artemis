@@ -18,6 +18,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -137,6 +138,23 @@ describe('ExerciseHint Management Update Component', () => {
         expect(comp.exerciseHint.content).toBe('Hello Content');
         expect(comp.exerciseHint.description).toBe('Hello Description');
     }));
+
+    it('should generate descriptions', () => {
+        const codeHint = new CodeHint();
+        codeHint.id = 123;
+        codeHint.programmingExerciseTask = task2;
+
+        comp.exerciseHint = codeHint;
+        comp.courseId = 1;
+        comp.exercise = programmingExercise;
+
+        const generateDescSpy = jest.spyOn(codeHintService, 'generateDescriptionForCodeHint');
+
+        comp.generateDescriptionForCodeHint();
+
+        expect(generateDescSpy).toHaveBeenCalledOnce();
+        expect(generateDescSpy).toHaveBeenCalledWith(15, 123);
+    });
 
     describe('save', () => {
         it('should call update service on save for existing entity', fakeAsync(() => {
