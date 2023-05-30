@@ -91,7 +91,7 @@ In this screen, users can choose which notification types to receive as push not
 Problems
 ^^^^^^^^
 
-Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-android>`_.
+Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-android/issues>`_.
 
 .. |server-selection-overview| image:: native-applications/android/server_selection_overview.png
     :width: 300
