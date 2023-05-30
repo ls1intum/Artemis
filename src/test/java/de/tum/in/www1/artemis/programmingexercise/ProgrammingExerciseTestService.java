@@ -2175,9 +2175,7 @@ public class ProgrammingExerciseTestService {
             mockDelegate.mockRepositoryUrlIsValid(auxiliaryRepository.getVcsRepositoryUrl(), urlService.getProjectKeyFromRepositoryUrl(auxiliaryRepository.getVcsRepositoryUrl()),
                     true);
         }
-        mockDelegate.mockCheckIfBuildPlanExists(urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl()),
-                programmingExercise.getTemplateBuildPlanId(), true, false);
-        mockDelegate.mockCheckIfBuildPlanExists(urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsSolutionRepositoryUrl()),
-                programmingExercise.getSolutionBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
     }
 }
