@@ -9,6 +9,8 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +30,9 @@ import de.tum.in.www1.artemis.service.FileService;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
+
+    @Transient
+    private final transient Logger log = LoggerFactory.getLogger(FileService.class);
 
     @Transient
     private transient FileService fileService = new FileService();
@@ -136,6 +141,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         }
         catch (FilePathParsingException ignored) {
             // if the file path is invalid, we don't need to delete it
+            log.warn("Could not delete file with path {}. Assume already deleted, entity can be removed.", pictureFilePath);
         }
     }
 

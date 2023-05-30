@@ -424,7 +424,6 @@ public class FileService implements DisposableBean {
     public String publicPathForActualPathOrThrow(String actualPathString, @Nullable Long entityId) {
         String publicPath = publicPathForActualPath(actualPathString, entityId);
         if (publicPath == null) {
-
             // path is unknown => cannot convert
             throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
         }

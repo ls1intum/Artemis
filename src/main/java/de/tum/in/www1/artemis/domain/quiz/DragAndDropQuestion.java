@@ -8,6 +8,8 @@ import javax.persistence.*;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +30,9 @@ import de.tum.in.www1.artemis.service.FileService;
 @JsonTypeName("drag-and-drop")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestion extends QuizQuestion {
+
+    @Transient
+    private final transient Logger log = LoggerFactory.getLogger(FileService.class);
 
     @Transient
     private transient FileService fileService = new FileService();
@@ -170,6 +175,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
         catch (FilePathParsingException ignored) {
             // if the file path is invalid, we don't need to delete it
+            log.info("Could not delete file with path {}. Assume already deleted, entity can be removed.", backgroundFilePath);
         }
     }
 
@@ -196,7 +202,6 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return the dragItem with the given ID, or null if the dragItem is not contained in this question
      */
     public DragItem findDragItemById(Long dragItemId) {
-
         if (dragItemId != null) {
             // iterate through all dragItems of this quiz
             for (DragItem dragItem : dragItems) {
@@ -216,7 +221,6 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return the dropLocation with the given ID, or null if the dropLocation is not contained in this question
      */
     public DropLocation findDropLocationById(Long dropLocationId) {
-
         if (dropLocationId != null) {
             // iterate through all dropLocations of this quiz
             for (DropLocation dropLocation : dropLocations) {
@@ -250,7 +254,6 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
      */
     private void undoUnallowedDragItemChanges(DragAndDropQuestion originalQuestion) {
-
         // find added DragItems, which are not allowed to be added
         Set<DragItem> notAllowedAddedDragItems = new HashSet<>();
         // check every dragItem of the question
@@ -282,7 +285,6 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
      */
     private void undoUnallowedDropLocationChanges(DragAndDropQuestion originalQuestion) {
-
         // find added DropLocations, which are not allowed to be added
         Set<DropLocation> notAllowedAddedDropLocations = new HashSet<>();
         // check every dropLocation of the question
@@ -334,9 +336,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return a boolean which is true if the dragItem-changes make an update necessary and false if not
      */
     private boolean checkDragItemsIfRecalculationIsNecessary(DragAndDropQuestion originalQuestion) {
-
         boolean updateNecessary = false;
-
         // check every dragItem of the question
         for (DragItem dragItem : this.getDragItems()) {
             // check if the dragItem were already in the originalQuizExercise
@@ -367,9 +367,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return a boolean which is true if the dropLocation-changes make an update necessary and false if not
      */
     private boolean checkDropLocationsIfRecalculationIsNecessary(DragAndDropQuestion originalQuestion) {
-
         boolean updateNecessary = false;
-
         // check every dropLocation of the question
         for (DropLocation dropLocation : this.getDropLocations()) {
             // check if the dropLocation were already in the originalQuizExercise

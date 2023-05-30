@@ -254,14 +254,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
         validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
         // Find old drag items paths
-        Set<String> oldDragItemPaths = originalExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
-                .flatMap(question -> ((DragAndDropQuestion) question).getDragItems().stream()).map(DragItem::getPictureFilePath).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        Set<String> oldBackgroundPaths = originalExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
-                .map(question -> ((DragAndDropQuestion) question).getBackgroundFilePath()).filter(Objects::nonNull).collect(Collectors.toSet());
-        Set<String> oldPaths = new HashSet<>();
-        oldPaths.addAll(oldDragItemPaths);
-        oldPaths.addAll(oldBackgroundPaths);
+        Set<String> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
         // Init files to remove with all old paths
         Set<String> filesToRemove = new HashSet<>(oldPaths);
 
@@ -274,6 +267,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         fileService.deleteFiles(filesToRemove.stream().map(Paths::get).collect(Collectors.toList()));
+    }
+
+    private Set<String> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
+        Set<String> paths = new HashSet<>();
+        for (var question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                paths.add(dragAndDropQuestion.getBackgroundFilePath());
+                paths.addAll(dragAndDropQuestion.getDragItems().stream().map(DragItem::getPictureFilePath).collect(Collectors.toSet()));
+            }
+        }
+        return paths;
     }
 
     private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Set<String> oldPaths, Set<String> filesToRemove, Map<String, MultipartFile> fileMap,
@@ -310,15 +314,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void validateQuizExerciseFiles(QuizExercise quizExercise, @Nonnull List<MultipartFile> providedFiles, boolean isCreate) {
         long fileCount = providedFiles.size();
-
-        List<QuizQuestion> dndQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion).toList();
-        List<DragItem> dragItems = dndQuestions.stream().flatMap(question -> ((DragAndDropQuestion) question).getDragItems().stream()).toList();
-        Set<String> backgroundFileNames = dndQuestions.stream().map(question -> ((DragAndDropQuestion) question).getBackgroundFilePath()).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        Set<String> dragItemFileNames = dragItems.stream().map(DragItem::getPictureFilePath).filter(Objects::nonNull).collect(Collectors.toSet());
-        Set<String> exerciseFileNames = new HashSet<>();
-        exerciseFileNames.addAll(backgroundFileNames);
-        exerciseFileNames.addAll(dragItemFileNames);
+        Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileName -> {
             try {
                 return !Files.exists(Paths.get(fileService.actualPathForPublicPathOrThrow(fileName)));
