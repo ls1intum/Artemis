@@ -9,7 +9,7 @@
 }
 
 .cdk-drag .question {
-    width: 10rem !important;
+    width: 8rem !important;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -23,7 +23,7 @@
 }
 
 .cdk-drag .question-points {
-    width: 3rem;
+    width: 2rem;
     background: var(--text-editor-background);
     color: var(--text-editor-color);
 }

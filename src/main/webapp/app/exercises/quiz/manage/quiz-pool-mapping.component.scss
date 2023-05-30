@@ -1,6 +1,7 @@
 .table-wrapper {
     table {
         table-layout: fixed;
+        min-width: 30rem;
 
         td {
             width: 5rem;
