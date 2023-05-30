@@ -229,10 +229,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     void getCourseScores_asInstructorOfCourseWithGradedPresentations_shouldReturnCourseScores() throws Exception {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
 
-        GradingScale gradingScale = new GradingScale();
-        gradingScale.setPresentationsNumber(2);
-        gradingScale.setPresentationsWeight(20.0);
-        gradingScale.setCourse(exam.getCourse());
+        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(exam.getCourse(), 2, 20.0);
         gradingScaleRepository.save(gradingScale);
 
         User student = userRepository.findById(idOfStudent1).get();

@@ -183,10 +183,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         TextExercise laterTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         TextExercise earlierTextExercise = database.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1), pastTimestamp.minusDays(1));
 
-        GradingScale gradingScale = new GradingScale();
-        gradingScale.setPresentationsNumber(2);
-        gradingScale.setPresentationsWeight(20.0);
-        gradingScale.setCourse(course);
+        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 2, 20.0);
         gradingScaleRepository.save(gradingScale);
 
         var laterTextExerciseId = laterTextExercise.getId();

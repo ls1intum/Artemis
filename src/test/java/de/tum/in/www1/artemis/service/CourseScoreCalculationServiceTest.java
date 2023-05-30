@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseScoresDTO;
@@ -216,10 +217,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         pastCourse.setPresentationScore(null);
 
-        GradingScale gradingScale = new GradingScale();
-        gradingScale.setPresentationsNumber(5);
-        gradingScale.setPresentationsWeight(37.5);
-        gradingScale.setCourse(pastCourse);
+        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(pastCourse, 5, 37.5);
         gradingScaleRepository.save(gradingScale);
 
         User student = database.getUserByLogin(TEST_PREFIX + "student1");

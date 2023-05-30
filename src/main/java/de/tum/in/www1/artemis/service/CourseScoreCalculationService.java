@@ -111,7 +111,7 @@ public class CourseScoreCalculationService {
         if (course == null) {
             return null;
         }
-        long courseId = course.getId();
+        Long courseId = course.getId();
 
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
         if (courseExercises.isEmpty()) {

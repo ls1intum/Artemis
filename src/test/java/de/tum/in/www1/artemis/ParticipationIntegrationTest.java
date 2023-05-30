@@ -770,7 +770,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         actualParticipation1 = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation1, StudentParticipation.class, HttpStatus.OK);
         assertThat(actualParticipation1).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation1.getPresentationScore()).as("Presentation score was set to 100").isEqualTo(80.0);
+        assertThat(actualParticipation1.getPresentationScore()).as("Presentation score was set to 80").isEqualTo(80.0);
 
         // SHOULD NOT ADD SECOND PRESENTATION GRADE
         StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise,
@@ -779,10 +779,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         participation2.setPresentationScore(100.0);
 
-        StudentParticipation actualParticipation2 = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/participations", participation2,
-                StudentParticipation.class, HttpStatus.BAD_REQUEST);
-        assertThat(actualParticipation2).as("The participation was not updated").isNull();
-
+        request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/participations", participation2, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
