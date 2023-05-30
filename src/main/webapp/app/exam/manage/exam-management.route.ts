@@ -422,7 +422,7 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    // Quiz Exam Exercise
+    // Quiz Pool Configuration
     {
         path: ':examId/quiz-pool',
         component: QuizPoolComponent,
