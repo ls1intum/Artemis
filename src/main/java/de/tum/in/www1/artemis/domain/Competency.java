@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,6 +25,9 @@ public class Competency extends DomainObject {
 
     @Column(name = "description")
     private String description;
+
+    @Column(name = "due_date")
+    private ZonedDateTime dueDate;
 
     @Column(name = "mastery_threshold")
     private Integer masteryThreshold;
@@ -78,6 +82,14 @@ public class Competency extends DomainObject {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public ZonedDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(ZonedDateTime dueDate) {
+        this.dueDate = dueDate;
     }
 
     public int getMasteryThreshold() {
