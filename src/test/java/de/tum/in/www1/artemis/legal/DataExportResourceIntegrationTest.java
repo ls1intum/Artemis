@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.jgit.lib.Repository;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
@@ -102,7 +104,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
         prepareCourseDataForDataExportCreation();
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -147,19 +148,25 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addSubmission(participation, submission);
         database.addSubmission(participation, submission2);
         var exercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
-        database.createPlagiarismCaseForUserForExercise(programmingExercise, database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
-        database.createPlagiarismCaseForUserForExercise(exercises.get(0), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
-        database.createPlagiarismCaseForUserForExercise(exercises.get(1), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
-        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
-
-        // add communication and messaging data
-        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
-        database.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
-        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
+        createPlagiarismData(userLogin, programmingExercise, submission2, exercises);
+        createCommunicationData(userLogin, course1);
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+    }
+
+    private void createCommunicationData(String userLogin, Course course1) {
+        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
+        database.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
+        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
+    }
+
+    private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, ProgrammingSubmission submission2, List<Exercise> exercises) {
+        database.createPlagiarismCaseForUserForExercise(programmingExercise, database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
+        database.createPlagiarismCaseForUserForExercise(exercises.get(0), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
+        database.createPlagiarismCaseForUserForExercise(exercises.get(1), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
+        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
@@ -173,11 +180,10 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).get();
         var studentExam = database.addStudentExamWithUser(exam, userForExport);
-        studentExam = database.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
-                programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userForExport.getId(), exam.getId()).get();
-
-        var submission = studentExam.getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+        database.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userForExport.getId(),
+                exam.getId());
+        var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
@@ -249,7 +255,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectExamContent() throws Exception {
         prepareExamDataForDataExportCreation("exam");
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -270,7 +275,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resultsPublicationDateInTheFuture_noResultsLeaked() throws Exception {
         prepareExamDataWithResultPublicationDateInTheFuture();
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
@@ -319,7 +323,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntBelongToUser_forbidden() throws Exception {
-        var user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);

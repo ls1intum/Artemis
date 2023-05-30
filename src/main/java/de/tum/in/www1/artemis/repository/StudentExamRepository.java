@@ -150,6 +150,13 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(@Param("examId") Long examId);
 
+    /**
+     * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.
+     *
+     * @param userId the id of the user
+     * @param examId the id of the exam
+     * @return all student exams for the given user and exam
+     */
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
@@ -162,7 +169,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             	AND se.user.id = sp.student.id
                 AND se.user.id = :userId
             """)
-    Optional<StudentExam> findWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+    Set<StudentExam> findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT se

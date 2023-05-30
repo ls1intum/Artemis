@@ -45,13 +45,14 @@ public class DragAndDropQuizAnswerConversionService {
      *
      * @param dragAndDropSubmittedAnswer the submitted answer
      * @param outputDir                  the directory where the pdf file will be stored
+     * @param showResult                 whether the result of the quiz question submission should be shown
      */
-    public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir) throws IOException {
+    public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
         BufferedImage backgroundImage = ImageIO.read(new File(fileService.actualPathForPublicPath(backgroundFilePath)));
 
-        generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer);
+        generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
         Path dndSubmissionPathPdf = outputDir.resolve(
                 "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".pdf");
         storeSubmissionAsPdf(backgroundImage, dndSubmissionPathPdf);
@@ -72,7 +73,8 @@ public class DragAndDropQuizAnswerConversionService {
         doc.close();
     }
 
-    private void generateDragAndDropSubmittedAnswerImage(BufferedImage backgroundImage, DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) throws IOException {
+    private void generateDragAndDropSubmittedAnswerImage(BufferedImage backgroundImage, DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, boolean showResult)
+            throws IOException {
         int backgroundImageWidth = backgroundImage.getWidth();
         int backgroundImageHeight = backgroundImage.getHeight();
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
@@ -85,45 +87,67 @@ public class DragAndDropQuizAnswerConversionService {
             int dropLocationWidth = (int) (dropLocation.getWidth() / MAX_SIZE_UNIT * backgroundImageWidth);
             int dropLocationHeight = (int) (dropLocation.getHeight() / MAX_SIZE_UNIT * backgroundImageHeight);
             DropLocationCoordinates dropLocationCoordinates = new DropLocationCoordinates(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
-            graphics.setColor(Color.WHITE);
-            graphics.fillRect(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
-            if (dropLocation.isDropLocationCorrect(dragAndDropSubmittedAnswer)) {
-                graphics.setColor(Color.GREEN);
-            }
-            else if (dropLocation.isInvalid()) {
-                markItemAsInvalid(graphics, dropLocationCoordinates);
-            }
-            // incorrect solution placed on drop location
-            else {
-                graphics.setColor(Color.RED);
-            }
-            graphics.setStroke(new BasicStroke(3));
-            graphics.drawRect(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
-
-            graphics.setColor(Color.BLACK);
-            int dropLocationMidY = dropLocationY + dropLocationHeight / 2;
-            Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
-            for (var mapping : mappings) {
-                if (dropLocation.equals(mapping.getDropLocation())) {
-                    if (mapping.getDragItem().getPictureFilePath() == null) {
-                        graphics.setFont(new Font("Arial", Font.PLAIN, 20));
-                        graphics.drawString(mapping.getDragItem().getText(), dropLocationX + 2, dropLocationMidY);
-                    }
-                    else {
-                        BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));
-                        Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
-                                new Dimension(dropLocationWidth, dropLocationHeight));
-                        graphics.drawImage(dragItem, dropLocationX, dropLocationY, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
-                    }
-                    // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
-                    if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {
-                        markItemAsInvalid(graphics, dropLocationCoordinates);
-                    }
-                }
-            }
+            drawDropLocation(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates, showResult);
+            drawDragItem(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates);
         }
         graphics.drawImage(backgroundImage, 0, 0, null);
 
+    }
+
+    private void drawDragItem(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Graphics2D graphics, DropLocation dropLocation,
+            DropLocationCoordinates dropLocationCoordinates) throws IOException {
+        graphics.setColor(Color.BLACK);
+        int dropLocationMidY = dropLocationCoordinates.y + dropLocationCoordinates.height / 2;
+        Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
+        for (var mapping : mappings) {
+            if (dropLocation.equals(mapping.getDropLocation())) {
+                if (mapping.getDragItem().getPictureFilePath() == null) {
+                    drawTextDragItem(graphics, dropLocationCoordinates, dropLocationMidY, mapping);
+                }
+                else {
+                    drawPictureDragItem(graphics, dropLocationCoordinates, mapping);
+                }
+                // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
+                if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {
+                    markItemAsInvalid(graphics, dropLocationCoordinates);
+                }
+            }
+        }
+    }
+
+    private void drawTextDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, int dropLocationMidY, DragAndDropMapping mapping) {
+        graphics.setFont(new Font("Arial", Font.PLAIN, 20));
+        graphics.drawString(mapping.getDragItem().getText(), dropLocationCoordinates.x + 5, dropLocationMidY);
+    }
+
+    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
+        BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));
+        Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
+                new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
+        graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
+    }
+
+    private void drawDropLocation(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Graphics2D graphics, DropLocation dropLocation,
+            DropLocationCoordinates dropLocationCoordinates, boolean showResult) {
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.width, dropLocationCoordinates.height);
+
+        if (dropLocation.isDropLocationCorrect(dragAndDropSubmittedAnswer)) {
+            graphics.setColor(Color.GREEN);
+        }
+        else if (dropLocation.isInvalid()) {
+            markItemAsInvalid(graphics, dropLocationCoordinates);
+        }
+        // incorrect solution placed on drop location
+        else {
+            graphics.setColor(Color.RED);
+        }
+
+        if (!showResult) {
+            graphics.setColor(Color.BLACK);
+        }
+        graphics.setStroke(new BasicStroke(3));
+        graphics.drawRect(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.width, dropLocationCoordinates.height);
     }
 
     private Dimension getScaledDimension(Dimension oldDimension, Dimension newDimension) {

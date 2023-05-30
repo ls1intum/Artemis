@@ -231,10 +231,10 @@ public class DataExportService {
 
     private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
         for (var exam : exams) {
-            Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
-            if (studentExam.isPresent()) {
-                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + exam.getId()));
-                createStudentExamExport(studentExam.get(), examWorkingDir);
+            Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
+            for (var studentExam : studentExams) {
+                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + studentExam.getId()));
+                createStudentExamExport(studentExam, examWorkingDir);
             }
         }
     }
@@ -344,6 +344,8 @@ public class DataExportService {
     }
 
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
+        boolean includeResults = exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
+                || exercise.isCourseExercise() && exercise.isAssessmentDueDateOver();
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
@@ -357,17 +359,16 @@ public class DataExportService {
                     storeModelingSubmissionContent(modelingSubmission, exerciseDir);
                 }
                 else if (submission instanceof QuizSubmission) {
-                    createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir);
+                    createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir, includeResults);
                 }
-                if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
-                        || exercise.isCourseExercise() && exercise.isAssessmentDueDateOver()) {
+                if (includeResults) {
                     createResultsTxtFile(submission, exerciseDir);
                 }
             }
         }
     }
 
-    private void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir) throws IOException {
+    private void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults) throws IOException {
         Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
         QuizSubmission quizSubmission;
 
@@ -380,13 +381,13 @@ public class DataExportService {
                 // if this question wasn't answered, the submitted answer is null
                 if (submittedAnswer != null) {
                     if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
-                        dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir);
+                        dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
                     }
                     else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
-                        shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer));
+                        shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
                     }
                     else if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
-                        multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer));
+                        multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
                     }
                 }
             }
@@ -400,7 +401,7 @@ public class DataExportService {
 
     }
 
-    private String createExportForMultipleChoiceAnswerQuestion(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+    private String createExportForMultipleChoiceAnswerQuestion(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, boolean includeResults) {
         StringBuilder stringBuilder = new StringBuilder();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) multipleChoiceSubmittedAnswer.getQuizQuestion();
         if (question.isSingleChoice()) {
@@ -410,59 +411,100 @@ public class DataExportService {
             stringBuilder.append("Multiple Choice Question: ");
         }
         stringBuilder.append(question.getTitle()).append("\n");
-        stringBuilder.append("Your score: ").append(multipleChoiceSubmittedAnswer.getScoreInPoints()).append("\n");
+        if (includeResults) {
+            stringBuilder.append("Your score: ").append(multipleChoiceSubmittedAnswer.getScoreInPoints()).append("\n");
+        }
         for (var answerOption : question.getAnswerOptions()) {
-            if (answerOption.isInvalid()) {
-                stringBuilder.append("Invalid answer option: ");
+            if (includeResults) {
+                addExplanationToAnswerOptionWithResult(multipleChoiceSubmittedAnswer, stringBuilder, answerOption);
             }
-            else if (answerOption.isIsCorrect() && multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
-                stringBuilder.append("Correct and selected answer: ");
-            }
-            else if (answerOption.isIsCorrect() && !multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
-                stringBuilder.append("Correct but NOT selected answer: ");
-            }
-            else if (!answerOption.isIsCorrect() && multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
-                stringBuilder.append("Incorrect but selected answer: ");
-            }
-            else if (!answerOption.isIsCorrect() && !multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
-                stringBuilder.append("Incorrect and NOT selected answer: ");
+            else {
+                addExplanationToAnswerOptionWithoutResult(multipleChoiceSubmittedAnswer, stringBuilder, answerOption);
             }
             stringBuilder.append(answerOption.getText()).append("\t").append("\n");
         }
         return stringBuilder.toString();
     }
 
-    private String createExportForShortAnswerQuestion(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+    private void addExplanationToAnswerOptionWithoutResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOption answerOption) {
+        if (answerOption.isInvalid()) {
+            stringBuilder.append("Invalid answer option: ");
+        }
+        else if (multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+            stringBuilder.append("Selected answer: ");
+        }
+        else {
+            stringBuilder.append("Not selected answer: ");
+        }
+    }
+
+    private static void addExplanationToAnswerOptionWithResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder,
+            AnswerOption answerOption) {
+        if (answerOption.isInvalid()) {
+            stringBuilder.append("Invalid answer option: ");
+        }
+        else if (answerOption.isIsCorrect() && multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+            stringBuilder.append("Correct and selected answer: ");
+        }
+        else if (answerOption.isIsCorrect() && !multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+            stringBuilder.append("Correct but NOT selected answer: ");
+        }
+        else if (!answerOption.isIsCorrect() && multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+            stringBuilder.append("Incorrect but selected answer: ");
+        }
+        else if (!answerOption.isIsCorrect() && !multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+            stringBuilder.append("Incorrect and NOT selected answer: ");
+        }
+    }
+
+    private String createExportForShortAnswerQuestion(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, boolean includeResults) {
         StringBuilder stringBuilder = new StringBuilder();
         ShortAnswerQuestion question = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
         stringBuilder.append("Short Answer Question: ").append(question.getTitle()).append("\n");
-        stringBuilder.append("Your score: ").append(shortAnswerSubmittedAnswer.getScoreInPoints()).append("\n");
-        return replaceSpotWithSubmittedAnswer(shortAnswerSubmittedAnswer, stringBuilder);
+        if (includeResults) {
+            stringBuilder.append("Your score: ").append(shortAnswerSubmittedAnswer.getScoreInPoints()).append("\n");
+        }
+        return replaceSpotWithSubmittedAnswer(shortAnswerSubmittedAnswer, stringBuilder, includeResults);
     }
 
-    private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder stringBuilder) {
+    private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder stringBuilder, boolean includeResults) {
 
         var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
         stringBuilder.append("Your answer: ").append("\n");
         stringBuilder.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
+        var shortAnswerQuestion = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
+        var mappings = shortAnswerQuestion.getCorrectMappings();
+        for (var mapping : mappings) {
+            var spot = mapping.getSpot();
+            var solution = mapping.getSolution();
+            shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
+            stringBuilder.append("\n").append("Spot: ").append(spot).append("\n").append("Solution: ").append(solution).append("\n");
+        }
+
         for (Map.Entry<String, ShortAnswerSubmittedText> entry : spotToSubmittedTextMap.entrySet()) {
             Pattern pattern = Pattern.compile(entry.getKey());
             Matcher matcher = pattern.matcher(stringBuilder);
             while (matcher.find()) {
                 int start = matcher.start();
                 int end = matcher.end();
-                String replacement;
+                StringBuilder replacement = new StringBuilder();
                 if (entry.getValue().isIsCorrect() != null && entry.getValue().isIsCorrect()) {
-                    replacement = entry.getValue().getText() + " (Correct)";
+                    replacement.append(entry.getValue().getText());
+                    if (includeResults) {
+                        replacement.append(" (Correct)");
+                    }
                 }
                 else if (entry.getValue().isIsCorrect() != null && !entry.getValue().isIsCorrect()) {
-                    replacement = entry.getValue().getText() + " (Incorrect)";
+                    replacement.append(entry.getValue().getText());
+                    if (includeResults) {
+                        replacement.append(" (Incorrect)");
+                    }
+                    else {
+                        replacement.append(entry.getValue().getText());
+                    }
+                    stringBuilder.replace(start, end, replacement.toString());
+                    matcher = pattern.matcher(stringBuilder);
                 }
-                else {
-                    replacement = entry.getValue().getText();
-                }
-                stringBuilder.replace(start, end, replacement);
-                matcher = pattern.matcher(stringBuilder);
             }
         }
         return stringBuilder.toString();
