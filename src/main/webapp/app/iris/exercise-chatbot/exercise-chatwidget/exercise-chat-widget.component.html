@@ -19,7 +19,7 @@
             <div *ngFor="let message of messages">
                 <div *ngFor="let content of message.content">
                     <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
-                        {{ content.textContent }}
+                        <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                     </div>
                 </div>
             </div>
