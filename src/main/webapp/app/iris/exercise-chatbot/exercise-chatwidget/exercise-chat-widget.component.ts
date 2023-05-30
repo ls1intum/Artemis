@@ -2,7 +2,7 @@ import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@an
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ConversationErrorOccurredAction, NumNewMessagesResetAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
@@ -84,6 +84,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     }
 
     closeChat() {
+        this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.dialog.closeAll();
     }
 

@@ -6,7 +6,9 @@ import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-
 import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisSessionService } from 'app/iris/session.service';
+import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
@@ -18,13 +20,14 @@ export class ExerciseChatbotComponent implements OnDestroy, OnInit {
     public chatAccepted = false;
     public buttonDisabled = false;
     private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
-    private chatOpen = false;
     private exerciseId: number;
+    private stateSubscription: Subscription;
     // Icons
     faCircle = faCircle;
     faCommentDots = faCommentDots;
 
-    isUnread = true; // TODO
+    hasNewMessages = false;
+    chatOpen = false;
 
     constructor(
         private dialog: MatDialog,
@@ -41,16 +44,22 @@ export class ExerciseChatbotComponent implements OnDestroy, OnInit {
                 this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
             }
         });
+
+        this.stateSubscription = this.stateStore.getState().subscribe((state) => {
+            this.hasNewMessages = state.numNewMessages > 0;
+        });
     }
 
     ngOnDestroy() {
         if (this.dialogRef) {
             this.dialogRef.close();
         }
+        this.stateSubscription.unsubscribe();
     }
 
     handleButtonClick() {
         if (this.chatOpen && this.dialogRef) {
+            this.stateStore.dispatch(new NumNewMessagesResetAction());
             this.dialogRef!.close();
             this.chatOpen = false;
         } else if (this.chatAccepted) {

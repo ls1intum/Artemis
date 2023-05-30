@@ -7,6 +7,7 @@ import {
     isActiveConversationMessageLoadedAction,
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
+    isNumNewMessagesResetAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
@@ -22,6 +23,7 @@ export class IrisStateStore implements OnDestroy {
         messages: [],
         sessionId: null,
         isLoading: false,
+        numNewMessages: 0,
         error: '',
     };
 
@@ -102,41 +104,53 @@ export class IrisStateStore implements OnDestroy {
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
-                messages: [...state.messages],
-                sessionId: state.sessionId,
+                ...state,
                 isLoading: false,
                 error: 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.', // TODO translate to German
             };
         }
-
-        if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
+        if (isNumNewMessagesResetAction(action)) {
+            return {
+                ...state,
+                numNewMessages: 0,
+            };
+        }
+        if (isHistoryMessageLoadedAction(action)) {
+            return {
+                ...state,
+                messages: [...state.messages, action.message],
+                isLoading: false,
+                error: '',
+            };
+        }
+        if (isActiveConversationMessageLoadedAction(action)) {
             return {
                 messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
                 isLoading: false,
+                numNewMessages: state.numNewMessages + 1,
                 error: '',
             };
         }
         if (isConversationErrorOccurredAction(action)) {
             return {
-                messages: state.messages,
-                sessionId: state.sessionId,
+                ...state,
                 isLoading: false,
                 error: action.errorMessage,
             };
         }
         if (isSessionReceivedAction(action)) {
             return {
+                ...state,
                 messages: action.messages,
                 sessionId: action.sessionId,
-                isLoading: state.isLoading,
                 error: '',
             };
         }
         if (isStudentMessageSentAction(action)) {
             return {
+                ...state,
                 messages: [...state.messages, action.message],
-                sessionId: state.sessionId,
                 isLoading: true,
                 error: '',
             };

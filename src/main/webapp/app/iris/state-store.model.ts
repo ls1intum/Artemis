@@ -1,11 +1,20 @@
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 export enum ActionType {
+    NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',
     ACTIVE_CONVERSATION_MESSAGE_LOADED = 'active-conversation-message-loaded',
     CONVERSATION_ERROR_OCCURRED = 'conversation-error-occurred',
     STUDENT_MESSAGE_SENT = 'student-message-sent',
     SESSION_CHANGED = 'session-changed',
+}
+
+export class NumNewMessagesResetAction {
+    readonly type: ActionType;
+
+    public constructor(private readonly tmp: number = 1) {
+        this.type = ActionType.NUM_NEW_MESSAGES_RESET;
+    }
 }
 
 export class HistoryMessageLoadedAction {
@@ -49,11 +58,16 @@ export class SessionReceivedAction {
 }
 
 export type MessageStoreAction =
+    | NumNewMessagesResetAction
     | HistoryMessageLoadedAction
     | ActiveConversationMessageLoadedAction
     | ConversationErrorOccurredAction
     | StudentMessageSentAction
     | SessionReceivedAction;
+
+export function isNumNewMessagesResetAction(action: MessageStoreAction): action is NumNewMessagesResetAction {
+    return action.type === ActionType.NUM_NEW_MESSAGES_RESET;
+}
 
 export function isHistoryMessageLoadedAction(action: MessageStoreAction): action is HistoryMessageLoadedAction {
     return action.type === ActionType.HISTORY_MESSAGE_LOADED;
@@ -76,5 +90,11 @@ export function isSessionReceivedAction(action: MessageStoreAction): action is S
 }
 
 export class MessageStoreState {
-    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean, public error: string) {}
+    public constructor(
+        public messages: ReadonlyArray<IrisMessage>,
+        public sessionId: number | null,
+        public isLoading: boolean,
+        public numNewMessages: number,
+        public error: string,
+    ) {}
 }
