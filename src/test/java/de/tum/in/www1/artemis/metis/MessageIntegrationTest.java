@@ -167,7 +167,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
             assertThat(post.getConversation().getId()).isEqualTo(conversationId);
         }
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(course.getId());
         postContextFilter.setConversationId(posts.get(0).getConversation().getId());
         if (pageSize == LOWER_PAGE_SIZE) {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize))).hasSize(LOWER_PAGE_SIZE);
