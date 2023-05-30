@@ -148,7 +148,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT DISTINCT e from Exercise e
-            LEFT JOIN FETCH e.channel
             LEFT JOIN FETCH e.categories
             WHERE e.id = :#{#exerciseId}
                 """)

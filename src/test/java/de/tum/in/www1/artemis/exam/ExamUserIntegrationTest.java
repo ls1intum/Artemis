@@ -132,7 +132,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
                 ExamUserDTO.class, OK);
         assertThat(responseNotFoundExamUsers).isEmpty();
-        Exam exam = examRepository.findWithExamUsersAndChannelById(exam1.getId()).orElseThrow();
+        Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         var examUsers = exam.getExamUsers();
         assertThat(examUsers).hasSize(2);
 

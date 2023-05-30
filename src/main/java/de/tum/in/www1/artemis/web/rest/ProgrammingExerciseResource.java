@@ -114,7 +114,7 @@ public class ProgrammingExerciseResource {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ConversationService conversationService, ChannelRepository channelRepository) {
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;

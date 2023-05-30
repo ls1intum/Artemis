@@ -254,10 +254,9 @@ public class ConversationService {
      * @param exercise the exercise that is being deleted
      */
     public void deregisterAllClientsFromChannel(Exercise exercise) {
-        if (exercise.isCourseExercise() && exercise.getChannel() != null) {
-            // deregister all clients from the channel
-            Channel originalChannel = channelRepository.findByIdElseThrow(exercise.getChannel().getId());
-
+        // deregister all clients from the channel
+        Channel originalChannel = channelRepository.findChannelByExerciseId(exercise.getId());
+        if (exercise.isCourseExercise() && originalChannel != null) {
             Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
             Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
             broadcastOnConversationMembershipChannel(originalChannel.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
@@ -270,10 +269,9 @@ public class ConversationService {
      * @param lecture the lecture that is being deleted
      */
     public void deregisterAllClientsFromChannel(Lecture lecture) {
-        if (lecture.getChannel() != null) {
-            // deregister all clients from the channel
-            Channel originalChannel = channelRepository.findByIdElseThrow(lecture.getChannel().getId());
-
+        // deregister all clients from the channel
+        Channel originalChannel = channelRepository.findChannelByLectureId(lecture.getId());
+        if (originalChannel != null) {
             Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
             Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
             broadcastOnConversationMembershipChannel(lecture.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);

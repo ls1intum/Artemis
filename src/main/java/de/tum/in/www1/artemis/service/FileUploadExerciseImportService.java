@@ -50,7 +50,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
         if (newExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(newFileUploadExercise, importedExercise.getChannelName());
-            newFileUploadExercise.setChannelName(channel.getName());
+            newFileUploadExercise.setChannelName(createdChannel.getName());
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
         return newFileUploadExercise;

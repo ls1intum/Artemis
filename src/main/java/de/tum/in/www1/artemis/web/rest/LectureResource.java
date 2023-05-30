@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
-import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -66,7 +65,7 @@ public class LectureResource {
     private final ExerciseService exerciseService;
 
     private final ConversationService conversationService;
-  
+
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -101,7 +100,7 @@ public class LectureResource {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
-      
+
         Lecture savedLecture = lectureRepository.save(lecture);
         Channel createdChannel = channelService.createLectureChannel(savedLecture, lecture.getChannelName());
         channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
@@ -346,7 +345,6 @@ public class LectureResource {
         }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
-        lecture.getChannel().setLecture(null);
         return lecture;
     }
 

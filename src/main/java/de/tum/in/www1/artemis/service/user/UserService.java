@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
@@ -122,17 +121,14 @@ public class UserService {
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
-    private final ConversationService conversationService;
-
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
-            LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
-            ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository,
-            PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository,
-            OneToOneChatRepository oneToOneChatRepository, ConversationService conversationService) {
+            CompetencyProgressRepository competencyProgressRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
+            InstanceMessageSendService instanceMessageSendService, ExerciseHintActivationRepository exerciseHintActivationRepository,
+            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository, PostRepository postRepository,
+            ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository, OneToOneChatRepository oneToOneChatRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -156,7 +152,6 @@ public class UserService {
         this.conversationRepository = conversationRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.oneToOneChatRepository = oneToOneChatRepository;
-        this.conversationService = conversationService;
     }
 
     /**

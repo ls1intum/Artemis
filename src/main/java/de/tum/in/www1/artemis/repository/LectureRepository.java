@@ -50,7 +50,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.channel
             LEFT JOIN FETCH lecture.attachments attachment
             LEFT JOIN FETCH lecture.lectureUnits lectureUnit
             LEFT JOIN FETCH lectureUnit.attachment luAttachment
@@ -67,7 +66,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             LEFT JOIN FETCH lu.completedUsers cu
             LEFT JOIN FETCH lu.competencies
             LEFT JOIN FETCH lu.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
             LEFT JOIN FETCH exercise.competencies
             WHERE lecture.id = :#{#lectureId}
             """)

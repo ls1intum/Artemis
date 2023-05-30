@@ -52,7 +52,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
         if (newExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(newQuizExercise, importedExercise.getChannelName());
-            newQuizExercise.setChannelName(channel.getName());
+            newQuizExercise.setChannelName(createdChannel.getName());
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
 

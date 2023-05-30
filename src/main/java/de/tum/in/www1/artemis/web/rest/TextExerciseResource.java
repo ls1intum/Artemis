@@ -101,7 +101,7 @@ public class TextExerciseResource {
 
     private final ConversationService conversationService;
 
-  private final ChannelRepository channelRepository;
+    private final ChannelRepository channelRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
