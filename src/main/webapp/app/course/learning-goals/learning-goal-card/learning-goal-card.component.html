@@ -31,8 +31,8 @@
                 <ng-content></ng-content>
             </div>
             <div *ngIf="!isPrerequisite && learningGoal.dueDate" class="col-sm col py-2" style="max-width: fit-content">
-                <span style="margin-top: auto; margin-bottom: auto"> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
-                <span *ngIf="!dueDatePassed" class="badge bg-success"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
+                <span> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
+                <span *ngIf="!dueDatePassed || isMastered" class="badge bg-success"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
                 <span *ngIf="dueDatePassed && !isMastered" class="badge bg-danger"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
             </div>
             <div *ngIf="!isPrerequisite" class="col-sm col text-end py-1 px-2" style="max-width: 95px">
