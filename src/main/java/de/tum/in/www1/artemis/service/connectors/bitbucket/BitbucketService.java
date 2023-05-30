@@ -72,8 +72,9 @@ public class BitbucketService extends AbstractVersionControlService {
 
     public BitbucketService(@Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
