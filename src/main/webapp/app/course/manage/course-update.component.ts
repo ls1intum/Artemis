@@ -407,6 +407,12 @@ export class CourseUpdateComponent implements OnInit {
         if (this.course.enrollmentEnabled) {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
+            if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+                this.course.enrollmentStartDate = this.course.startDate;
+                this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
+                this.course.enrollmentEndDate = this.course.endDate;
+                this.courseForm.controls['enrollmentEndDate'].setValue(this.course.endDate);
+            }
         } else {
             if (this.course.unenrollmentEnabled) {
                 this.changeUnenrollmentEnabled();
@@ -590,7 +596,7 @@ export class CourseUpdateComponent implements OnInit {
             return false;
         }
 
-        return dayjs(this.course.enrollmentEndDate).isBefore(this.course.unenrollmentEndDate) && !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.endDate);
+        return !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.enrollmentEndDate) && !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.endDate);
     }
 
     /**
