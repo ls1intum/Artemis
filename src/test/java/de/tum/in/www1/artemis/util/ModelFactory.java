@@ -693,7 +693,8 @@ public class ModelFactory {
     /**
      * Generates a real exam without student review dates set and attaches a channel
      *
-     * @param course the associated course
+     * @param course      the associated course
+     * @param channelName the channel name
      * @return the created exam
      */
     public static Exam generateExam(Course course, String channelName) {
@@ -722,6 +723,7 @@ public class ModelFactory {
      * @param startDate   the start date of the exam
      * @param endDate     the end date of the exam
      * @param testExam    if the exam is a test exam
+     * @param channelName the channel name
      * @return the created exam
      */
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, String channelName) {

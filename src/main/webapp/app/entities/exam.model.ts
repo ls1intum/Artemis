@@ -38,7 +38,6 @@ export class Exam implements BaseEntity {
     public studentExams?: StudentExam[];
     public examUsers?: ExamUser[];
     public numberOfExamUsers?: number; // transient
-    public channel?: Channel;
     public channelName?: string; // transient
 
     // helper attributes
