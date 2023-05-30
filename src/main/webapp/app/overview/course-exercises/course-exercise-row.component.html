@@ -1,18 +1,20 @@
 <div [id]="'exercise-card-' + exercise.id" class="course-exercise-row align-items-center mb-2 mt-2 position-relative" [class.guided-tour]="hasGuidedTour">
     <a class="stretched-link" [routerLink]="routerLink"></a>
-    <div class="col-auto d-none d-sm-block">
+    <div class="col-auto d-none d-md-block">
         <a class="exercise-row-icon" [routerLink]="routerLink">
             <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
         </a>
     </div>
     <div class="col max-width">
-        <div class="row max-width">
-            <div class="col-auto d-sm-none">
-                <h4 class="fw-medium">
+        <div class="row">
+            <div class="col-auto d-md-none">
+                <h4 class="fw-medium exercise-title">
                     <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>
+                    &nbsp;
+                    {{ exercise.title }}
                 </h4>
             </div>
-            <div class="col-sm col max-width">
+            <div class="col-sm col d-none d-md-flex">
                 <h4 class="fw-medium exercise-title">{{ exercise.title }}</h4>
             </div>
             <jhi-submission-result-status
@@ -49,6 +51,7 @@
                 [routerLink]="routerLink"
             >
                 <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
+                <span class="d-sm-none"> {{ 'artemisApp.courseOverview.exerciseList.shortDueDate' | artemisTranslate }}: </span>
                 {{ dueDate | artemisTimeAgo }}
             </div>
             <ng-template #noDate>
