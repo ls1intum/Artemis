@@ -890,7 +890,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             });
     }
 
-    asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+    asQuizExercise(exercise: Exercise): QuizExercise | undefined {
+        if (this.isQuizExercise(exercise)) {
+            return exercise as QuizExercise;
+        }
+        return undefined;
+    }
+
+    isQuizExercise(exercise: Exercise): exercise is QuizExercise {
+        return (exercise as QuizExercise).quizQuestions !== undefined;
     }
 }
