@@ -16,6 +16,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Router } from '@angular/router';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;

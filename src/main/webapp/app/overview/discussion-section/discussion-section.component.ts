@@ -16,6 +16,7 @@ import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLong
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -44,6 +45,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     constructor(
         protected metisService: MetisService,
+        private channelService: ChannelService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private router: Router,
@@ -67,14 +69,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
-                    this.channel = this.lecture?.channel || this.exercise?.channel!;
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({
-                        conversationId: this.channel.id,
-                    });
-                    this.createEmptyPost();
-                    this.resetFormGroup();
+                    this.setChannel(courseId); // set before fetching posts
                 }
             });
         });
@@ -167,6 +164,40 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     };
 
     /**
+     * Set the channel for the discussion section, either for a lecture or an exercise
+     * @param courseId
+     */
+    setChannel(courseId: number): void {
+        if (this.lecture?.id) {
+            this.channelService
+                .getChannelOfLecture(courseId, this.lecture.id)
+                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .subscribe({
+                    next: (channel: Channel) => {
+                        this.channel = channel ?? undefined;
+                        const contextFilter = this.channel?.id ? { conversationId: this.channel.id } : { exerciseId: this.exercise?.id, lectureId: this.lecture?.id };
+                        this.metisService.getFilteredPosts(contextFilter);
+                        this.createEmptyPost();
+                        this.resetFormGroup();
+                    },
+                });
+        } else if (this.exercise?.id) {
+            this.channelService
+                .getChannelOfExercise(courseId, this.exercise.id)
+                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .subscribe({
+                    next: (channel: Channel) => {
+                        this.channel = channel ?? undefined;
+                        const contextFilter = this.channel?.id ? { conversationId: this.channel.id } : { exerciseId: this.exercise?.id, lectureId: this.lecture?.id };
+                        this.metisService.getFilteredPosts(contextFilter);
+                        this.createEmptyPost();
+                        this.resetFormGroup();
+                    },
+                });
+        }
+    }
+
+    /**
      * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
@@ -218,7 +249,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             courseId: undefined,
             // exerciseId: this.exercise?.id,
             // lectureId: this.lecture?.id,
-            conversationId: this.lecture ? this.lecture?.channel?.id : this.exercise?.channel?.id,
+            conversationId: this.channel?.id,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
@@ -242,6 +273,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
+            conversationId: this.channel?.id,
             exerciseId: this.exercise?.id,
             lectureId: this.lecture?.id,
             filterToUnresolved: false,

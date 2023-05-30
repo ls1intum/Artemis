@@ -106,6 +106,44 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     /**
+     * GET /api/courses/:courseId/exercises/:exerciseId/channel Returns the channel by exercise id
+     *
+     * @param courseId   the id of the course
+     * @param exerciseId the id of the channel
+     * @return ResponseEntity with status 200 (OK) and with body containing the channel
+     */
+    @GetMapping("/{courseId}/exercises/{exerciseId}/channel")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Channel> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        log.debug("REST request to get channel of exercise: {}", exerciseId);
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var channel = channelRepository.findChannelByExerciseId(exerciseId);
+        return ResponseEntity.ok(channel);
+    }
+
+    /**
+     * GET /api/courses/:courseId/lectures/:lectureId/channel Returns the channel by lecture id
+     *
+     * @param courseId  the id of the course
+     * @param lectureId the id of the channel
+     * @return ResponseEntity with status 200 (OK) and with body containing the channel
+     */
+    @GetMapping("/{courseId}/lectures/{lectureId}/channel")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Channel> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
+        log.debug("REST request to get channel of lecture: {}", lectureId);
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var channel = channelRepository.findChannelByLectureId(lectureId);
+        return ResponseEntity.ok(channel);
+    }
+
+    /**
      * POST /api/courses/:courseId/channels/: Creates a new channel in a course
      *
      * @param courseId   the id of the course
