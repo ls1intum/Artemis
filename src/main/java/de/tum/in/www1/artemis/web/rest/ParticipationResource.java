@@ -521,8 +521,9 @@ public class ParticipationResource {
                     participation.setSubmissions(null);
                 }
                 else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
-                    participation.setSubmissions(Set
-                            .of(participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL).max(Comparator.naturalOrder()).get()));
+                    var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
+                            .max(Comparator.naturalOrder());
+                    participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
                 }
             });
         }

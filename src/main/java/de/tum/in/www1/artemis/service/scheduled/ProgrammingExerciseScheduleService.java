@@ -275,7 +275,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleDueDateLockAndScoreUpdate(ProgrammingExercise exercise) {
-        // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
         final boolean updateScores = isScoreUpdateAfterDueDateNeeded(exercise);
 
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
@@ -366,6 +365,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private boolean isScoreUpdateAfterDueDateNeeded(ProgrammingExercise exercise) {
+        // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
         return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null && programmingExerciseTestCaseRepository.countAfterDueDateByExerciseId(exercise.getId()) > 0;
     }
 
