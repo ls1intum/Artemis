@@ -545,6 +545,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
+        exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, true);
         var programmingExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(programmingExercise).isNull();
