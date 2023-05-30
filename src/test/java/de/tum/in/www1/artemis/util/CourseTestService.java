@@ -508,7 +508,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourseIsEmpty() throws Exception {
-        Course course = ModelFactory.generateCourse(UUID.randomUUID().getLeastSignificantBits(), null, null, new HashSet<>());
+        Course course = ModelFactory.generateCourse(1042001L, null, null, new HashSet<>());
         request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
@@ -2964,7 +2964,7 @@ public class CourseTestService {
         assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
 
         course.setCourseIcon(null);
-        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK);
+        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK, null);
 
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();

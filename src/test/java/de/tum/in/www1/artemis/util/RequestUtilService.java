@@ -66,7 +66,12 @@ public class RequestUtilService {
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json)).andExpect(status().is(expectedStatus.value())).andReturn();
+        var builder = MockMvcRequestBuilders.multipart(new URI(path));
+        if (file != null) {
+            builder = builder.file(file);
+        }
+        builder.file(json);
+        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -296,7 +301,8 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
+            LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
@@ -305,7 +311,10 @@ public class RequestUtilService {
             return request;
         });
         if (file != null) {
-            builder = builder.file(file);
+            builder.file(file);
+        }
+        if (params != null) {
+            builder.params(params);
         }
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
