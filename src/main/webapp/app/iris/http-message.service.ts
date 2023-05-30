@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris.model';
+import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
 
 /**
- * Provides a singleton instance of http client to perform CRUD operations.
+ * Provides a singleton root-level IrisHttpMessageService to perform CRUD operations on messages
  */
 @Injectable({ providedIn: 'root' })
 export class IrisHttpMessageService {

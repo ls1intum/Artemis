@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage } from 'app/entities/iris/iris.model';
+import { IrisClientMessage } from 'app/entities/iris/iris-content-type.model';
 
 describe('HTTP Message Service', () => {
     let service: IrisHttpMessageService;

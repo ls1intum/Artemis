@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { IrisSession } from 'app/entities/iris/iris.model';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/message-store.model';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
+import { IrisSession } from 'app/entities/iris/iris-session.model';
 
 @Injectable()
 export class IrisSessionService {

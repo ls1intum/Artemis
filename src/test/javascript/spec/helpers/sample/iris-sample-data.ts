@@ -1,4 +1,4 @@
-import { IrisClientMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage, IrisSession } from 'app/entities/iris/iris.model';
+import { IrisClientMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage, IrisSession } from 'app/entities/iris/iris-content-type.model';
 import dayjs from 'dayjs';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -11,7 +11,7 @@ export const mockMessageContent = {
 export const irisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
 export const mockServerMessage = {
-    sender: IrisSender.SERVER,
+    sender: IrisSender.LLM,
     id: 1,
     content: [mockMessageContent],
     sentAt: dayjs(),

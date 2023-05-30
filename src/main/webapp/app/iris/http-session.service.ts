@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisSession } from 'app/entities/iris/iris.model';
+import { IrisSession } from 'app/entities/iris/iris-session.model';
 
 type EntityResponseType = HttpResponse<IrisSession>;
 
 /**
- * Provides a singleton instance of http client to manage IRIS sessions
+ * Provides a singleton root-level IrisHttpSessionService to retrieve existing or create new sessions
  */
 @Injectable({ providedIn: 'root' })
 export class IrisHttpSessionService {

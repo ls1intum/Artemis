@@ -5,7 +5,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/message-store.model';
-import { IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
+import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 @Injectable()
 export class IrisWebsocketService implements OnDestroy {

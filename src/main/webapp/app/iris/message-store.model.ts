@@ -1,4 +1,4 @@
-import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris.model';
+import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 export enum ActionType {
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',

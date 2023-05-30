@@ -1,10 +1,11 @@
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender } from 'app/entities/iris/iris.model';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/iris/message-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -16,7 +17,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     @ViewChild('chatBody') chatBody!: ElementRef;
 
     readonly SENDER_USER = IrisSender.USER;
-    readonly SENDER_SERVER = IrisSender.SERVER;
+    readonly SENDER_SERVER = IrisSender.LLM;
     readonly stateStore: IrisStateStore;
 
     messages: IrisMessage[] = [];
