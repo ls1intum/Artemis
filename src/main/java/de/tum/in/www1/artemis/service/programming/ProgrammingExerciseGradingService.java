@@ -176,7 +176,7 @@ public class ProgrammingExerciseGradingService {
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = studentParticipation.getBranch();
+                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
             }
             if (Strings.isNullOrEmpty(participationDefaultBranch)) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
