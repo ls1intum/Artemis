@@ -120,7 +120,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", templateBuildTestResults,
                 solutionBuildTestResults);
-
+        newExercise.setChannelName("testchannelname-pe");
         ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Check that the repository folders were created in the file system for the template, solution, and tests repository.
@@ -198,6 +198,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         // Import the exercise and load all referenced entities
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
+        exerciseToBeImported.setChannelName("testchannel-pe-imported");
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
