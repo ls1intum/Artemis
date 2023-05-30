@@ -288,7 +288,7 @@ describe('Course Management Service', () => {
             .findAllForRegistration()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-registration`, returnedFromService, course);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
         tick();
     }));
 
@@ -319,7 +319,7 @@ describe('Course Management Service', () => {
             .registerForCourse(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(user));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/register` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
         req.flush(user);
         expect(syncGroupsSpy).toHaveBeenCalledWith(user);
         tick();
