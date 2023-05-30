@@ -365,6 +365,8 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 registrationEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
+                enrollmentStartDate: new FormControl(),
+                enrollmentEndDate: new FormControl(),
             });
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
