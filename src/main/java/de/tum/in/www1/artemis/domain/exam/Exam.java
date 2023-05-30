@@ -474,15 +474,6 @@ public class Exam extends DomainObject {
     }
 
     /**
-     * a helper method to get the exam title in a sanitized form (i.e. usable in file names)
-     *
-     * @return the sanitized exam title
-     **/
-    public String getSanitizedExamTitle() {
-        return title != null ? title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "") : "exam";
-    }
-
-    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
