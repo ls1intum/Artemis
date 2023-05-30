@@ -360,9 +360,6 @@ public class DatabaseUtilService {
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
 
-    @Autowired
-    private ReactionRepository reactionRepository;
-
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
         User user = getUserByLogin(username);
