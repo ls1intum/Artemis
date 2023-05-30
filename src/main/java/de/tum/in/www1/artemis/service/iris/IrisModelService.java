@@ -28,7 +28,6 @@ public class IrisModelService {
      * @param irisSession The session to send to the LLM.
      * @return A CompletableFuture containing the response from the LLM or an empty Optional if no model is available.
      */
-
     public CompletableFuture<IrisMessage> requestResponse(IrisSession irisSession) {
         if (irisGPT3_5Service.isPresent()) {
             return irisGPT3_5Service.get().getResponse(irisSession);
