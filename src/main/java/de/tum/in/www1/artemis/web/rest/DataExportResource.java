@@ -25,28 +25,23 @@ public class DataExportResource {
 
     private final Logger log = LoggerFactory.getLogger(DataExportResource.class);
 
-    private final UserRepository userRepository;
-
     public DataExportResource(DataExportService dataExportService, UserRepository userRepository) {
         this.dataExportService = dataExportService;
-        this.userRepository = userRepository;
     }
 
     /**
      * Request a data export for the given user
      *
-     * @param userId the id of the user to request the data export for
      * @return the data export object
      */
-    @PutMapping("{userId}/data-export")
+    @PutMapping("data-export")
     @PreAuthorize("hasRole('USER')")
-    public DataExport requestDataExport(@PathVariable long userId) {
+    public DataExport requestDataExport() {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
         // for now we return the data export object, so the client can make the request to download the export.
-        var user = userRepository.findOneWithGroupsAndAuthoritiesByIdOrElseThrow(userId);
 
         try {
-            return dataExportService.requestDataExport(user);
+            return dataExportService.requestDataExport();
         }
         catch (Exception e) {
             log.error("Could not create data export", e);
@@ -58,14 +53,13 @@ public class DataExportResource {
     /**
      * Download the data export for the given user
      *
-     * @param userId       the id of the user to download the data export for
      * @param dataExportId the id of the data export to download
      * @return A resource containing the data export zip file
      */
-    @GetMapping("{userId}/data-export/{dataExportId}")
+    @GetMapping("data-export/{dataExportId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId, @PathVariable long dataExportId) {
-        var dataExportPath = dataExportService.downloadDataExport(userId, dataExportId);
+    public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
+        var dataExportPath = dataExportService.downloadDataExport(dataExportId);
         var finalZipFile = dataExportPath.toFile();
         InputStreamResource resource;
         try {

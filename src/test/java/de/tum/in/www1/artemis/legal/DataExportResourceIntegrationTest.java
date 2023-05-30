@@ -289,7 +289,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userForExport);
         dataExport = dataExportRepository.save(dataExport);
-        var dataExportFile = request.getFile("/api/" + userForExport.getId() + "/data-export/" + dataExport.getId(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        var dataExportFile = request.getFile("/api/data-export/" + dataExport.getId(), HttpStatus.OK, new LinkedMultiValueMap<>());
         var dataExportAfterDownload = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFile).isNotNull();
         assertThat(dataExportAfterDownload.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED);
@@ -325,28 +325,15 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/" + user1.getId() + "/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportDoesntBelongToLoggedInUser_forbidden() throws Exception {
-        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
-        var dataExport = new DataExport();
-        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport.setUser(user2);
-        dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/" + user2.getId() + "/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportErrorDuringCreation_internalServerError() throws Exception {
-        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
-        when(dataExportService.requestDataExport(userForExport)).thenThrow(new RuntimeException("Error!"));
-        request.putWithResponseBody("/api/" + userForExport.getId() + "/data-export", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        when(dataExportService.requestDataExport()).thenThrow(new RuntimeException("Error!"));
+        request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -359,7 +346,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/" + userForExport.getId() + "/data-export/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
+        request.get("/api/data-export/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
 
     }
 
@@ -373,22 +360,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(state);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/" + userForExport.getId() + "/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportIdNotExistent_notFound() throws Exception {
-        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
-        request.get("/api/" + userForExport.getId() + "/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserIdNotExistent_notFound() throws Exception {
-        request.get("/api/" + 999999999 + "/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
+        request.get("/api/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
 
     }
 }

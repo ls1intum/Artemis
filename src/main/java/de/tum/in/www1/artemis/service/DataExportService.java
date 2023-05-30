@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -37,12 +35,14 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
@@ -59,8 +59,6 @@ public class DataExportService {
     private static final String TXT_FILE_EXTENSION = ".txt";
 
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
-
-    private long userId;
 
     @Value("${artemis.data-export-path:./data-exports}")
     private Path dataExportPath;
@@ -108,86 +106,88 @@ public class DataExportService {
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
-            ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
-            QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
-            StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
+            ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
+            QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
+            Optional<ApollonConversionService> apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            ReactionRepository reactionRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.examService = examService;
         this.dataExportRepository = dataExportRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
         this.apollonConversionService = apollonConversionService;
-        this.studentExamRepository = studentExamRepository;
         this.fileService = fileService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.reactionRepository = reactionRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
     /**
      * Requests a data export for the given user.
      * This will create a new DataExport object in the database and start the creation of the data export.
      *
-     * @param user the user for which to create the data export
      * @return the created DataExport object
-     **/
-    public DataExport requestDataExport(User user) throws IOException {
-        this.userId = user.getId();
+     */
+    public DataExport requestDataExport() throws IOException {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
+        var login = SecurityUtils.getCurrentUserLogin();
+        if (login.isEmpty()) {
+            throw new AccessForbiddenException("Cannot request data export for anonymous user");
+        }
+        var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login.get())
+                .orElseThrow(() -> new EntityNotFoundException("User with login " + login.get() + " does not exist"));
+
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
         if (!Files.exists(dataExportPath)) {
             Files.createDirectories(dataExportPath);
         }
-        dataExportRepository.save(dataExport);
+        dataExport = dataExportRepository.save(dataExport);
+
+        // ToDo: return from here directly and let the scheduler manage the pending exports in a work queue (part of a follow-up)
         workingDirectory = Files.createTempDirectory(dataExportPath, "data-export-working-dir");
+
         dataExport.setDataExportState(DataExportState.IN_CREATION);
-        dataExportRepository.save(dataExport);
+        dataExport = dataExportRepository.save(dataExport);
+
         var dataExportPath = createDataExport(user);
         dataExport.setFilePath(dataExportPath.toString());
         // sending the email will be part of a follow-up, for now this just implies export finished
         dataExport.setCreationDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport = dataExportRepository.save(dataExport);
-        return dataExport;
+
+        return dataExportRepository.save(dataExport);
     }
 
     /**
-     * Download the data export for the given user id and data export id.
+     * Download the data export for the given data export id.
      *
-     * @param userId       the id of the user for which to download the data export
      * @param dataExportId the id of the data export to download
      * @return the file path where the data export is stored
      * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
      * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    public Path downloadDataExport(long userId, long dataExportId) {
+    public Path downloadDataExport(long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
-        var user = userRepository.findByIdElseThrow(userId);
-        // check data export belongs to specified user
-        authorizationCheckService.isOwnerOfDataExportElseThrow(dataExport, user);
-        // check data export belongs to currently logged-in user
         authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
+        checkDataExportCanBeDownloaded(dataExport);
 
-        // the first condition checks that the export has been created and the second that it has not yet been deleted (we allow multiple downloads as long as the export is not
-        // deleted
-        if (dataExport.getDataExportState() != DataExportState.EMAIL_SENT && dataExport.getDataExportState() != DataExportState.DOWNLOADED) {
-            throw new AccessForbiddenException("Data export is not ready for download yet or has already been deleted");
-        }
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
         return Path.of(dataExport.getFilePath());
+    }
+
+    private void checkDataExportCanBeDownloaded(DataExport dataExport) {
+        if (!dataExport.getDataExportState().isDownloadable()) {
+            throw new AccessForbiddenException("Data export has either not been created or already been deleted");
+        }
     }
 
     /**
@@ -196,7 +196,7 @@ public class DataExportService {
      *
      * @param user the user for which to create the data export
      * @return the path to the created data export
-     **/
+     */
     private Path createDataExport(User user) throws IOException {
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
         var posts = postRepository.findPostsByAuthorId(userId);
@@ -208,21 +208,14 @@ public class DataExportService {
             Path courseDir = Files.createDirectory(workingDirectory.resolve("course_" + course.getShortName()));
             Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
                     user.getId());
-            Set<ProgrammingExercise> programmingExercises = exercises.stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                    .map(exercise -> (ProgrammingExercise) exercise).collect(Collectors.toSet());
-            Set<TextExercise> textExercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise).map(exercise -> (TextExercise) exercise)
-                    .collect(Collectors.toSet());
-            Set<FileUploadExercise> fileUploadExercises = exercises.stream().filter(exercise -> exercise instanceof FileUploadExercise)
-                    .map(exercise -> (FileUploadExercise) exercise).collect(Collectors.toSet());
-            Set<ModelingExercise> modelingExercises = exercises.stream().filter(exercise -> exercise instanceof ModelingExercise).map(exercise -> (ModelingExercise) exercise)
-                    .collect(Collectors.toSet());
-            Set<QuizExercise> quizExercises = exercises.stream().filter(exercise -> exercise instanceof QuizExercise).map(exercise -> (QuizExercise) exercise)
-                    .collect(Collectors.toSet());
-            createExportForProgrammingExercises(programmingExercises, courseDir);
-            createExportForModelingExercises(modelingExercises, courseDir);
-            createExportForTextExercises(textExercises, courseDir);
-            createExportForFileUploadExercises(fileUploadExercises, courseDir);
-            createExportForQuizExercises(quizExercises, courseDir);
+            for (var exercise : exercises) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    createProgrammingExerciseExport(programmingExercise, courseDir);
+                }
+                else {
+                    createNonProgrammingExerciseExport(exercise, courseDir);
+                }
+            }
             createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
             createExportForExams(user.getId(), course.getExams(), courseDir);
         }
@@ -308,36 +301,6 @@ public class DataExportService {
         }
     }
 
-    private void createExportForQuizExercises(Set<QuizExercise> quizExercises, Path courseDir) throws IOException {
-        for (var quizExercise : quizExercises) {
-            createNonProgrammingExerciseExport(quizExercise, courseDir);
-        }
-    }
-
-    private void createExportForProgrammingExercises(Set<ProgrammingExercise> programmingExercises, Path courseDir) throws IOException {
-        for (var programmingExercise : programmingExercises) {
-            createProgrammingExerciseExport(programmingExercise, courseDir);
-        }
-    }
-
-    private void createExportForModelingExercises(Set<ModelingExercise> modelingExercises, Path courseDir) throws IOException {
-        for (var modelingExercise : modelingExercises) {
-            createNonProgrammingExerciseExport(modelingExercise, courseDir);
-        }
-    }
-
-    private void createExportForTextExercises(Set<TextExercise> textExercises, Path courseDir) throws IOException {
-        for (var textExercise : textExercises) {
-            createNonProgrammingExerciseExport(textExercise, courseDir);
-        }
-    }
-
-    private void createExportForFileUploadExercises(Set<FileUploadExercise> fileUploadExercises, Path courseWorkingDir) throws IOException {
-        for (var fileUploadExercise : fileUploadExercises) {
-            createNonProgrammingExerciseExport(fileUploadExercise, courseWorkingDir);
-        }
-    }
-
     private void addGeneralUserInformation(User user) throws IOException {
         String[] headers = new String[] { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
@@ -345,7 +308,6 @@ public class DataExportService {
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("general_user_information" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
             printer.flush();
-
         }
     }
 
@@ -690,7 +652,6 @@ public class DataExportService {
                 csvFormat)) {
             printer.printRecord(getSubmissionStreamToPrint(submission));
             printer.flush();
-
         }
     }
 
@@ -699,7 +660,6 @@ public class DataExportService {
         builder.add(submission.getId()).add(submission.getSubmissionDate());
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
             builder.add(programmingSubmission.getCommitHash());
-
         }
         return builder.build();
     }
