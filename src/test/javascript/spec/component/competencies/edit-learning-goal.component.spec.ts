@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
-import { EditLearningGoalComponent } from 'app/course/competencies/edit-competency/edit-learning-goal.component';
+import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
@@ -17,12 +17,12 @@ import { LearningGoalFormStubComponent } from './learning-goal-form-stub.compone
 import { ArtemisTestModule } from '../../test.module';
 
 describe('EditLearningGoalComponent', () => {
-    let editLearningGoalComponentFixture: ComponentFixture<EditLearningGoalComponent>;
-    let editLearningGoalComponent: EditLearningGoalComponent;
+    let editLearningGoalComponentFixture: ComponentFixture<EditCompetencyComponent>;
+    let editLearningGoalComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [LearningGoalFormStubComponent, EditLearningGoalComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [LearningGoalFormStubComponent, EditCompetencyComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(CompetencyService),
@@ -58,7 +58,7 @@ describe('EditLearningGoalComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                editLearningGoalComponentFixture = TestBed.createComponent(EditLearningGoalComponent);
+                editLearningGoalComponentFixture = TestBed.createComponent(EditCompetencyComponent);
                 editLearningGoalComponent = editLearningGoalComponentFixture.componentInstance;
             });
     });
@@ -160,7 +160,7 @@ describe('EditLearningGoalComponent', () => {
         );
         editLearningGoalComponentFixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(editLearningGoalComponent.learningGoal).toEqual(learningGoalDatabase);
+        expect(editLearningGoalComponent.competency).toEqual(learningGoalDatabase);
 
         const changedUnit: Competency = {
             ...learningGoalDatabase,

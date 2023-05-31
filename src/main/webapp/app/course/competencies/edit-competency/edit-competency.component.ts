@@ -13,13 +13,13 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
-    selector: 'jhi-edit-learning-goal',
-    templateUrl: './edit-learning-goal.component.html',
+    selector: 'jhi-edit-competency',
+    templateUrl: './edit-competency.component.html',
     styles: [],
 })
-export class EditLearningGoalComponent implements OnInit {
+export class EditCompetencyComponent implements OnInit {
     isLoading = false;
-    learningGoal: Competency;
+    competency: Competency;
     lecturesWithLectureUnits: Lecture[] = [];
     formData: CompetencyFormData;
     courseId: number;
@@ -28,7 +28,7 @@ export class EditLearningGoalComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private lectureService: LectureService,
         private router: Router,
-        private learningGoalService: CompetencyService,
+        private competencyService: CompetencyService,
         private alertService: AlertService,
     ) {}
 
@@ -38,26 +38,26 @@ export class EditLearningGoalComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const learningGoalId = Number(params.get('competencyId'));
+                    const competencyId = Number(params.get('competencyId'));
                     this.courseId = Number(parentParams.get('courseId'));
 
-                    const learningGoalObservable = this.learningGoalService.findById(learningGoalId, this.courseId);
-                    const learningGoalCourseProgressObservable = this.learningGoalService.getCourseProgress(learningGoalId, this.courseId);
+                    const competencyObservable = this.competencyService.findById(competencyId, this.courseId);
+                    const competencyCourseProgressObservable = this.competencyService.getCourseProgress(competencyId, this.courseId);
                     const lecturesObservable = this.lectureService.findAllByCourseId(this.courseId, true);
-                    return forkJoin([learningGoalObservable, learningGoalCourseProgressObservable, lecturesObservable]);
+                    return forkJoin([competencyObservable, competencyCourseProgressObservable, lecturesObservable]);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
             .subscribe({
-                next: ([learningGoalResult, courseProgressResult, lecturesResult]) => {
-                    if (learningGoalResult.body) {
-                        this.learningGoal = learningGoalResult.body;
+                next: ([competencyResult, courseProgressResult, lecturesResult]) => {
+                    if (competencyResult.body) {
+                        this.competency = competencyResult.body;
                         if (courseProgressResult.body) {
-                            this.learningGoal.courseProgress = courseProgressResult.body;
+                            this.competency.courseProgress = courseProgressResult.body;
                         }
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.learningGoal.lectureUnits) {
-                            this.learningGoal.lectureUnits = [];
+                        if (!this.competency.lectureUnits) {
+                            this.competency.lectureUnits = [];
                         }
                     }
                     if (lecturesResult.body) {
@@ -75,31 +75,31 @@ export class EditLearningGoalComponent implements OnInit {
                     }
 
                     this.formData = {
-                        id: this.learningGoal.id,
-                        title: this.learningGoal.title,
-                        description: this.learningGoal.description,
-                        connectedLectureUnits: this.learningGoal.lectureUnits,
-                        taxonomy: this.learningGoal.taxonomy,
-                        masteryThreshold: this.learningGoal.masteryThreshold,
+                        id: this.competency.id,
+                        title: this.competency.title,
+                        description: this.competency.description,
+                        connectedLectureUnits: this.competency.lectureUnits,
+                        taxonomy: this.competency.taxonomy,
+                        masteryThreshold: this.competency.masteryThreshold,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
-    updateLearningGoal(formData: CompetencyFormData) {
+    updateCompetency(formData: CompetencyFormData) {
         const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
-        this.learningGoal.title = title;
-        this.learningGoal.description = description;
-        this.learningGoal.taxonomy = taxonomy;
-        this.learningGoal.masteryThreshold = masteryThreshold;
-        this.learningGoal.lectureUnits = connectedLectureUnits;
+        this.competency.title = title;
+        this.competency.description = description;
+        this.competency.taxonomy = taxonomy;
+        this.competency.masteryThreshold = masteryThreshold;
+        this.competency.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;
 
-        this.learningGoalService
-            .update(this.learningGoal, this.courseId)
+        this.competencyService
+            .update(this.competency, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

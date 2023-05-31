@@ -9,7 +9,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
-import { EditLearningGoalComponent } from 'app/course/competencies/edit-competency/edit-learning-goal.component';
+import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
@@ -210,7 +210,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: ':competencyId/edit',
-                                component: EditLearningGoalComponent,
+                                component: EditCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',

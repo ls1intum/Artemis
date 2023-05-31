@@ -5,7 +5,7 @@ import { CreateCompetencyComponent } from './create-competency/create-competency
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { EditLearningGoalComponent } from './edit-competency/edit-learning-goal.component';
+import { EditCompetencyComponent } from './edit-competency/edit-competency.component';
 import { CompetencyManagementComponent } from './competency-management/competency-management.component';
 import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
 import { CompetenciesPopoverComponent } from './competencies-popover/competencies-popover.component';
@@ -20,7 +20,7 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
         CompetencyFormComponent,
         CompetencyRingsComponent,
         CreateCompetencyComponent,
-        EditLearningGoalComponent,
+        EditCompetencyComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
         CompetenciesPopoverComponent,
