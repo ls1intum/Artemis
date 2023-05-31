@@ -1,7 +1,9 @@
-import { IrisClientMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage, IrisSession } from 'app/entities/iris/iris-content-type.model';
 import dayjs from 'dayjs';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { IrisClientMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { IrisSession } from 'app/entities/iris/iris-session.model';
 
 export const mockMessageContent = {
     textContent: 'Hello, world!',
@@ -28,3 +30,10 @@ export const mockConversation = {
     exercise: irisExercise,
     messages: [mockClientMessage, mockServerMessage],
 } as IrisSession;
+
+export const mockState = {
+    messages: [],
+    isLoading: false,
+    error: '',
+    sessionId: 0,
+};

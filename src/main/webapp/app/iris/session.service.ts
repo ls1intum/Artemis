@@ -20,19 +20,22 @@ export class IrisSessionService {
                 sessionId = irisSessionResponse.body!.id;
                 return this.httpMessageService.getMessages(sessionId).toPromise();
             })
-            .then((messages: HttpResponse<IrisMessage[]>) => {
-                this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages.body!));
-            })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
                     return this.createNewSession(exerciseId);
                 } else {
                     this.dispatchError('Could not fetch session details');
                 }
+            })
+            .then((messages: HttpResponse<IrisMessage[]>) => {
+                this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages.body!));
+            })
+            .catch(() => {
+                this.dispatchError('Could not fetch messages');
             });
     }
 
-    createNewSession(exerciseId: number): void {
+    private createNewSession(exerciseId: number): void {
         this.httpSessionService
             .createSessionForProgrammingExercise(exerciseId)
             .toPromise()
@@ -40,11 +43,11 @@ export class IrisSessionService {
                 this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.body!.id, []));
             })
             .catch(() => {
-                this.dispatchError('Could not create a new session');
+                this.dispatchError('Could not create a new session'); // TODO move to messages.json
             });
     }
 
     private dispatchError(error: string): void {
-        this.stateStore.dispatch(new ConversationErrorOccurredAction(error)); // TODO in messages.json
+        this.stateStore.dispatch(new ConversationErrorOccurredAction(error));
     }
 }

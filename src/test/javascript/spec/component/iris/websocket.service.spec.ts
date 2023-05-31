@@ -13,9 +13,9 @@ import { mockServerMessage } from '../../helpers/sample/iris-sample-data';
 describe('IrisWebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
     let jhiWebsocketService: JhiWebsocketService;
-    let irisMessageStore: IrisStateStore;
+    let irisStateStore: IrisStateStore;
 
-    const channel = 'topic/iris/sessions/0';
+    const channel = '/user/topic/iris/sessions/0';
     const newMessageObservable = of(mockServerMessage);
 
     beforeEach(() => {
@@ -25,7 +25,7 @@ describe('IrisWebsocketService', () => {
         });
         irisWebsocketService = TestBed.inject(IrisWebsocketService);
         jhiWebsocketService = TestBed.inject(JhiWebsocketService);
-        irisMessageStore = TestBed.inject(IrisStateStore);
+        irisStateStore = TestBed.inject(IrisStateStore);
     });
 
     afterEach(() => {
@@ -37,12 +37,12 @@ describe('IrisWebsocketService', () => {
         expect(irisWebsocketService).toBeTruthy();
     });
 
-    it('should subscribe to a channel', fakeAsync(() => {
+    it('should subscribe to a channel, get session updates and notify store about new messages', fakeAsync(() => {
         const websocketSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(newMessageObservable);
-        const dispatchSpy = jest.spyOn(irisMessageStore, 'dispatch');
+        const dispatchSpy = jest.spyOn(irisStateStore, 'dispatch');
 
-        irisMessageStore.dispatch(new SessionReceivedAction(0, []));
+        irisStateStore.dispatch(new SessionReceivedAction(0, []));
 
         tick();
 
@@ -60,9 +60,9 @@ describe('IrisWebsocketService', () => {
         jest.spyOn(jhiWebsocketService, 'subscribe');
         jest.spyOn(jhiWebsocketService, 'unsubscribe');
         jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(newMessageObservable);
-        irisMessageStore.dispatch(new SessionReceivedAction(0, []));
+        irisStateStore.dispatch(new SessionReceivedAction(0, []));
         tick();
-        irisMessageStore.dispatch(new SessionReceivedAction(2, []));
+        irisStateStore.dispatch(new SessionReceivedAction(2, []));
         tick();
         expect(jhiWebsocketService.unsubscribe).toHaveBeenCalledWith(channel);
     }));

@@ -33,7 +33,7 @@ export class IrisStateStore implements OnDestroy {
         this.subscription = this.action
             .pipe(
                 tap((resolvableAction: ResolvableAction) => {
-                    const newState = this.storeReducer(this.state.getValue(), resolvableAction.action);
+                    const newState = IrisStateStore.storeReducer(this.state.getValue(), resolvableAction.action);
                     this.state.next(newState);
                     if (newState.error) {
                         resolvableAction.reject(newState.error);
@@ -99,7 +99,7 @@ export class IrisStateStore implements OnDestroy {
         console.debug('You forgot to handle a case of MessageStoreAction: ' + action);
     }
 
-    private storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
+    private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
                 messages: [...state.messages],

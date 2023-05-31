@@ -2,6 +2,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import {
     ActionType,
     ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
     HistoryMessageLoadedAction,
     MessageStoreState,
     SessionReceivedAction,
@@ -10,52 +11,52 @@ import {
 import { skip, take } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { mockClientMessage, mockServerMessage } from '../../helpers/sample/iris-sample-data';
+import { mockClientMessage, mockServerMessage, mockState } from '../../helpers/sample/iris-sample-data';
 
-describe('IrisMessageStore', () => {
-    let messageStore: IrisStateStore;
+describe('IrisStateStore', () => {
+    let stateStore: IrisStateStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [IrisStateStore],
         });
-        messageStore = TestBed.inject(IrisStateStore);
-        messageStore.dispatch(new SessionReceivedAction(0, []));
+        stateStore = TestBed.inject(IrisStateStore);
+        stateStore.dispatch(new SessionReceivedAction(0, []));
     });
 
     it('should dispatch and handle HistoryMessageLoadedAction', async () => {
-        const action: HistoryMessageLoadedAction = {
-            type: ActionType.HISTORY_MESSAGE_LOADED,
-            message: mockServerMessage,
-        };
+        const action: HistoryMessageLoadedAction = new HistoryMessageLoadedAction(mockServerMessage);
 
-        const obs = messageStore.getState();
+        const obs = stateStore.getState();
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        messageStore.dispatch(action);
+        stateStore.dispatch(action);
 
         const state = (await promise) as MessageStoreState;
 
-        expect(state.messages).toEqual([action.message]);
+        expect(state).toEqual({
+            ...mockState,
+            messages: [action.message],
+        });
     });
 
     it('should dispatch and handle ActiveConversationMessageLoadedAction', async () => {
-        const action: ActiveConversationMessageLoadedAction = {
-            type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
-            message: mockServerMessage,
-        };
+        const action: ActiveConversationMessageLoadedAction = new ActiveConversationMessageLoadedAction(mockServerMessage);
 
-        const obs = messageStore.getState();
+        const obs = stateStore.getState();
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        messageStore.dispatch(action);
+        stateStore.dispatch(action);
 
         const state = (await promise) as MessageStoreState;
 
-        expect(state.messages).toEqual([action.message]);
+        expect(state).toEqual({
+            ...mockState,
+            messages: [action.message],
+        });
     });
 
     it('should dispatch and handle StudentMessageSentAction', async () => {
@@ -64,15 +65,19 @@ describe('IrisMessageStore', () => {
             message: mockClientMessage,
         };
 
-        const obs = messageStore.getState();
+        const obs = stateStore.getState();
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        messageStore.dispatch(action);
+        stateStore.dispatch(action);
 
         const state = (await promise) as MessageStoreState;
 
-        expect(state.messages).toEqual([action.message]);
+        expect(state).toEqual({
+            ...mockState,
+            isLoading: true,
+            messages: [action.message],
+        });
     });
 
     it('should dispatch and handle 3 messages', async () => {
@@ -91,47 +96,108 @@ describe('IrisMessageStore', () => {
             message: mockServerMessage,
         };
 
-        const obs = messageStore.getState();
+        const obs = stateStore.getState();
 
         const promise1 = obs.pipe(skip(1), take(1)).toPromise();
 
-        messageStore.dispatch(action1);
+        stateStore.dispatch(action1);
 
         const state1 = (await promise1) as MessageStoreState;
 
-        expect(state1.messages).toEqual([action1.message]);
+        expect(state1).toEqual({
+            ...mockState,
+            isLoading: true,
+            messages: [action1.message],
+        });
 
         const promise2 = obs.pipe(skip(1), take(1)).toPromise();
 
-        messageStore.dispatch(action2);
+        stateStore.dispatch(action2);
 
         const state2 = (await promise2) as MessageStoreState;
 
-        expect(state2.messages).toEqual([action1.message, action2.message]);
+        expect(state2).toEqual({
+            ...mockState,
+            messages: [action1.message, action2.message],
+        });
 
         // the observable should only be aware of the previously emitted value
         const promise3 = obs.pipe(skip(1), take(1)).toPromise();
 
-        messageStore.dispatch(action3);
+        stateStore.dispatch(action3);
 
         const state3 = (await promise3) as MessageStoreState;
 
-        expect(state3.messages).toEqual([action1.message, action2.message, action3.message]);
+        expect(state3).toEqual({
+            ...mockState,
+            messages: [action1.message, action2.message, action3.message],
+        });
     });
 
-    it.skip('should not dispatch new message actions with an empty session id', async () => {
-        messageStore.dispatch(new SessionReceivedAction(1, []));
+    it('should dispatch error occurrences', async () => {
+        const obs = stateStore.getState();
 
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new ConversationErrorOccurredAction('123'));
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toStrictEqual({
+            ...mockState,
+            error: '123',
+        });
+    });
+
+    it('should proceed with then clause after dispatchAndThen is executed', async () => {
+        const action: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: mockClientMessage,
+        };
+
+        await stateStore.dispatchAndThen(action).then(async () => {
+            const promise = stateStore.getState().pipe(take(1)).toPromise();
+            const state = (await promise) as MessageStoreState;
+            expect(state).toEqual({
+                ...mockState,
+                isLoading: true,
+                messages: [action.message],
+            });
+        });
+    });
+});
+
+describe('IrisStateStore with an empty session state', () => {
+    let stateStore: IrisStateStore;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
+            providers: [IrisStateStore],
+        });
+        stateStore = TestBed.inject(IrisStateStore);
+    });
+
+    it('should not dispatch new message actions with an empty session id', async () => {
         const action: ActiveConversationMessageLoadedAction = {
             type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
             message: mockServerMessage,
         };
 
-        const youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId = 'You are trying to append messages to a conversation with an empty session id!';
-        try {
-            messageStore.dispatch(action);
-        } catch (error) {
-            expect(error.message).toBe(youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId);
-        }
+        const youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId = 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.';
+
+        const obs = stateStore.getState();
+
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action);
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toStrictEqual({
+            ...mockState,
+            error: youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId,
+            sessionId: null,
+        });
     });
 });
