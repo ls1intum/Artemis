@@ -133,31 +133,31 @@ When the due date is over you can assess the submissions.
 
 - Then click on Exercise Dashboard of the text exercise.
 
-    .. figure:: modeling/exercise-dashboard.png
+    .. figure:: text/exercise-dashboard.png
               :align: center
 
 - You will then be redirected to *Exercise Assessment Dashboard*.
 
-    .. figure:: modeling/submissions-dashboard.png
+    .. figure:: text/exercise-assessment-dashboard.png
               :align: center
 
-- In case you have not assessed a submission of this exercise before, you will get shown the problem statement and a summary of assessment instructions. Once you know what the exercise is about, you can click on the **Start participating in the exercise** button.
+- In case you have not assessed a submission of this exercise before, you will get shown the problem statement and a summary of assessment instructions. Once you know what the exercise is about, you can click on the |participate-in-exercise| button.
 
-- In case unassessed submissions are available, you can click on the **Start new assessment** button. You will then be redirected to the assessment page where you will be able to assess submission of a random student.
+- In case unassessed submissions are available, you can click on the |start-new-assessment| button. You will then be redirected to the assessment page where you will be able to assess submission of a random student.
 
-- You can now start assessing the elements of the model by double clicking it. Once you double click, you will get an assessment dialog where you can assign points, feedback and navigate through all other assessable components.
-
-    .. figure:: modeling/assessment-modal.png
+    .. figure:: text/exercise-assessment-dashboard-2.png
               :align: center
 
-- Alternatively, you can also assess the diagram by dragging and dropping assessment instructions from the *Assessment Instructions* section.
+- You can now start assessing text blocks by clicking on them. This opens an assessment dialog where you can assign points and provide feedback. To assess custom text blocks, hold `alt/option` while clicking in any order on the first and last word of a text segment.
 
-    .. figure:: modeling/assessment-instruction.png
+    .. figure:: text/assessment-modal.png
               :align: center
+
+- Alternatively, you can also assess the text blocks by dragging and dropping assessment instructions from the *Assessment Instructions* section.
 
 - Feedback to the entire submission can also be added by clicking on the |add-new-feedback| button.
 
-    .. figure:: modeling/feedback-modal.png
+    .. figure:: general/feedback-modal.png
               :align: center
 
 Once you're done assessing the solution, you can either:
@@ -178,7 +178,12 @@ Once you're done assessing the solution, you can either:
 .. |participation| image:: general/participation-button.png
 .. |example-submission| image:: general/example-submission-button.png
 .. |delete| image:: general/delete-button.png
+.. |participate-in-exercise| image:: general/start-participating-in-exercise-button.png
+.. |start-new-assessment| image:: general/start-new-assessment-button.png
 .. |start| image:: general/start-button.png
+.. |save| image:: general/save-button.png
+.. |cancel| image:: general/cancel-button.png
+.. |exercise-dashboard-button| image:: general/cancel-button.png
 .. |open-text-editor| image:: text/open-text-editor-button.png
 
 .. |submit| image:: general/submit-button.png
