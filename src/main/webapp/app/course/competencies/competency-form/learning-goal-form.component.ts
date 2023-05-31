@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { merge, of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
@@ -14,7 +14,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 /**
  * Async Validator to make sure that a competency title is unique within a course
  */
-export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number, initialTitle?: string) => {
+export const titleUniqueValidator = (learningGoalService: CompetencyService, courseId: number, initialTitle?: string) => {
     return (learningGoalTitleControl: FormControl<string | undefined>) => {
         return of(learningGoalTitleControl.value).pipe(
             delay(250),
@@ -100,7 +100,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     constructor(
         private fb: FormBuilder,
-        private learningGoalService: LearningGoalService,
+        private learningGoalService: CompetencyService,
         private translateService: TranslateService,
         public lectureUnitService: LectureUnitService,
     ) {}

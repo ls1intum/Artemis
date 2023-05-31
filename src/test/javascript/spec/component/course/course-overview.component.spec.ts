@@ -33,7 +33,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewChild } f
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency } from 'app/entities/competency.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
@@ -110,7 +110,7 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let teamService: TeamService;
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
@@ -148,7 +148,7 @@ describe('CourseOverviewComponent', () => {
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseExerciseService),
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 {
                     provide: ActivatedRoute,
                     useValue: { params: of({ courseId: course1.id }), snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } } },
@@ -185,7 +185,7 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
-                learningGoalService = TestBed.inject(LearningGoalService);
+                learningGoalService = TestBed.inject(CompetencyService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
@@ -14,7 +14,7 @@ import { LearningGoalCardStubComponent } from '../../competencies/learning-goal-
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
 
     const activeModalStub = {
         close: () => {},
@@ -27,7 +27,7 @@ describe('CoursePrerequisitesModal', () => {
             declarations: [CoursePrerequisitesModalComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 {
                     provide: NgbActiveModal,
                     useValue: activeModalStub,
@@ -40,7 +40,7 @@ describe('CoursePrerequisitesModal', () => {
                 coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
                 coursePrerequisitesModalComponent = coursePrerequisitesModalComponentFixture.componentInstance;
                 coursePrerequisitesModalComponentFixture.componentInstance.courseId = 1;
-                learningGoalService = TestBed.inject(LearningGoalService);
+                learningGoalService = TestBed.inject(CompetencyService);
             });
     });
 

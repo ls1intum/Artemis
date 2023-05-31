@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgModel, ReactiveFormsModule } from '@angular/forms';
@@ -18,7 +18,7 @@ describe('LearningGoalSelection', () => {
     let fixture: ComponentFixture<LearningGoalSelectionComponent>;
     let component: LearningGoalSelectionComponent;
     let courseStorageService: CourseStorageService;
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,7 +44,7 @@ describe('LearningGoalSelection', () => {
                 fixture = TestBed.createComponent(LearningGoalSelectionComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
-                learningGoalService = TestBed.inject(LearningGoalService);
+                learningGoalService = TestBed.inject(CompetencyService);
             });
     });
 

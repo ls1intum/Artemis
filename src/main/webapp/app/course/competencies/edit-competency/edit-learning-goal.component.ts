@@ -5,7 +5,7 @@ import { LearningGoalFormData } from 'app/course/competencies/competency-form/le
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, switchMap, take } from 'rxjs/operators';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
@@ -28,7 +28,7 @@ export class EditLearningGoalComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private lectureService: LectureService,
         private router: Router,
-        private learningGoalService: LearningGoalService,
+        private learningGoalService: CompetencyService,
         private alertService: AlertService,
     ) {}
 

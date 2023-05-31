@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -33,7 +33,7 @@ describe('CourseLearningGoalsDetails', () => {
     let fixture: ComponentFixture<CourseLearningGoalsDetailsComponent>;
     let component: CourseLearningGoalsDetailsComponent;
 
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -70,7 +70,7 @@ describe('CourseLearningGoalsDetails', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseLearningGoalsDetailsComponent);
                 component = fixture.componentInstance;
-                learningGoalService = TestBed.inject(LearningGoalService);
+                learningGoalService = TestBed.inject(CompetencyService);
             });
     });
 

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@ang
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Competency, getIcon } from 'app/entities/competency.model';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
@@ -35,7 +35,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
-    constructor(private route: ActivatedRoute, private courseStorageService: CourseStorageService, private learningGoalService: LearningGoalService) {}
+    constructor(private route: ActivatedRoute, private courseStorageService: CourseStorageService, private learningGoalService: CompetencyService) {}
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));

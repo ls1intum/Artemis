@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
 import { EditLearningGoalComponent } from 'app/course/competencies/edit-competency/edit-learning-goal.component';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -25,7 +25,7 @@ describe('EditLearningGoalComponent', () => {
             declarations: [LearningGoalFormStubComponent, EditLearningGoalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(LectureService),
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -74,7 +74,7 @@ describe('EditLearningGoalComponent', () => {
 
     it('should set form data correctly', () => {
         // mocking competency service
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const lectureUnit = new TextUnit();
         lectureUnit.id = 1;
 
@@ -126,7 +126,7 @@ describe('EditLearningGoalComponent', () => {
 
     it('should send PUT request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const lectureService = TestBed.inject(LectureService);
 
         const textUnit = new TextUnit();

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { Competency } from 'app/entities/competency.model';
@@ -17,7 +17,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     isLoading = false;
     prerequisites: Competency[] = [];
 
-    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private learningGoalService: LearningGoalService) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private learningGoalService: CompetencyService) {}
 
     ngOnInit(): void {
         if (this.courseId) {

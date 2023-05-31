@@ -10,7 +10,7 @@ import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mo
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -31,7 +31,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 MockProvider(LectureService),
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 {
@@ -61,7 +61,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should initialize and load data', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         const lecture = new Lecture();
         lecture.id = 1;
@@ -92,7 +92,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should show create form and load lecture when clicked', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         const lecture = new Lecture();
         lecture.id = 1;
@@ -123,7 +123,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should show an alert when loading fails', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -147,7 +147,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should show an alert when creating fails', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -177,7 +177,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should show an alert when deleting fails', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -204,7 +204,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should show an alert when editing fails', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -236,7 +236,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should close all forms when canceling', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
@@ -260,7 +260,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should delete the learning goal when clicked', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
@@ -283,7 +283,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should open the form when editing', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -302,7 +302,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should return the connected units for a goal and lecture', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -325,7 +325,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should return no connected units for empty goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -341,7 +341,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should call the service and show an alert when creating a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -371,7 +371,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should append exercises as units when creating a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -416,7 +416,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should not call the service when creating a goal with an empty form', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -441,7 +441,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should call the service and show an alert when editing a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
@@ -472,7 +472,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
     it('should append exercises as units when editing a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
         const alertService = TestBed.inject(AlertService);
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));

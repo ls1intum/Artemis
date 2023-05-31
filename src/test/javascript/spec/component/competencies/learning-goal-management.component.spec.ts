@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyRelationError, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
@@ -32,7 +32,7 @@ class NgxGraphStubComponent {}
 describe('LearningGoalManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
     let modalService: NgbModal;
 
     let getAllForCourseSpy: any;
@@ -74,7 +74,7 @@ describe('LearningGoalManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CompetencyManagementComponent);
                 component = fixture.componentInstance;
-                learningGoalService = TestBed.inject(LearningGoalService);
+                learningGoalService = TestBed.inject(CompetencyService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
                 const learningGoal = new Competency();

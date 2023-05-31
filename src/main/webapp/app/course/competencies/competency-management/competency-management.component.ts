@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Competency, CompetencyRelation, CompetencyRelationError, CourseCompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -53,7 +53,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private accountService: AccountService,
-        private competencyService: LearningGoalService,
+        private competencyService: CompetencyService,
         private alertService: AlertService,
         private modalService: NgbModal,
     ) {}
@@ -154,7 +154,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                     );
 
                     const relationsObservable = this.competencies.map((lg) => {
-                        return this.competencyService.getLearningGoalRelations(lg.id!, this.courseId);
+                        return this.competencyService.getCompetencyRelations(lg.id!, this.courseId);
                     });
 
                     const progressObservable = this.competencies.map((lg) => {
@@ -272,7 +272,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             }
         }
         this.competencyService
-            .createLearningGoalRelation(this.tailCompetency!, this.headCompetency!, this.relationType!, this.courseId)
+            .createCompetencyRelation(this.tailCompetency!, this.headCompetency!, this.relationType!, this.courseId)
             .pipe(
                 filter((res: HttpResponse<CompetencyRelation>) => res.ok),
                 map((res: HttpResponse<CompetencyRelation>) => res.body),
@@ -286,7 +286,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     removeRelation(edge: Edge) {
-        this.competencyService.removeLearningGoalRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
+        this.competencyService.removeCompetencyRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
             next: () => {
                 this.loadData();
             },

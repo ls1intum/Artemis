@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -34,7 +34,7 @@ export class CourseLearningGoalsComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
-        private learningGoalService: LearningGoalService,
+        private learningGoalService: CompetencyService,
     ) {}
 
     ngOnInit(): void {

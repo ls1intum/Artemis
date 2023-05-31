@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
@@ -38,7 +38,7 @@ const mockActivatedRoute = new MockActivatedRoute({
 describe('CourseLearningGoals', () => {
     let courseLearningGoalsComponentFixture: ComponentFixture<CourseLearningGoalsComponent>;
     let courseLearningGoalsComponent: CourseLearningGoalsComponent;
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
     const mockCourseStorageService = {
         getCourse: () => {},
         setCourses: () => {},
@@ -52,7 +52,7 @@ describe('CourseLearningGoals', () => {
             providers: [
                 MockProvider(AlertService),
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 MockProvider(AccountService),
                 {
                     provide: ActivatedRoute,
@@ -65,7 +65,7 @@ describe('CourseLearningGoals', () => {
             .then(() => {
                 courseLearningGoalsComponentFixture = TestBed.createComponent(CourseLearningGoalsComponent);
                 courseLearningGoalsComponent = courseLearningGoalsComponentFixture.componentInstance;
-                learningGoalService = TestBed.inject(LearningGoalService);
+                learningGoalService = TestBed.inject(CompetencyService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';

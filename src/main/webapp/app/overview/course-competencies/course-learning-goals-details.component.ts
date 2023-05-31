@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -32,7 +32,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     constructor(
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
-        private learningGoalService: LearningGoalService,
+        private learningGoalService: CompetencyService,
         private lectureUnitService: LectureUnitService,
     ) {}
 

@@ -5,11 +5,11 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyProgress, CompetencyRelation, CourseCompetencyProgress } from 'app/entities/competency.model';
 
 describe('LearningGoalService', () => {
-    let learningGoalService: LearningGoalService;
+    let learningGoalService: CompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultLearningGoals: Competency[];
     let defaultLearningGoalProgress: CompetencyProgress;
@@ -35,7 +35,7 @@ describe('LearningGoalService', () => {
         expectedResultLearningGoal = {} as HttpResponse<Competency>;
         expectedResultLearningGoalProgress = {} as HttpResponse<CompetencyProgress>;
 
-        learningGoalService = TestBed.inject(LearningGoalService);
+        learningGoalService = TestBed.inject(CompetencyService);
         httpTestingController = TestBed.inject(HttpTestingController);
 
         defaultLearningGoals = [{ id: 0, title: 'title', description: 'description' } as Competency];
@@ -155,7 +155,7 @@ describe('LearningGoalService', () => {
         const returnedFromService = { tailCompetency: 1, headCompetency: 2, type: 'assumes' } as CompetencyRelation;
         let result: any;
         learningGoalService
-            .createLearningGoalRelation(1, 2, 'assumes', 1)
+            .createCompetencyRelation(1, 2, 'assumes', 1)
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -168,7 +168,7 @@ describe('LearningGoalService', () => {
 
     it('should remove a LearningGoal relation', fakeAsync(() => {
         let result: any;
-        learningGoalService.removeLearningGoalRelation(1, 1, 1).subscribe((resp) => (result = resp.ok));
+        learningGoalService.removeCompetencyRelation(1, 1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
         tick();

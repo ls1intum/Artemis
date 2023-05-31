@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -26,7 +26,7 @@ export class CreateLearningGoalComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private learningGoalService: LearningGoalService,
+        private learningGoalService: CompetencyService,
         private alertService: AlertService,
         private lectureService: LectureService,
     ) {}

@@ -9,7 +9,7 @@ import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -43,7 +43,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     constructor(
         protected alertService: AlertService,
         protected lectureService: LectureService,
-        protected learningGoalService: LearningGoalService,
+        protected learningGoalService: CompetencyService,
         protected translateService: TranslateService,
     ) {}
 

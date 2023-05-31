@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { CreateLearningGoalComponent } from 'app/course/competencies/create-competency/create-learning-goal.component';
 import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -25,7 +25,7 @@ describe('CreateLearningGoal', () => {
             imports: [],
             declarations: [LearningGoalFormStubComponent, CreateLearningGoalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
             providers: [
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
@@ -67,7 +67,7 @@ describe('CreateLearningGoal', () => {
 
     it('should send POST request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         const textUnit: TextUnit = new TextUnit();
         textUnit.id = 1;

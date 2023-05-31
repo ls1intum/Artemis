@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
-import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -26,7 +26,7 @@ describe('LearningGoalFormComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
             declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
-            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -47,7 +47,7 @@ describe('LearningGoalFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         // stubbing learning goal service for asynchronous validator
-        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoalService = TestBed.inject(CompetencyService);
 
         const learningGoalOfResponse = new Competency();
         learningGoalOfResponse.id = 1;
