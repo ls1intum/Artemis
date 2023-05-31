@@ -4,7 +4,6 @@ import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.validation.constraints.NotBlank;
@@ -71,17 +70,17 @@ public class Channel extends Conversation {
     @NotNull
     private Boolean isArchived;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(unique = true, name = "lecture_id")
     @JsonIgnoreProperties("channel")
     private Lecture lecture;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(unique = true, name = "exercise_id")
     @JsonIgnoreProperties("channel")
     private Exercise exercise;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(unique = true, name = "exam_id")
     @JsonIgnoreProperties("channel")
     private Exam exam;
