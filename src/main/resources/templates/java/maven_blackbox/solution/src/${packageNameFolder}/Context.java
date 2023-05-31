@@ -15,8 +15,8 @@ public class Context {
         this.dates = dates;
     }
 
-    public void addDates(List<Date> dates) {
-        this.dates.addAll(dates);
+    public void addDates(List<Date> datesToAdd) {
+        this.dates.addAll(datesToAdd);
     }
 
     public void clearDates() {

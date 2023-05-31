@@ -9,7 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class Client {
+public final class Client {
     private static final String PROMPT = "sort> ";
     private static final Context context = new Context();
     // private static final Policy policy = new Policy(context);

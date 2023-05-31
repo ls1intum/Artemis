@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
-public class CommandParser {
+public final class CommandParser {
 
     private static final String HELP_MESSAGE =
                 """
