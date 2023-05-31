@@ -3,7 +3,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CreateLearningGoalComponent } from 'app/course/competencies/create-competency/create-learning-goal.component';
+import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
 import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -17,13 +17,13 @@ import { LearningGoalFormStubComponent } from './learning-goal-form-stub.compone
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CreateLearningGoal', () => {
-    let createLearningGoalComponentFixture: ComponentFixture<CreateLearningGoalComponent>;
-    let createLearningGoalComponent: CreateLearningGoalComponent;
+    let createLearningGoalComponentFixture: ComponentFixture<CreateCompetencyComponent>;
+    let createLearningGoalComponent: CreateCompetencyComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LearningGoalFormStubComponent, CreateLearningGoalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
+            declarations: [LearningGoalFormStubComponent, CreateCompetencyComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
             providers: [
                 MockProvider(CompetencyService),
                 MockProvider(LectureService),
@@ -51,7 +51,7 @@ describe('CreateLearningGoal', () => {
         })
             .compileComponents()
             .then(() => {
-                createLearningGoalComponentFixture = TestBed.createComponent(CreateLearningGoalComponent);
+                createLearningGoalComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
                 createLearningGoalComponent = createLearningGoalComponentFixture.componentInstance;
             });
     });

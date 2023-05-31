@@ -8,7 +8,7 @@ import { CourseManagementExercisesComponent } from './course-management-exercise
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
-import { CreateLearningGoalComponent } from 'app/course/competencies/create-competency/create-learning-goal.component';
+import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
 import { EditLearningGoalComponent } from 'app/course/competencies/edit-competency/edit-learning-goal.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
@@ -201,7 +201,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: 'create',
-                                component: CreateLearningGoalComponent,
+                                component: CreateCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',

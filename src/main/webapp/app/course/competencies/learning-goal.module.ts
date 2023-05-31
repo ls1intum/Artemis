@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CompetencyFormComponent } from './competency-form/competency-form.component';
-import { CreateLearningGoalComponent } from './create-competency/create-learning-goal.component';
+import { CreateCompetencyComponent } from './create-competency/create-competency.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
     declarations: [
         CompetencyFormComponent,
         CompetencyRingsComponent,
-        CreateLearningGoalComponent,
+        CreateCompetencyComponent,
         EditLearningGoalComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
