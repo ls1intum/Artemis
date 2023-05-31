@@ -18,7 +18,15 @@ export class IrisSessionService {
             .toPromise()
             .then((irisSessionResponse: HttpResponse<IrisSession>) => {
                 sessionId = irisSessionResponse.body!.id;
-                return this.httpMessageService.getMessages(sessionId).toPromise();
+                return this.httpMessageService
+                    .getMessages(sessionId)
+                    .toPromise()
+                    .then((messages: HttpResponse<IrisMessage[]>) => {
+                        this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages.body!));
+                    })
+                    .catch(() => {
+                        this.dispatchError('Could not fetch messages');
+                    });
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
@@ -26,12 +34,6 @@ export class IrisSessionService {
                 } else {
                     this.dispatchError('Could not fetch session details');
                 }
-            })
-            .then((messages: HttpResponse<IrisMessage[]>) => {
-                this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages.body!));
-            })
-            .catch(() => {
-                this.dispatchError('Could not fetch messages');
             });
     }
 
