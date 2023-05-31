@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -77,6 +78,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ChannelRepository channelRepository;
+  
+    @Autowired
+    private ExerciseService exerciseService;
 
     private QuizExercise quizExercise;
 
@@ -1861,6 +1865,23 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             assertThat(quizQuestion.isInvalid()).as("Quiz Question invalid flag has been set to false").isFalse();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFilterForCourseDashboard_QuizSubmissionButNoParticipation() {
+        Course course = database.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
+        database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+
+        quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student1", quizSubmission);
+
+        exerciseService.filterForCourseDashboard(quizExercise, List.of(), TEST_PREFIX + "student1", true);
+
+        assertThat(quizExercise.getStudentParticipations()).hasSize(1);
+        assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {
