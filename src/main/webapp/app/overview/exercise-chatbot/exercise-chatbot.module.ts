@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +8,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AngularDraggableModule } from 'angular2-draggable';
 
 @NgModule({
-    declarations: [ChatbotPopupComponent, ExerciseChatWidgetComponent],
+    declarations: [ExerciseChatWidgetComponent],
     imports: [MatDialogModule, FormsModule, CommonModule, FontAwesomeModule, ArtemisSharedModule, AngularDraggableModule],
     providers: [],
 })

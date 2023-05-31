@@ -100,3 +100,42 @@
 .btn-circle:active {
     background-color: var(--iris-btn-circle-hover);
 }
+.p-chat {
+    background-color: var(--iris-client-chat-background);
+    color: var(--bs-body-color);
+    padding: 0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 1.5px solid var(--iris-client-chat-background);
+}
+
+.message-text {
+    padding: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom: 1px solid var(--iris-client-chat-background);
+}
+
+.button-container {
+    display: flex;
+}
+
+.button {
+    flex: 1;
+    padding: 10px 0;
+    background-color: #fff;
+    color: var(--bs-body-color);
+    border: none;
+    cursor: pointer;
+}
+
+.button:first-child {
+    border-right: 1px solid var(--iris-client-chat-background);
+}
+
+.button:hover {
+    background-color: #f5f5f5;
+}

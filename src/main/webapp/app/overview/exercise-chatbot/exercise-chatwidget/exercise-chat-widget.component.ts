@@ -4,6 +4,9 @@ import { faExpand } from '@fortawesome/free-solid-svg-icons';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
+import { LocalStorageService } from 'ngx-webstorage';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -14,12 +17,15 @@ export class ExerciseChatWidgetComponent implements OnInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
     messages: string[] = [];
-    irisMessages: string[] = ['Hey! How can I help you?'];
+    irisMessages: string[] = [];
     userMessages: string[] = [];
     newMessage = '';
     componentClass = 'chat-widget';
-
-    constructor(private dialog: MatDialog, private route: ActivatedRoute) {}
+    userAccepted = false;
+    perMessage =
+        "By choosing to continue, you agree that your interactions with IrisBot will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'. ";
+    public firstName: string | undefined;
+    constructor(private dialog: MatDialog, private route: ActivatedRoute, private localStorage: LocalStorageService, private accountService: AccountService) {}
 
     // Icons
     faPaperPlane = faPaperPlane;
@@ -27,11 +33,17 @@ export class ExerciseChatWidgetComponent implements OnInit {
     faXmark = faXmark;
 
     ngOnInit() {
+        //localStorage.removeItem('ge86let');
         this.route.url.subscribe((data) => {
             if (data[0].path === 'chat') {
                 this.setFullScreenClass();
             } else {
                 this.setDefaultClass();
+            }
+        });
+        this.accountService.identity().then((user: User) => {
+            if (typeof user!.login === 'string') {
+                this.userAccepted = localStorage.getItem(user!.login) == 'true';
             }
         });
     }
@@ -68,5 +80,16 @@ export class ExerciseChatWidgetComponent implements OnInit {
     openComponentInNewWindow() {
         window.open('/chat', '_blank', 'width=400,height=600');
         this.closeChat();
+    }
+
+    acceptPermission() {
+        this.accountService.identity().then((user: User) => {
+            if (typeof user!.login === 'string') {
+                localStorage.setItem(user!.login, 'true');
+            }
+        });
+
+        this.userAccepted = true;
+        this.irisMessages.push('Hey! How can I help you?');
     }
 }

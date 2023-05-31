@@ -16,6 +16,13 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody>
+            <div class="p-chat" *ngIf="!userAccepted">
+                <div class="message-text">{{ perMessage }}</div>
+                <div class="button-container">
+                    <button class="button" (click)="acceptPermission()">Accept</button>
+                    <button class="button" (click)="closeChat()">Decline</button>
+                </div>
+            </div>
             <div *ngFor="let message of irisMessages" class="client-chat">{{ message }}</div>
             <div *ngFor="let message of userMessages" class="my-chat">{{ message }}</div>
         </div>
@@ -29,7 +36,7 @@
                 (keyup.enter)="onSend()"
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
             />
-            <button (click)="onSend()" class="btn btn-primary btn-md btn-circle">
+            <button [disabled]="!userAccepted" (click)="onSend()" class="btn btn-primary btn-md btn-circle">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
         </div>

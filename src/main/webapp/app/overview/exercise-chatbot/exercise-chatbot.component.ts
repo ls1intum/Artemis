@@ -1,7 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { faChevronDown, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 
@@ -31,22 +30,9 @@ export class ExerciseChatbotComponent implements OnDestroy {
         if (this.chatOpen && this.dialogRef) {
             this.dialogRef!.close();
             this.chatOpen = false;
-        } else if (this.chatAccepted) {
-            this.openChat();
         } else {
-            this.openDialog();
+            this.openChat();
         }
-    }
-
-    openDialog() {
-        const dialogRef = this.dialog.open(ChatbotPopupComponent, {});
-
-        dialogRef.afterClosed().subscribe((result) => {
-            this.chatAccepted = result == 'true';
-            if (this.chatAccepted) {
-                this.openChat();
-            }
-        });
     }
 
     openChat() {
