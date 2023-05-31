@@ -71,7 +71,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     this.course = res.body!;
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    this.setChannel(courseId); // set before fetching posts
+                    this.setChannel(courseId);
                 }
             });
         });
@@ -247,8 +247,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
-            // exerciseId: this.exercise?.id,
-            // lectureId: this.lecture?.id,
+            exerciseId: this.channel?.id ? undefined : this.exercise?.id,
+            lectureId: this.channel?.id ? undefined : this.lecture?.id,
             conversationId: this.channel?.id,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
