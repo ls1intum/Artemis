@@ -70,7 +70,8 @@ The following screenshot illustrates the second section of the form. It consists
     .. figure:: general/create-exercise-form-hint.png
               :align: center
 
-The following screenshot illustrates the last section of the form.
+The following screenshot illustrates the last section of the form:
+
 - **Assessment Instructions**: Instructions for instructors while assessing the submission.
 
     .. figure:: text/create-text-exercise-form-3.png
@@ -90,6 +91,7 @@ Import Text Exercise
 
     .. figure:: text/import-text-exercise-modal.png
               :align: center
+              :scale: 70
 
 - Once you import one of the exercise, you will then be redirected to a form which is similar to *Create new text exercise* form with all the fields filled from imported exercise. You can now modify the fields as per your necessity to create a new Text Exercise.
 
@@ -173,18 +175,29 @@ Once you're done assessing the solution, you can either:
 
 .. |course-management| image:: general/course-management.png
 .. |create| image:: general/create-button.png
+    :scale: 50
 .. |edit| image:: general/edit-button.png
 .. |scores| image:: general/scores-button.png
+    :scale: 50
 .. |participation| image:: general/participation-button.png
+    :scale: 50
 .. |example-submission| image:: general/example-submission-button.png
+    :scale: 50
 .. |delete| image:: general/delete-button.png
+    :scale: 50
 .. |participate-in-exercise| image:: general/start-participating-in-exercise-button.png
+    :scale: 50
 .. |start-new-assessment| image:: general/start-new-assessment-button.png
-.. |start| image:: general/start-button.png
+    :scale: 50
+.. |add-new-feedback| image:: general/add-new-feedback-button.png
+    :scale: 50
+.. |start| image:: general/start-exercise-button.png
+    :scale: 50
 .. |save| image:: general/save-button.png
 .. |cancel| image:: general/cancel-button.png
-.. |exercise-dashboard-button| image:: general/cancel-button.png
+.. |exercise-dashboard-button| image:: general/exercise-dashboard-button.png
+    :scale: 50
 .. |open-text-editor| image:: text/open-text-editor-button.png
+    :scale: 50
 
 .. |submit| image:: general/submit-button.png
-    :scale: 50
