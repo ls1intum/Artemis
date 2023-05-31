@@ -28,7 +28,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 close: jest.fn(),
             }),
             closeAll: jest.fn(),
-        } as jest.Mocked<MatDialog>;
+        } as unknown as MatDialog;
 
         mockHttpMessageService = {
             createMessage: jest.fn(),
@@ -72,7 +72,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 content: [
                     {
                         type: IrisMessageContentType.TEXT,
-                        textContent: message,
+                        textContent: 'Hello',
                     },
                 ],
             }),

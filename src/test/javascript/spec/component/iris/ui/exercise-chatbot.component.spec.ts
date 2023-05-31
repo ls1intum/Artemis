@@ -26,11 +26,13 @@ describe('ExerciseChatbotComponent', () => {
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
+    let mockParamsSubject: any;
 
     beforeEach(async () => {
+        mockParamsSubject = new Subject();
         mockActivatedRoute = {
-            params: new Subject(),
-        } as ActivatedRoute;
+            params: mockParamsSubject,
+        } as unknown as ActivatedRoute;
 
         mockDialogClose = jest.fn();
 
@@ -92,13 +94,12 @@ describe('ExerciseChatbotComponent', () => {
     });
 
     it('should open chat and set buttonDisabled and chatOpen flags', () => {
-        jest.spyOn(component.dialog, 'open');
+        jest.spyOn(mockDialog, 'open');
         component.buttonDisabled = false;
-        component.chatOpen = false;
 
         component.openChat();
 
-        expect(component.dialog.open).toHaveBeenCalledWith(ExerciseChatWidgetComponent, {
+        expect(mockDialog.open).toHaveBeenCalledWith(ExerciseChatWidgetComponent, {
             hasBackdrop: false,
             position: { bottom: '0px', right: '0px' },
             data: expect.objectContaining({
@@ -113,7 +114,7 @@ describe('ExerciseChatbotComponent', () => {
         const mockParams = { exerciseId: mockExerciseId };
         const spy = jest.spyOn(sessionService, 'getCurrentSessionOrCreate');
 
-        mockActivatedRoute['params'].next(mockParams);
+        mockParamsSubject.next(mockExerciseId);
         await fixture.whenStable();
 
         expect(spy).toHaveBeenCalled();
