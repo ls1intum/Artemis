@@ -30,7 +30,7 @@ describe('ExerciseChatbotComponent', () => {
     beforeEach(async () => {
         mockActivatedRoute = {
             params: new Subject(),
-        } as jest.Mocked<ActivatedRoute>;
+        } as ActivatedRoute;
 
         mockDialogClose = jest.fn();
 
@@ -40,13 +40,13 @@ describe('ExerciseChatbotComponent', () => {
                 close: mockDialogClose,
             }),
             closeAll: jest.fn(),
-        } as jest.Mocked<MatDialog>;
+        } as unknown as MatDialog;
 
         mockOverlay = {
             scrollStrategies: {
                 noop: jest.fn().mockReturnValue({}),
             },
-        } as jest.Mocked<Overlay>;
+        } as unknown as Overlay;
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
@@ -113,7 +113,7 @@ describe('ExerciseChatbotComponent', () => {
         const mockParams = { exerciseId: mockExerciseId };
         const spy = jest.spyOn(sessionService, 'getCurrentSessionOrCreate');
 
-        mockActivatedRoute.params.next(mockParams);
+        mockActivatedRoute['params'].next(mockParams);
         await fixture.whenStable();
 
         expect(spy).toHaveBeenCalled();

@@ -12,6 +12,7 @@ import { SessionReceivedAction, StudentMessageSentAction } from 'app/iris/messag
 import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -65,7 +66,17 @@ describe('ExerciseChatWidgetComponent', () => {
 
         // then
         expect(component.messages).toContain('Hello');
-        expect(stateStore.dispatch).toHaveBeenCalledWith(new StudentMessageSentAction('Hello'));
+        expect(stateStore.dispatch).toHaveBeenCalledWith(
+            new StudentMessageSentAction({
+                sender: this.SENDER_USER,
+                content: [
+                    {
+                        type: IrisMessageContentType.TEXT,
+                        textContent: message,
+                    },
+                ],
+            }),
+        );
     }));
 
     it('should clear newMessage on send', async () => {
