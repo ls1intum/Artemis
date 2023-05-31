@@ -14,7 +14,7 @@ export class CompetencyImportComponent extends ImportComponent<Competency> {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForLearningGoals(this.state)),
+                switchMap(() => this.pagingService.searchForCompetencies(this.state)),
             )
             .subscribe((resp) => {
                 this.content = resp;

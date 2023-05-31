@@ -9,7 +9,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
-import { LearningGoalPagingService } from 'app/course/competencies/learning-goal-paging.service';
+import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
 import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TableColumn } from 'app/shared/import/import-component';
@@ -17,7 +17,7 @@ import { TableColumn } from 'app/shared/import/import-component';
 describe('PrerequisiteImportComponent', () => {
     let fixture: ComponentFixture<PrerequisiteImportComponent>;
     let comp: PrerequisiteImportComponent;
-    let pagingService: LearningGoalPagingService;
+    let pagingService: CompetencyPagingService;
     let sortService: SortService;
     let searchForLearningGoalsStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
@@ -33,7 +33,7 @@ describe('PrerequisiteImportComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PrerequisiteImportComponent);
                 comp = fixture.componentInstance;
-                pagingService = TestBed.inject(LearningGoalPagingService);
+                pagingService = TestBed.inject(CompetencyPagingService);
                 sortService = TestBed.inject(SortService);
                 searchForLearningGoalsStub = jest.spyOn(pagingService, 'searchForLearningGoals');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
