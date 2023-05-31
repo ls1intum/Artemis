@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningGoalCardComponent } from 'app/course/competencies/competency-card/learning-goal-card.component';
+import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -9,18 +9,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('LearningGoalCardComponent', () => {
-    let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
-    let learningGoalCardComponent: LearningGoalCardComponent;
+    let learningGoalCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
+    let learningGoalCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
-            declarations: [LearningGoalCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(LearningGoalRingsComponent)],
+            declarations: [CompetencyCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(LearningGoalRingsComponent)],
             providers: [MockProvider(TranslateService)],
             schemas: [],
         })
             .compileComponents()
             .then(() => {
-                learningGoalCardComponentFixture = TestBed.createComponent(LearningGoalCardComponent);
+                learningGoalCardComponentFixture = TestBed.createComponent(CompetencyCardComponent);
                 learningGoalCardComponent = learningGoalCardComponentFixture.componentInstance;
             });
     });
@@ -30,7 +30,7 @@ describe('LearningGoalCardComponent', () => {
     });
 
     it('should calculate correct progress, confidence and mastery', () => {
-        learningGoalCardComponent.learningGoal = {
+        learningGoalCardComponent.competency = {
             id: 1,
             masteryThreshold: 80,
             userProgress: [
@@ -50,7 +50,7 @@ describe('LearningGoalCardComponent', () => {
     });
 
     it('should display learning goal as mastered', () => {
-        learningGoalCardComponent.learningGoal = {
+        learningGoalCardComponent.competency = {
             id: 1,
             masteryThreshold: 40,
             userProgress: [

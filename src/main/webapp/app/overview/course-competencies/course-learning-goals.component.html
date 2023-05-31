@@ -2,11 +2,11 @@
     <div class="col-12 col-lg-8">
         <div *ngIf="countLearningGoals > 0" class="mt-3 position-relative">
             <div class="exercise-row-container mb-3">
-                <jhi-learning-goal-card
+                <jhi-competency-card
                     *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
-                    [learningGoal]="learningGoal"
+                    [competency]="learningGoal"
                     [courseId]="courseId"
-                ></jhi-learning-goal-card>
+                ></jhi-competency-card>
             </div>
         </div>
         <div *ngIf="countPrerequisites > 0" class="mt-3 position-relative">
@@ -16,12 +16,12 @@
                     <span>{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
                 </div>
                 <div *ngIf="!isCollapsed">
-                    <jhi-learning-goal-card
+                    <jhi-competency-card
                         *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
-                        [learningGoal]="prerequisite"
+                        [competency]="prerequisite"
                         [courseId]="courseId"
                         [isPrerequisite]="true"
-                    ></jhi-learning-goal-card>
+                    ></jhi-competency-card>
                 </div>
                 <div class="collapsed"></div>
             </div>

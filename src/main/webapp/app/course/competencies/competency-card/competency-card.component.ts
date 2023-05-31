@@ -3,15 +3,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
 
 @Component({
-    selector: 'jhi-learning-goal-card',
-    templateUrl: './learning-goal-card.component.html',
+    selector: 'jhi-competency-card',
+    templateUrl: './competency-card.component.html',
     styleUrls: ['../../../overview/course-exercises/course-exercise-row.scss'],
 })
-export class LearningGoalCardComponent {
+export class CompetencyCardComponent {
     @Input()
     courseId?: number;
     @Input()
-    learningGoal: Competency;
+    competency: Competency;
     @Input()
     isPrerequisite: boolean;
 
@@ -21,8 +21,8 @@ export class LearningGoalCardComponent {
     constructor(public translateService: TranslateService) {}
 
     getUserProgress(): CompetencyProgress {
-        if (this.learningGoal.userProgress?.length) {
-            return this.learningGoal.userProgress.first()!;
+        if (this.competency.userProgress?.length) {
+            return this.competency.userProgress.first()!;
         }
         return { progress: 0, confidence: 0 } as CompetencyProgress;
     }
@@ -35,7 +35,7 @@ export class LearningGoalCardComponent {
     get confidence(): number {
         // Confidence level (average score in exercises) in proportion to the threshold value (max. 100 %)
         // Example: If the student’s latest confidence level equals 60 % and the mastery threshold is set to 80 %, the ring would be 75 % full.
-        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.learningGoal.masteryThreshold ?? 100)) * 100), 100);
+        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.competency.masteryThreshold ?? 100)) * 100), 100);
     }
 
     get mastery(): number {
