@@ -30,7 +30,8 @@
         "paths": {
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true
+        "importHelpers": true,
+        "ignoreDeprecations": "5.0"
     },
     "angularCompilerOptions": {
         "genDir": "build/resources/main/aot",
