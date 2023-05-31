@@ -111,10 +111,6 @@ describe('LectureUpdateComponent', () => {
                         course: {
                             id: 1,
                         },
-                        channel: {
-                            type: 'channel',
-                            id: 1,
-                        },
                     } as Lecture,
                 }),
             ),

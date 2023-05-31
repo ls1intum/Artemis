@@ -32,7 +32,6 @@ import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 
 @Component({

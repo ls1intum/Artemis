@@ -828,7 +828,6 @@ public class CourseTestService {
             channel.setIsPublic(false);
             channel.setIsArchived(false);
             channelRepository.save(channel);
-            // examRegistered.setChannel(channel);
             Exam examUnregistered = ModelFactory.generateExam(courses[i]);
             Channel channel1 = new Channel();
             channel1.setName(examUnregistered.getTitle());
@@ -836,7 +835,6 @@ public class CourseTestService {
             channel1.setIsPublic(false);
             channel1.setIsArchived(false);
             channelRepository.save(channel1);
-            // examUnregistered.setChannel(channel1);
             Exam testExam = ModelFactory.generateTestExam(courses[i]);
             if (i == 0) {
                 examRegistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
@@ -908,7 +906,6 @@ public class CourseTestService {
         channel.setIsArchived(false);
 
         channelRepository.save(channel);
-        // programmingExercise.setChannel(channel);
         programmingExerciseRepository.save(programmingExercise);
         Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
