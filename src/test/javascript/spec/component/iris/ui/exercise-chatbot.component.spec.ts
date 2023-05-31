@@ -1,42 +1,62 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { Subject, of } from 'rxjs';
 import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { IrisSessionService } from 'app/iris/session.service';
+import { IrisHttpSessionService } from 'app/iris/http-session.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ActivatedRoute } from '@angular/router';
+import { IrisStateStore } from 'app/iris/state-store.service';
 
-describe.skip('ExerciseChatbotComponent', () => {
+describe('ExerciseChatbotComponent', () => {
     let component: ExerciseChatbotComponent;
     let fixture: ComponentFixture<ExerciseChatbotComponent>;
+    let sessionService: IrisSessionService;
+    let stateStore: IrisStateStore;
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
+    let mockActivatedRoute: ActivatedRoute;
+    let mockDialogClose: any;
 
     beforeEach(async () => {
+        mockActivatedRoute = {
+            params: new Subject(),
+        } as jest.Mocked<ActivatedRoute>;
+
+        mockDialogClose = jest.fn();
+
         mockDialog = {
             open: jest.fn().mockReturnValue({
-                afterClosed: jest.fn().mockReturnValue(of('true')) as any, // Use 'as any' to cast to unknown
-                close: jest.fn(),
-            }) as any, // Use 'as any' to cast to unknown
+                afterClosed: jest.fn().mockReturnValue(of('true')),
+                close: mockDialogClose,
+            }),
             closeAll: jest.fn(),
-        } as any; // Use 'as any' to cast to unknown
+        } as jest.Mocked<MatDialog>;
 
         mockOverlay = {
             scrollStrategies: {
                 noop: jest.fn().mockReturnValue({}),
             },
-        } as unknown as Overlay;
+        } as jest.Mocked<Overlay>;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule],
+            imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
             declarations: [ExerciseChatbotComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
+                IrisHttpSessionService,
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
             ],
         })
             .compileComponents()
@@ -44,7 +64,13 @@ describe.skip('ExerciseChatbotComponent', () => {
                 fixture = TestBed.createComponent(ExerciseChatbotComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
+                sessionService = fixture.debugElement.injector.get(IrisSessionService);
+                stateStore = fixture.debugElement.injector.get(IrisStateStore);
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should open dialog when chat not accepted', () => {
@@ -74,11 +100,33 @@ describe.skip('ExerciseChatbotComponent', () => {
 
         expect(component.dialog.open).toHaveBeenCalledWith(ExerciseChatWidgetComponent, {
             hasBackdrop: false,
-            scrollStrategy: {},
             position: { bottom: '0px', right: '0px' },
+            data: expect.objectContaining({
+                stateStore: stateStore,
+            }),
         });
         expect(component.buttonDisabled).toBeTrue();
     });
 
-    // TODO test the number of created services
+    it('should subscribe to route.params and call sessionService.getCurrentSessionOrCreate', waitForAsync(async () => {
+        const mockExerciseId = 123;
+        const mockParams = { exerciseId: mockExerciseId };
+        const spy = jest.spyOn(sessionService, 'getCurrentSessionOrCreate');
+
+        mockActivatedRoute.params.next(mockParams);
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalled();
+    }));
+
+    it('should close the dialog when destroying the object', () => {
+        // given
+        component.openDialog();
+
+        // when
+        component.ngOnDestroy();
+
+        // then
+        expect(mockDialogClose).toHaveBeenCalled();
+    });
 });

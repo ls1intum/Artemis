@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { irisExercise, mockConversation } from '../../helpers/sample/iris-sample-data';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
 
-describe('Session Service', () => {
+describe('Iris Http Session Service', () => {
     let service: IrisHttpSessionService;
     let httpMock: HttpTestingController;
 
@@ -18,15 +18,14 @@ describe('Session Service', () => {
     });
 
     describe('Service methods', () => {
-        it.skip('should create a session', fakeAsync(() => {
+        it('should create a session', fakeAsync(() => {
             const returnedFromService = { id: '1' };
-            const expected = { ...returnedFromService };
             service
                 .createSessionForProgrammingExercise(1)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
+                .subscribe((resp) => expect(resp).toEqual(returnedFromService));
             const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(returnedFromService);
+            req.flush(returnedFromService, { status: 201, statusText: 'Created' });
             tick();
         }));
 

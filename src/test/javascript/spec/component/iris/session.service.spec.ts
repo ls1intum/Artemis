@@ -28,6 +28,10 @@ describe('IrisSessionService', () => {
         mockHttpMessageService = TestBed.inject(IrisHttpMessageService);
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should create a new session if getCurrentSession returns 404 and createSession is successful', async () => {
         // given
         const exerciseId = 123;
@@ -123,7 +127,6 @@ describe('IrisSessionService', () => {
     it('should dispatch an error if getCurrentSession is 404 and createSession returned an error', async () => {
         // given
         const exerciseId = 123;
-        const sessionId = 456;
         const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
         const createSessionForProgrammingExerciseMock = jest
             .spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise')
