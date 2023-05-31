@@ -44,7 +44,7 @@ It also shows the average rating the students have given to each exercise.
 Each exercise also has its own assessment dashboard that shows all of this information for a single exercise.
 
 Structured Grading Criteria
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To ensure consistency, fairness, and transparency and simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
 
@@ -53,7 +53,7 @@ To ensure consistency, fairness, and transparency and simplify the grading proce
     :align: center
 
 Integrated Training Process
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructors can use the assessment training process to make the grading more consistent. An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to properly assess submissions and provide feedback. They define a series of example submissions and assessments that the tutors must first read through.
 
@@ -67,7 +67,7 @@ The manual assessment begins after the deadline of an exercise has passed for al
    :align: center
    
 Grading Leaderboard
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 Artemis also offers a way for instructors to monitor the tutors' assessments based on the students' feedback on reviewer evaluation. The first part of this is the grading leaderboard, which is visible to all tutors. 
     
