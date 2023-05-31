@@ -20,12 +20,15 @@ Artemis offers three different modes of exercise assessment:
 Manual Assessment
 -----------------
 
-Manual assessment is available for all exercise types except quiz exercises.
-The manual assessment begins after the deadline of an exercise has passed for all students and is double-blind. This means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors.
+Manual assessment refers to evaluating or grading student assignments, typically performed by a tutor rather than in an automated way. It is available and tailored to all exercise types except quiz exercises.
 
-Instructors can use the assessment training process to make the grading more consistent. They define a series of example submissions and assessments that the tutors must first read through.
+Manual assessment in Artemis involves the following steps:
 
-Students have the option to rate the assessments of the tutors. They can also complain or ask for more feedback.
+1. Submission: Students submit their assignments through Artemis.
+2. Review: Reviewers access the submitted work and review it carefully, considering the objectives, requirements, and criteria established for the assessment.
+3. Evaluation: Based on their assessment, reviewers assign scores, provide feedback, or grade the student's work keeping the grading criteria in mind to ensure consistency and fairness.
+4. Student feedback: Students rate the quality of the feedback to motivate the reviewers to provide high-quality feedback to improve understanding and prevent misconceptions.
+            
 
 Assessment Dashboard
 ^^^^^^^^^^^^^^^^^^^^
@@ -34,15 +37,46 @@ To keep track of the manual assessments, Artemis offers the assessment dashboard
 It shows the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
 It also shows the average rating the students have given to each exercise.
 
-    .. figure:: assessment/assessment_dashboard.png
-        :alt: A picture of the assessment dashboard (of an exam)
-        :align: center
-
-Artemis also offers a way for instructors to monitor the tutors' assessments. The first part of this is the tutor leaderboard, which is visible to all tutors. The tutor leaderboard shows the number of assessments each tutor has done and the amount of more feedback requests and accepted complaints about them.
-It also shows the average score the tutor has given and the average rating they received for their assessments.
+.. figure:: assessment/assessment_dashboard.png
+    :alt: A picture of the assessment dashboard (of an exam)
+    :align: center
 
 Each exercise also has its own assessment dashboard that shows all of this information for a single exercise.
 
+Structured Grading Criteria
+^^^^^^^^^^^^^^^^^^^^
+
+To ensure consistency, fairness, and transparency and simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
+
+.. figure:: assessment/grading_criteria.png
+    :alt: A picture of the assessment user interface with grading criteria, student submission and example solution
+    :align: center
+
+Integrated Training Process
+^^^^^^^^^^^^^^^^^^^^
+
+Instructors can use the assessment training process to make the grading more consistent. An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to properly assess submissions and provide feedback. They define a series of example submissions and assessments that the tutors must first read through.
+
+Grading Leaderboard
+^^^^^^^^^^^^^^^^^^^^
+
+Artemis also offers a way for instructors to monitor the tutors' assessments based on the students' feedback on reviewer evaluation. The first part of this is the grading leaderboard, which is visible to all tutors. 
+    
+.. figure:: assessment/leaderboard.png
+   :alt: Grading leaderboard
+   :align: center
+
+The leaderboard shows the number of assessments each tutor has done and the number of feedback requests and accepted complaints about them.
+It also shows the average score the tutor has given and the average rating they received for their assessments. It helps to track and display the performance and rankings of the reviewers who assess and provide feedback on student submissions.
+
+Double-blind Grading
+^^^^^^^^^^^^^^^^^^^^
+
+The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are "blind" to the identity of each other, ensuring that their expectations or biases do not influence the results. 
+    
+.. figure:: assessment/double_blind.png
+   :alt: Double-blind grading
+   :align: center
 
 Automatic Assessment
 --------------------
