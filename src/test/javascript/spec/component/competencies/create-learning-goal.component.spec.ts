@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CreateLearningGoalComponent } from 'app/course/competencies/create-competency/create-learning-goal.component';
-import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
+import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -71,7 +71,7 @@ describe('CreateLearningGoal', () => {
 
         const textUnit: TextUnit = new TextUnit();
         textUnit.id = 1;
-        const formData: LearningGoalFormData = {
+        const formData: CompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             connectedLectureUnits: [textUnit],

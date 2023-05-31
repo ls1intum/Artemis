@@ -72,7 +72,7 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-    <jhi-learning-goal-form
+    <jhi-competency-form
         *ngIf="(isAddingLearningGoal || isEditingLearningGoal || isConnectingLearningGoal) && !isLoadingLearningGoalForm"
         [isEditMode]="isEditingLearningGoal"
         [isInConnectMode]="isConnectingLearningGoal"
@@ -84,5 +84,5 @@
         [lecturesOfCourseWithLectureUnits]="[lecture]"
         [isInSingleLectureMode]="true"
     >
-    </jhi-learning-goal-form>
+    </jhi-competency-form>
 </div>

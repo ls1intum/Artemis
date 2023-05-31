@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { Competency } from 'app/entities/competency.model';
-import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
+import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { faLink, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +32,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
 
     currentlyProcessedLearningGoal: Competency;
     learningGoals: Competency[] = [];
-    learningGoalFormData: LearningGoalFormData;
+    learningGoalFormData: CompetencyFormData;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -110,7 +110,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         onError(this.alertService, error);
     }
 
-    onLearningGoalFormSubmitted(formData: LearningGoalFormData) {
+    onLearningGoalFormSubmitted(formData: CompetencyFormData) {
         if (this.isEditingLearningGoal) {
             this.editLearningGoal(formData);
         } else {
@@ -118,7 +118,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         }
     }
 
-    createLearningGoal(formData: LearningGoalFormData) {
+    createLearningGoal(formData: CompetencyFormData) {
         if (!formData?.title) {
             return;
         }
@@ -161,7 +161,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
             });
     }
 
-    editLearningGoal(formData: LearningGoalFormData) {
+    editLearningGoal(formData: CompetencyFormData) {
         const { title, description, taxonomy, connectedLectureUnits } = formData;
 
         this.currentlyProcessedLearningGoal.title = title;

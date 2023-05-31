@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
-import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
+import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -21,7 +21,7 @@ export class EditLearningGoalComponent implements OnInit {
     isLoading = false;
     learningGoal: Competency;
     lecturesWithLectureUnits: Lecture[] = [];
-    formData: LearningGoalFormData;
+    formData: CompetencyFormData;
     courseId: number;
 
     constructor(
@@ -87,7 +87,7 @@ export class EditLearningGoalComponent implements OnInit {
             });
     }
 
-    updateLearningGoal(formData: LearningGoalFormData) {
+    updateLearningGoal(formData: CompetencyFormData) {
         const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoal.title = title;

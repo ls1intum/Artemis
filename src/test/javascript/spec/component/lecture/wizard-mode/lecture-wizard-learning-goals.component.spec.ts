@@ -15,7 +15,7 @@ import { Competency } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
+import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -352,7 +352,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const formData: LearningGoalFormData = {
+        const formData: CompetencyFormData = {
             id: 1,
             title: 'Goal',
         };
@@ -393,7 +393,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const formData: LearningGoalFormData = {
+        const formData: CompetencyFormData = {
             id: 1,
             title: 'Goal',
         };
@@ -427,7 +427,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const formData: LearningGoalFormData = {};
+        const formData: CompetencyFormData = {};
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             wizardLearningGoalsComponent.createLearningGoal(formData);
@@ -452,7 +452,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const formData: LearningGoalFormData = {
+        const formData: CompetencyFormData = {
             id: 1,
             title: 'Goal',
         };
@@ -494,7 +494,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const formData: LearningGoalFormData = {
+        const formData: CompetencyFormData = {
             id: 1,
             title: 'Goal',
         };

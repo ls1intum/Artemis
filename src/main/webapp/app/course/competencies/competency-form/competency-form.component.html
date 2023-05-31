@@ -46,7 +46,7 @@
                 </label>
                 <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
                     <option [ngValue]="undefined" selected></option>
-                    <option *ngFor="let taxonomy of learningGoalTaxonomy | keyvalue : keepOrder; let i = index" [ngValue]="taxonomy.key">
+                    <option *ngFor="let taxonomy of competencyTaxonomy | keyvalue : keepOrder; let i = index" [ngValue]="taxonomy.key">
                         {{ '&ThinSpace;'.repeat(i) }}&boxur;
                         {{ 'artemisApp.learningGoal.taxonomies.' + taxonomy.value.toLowerCase() | artemisTranslate }}
                         ({{ 'artemisApp.learningGoal.keywords.' + taxonomy.value.toLowerCase() | artemisTranslate }})

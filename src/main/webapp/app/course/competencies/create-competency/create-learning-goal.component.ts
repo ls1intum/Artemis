@@ -4,7 +4,7 @@ import { Competency } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
+import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -61,7 +61,7 @@ export class CreateLearningGoalComponent implements OnInit {
             });
     }
 
-    createLearningGoal(formData: LearningGoalFormData) {
+    createLearningGoal(formData: CompetencyFormData) {
         if (!formData?.title) {
             return;
         }

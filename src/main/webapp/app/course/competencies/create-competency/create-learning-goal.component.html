@@ -9,10 +9,10 @@
         <h3>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</h3>
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
-    <jhi-learning-goal-form
+    <jhi-competency-form
         [isEditMode]="false"
         (formSubmitted)="createLearningGoal($event)"
         [courseId]="courseId"
         [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
-    ></jhi-learning-goal-form>
+    ></jhi-competency-form>
 </div>

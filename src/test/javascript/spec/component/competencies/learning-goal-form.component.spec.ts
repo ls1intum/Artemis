@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
+import { CompetencyFormComponent, CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -17,20 +17,20 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 
 describe('LearningGoalFormComponent', () => {
-    let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
-    let learningGoalFormComponent: LearningGoalFormComponent;
+    let learningGoalFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
+    let learningGoalFormComponent: CompetencyFormComponent;
 
     let translateService: TranslateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
-            declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
+            declarations: [CompetencyFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
             providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
-                learningGoalFormComponentFixture = TestBed.createComponent(LearningGoalFormComponent);
+                learningGoalFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
                 learningGoalFormComponent = learningGoalFormComponentFixture.componentInstance;
             });
         translateService = TestBed.inject(TranslateService);
@@ -98,7 +98,7 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.isEditMode = true;
         const textUnit = new TextUnit();
         textUnit.id = 1;
-        const formData: LearningGoalFormData = {
+        const formData: CompetencyFormData = {
             id: 1,
             title: 'test',
             description: 'lorem ipsum',

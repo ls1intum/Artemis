@@ -14,21 +14,21 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 /**
  * Async Validator to make sure that a competency title is unique within a course
  */
-export const titleUniqueValidator = (learningGoalService: CompetencyService, courseId: number, initialTitle?: string) => {
-    return (learningGoalTitleControl: FormControl<string | undefined>) => {
-        return of(learningGoalTitleControl.value).pipe(
+export const titleUniqueValidator = (competencyService: CompetencyService, courseId: number, initialTitle?: string) => {
+    return (competencyTitleControl: FormControl<string | undefined>) => {
+        return of(competencyTitleControl.value).pipe(
             delay(250),
             switchMap((title) => {
                 if (initialTitle && title === initialTitle) {
                     return of(null);
                 }
-                return learningGoalService.getAllForCourse(courseId).pipe(
+                return competencyService.getAllForCourse(courseId).pipe(
                     map((res) => {
-                        let learningGoalTitles: string[] = [];
+                        let competencyTitles: string[] = [];
                         if (res.body) {
-                            learningGoalTitles = res.body.map((learningGoal) => learningGoal.title!);
+                            competencyTitles = res.body.map((competency) => competency.title!);
                         }
-                        if (title && learningGoalTitles.includes(title)) {
+                        if (title && competencyTitles.includes(title)) {
                             return {
                                 titleUnique: { valid: false },
                             };
@@ -43,7 +43,7 @@ export const titleUniqueValidator = (learningGoalService: CompetencyService, cou
     };
 };
 
-export interface LearningGoalFormData {
+export interface CompetencyFormData {
     id?: number;
     title?: string;
     description?: string;
@@ -53,13 +53,13 @@ export interface LearningGoalFormData {
 }
 
 @Component({
-    selector: 'jhi-learning-goal-form',
-    templateUrl: './learning-goal-form.component.html',
-    styleUrls: ['./learning-goal-form.component.scss'],
+    selector: 'jhi-competency-form',
+    templateUrl: './competency-form.component.html',
+    styleUrls: ['./competency-form.component.scss'],
 })
-export class LearningGoalFormComponent implements OnInit, OnChanges {
+export class CompetencyFormComponent implements OnInit, OnChanges {
     @Input()
-    formData: LearningGoalFormData = {
+    formData: CompetencyFormData = {
         id: undefined,
         title: undefined,
         description: undefined,
@@ -86,10 +86,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
-    learningGoalTaxonomy = CompetencyTaxonomy;
+    competencyTaxonomy = CompetencyTaxonomy;
 
     @Output()
-    formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
+    formSubmitted: EventEmitter<CompetencyFormData> = new EventEmitter<CompetencyFormData>();
 
     form: FormGroup;
     selectedLectureInDropdown: Lecture;
@@ -98,12 +98,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     faTimes = faTimes;
 
-    constructor(
-        private fb: FormBuilder,
-        private learningGoalService: CompetencyService,
-        private translateService: TranslateService,
-        public lectureUnitService: LectureUnitService,
-    ) {}
+    constructor(private fb: FormBuilder, private competencyService: CompetencyService, private translateService: TranslateService, public lectureUnitService: LectureUnitService) {}
 
     get titleControl() {
         return this.form.get('title');
@@ -140,10 +135,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             title: [
                 undefined as string | undefined,
                 [Validators.required, Validators.maxLength(255)],
-                [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)],
+                [this.titleUniqueValidator(this.competencyService, this.courseId, initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
-            taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
+            taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.competencyTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
         });
         this.selectedLectureUnitsInTable = [];
@@ -155,7 +150,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         }
     }
 
-    private setFormValues(formData: LearningGoalFormData) {
+    private setFormValues(formData: CompetencyFormData) {
         this.form.patchValue(formData);
         if (formData.connectedLectureUnits) {
             this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
@@ -167,9 +162,9 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     submitForm() {
-        const learningGoalFormData: LearningGoalFormData = { ...this.form.value };
-        learningGoalFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
-        this.formSubmitted.emit(learningGoalFormData);
+        const competencyFormData: CompetencyFormData = { ...this.form.value };
+        competencyFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
+        this.formSubmitted.emit(competencyFormData);
     }
 
     get isSubmitPossible() {
@@ -195,7 +190,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         this.suggestedTaxonomies = [];
         const title = this.titleControl?.value?.toLowerCase() ?? '';
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
-        for (const taxonomy in this.learningGoalTaxonomy) {
+        for (const taxonomy in this.competencyTaxonomy) {
             const keywords = this.translateService.instant('artemisApp.learningGoal.keywords.' + taxonomy.toLowerCase()).split(', ');
             const taxonomyName = this.translateService.instant('artemisApp.learningGoal.taxonomies.' + taxonomy.toLowerCase());
             keywords.push(taxonomyName);

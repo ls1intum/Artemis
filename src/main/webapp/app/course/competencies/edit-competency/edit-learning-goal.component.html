@@ -6,12 +6,12 @@
 
 <div *ngIf="!isLoading" class="container">
     <h3>{{ 'artemisApp.learningGoal.editLearningGoal.title' | artemisTranslate }}</h3>
-    <jhi-learning-goal-form
+    <jhi-competency-form
         [isEditMode]="true"
         [formData]="formData"
         (formSubmitted)="updateLearningGoal($event)"
         [courseId]="courseId"
         [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
         [averageStudentScore]="learningGoal?.courseProgress?.averageStudentScore ?? 0"
-    ></jhi-learning-goal-form>
+    ></jhi-competency-form>
 </div>
