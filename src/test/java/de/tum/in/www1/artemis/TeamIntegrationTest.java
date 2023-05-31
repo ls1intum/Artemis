@@ -9,6 +9,8 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -51,6 +53,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private static final String TEST_PREFIX = "tit";
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
+
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
@@ -91,7 +95,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
         assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
-        System.out.println(teamAssignmentConfig);
+        log.debug(teamAssignmentConfig.toString());
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
