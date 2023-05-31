@@ -319,7 +319,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
         Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileName -> {
             try {
-                return !Files.exists(Paths.get(fileService.actualPathForPublicPathOrThrow(fileName)));
+                return !Files.exists(Path.of(fileService.actualPathForPublicPathOrThrow(fileName)));
             }
             catch (FilePathParsingException e) {
                 // File is not in the internal API format and hence expected to be a new file

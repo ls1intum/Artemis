@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -118,7 +118,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
         if (dndQuestion.getBackgroundFilePath() != null) {
             String actualPath = fileService.actualPathForPublicPath(dndQuestion.getBackgroundFilePath());
-            if (actualPath != null && Files.exists(Paths.get(actualPath))) {
+            if (actualPath != null && Files.exists(Path.of(actualPath))) {
                 // Copy the file to the new path
                 dndQuestion
                         .setBackgroundFilePath(fileService.copyExistingFileToTarget(dndQuestion.getBackgroundFilePath(), FilePathService.getDragAndDropBackgroundFilePath(), null));
@@ -141,7 +141,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 continue;
             }
             String actualPath = fileService.actualPathForPublicPath(dragItem.getPictureFilePath());
-            if (actualPath != null && Files.exists(Paths.get(actualPath))) {
+            if (actualPath != null && Files.exists(Path.of(actualPath))) {
                 // Need to copy the file and get a new path, same as above
                 dragItem.setPictureFilePath(fileService.copyExistingFileToTarget(dragItem.getPictureFilePath(), FilePathService.getDragItemFilePath(), null));
             }

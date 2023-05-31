@@ -173,9 +173,9 @@ public class DragAndDropQuestion extends QuizQuestion {
                 fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPathOrThrow(backgroundFilePath))));
             }
         }
-        catch (FilePathParsingException ignored) {
+        catch (FilePathParsingException e) {
             // if the file path is invalid, we don't need to delete it
-            log.info("Could not delete file with path {}. Assume already deleted, entity can be removed.", backgroundFilePath);
+            log.warn("Could not delete file with path " + backgroundFilePath + ". Assume already deleted, entity can be removed.", e);
         }
     }
 
