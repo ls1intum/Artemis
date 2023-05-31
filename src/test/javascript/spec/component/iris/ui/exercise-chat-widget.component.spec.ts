@@ -100,7 +100,11 @@ describe('ExerciseChatWidgetComponent', () => {
                 },
             ],
         };
-        jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(throwError());
+        jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(
+            throwError({
+                status: 500,
+            }),
+        );
         jest.spyOn(component, 'scrollToBottom');
         jest.spyOn(stateStore, 'dispatchAndThen');
 
