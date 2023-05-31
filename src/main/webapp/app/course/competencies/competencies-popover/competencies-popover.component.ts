@@ -3,18 +3,18 @@ import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { Competency } from 'app/entities/competency.model';
 
 @Component({
-    selector: 'jhi-learning-goals-popover',
-    templateUrl: './learning-goals-popover.component.html',
-    styleUrls: ['./learning-goals-popover.component.scss'],
+    selector: 'jhi-competencies-popover',
+    templateUrl: './competencies-popover.component.html',
+    styleUrls: ['./competencies-popover.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class LearningGoalsPopoverComponent implements OnInit {
+export class CompetenciesPopoverComponent implements OnInit {
     @Input()
     courseId: number;
     @Input()
-    learningGoals: Competency[] = [];
+    competencies: Competency[] = [];
     @Input()
-    navigateTo: 'learningGoalManagement' | 'courseLearningGoals' = 'courseLearningGoals';
+    navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
 
     navigationArray: string[] = [];
 
@@ -26,11 +26,11 @@ export class LearningGoalsPopoverComponent implements OnInit {
     ngOnInit(): void {
         if (this.courseId) {
             switch (this.navigateTo) {
-                case 'courseLearningGoals': {
+                case 'courseCompetencies': {
                     this.navigationArray = ['/courses', `${this.courseId}`, 'competencies'];
                     break;
                 }
-                case 'learningGoalManagement': {
+                case 'competencyManagement': {
                     this.navigationArray = ['/course-management', `${this.courseId}`, 'competency-management'];
                     break;
                 }

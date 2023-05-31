@@ -60,12 +60,12 @@
                     <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
                 </div>
                 <div class="col-1 my-auto mx-auto">
-                    <jhi-learning-goals-popover
+                    <jhi-competencies-popover
                         [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
                         [courseId]="lecture!.course!.id!"
-                        [learningGoals]="lectureUnit.competencies || []"
+                        [competencies]="lectureUnit.competencies || []"
                         [navigateTo]="'courseLearningGoals'"
-                    ></jhi-learning-goals-popover>
+                    ></jhi-competencies-popover>
                 </div>
             </div>
             <!-- LECTURE UNITS END-->

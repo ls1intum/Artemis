@@ -4,7 +4,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
-import { LearningGoalsPopoverComponent } from 'app/course/competencies/competencies-popover/learning-goals-popover.component';
+import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
 import { By } from '@angular/platform-browser';
 import { Competency } from 'app/entities/competency.model';
 import { Component } from '@angular/core';
@@ -23,8 +23,8 @@ class DummyStatisticsComponent {}
 class DummyManagementComponent {}
 
 describe('LearningGoalPopoverComponent', () => {
-    let learningGoalPopoverComponentFixture: ComponentFixture<LearningGoalsPopoverComponent>;
-    let learningGoalPopoverComponent: LearningGoalsPopoverComponent;
+    let learningGoalPopoverComponentFixture: ComponentFixture<CompetenciesPopoverComponent>;
+    let learningGoalPopoverComponent: CompetenciesPopoverComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,13 +35,13 @@ describe('LearningGoalPopoverComponent', () => {
                     { path: 'course-management/:courseId/competency-management', component: DummyManagementComponent },
                 ]),
             ],
-            declarations: [LearningGoalsPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
+            declarations: [CompetenciesPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
             providers: [],
             schemas: [],
         })
             .compileComponents()
             .then(() => {
-                learningGoalPopoverComponentFixture = TestBed.createComponent(LearningGoalsPopoverComponent);
+                learningGoalPopoverComponentFixture = TestBed.createComponent(CompetenciesPopoverComponent);
                 learningGoalPopoverComponent = learningGoalPopoverComponentFixture.componentInstance;
             });
     });
@@ -57,8 +57,8 @@ describe('LearningGoalPopoverComponent', () => {
 
     it('should navigate to course learning goals', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
-        learningGoalPopoverComponent.navigateTo = 'courseLearningGoals';
-        learningGoalPopoverComponent.learningGoals = [new Competency()];
+        learningGoalPopoverComponent.navigateTo = 'courseCompetencies';
+        learningGoalPopoverComponent.competencies = [new Competency()];
         learningGoalPopoverComponent.courseId = 1;
         learningGoalPopoverComponentFixture.detectChanges();
         const popoverButton = learningGoalPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
@@ -72,8 +72,8 @@ describe('LearningGoalPopoverComponent', () => {
 
     it('should navigate to learning goal management', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
-        learningGoalPopoverComponent.navigateTo = 'learningGoalManagement';
-        learningGoalPopoverComponent.learningGoals = [new Competency()];
+        learningGoalPopoverComponent.navigateTo = 'competencyManagement';
+        learningGoalPopoverComponent.competencies = [new Competency()];
         learningGoalPopoverComponent.courseId = 1;
         learningGoalPopoverComponentFixture.detectChanges();
         const popoverButton = learningGoalPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
