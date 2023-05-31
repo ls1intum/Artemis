@@ -174,7 +174,6 @@ public class ProgrammingExerciseExportImportResource {
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
         if (!consistencyErrors.isEmpty()) {
-            // TODO: send error message to client and handle it accordingly
             throw new ConflictException("The source exercise is inconsistent", ENTITY_NAME, "sourceExerciseInconsistent");
         }
 
