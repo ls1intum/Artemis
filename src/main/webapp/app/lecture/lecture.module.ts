@@ -14,7 +14,7 @@ import { lectureRoute } from 'app/lecture/lecture.route';
 import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
-import { ArtemisLearningGoalsModule } from 'app/course/competencies/learning-goal.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
@@ -33,7 +33,7 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
-        ArtemisLearningGoalsModule,
+        ArtemisCompetenciesModule,
     ],
     declarations: [
         LectureComponent,

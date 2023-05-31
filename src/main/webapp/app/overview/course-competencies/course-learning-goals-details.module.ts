@@ -3,7 +3,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { NgModule } from '@angular/core';
-import { ArtemisLearningGoalsModule } from 'app/course/competencies/learning-goal.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RouterModule, Routes } from '@angular/router';
@@ -30,7 +30,7 @@ const routes: Routes = [
         ArtemisSharedComponentModule,
         ArtemisSharedPipesModule,
         ArtemisLectureUnitsModule,
-        ArtemisLearningGoalsModule,
+        ArtemisCompetenciesModule,
         ArtemisMarkdownModule,
         ArtemisSidePanelModule,
         FireworksModule,

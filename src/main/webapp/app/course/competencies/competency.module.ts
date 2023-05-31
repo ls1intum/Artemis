@@ -29,4 +29,4 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
     ],
     exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })
-export class ArtemisLearningGoalsModule {}
+export class ArtemisCompetenciesModule {}

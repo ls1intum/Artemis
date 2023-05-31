@@ -35,7 +35,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { ArtemisLearningGoalsModule } from 'app/course/competencies/learning-goal.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
@@ -76,7 +76,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
         ArtemisLectureModule,
         ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
-        ArtemisLearningGoalsModule,
+        ArtemisCompetenciesModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFileUploadExerciseManagementModule,
