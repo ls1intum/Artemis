@@ -72,6 +72,7 @@ The following screenshot illustrates the second section of the form. It consists
 
 The following screenshot illustrates the last section of the form:
 
+- **Linked Competencies**: In case instructors created competencies, they can link them to the exercise here. See :ref:`Learning Analytics <learning-analytics>` for more information.
 - **Assessment Instructions**: Instructions for instructors while assessing the submission.
 
     .. figure:: text/create-text-exercise-form-3.png
@@ -87,7 +88,7 @@ Import Text Exercise
     .. figure:: text/import-text-exercise.png
               :align: center
 
-- An import modal will prompt up, where you will have an option to select and import previous text exercises from the list by clicking on |import| button.
+- An import modal will prompt up, where you will have an option to select and import previous text exercises from the list by clicking on the **Import** button.
 
     .. figure:: text/import-text-exercise-modal.png
               :align: center
@@ -166,7 +167,7 @@ Once you're done assessing the solution, you can either:
 
 - Click on |save| to save the incomplete assessment so that you can continue it afterwards.
 
-- Click on |submit| to submit the assessment.
+- Click on |submit-assessment| to submit the assessment.
 
 - Click on |cancel| to cancel and release the lock of the assessment.
 
@@ -195,9 +196,11 @@ Once you're done assessing the solution, you can either:
     :scale: 50
 .. |save| image:: general/save-button.png
 .. |cancel| image:: general/cancel-button.png
+    :scale: 50
 .. |exercise-dashboard-button| image:: general/exercise-dashboard-button.png
     :scale: 50
 .. |open-text-editor| image:: text/open-text-editor-button.png
     :scale: 50
 
-.. |submit| image:: general/submit-button.png
+.. |submit| image:: general/submit-assessment-button.png
+.. |submit-assessment| image:: general/submit-button.png
