@@ -202,6 +202,5 @@ Once you're done assessing the solution, you can either:
 .. |open-text-editor| image:: text/open-text-editor-button.png
     :scale: 50
 .. |submit| image:: general/submit-button.png
-    :scale: 50
 .. |submit-assessment| image:: general/submit-assessment-button.png
     :scale: 50
