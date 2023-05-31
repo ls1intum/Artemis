@@ -57,6 +57,15 @@ Integrated Training Process
 
 Instructors can use the assessment training process to make the grading more consistent. An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to properly assess submissions and provide feedback. They define a series of example submissions and assessments that the tutors must first read through.
 
+Double-blind Grading
+^^^^^^^^^^^^^^^^^^^^
+
+The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are "blind" to the identity of each other, ensuring that their expectations or biases do not influence the results. 
+    
+.. figure:: assessment/double_blind.png
+   :alt: Double-blind grading
+   :align: center
+   
 Grading Leaderboard
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -68,15 +77,6 @@ Artemis also offers a way for instructors to monitor the tutors' assessments bas
 
 The leaderboard shows the number of assessments each tutor has done and the number of feedback requests and accepted complaints about them.
 It also shows the average score the tutor has given and the average rating they received for their assessments. It helps to track and display the performance and rankings of the reviewers who assess and provide feedback on student submissions.
-
-Double-blind Grading
-^^^^^^^^^^^^^^^^^^^^
-
-The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are "blind" to the identity of each other, ensuring that their expectations or biases do not influence the results. 
-    
-.. figure:: assessment/double_blind.png
-   :alt: Double-blind grading
-   :align: center
 
 Automatic Assessment
 --------------------
