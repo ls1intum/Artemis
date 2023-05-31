@@ -92,7 +92,7 @@ Import Text Exercise
 
     .. figure:: text/import-text-exercise-modal.png
               :align: center
-              :scale: 70
+              :scale: 50
 
 - Once you import one of the exercises, you will then be redirected to a form that is similar to *Create new text exercise* form with all the fields filled from the imported exercise. You can now modify the fields as per your necessity to create a new Text Exercise.
 
