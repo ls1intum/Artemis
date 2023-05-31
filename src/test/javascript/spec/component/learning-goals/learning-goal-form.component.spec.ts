@@ -16,6 +16,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import dayjs from 'dayjs/esm';
 
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
@@ -103,6 +104,7 @@ describe('LearningGoalFormComponent', () => {
             id: 1,
             title: 'test',
             description: 'lorem ipsum',
+            dueDate: dayjs(),
             connectedLectureUnits: [textUnit],
             taxonomy: LearningGoalTaxonomy.ANALYZE,
         };
@@ -112,6 +114,7 @@ describe('LearningGoalFormComponent', () => {
 
         expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
         expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(learningGoalFormComponent.dueDateControl?.value).toEqual(formData.dueDate);
         expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
