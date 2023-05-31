@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
+import { LearningGoalRingsComponent } from 'app/course/competencies/competency-rings/learning-goal-rings.component';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

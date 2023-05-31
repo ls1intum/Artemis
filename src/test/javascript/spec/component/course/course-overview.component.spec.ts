@@ -33,7 +33,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewChild } f
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';

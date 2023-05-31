@@ -53,7 +53,7 @@ import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picke
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';

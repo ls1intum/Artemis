@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { LearningGoal } from 'app/entities/learningGoal.model';

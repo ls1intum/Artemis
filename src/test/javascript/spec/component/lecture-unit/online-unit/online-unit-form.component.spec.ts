@@ -10,7 +10,7 @@ import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;

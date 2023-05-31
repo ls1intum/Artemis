@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {

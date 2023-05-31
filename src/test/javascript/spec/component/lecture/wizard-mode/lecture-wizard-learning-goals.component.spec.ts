@@ -10,12 +10,12 @@ import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mo
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
+import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

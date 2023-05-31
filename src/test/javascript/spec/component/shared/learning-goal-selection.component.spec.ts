@@ -1,10 +1,10 @@
 import { ArtemisTestModule } from '../../test.module';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgModel, ReactiveFormsModule } from '@angular/forms';

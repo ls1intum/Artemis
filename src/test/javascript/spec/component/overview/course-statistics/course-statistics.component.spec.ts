@@ -17,7 +17,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
+import { CourseLearningGoalsComponent } from 'app/overview/course-competencies/course-learning-goals.component';
 import { CourseStatisticsComponent, NgxExercise } from 'app/overview/course-statistics/course-statistics.component';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';

@@ -22,7 +22,7 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
