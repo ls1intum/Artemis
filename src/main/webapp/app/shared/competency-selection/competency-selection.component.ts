@@ -7,23 +7,23 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
-    selector: 'jhi-learning-goal-selection',
-    templateUrl: './learning-goal-selection.component.html',
+    selector: 'jhi-competency-selection',
+    templateUrl: './competency-selection.component.html',
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
             multi: true,
-            useExisting: forwardRef(() => LearningGoalSelectionComponent),
+            useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
 })
-export class LearningGoalSelectionComponent implements OnInit, ControlValueAccessor {
+export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
-    @Input() learningGoals: Competency[];
+    @Input() competencies: Competency[];
 
     @Output() valueChange = new EventEmitter();
 
@@ -35,19 +35,19 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
-    constructor(private route: ActivatedRoute, private courseStorageService: CourseStorageService, private learningGoalService: CompetencyService) {}
+    constructor(private route: ActivatedRoute, private courseStorageService: CourseStorageService, private competencyService: CompetencyService) {}
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (this.learningGoals == undefined && courseId) {
+        if (this.competencies == undefined && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             if (course?.competencies) {
-                this.setLearningGoals(course.competencies!);
+                this.setCompetencies(course.competencies!);
             } else {
                 this.isLoading = true;
-                this.learningGoalService.getAllForCourse(courseId).subscribe({
+                this.competencyService.getAllForCourse(courseId).subscribe({
                     next: (response) => {
-                        this.setLearningGoals(response.body!);
+                        this.setCompetencies(response.body!);
                         this.writeValue(this.value);
                         this.isLoading = false;
                     },
@@ -62,14 +62,14 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
 
     /**
      * Set the available competencies for selection
-     * @param learningGoals The competencies of the course
+     * @param competencies The competencies of the course
      */
-    setLearningGoals(learningGoals: Competency[]) {
-        this.learningGoals = learningGoals.map((learningGoal) => {
+    setCompetencies(competencies: Competency[]) {
+        this.competencies = competencies.map((competency) => {
             // Remove unnecessary properties
-            learningGoal.course = undefined;
-            learningGoal.userProgress = undefined;
-            return learningGoal;
+            competency.course = undefined;
+            competency.userProgress = undefined;
+            return competency;
         });
     }
 
@@ -80,10 +80,10 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     }
 
     writeValue(value?: Competency[]): void {
-        if (value && this.learningGoals) {
+        if (value && this.competencies) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.id);
-            this.value = this.learningGoals.filter((learningGoal) => ids.includes(learningGoal.id));
+            this.value = this.competencies.filter((competency) => ids.includes(competency.id));
         } else {
             this.value = value;
         }

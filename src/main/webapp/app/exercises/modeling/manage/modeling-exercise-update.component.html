@@ -225,13 +225,13 @@
             }}</span>
         </div>
         <div class="form-group" *ngIf="!isExamMode">
-            <jhi-learning-goal-selection
+            <jhi-competency-selection
                 id="learning-goals"
                 [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
                 [(ngModel)]="modelingExercise.competencies"
                 name="learningGoals"
-            ></jhi-learning-goal-selection>
+            ></jhi-competency-selection>
         </div>
         <div class="form-group" *ngIf="modelingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>

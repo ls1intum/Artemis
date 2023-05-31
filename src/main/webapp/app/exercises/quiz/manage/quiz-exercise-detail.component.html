@@ -198,13 +198,13 @@
             </div>
             <div class="row">
                 <div class="form-group" *ngIf="!isExamMode">
-                    <jhi-learning-goal-selection
+                    <jhi-competency-selection
                         id="learning-goals"
                         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
                         [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
                         [(ngModel)]="quizExercise.competencies"
                         name="learningGoals"
-                    ></jhi-learning-goal-selection>
+                    ></jhi-competency-selection>
                 </div>
             </div>
             <ng-container *ngIf="courseId">

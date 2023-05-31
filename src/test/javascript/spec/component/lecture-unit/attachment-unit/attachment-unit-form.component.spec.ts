@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 describe('AttachmentUnitFormComponent', () => {
@@ -23,7 +23,7 @@ describe('AttachmentUnitFormComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
-                MockComponent(LearningGoalSelectionComponent),
+                MockComponent(CompetencySelectionComponent),
             ],
             providers: [MockProviders(TranslateService)],
             schemas: [],

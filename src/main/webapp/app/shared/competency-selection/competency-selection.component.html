@@ -1,4 +1,4 @@
-<div *ngIf="isLoading || (learningGoals && learningGoals.length)">
+<div *ngIf="isLoading || (competencies && competencies.length)">
     <label for="learning-goal-input-field" class="form-control-label col" *ngIf="labelName">
         {{ labelName }}
     </label>
@@ -20,7 +20,7 @@
         (ngModelChange)="updateField($event)"
         multiple
     >
-        <option *ngFor="let learningGoal of learningGoals" [ngValue]="learningGoal">
+        <option *ngFor="let learningGoal of competencies" [ngValue]="learningGoal">
             <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)" [fixedWidth]="true"></fa-icon>
             {{ learningGoal.title }}
         </option>

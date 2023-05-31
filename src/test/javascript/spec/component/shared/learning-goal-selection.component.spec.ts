@@ -1,5 +1,5 @@
 import { ArtemisTestModule } from '../../test.module';
-import { LearningGoalSelectionComponent } from 'app/shared/competency-selection/learning-goal-selection.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
@@ -15,15 +15,15 @@ import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('LearningGoalSelection', () => {
-    let fixture: ComponentFixture<LearningGoalSelectionComponent>;
-    let component: LearningGoalSelectionComponent;
+    let fixture: ComponentFixture<CompetencySelectionComponent>;
+    let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let learningGoalService: CompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
-            declarations: [LearningGoalSelectionComponent, MockComponent(FaIconComponent), MockDirective(NgModel)],
+            declarations: [CompetencySelectionComponent, MockComponent(FaIconComponent), MockDirective(NgModel)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -41,7 +41,7 @@ describe('LearningGoalSelection', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(LearningGoalSelectionComponent);
+                fixture = TestBed.createComponent(CompetencySelectionComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
                 learningGoalService = TestBed.inject(CompetencyService);
@@ -63,7 +63,7 @@ describe('LearningGoalSelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeArrayOfSize(1);
+        expect(component.competencies).toBeArrayOfSize(1);
         expect(select).not.toBeNull();
     });
 
@@ -76,9 +76,9 @@ describe('LearningGoalSelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeArrayOfSize(1);
-        expect(component.learningGoals.first()?.course).toBeUndefined();
-        expect(component.learningGoals.first()?.userProgress).toBeUndefined();
+        expect(component.competencies).toBeArrayOfSize(1);
+        expect(component.competencies.first()?.course).toBeUndefined();
+        expect(component.competencies.first()?.userProgress).toBeUndefined();
     });
 
     it('should set disabled when error during loading', () => {
@@ -101,7 +101,7 @@ describe('LearningGoalSelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeEmpty();
+        expect(component.competencies).toBeEmpty();
         expect(select).toBeNull();
     });
 
