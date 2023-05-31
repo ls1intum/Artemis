@@ -52,6 +52,7 @@ To ensure consistency, fairness, and transparency and simplify the grading proce
     :alt: A picture of the assessment user interface with grading criteria, student submission and example solution
     :align: center
 
+
 Integrated Training Process
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -74,6 +75,7 @@ Artemis also offers a way for instructors to monitor the tutors' assessments bas
 .. figure:: assessment/leaderboard.png
    :alt: Grading leaderboard
    :align: center
+
 
 The leaderboard shows the number of assessments each tutor has done and the number of feedback requests and accepted complaints about them.
 It also shows the average score the tutor has given and the average rating they received for their assessments. It helps to track and display the performance and rankings of the reviewers who assess and provide feedback on student submissions.
