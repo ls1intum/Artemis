@@ -25,10 +25,26 @@ ARG WAR_FILE_STAGE="builder"
 FROM docker.io/library/eclipse-temurin:17-jdk as builder
 
 WORKDIR /opt/artemis
+# copy gradle related files
+COPY gradlew gradlew.bat ./
+COPY build.gradle gradle.properties settings.gradle ./
+COPY gradle gradle/
+# copy npm related files and install node modules
+# (from https://stackoverflow.com/questions/63961934/how-to-use-docker-build-cache-when-version-bumping-a-react-app)
+COPY package.json package-lock.json ./
+RUN \
+  --mount=type=cache,target=/opt/artemis/.npm \
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_set_cache /opt/artemis/.npm && \
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_ci
+
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
-RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
+RUN \
+  --mount=type=cache,target=/opt/artemis/.gradle/caches \
+  --mount=type=cache,target=/root/.gradle/caches \
+  --mount=type=cache,target=/opt/artemis/.cache \
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
@@ -60,13 +76,17 @@ ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
-RUN echo "Installing needed dependencies" \
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 # See https://github.com/ls1intum/Artemis/issues/4439
-RUN echo "Fixing locales" \
+RUN \
+  echo "Fixing locales" \
   && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
   && locale-gen
 ENV LC_ALL en_US.UTF-8
@@ -74,7 +94,8 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 
 # Create directories for volumes, create artemis user and set right owners
-RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
+RUN \
+  mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
   && groupadd --gid ${GID} artemis \
   && useradd -m --gid ${GID} --uid ${UID} --shell /bin/bash artemis \
   && chown -R artemis:artemis /opt/artemis
