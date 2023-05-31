@@ -5,7 +5,7 @@ import java.util.*;
 public class Context {
     private SortStrategy sortAlgorithm;
 
-    private List<Date> dates;
+    private List<Date> dates = new ArrayList<>();
 
     public List<Date> getDates() {
         return dates;
