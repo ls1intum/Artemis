@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Transient
-    private final transient Logger log = LoggerFactory.getLogger(FileService.class);
+    private final transient Logger log = LoggerFactory.getLogger(DragItem.class);
 
     @Transient
     private transient FileService fileService = new FileService();
@@ -117,8 +117,8 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     }
 
     /**
-     * This method is called after the entity is saved for the first time. Before creation, we don't know yet the id of the entity, so we use a placeholder in the
-     * backgroundFilePath
+     * This method is called after the entity is saved for the first time. We replace the placeholder in the pictureFilePath with the id of the entity because we don't know it
+     * before creation.
      */
     @PostPersist
     public void afterCreate() {
