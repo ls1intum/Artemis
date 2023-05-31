@@ -186,7 +186,7 @@ public class QuizSubmissionResource {
         // update submission
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
-        quizSubmission.calculateAndUpdateScores(quizExercise);
+        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
 
         // create Participation stub
         StudentParticipation participation = new StudentParticipation().exercise(quizExercise);

@@ -5,7 +5,7 @@ import { Observable, map, shareReplay } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CourseConversationsNotificationsService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = 'api/courses';
 
     coursesForNotifications$: Observable<Conversation[]>;
 

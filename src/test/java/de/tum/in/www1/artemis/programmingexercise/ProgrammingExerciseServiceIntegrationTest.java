@@ -5,8 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
-import java.util.UUID;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +28,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasic
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -149,7 +147,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -157,7 +155,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch("Programming");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNotEmpty();
     }
 
@@ -184,30 +182,29 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         var exerciseId = exercise.getId();
 
         final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
+        final var searchResult = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(programmingExercise -> (Objects.equals(programmingExercise.getId(), exerciseId)))).hasSize(1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
-        testCourseAndExamFilters(withSCA);
+        testCourseAndExamFilters(withSCA, "testCourseAndExamFiltersAsInstructor" + withSCA);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin(boolean withSCA) throws Exception {
-        testCourseAndExamFilters(withSCA);
+        testCourseAndExamFilters(withSCA, "testCourseAndExamFiltersAsAdmin" + withSCA);
     }
 
-    private void testCourseAndExamFilters(boolean withSCA) throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString, withSCA);
-        database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
-        testSCAFilter(randomString, withSCA);
+    private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", programmingExerciseTitle);
+        testSCAFilter(programmingExerciseTitle, withSCA);
     }
 
     private void testSCAFilter(String searchTerm, boolean expectSca) throws Exception {
@@ -215,7 +212,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         var filters = database.searchMapping(search);
 
         // We should get both exercises when we don't filter for SCA only (other endpoint)
-        var result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        var result = request.getSearchResult("/api/programming-exercises", HttpStatus.OK, ProgrammingExercise.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(2);
 
         filters = database.searchMapping(search);
@@ -223,7 +220,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
         // The exam exercise is always created with SCA deactivated
         // expectSca true -> 1 result, false -> 0 results
-        result = request.get("/api/programming-exercises/with-sca", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        result = request.getSearchResult("/api/programming-exercises/with-sca", HttpStatus.OK, ProgrammingExercise.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(expectSca ? 1 : 0);
     }
 
@@ -234,15 +231,15 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
         final var searchPython = database.configureSearch("Python");
-        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchPython));
+        final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage()).hasSize(1);
 
         final var searchJava = database.configureSearch("Java");
-        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchJava));
+        final var resultJava = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchJava));
         assertThat(resultJava.getResultsOnPage()).hasSize(2);
 
         final var searchSwift = database.configureSearch("Swift");
-        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchSwift));
+        final var resultSwift = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -260,7 +257,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         programmingExerciseRepository.save(otherProgrammingExercise);
 
         final var search = database.configureSearch(title);
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 

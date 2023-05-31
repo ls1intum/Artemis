@@ -8,13 +8,13 @@ export class LogsService {
     constructor(private http: HttpClient) {}
 
     changeLevel(name: string, configuredLevel: Level): Observable<any> {
-        return this.http.post(SERVER_API_URL + `management/loggers/${name}`, { configuredLevel });
+        return this.http.post(`management/loggers/${name}`, { configuredLevel });
     }
 
     /**
      * Sends a GET request to retrieve all logs
      */
     findAll(): Observable<LoggersResponse> {
-        return this.http.get<LoggersResponse>(SERVER_API_URL + 'management/loggers');
+        return this.http.get<LoggersResponse>('management/loggers');
     }
 }

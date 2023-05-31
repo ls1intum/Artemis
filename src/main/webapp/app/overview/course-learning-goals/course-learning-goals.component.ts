@@ -48,8 +48,8 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     private setCourse(course?: Course) {
         this.course = course;
-        if (this.course && this.course.learningGoals && this.course.prerequisites) {
-            this.learningGoals = this.course.learningGoals;
+        if (this.course && this.course.competencies && this.course.prerequisites) {
+            this.learningGoals = this.course.competencies;
             this.prerequisites = this.course.prerequisites;
         } else {
             this.loadData();
@@ -74,7 +74,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     }
 
     /**
-     * Loads all prerequisites and learning goals for the course
+     * Loads all prerequisites and competencies for the course
      */
     loadData() {
         this.isLoading = true;
@@ -89,9 +89,9 @@ export class CourseLearningGoalsComponent implements OnInit {
     }
 
     /**
-     * Calculates a unique identity for each learning goal card shown in the component
+     * Calculates a unique identity for each competency card shown in the component
      * @param index The index in the list
-     * @param learningGoal The learning goal of the current iteration
+     * @param learningGoal The competency of the current iteration
      */
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;

@@ -88,7 +88,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 5, 0, 1);
+        database.addUsers(TEST_PREFIX, 0, 1, 0, 1);
         course = database.addCourseWithModelingAndTextExercise();
 
         // Make both source and destination exercise team exercises

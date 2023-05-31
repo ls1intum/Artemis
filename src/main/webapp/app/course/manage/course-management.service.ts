@@ -33,7 +33,7 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = 'api/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
@@ -244,7 +244,7 @@ export class CourseManagementService {
      */
     findAllForRegistration(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
     }
 
@@ -253,7 +253,7 @@ export class CourseManagementService {
      */
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
@@ -263,7 +263,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' }).pipe(
+        return this.http.post<User>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
             map((res: HttpResponse<User>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
@@ -619,13 +619,13 @@ export class CourseManagementService {
     }
 
     /**
-     * Set the learning goals and prerequisites to an empty array if undefined
+     * Set the competencies and prerequisites to an empty array if undefined
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
     private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.learningGoals = res.body.learningGoals || [];
+            res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];
         }
         return res;

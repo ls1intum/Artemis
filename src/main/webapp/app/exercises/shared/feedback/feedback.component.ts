@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnInit } from '@angular/core';
+import { Component, Injector, Input, OnInit, Optional } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -15,7 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -103,7 +102,6 @@ export class FeedbackComponent implements OnInit {
     feedbackItemNodes: FeedbackNode[];
 
     constructor(
-        public activeModal: NgbActiveModal,
         private resultService: ResultService,
         private buildLogService: BuildLogService,
         private translateService: TranslateService,
@@ -111,6 +109,8 @@ export class FeedbackComponent implements OnInit {
         private feedbackService: FeedbackService,
         private feedbackChartService: FeedbackChartService,
         private injector: Injector,
+        @Optional()
+        public activeModal?: NgbActiveModal,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
@@ -134,8 +134,8 @@ export class FeedbackComponent implements OnInit {
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
 
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.commitHashURLTemplate = info?.commitHashURLTemplate;
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl();
         });
     }

@@ -12,7 +12,7 @@ import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-finger
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
-    private infoUrl = SERVER_API_URL + 'management/info';
+    private infoUrl = 'management/info';
     private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
 
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService, private browserFingerprintService: BrowserFingerprintService) {}

@@ -8,7 +8,7 @@ describe('PasswordService', () => {
     let httpService: HttpClient;
     let postStub: jest.SpyInstance;
 
-    const postURL = SERVER_API_URL + 'api/account/change-password';
+    const postURL = 'api/account/change-password';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

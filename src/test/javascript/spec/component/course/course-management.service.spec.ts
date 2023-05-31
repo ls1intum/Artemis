@@ -40,7 +40,7 @@ describe('Course Management Service', () => {
     let convertExercisesDateFromServerSpy: jest.SpyInstance;
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
-    const resourceUrl = SERVER_API_URL + 'api/courses';
+    const resourceUrl = 'api/courses';
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
@@ -81,7 +81,7 @@ describe('Course Management Service', () => {
         course.lectures = undefined;
         course.startDate = undefined;
         course.endDate = undefined;
-        course.learningGoals = [];
+        course.competencies = [];
         course.prerequisites = [];
 
         courseForDashboard = new CourseForDashboardDTO();
@@ -280,7 +280,7 @@ describe('Course Management Service', () => {
             .findAllForRegistration()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-registration`, returnedFromService, course);
+        requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
         tick();
     }));
 
@@ -311,7 +311,7 @@ describe('Course Management Service', () => {
             .registerForCourse(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(user));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/register` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
         req.flush(user);
         expect(syncGroupsSpy).toHaveBeenCalledWith(user);
         tick();
