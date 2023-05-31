@@ -12,7 +12,7 @@ Conducting a Text exercise consists of 3 steps:
 
 1. **Instructor prepares exercise:** Creates and configures the text exercise in Artemis.
 2. **Student solves exercise:** Student works on the exercise and submits the solution.
-3. **Tutors assesses submissions:** Reviews the submitted exercises and creates results for the students.
+3. **Tutor assesses submissions:** Reviews the submitted exercises and creates results for the students.
 
 
 Setup
@@ -39,14 +39,14 @@ The following screenshot illustrates the first section of the form. It consists 
 - **Title**: Title of an exercise.
 - **Categories**: Category of an exercise.
 - **Difficulty**: Difficulty of an exercise. (No Level, Easy, Medium or Hard).
-- **Mode**: Solving mode of an exercise. *This cannot be changed afterwards* (Individual or Team).
+- **Mode**: Solving mode of an exercise. *This cannot be changed afterward* (Individual or Team).
 - **Release Date**: Date after which the exercise is released to the students.
 - **Release Date**: Date after which students can start the exercise.
 - **Due Date**: Date till when students can work on the exercise.
 - **Assessment Due Date**: Date after which students can view the feedback of the assessments from the instructors.
 - **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation.
 - **Points**: Total points of an exercise.
-- **Bonus Points**: Bonus points of an exercise.
+- **Bonus Points**: Bonus points for an exercise.
 - **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for text blocks based on previously graded submissions for this exercise using the Athena service.
 
     .. figure:: text/create-text-exercise-form-1.png
@@ -88,13 +88,13 @@ Import Text Exercise
     .. figure:: text/import-text-exercise.png
               :align: center
 
-- An import modal will prompt up, where you will have an option to select and import previous text exercises from the list by clicking on the **Import** button.
+- An import modal will prompt up, where you will have the option to select and import previous text exercises from the list by clicking on the **Import** button.
 
     .. figure:: text/import-text-exercise-modal.png
               :align: center
               :scale: 70
 
-- Once you import one of the exercise, you will then be redirected to a form which is similar to *Create new text exercise* form with all the fields filled from imported exercise. You can now modify the fields as per your necessity to create a new Text Exercise.
+- Once you import one of the exercises, you will then be redirected to a form that is similar to *Create new text exercise* form with all the fields filled from the imported exercise. You can now modify the fields as per your necessity to create a new Text Exercise.
 
 Result
 ^^^^^^
@@ -104,8 +104,8 @@ Result
 
 - Click the |edit| button of the text exercise and adapt the interactive problem statement. There you can also set release and due dates.
 - Click the |scores| button to see the scores achieved by the students.
-- Click the |participation| button to see the list of students participated in the exercise.
-- Click the |example-submission| button to modify/add example submission of the exercise.
+- Click the |participation| button to see the list of students who participated in the exercise.
+- Click the |example-submission| button to modify/add an example submission of the exercise.
 - Click the |delete| button to delete the exercise.
 - You can get an overview of the exercise by clicking on the title.
 
@@ -120,7 +120,7 @@ Student Submission
 
 - Once they start the exercise, they will now have the option to work on it in an online text editor by clicking on the |open-text-editor| button.
 
-- The screenshot below depicts the exercise interface for students. They can read the Problem Statement on the right and fill in their solution in the textbox on the left.
+- The screenshot below depicts the exercise interface for students. They can read the Problem Statement on the right and fill in their solution in the textbox on the left. To submit, you need to click on the |submit| button on the top right.
 
     .. figure:: text/text-exercise-students-interface.png
               :align: center
@@ -129,12 +129,12 @@ Assessment
 ----------
 When the due date is over you can assess the submissions.
 
-- To assess the submissions, first click on Assessment Dashboard.
+- To assess the submissions, first click on **Assessment Dashboard**.
 
     .. figure:: general/assessment-dashboard.png
               :align: center
 
-- Then click on Exercise Dashboard of the text exercise.
+- Then click on **Exercise Dashboard** of the text exercise.
 
     .. figure:: text/exercise-dashboard.png
               :align: center
@@ -146,7 +146,7 @@ When the due date is over you can assess the submissions.
 
 - In case you have not assessed a submission of this exercise before, you will get shown the problem statement and a summary of assessment instructions. Once you know what the exercise is about, you can click on the |participate-in-exercise| button.
 
-- In case unassessed submissions are available, you can click on the |start-new-assessment| button. You will then be redirected to the assessment page where you will be able to assess submission of a random student.
+- In case unassessed submissions are available, you can click on the |start-new-assessment| button. You will then be redirected to the assessment page where you will be able to assess the submission of a random student.
 
     .. figure:: text/exercise-assessment-dashboard-2.png
               :align: center
@@ -165,13 +165,13 @@ When the due date is over you can assess the submissions.
 
 Once you're done assessing the solution, you can either:
 
-- Click on |save| to save the incomplete assessment so that you can continue it afterwards.
+- Click on |save| to save the incomplete assessment so that you can continue it afterward.
 
 - Click on |submit-assessment| to submit the assessment.
 
 - Click on |cancel| to cancel and release the lock of the assessment.
 
-- Click on |exercise-dashboard-button| to navigate to exercise dashboard page.
+- Click on |exercise-dashboard-button| to navigate to the **Exercise Dashboard**.
 
 
 .. |course-management| image:: general/course-management.png
@@ -202,5 +202,5 @@ Once you're done assessing the solution, you can either:
 .. |open-text-editor| image:: text/open-text-editor-button.png
     :scale: 50
 
-.. |submit| image:: general/submit-assessment-button.png
-.. |submit-assessment| image:: general/submit-button.png
+.. |submit| image:: general/submit-button.png
+.. |submit-assessment| image:: general/submit-assessment-button.png
