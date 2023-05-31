@@ -13,6 +13,7 @@ import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { IrisSender } from 'app/entities/iris/iris-message.model';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -68,7 +69,7 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.messages).toContain('Hello');
         expect(stateStore.dispatch).toHaveBeenCalledWith(
             new StudentMessageSentAction({
-                sender: this.SENDER_USER,
+                sender: IrisSender.USER,
                 content: [
                     {
                         type: IrisMessageContentType.TEXT,
@@ -95,7 +96,7 @@ describe('ExerciseChatWidgetComponent', () => {
             content: [
                 {
                     type: 'TEXT',
-                    textContent: message,
+                    textContent: 'Hello',
                 },
             ],
         };
