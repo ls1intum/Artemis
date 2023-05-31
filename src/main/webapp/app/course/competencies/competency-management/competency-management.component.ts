@@ -16,24 +16,24 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 
 @Component({
-    selector: 'jhi-learning-goal-management',
-    templateUrl: './learning-goal-management.component.html',
-    styleUrls: ['./learning-goal-management.component.scss'],
+    selector: 'jhi-competency-management',
+    templateUrl: './competency-management.component.html',
+    styleUrls: ['./competency-management.component.scss'],
 })
-export class LearningGoalManagementComponent implements OnInit, OnDestroy {
+export class CompetencyManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
-    learningGoals: Competency[] = [];
+    competencies: Competency[] = [];
     prerequisites: Competency[] = [];
 
     showRelations = false;
-    tailLearningGoal?: number;
-    headLearningGoal?: number;
+    tailCompetency?: number;
+    headCompetency?: number;
     relationType?: string;
     nodes: Node[] = [];
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
-    learningGoalRelationError = CompetencyRelationError;
+    competencyRelationError = CompetencyRelationError;
     relationError: CompetencyRelationError = CompetencyRelationError.NONE;
 
     private dialogErrorSource = new Subject<string>();
@@ -53,7 +53,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private accountService: AccountService,
-        private learningGoalService: LearningGoalService,
+        private competencyService: LearningGoalService,
         private alertService: AlertService,
         private modalService: NgbModal,
     ) {}
@@ -73,7 +73,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     validate(): void {
-        if (this.headLearningGoal && this.tailLearningGoal && this.relationType && this.headLearningGoal === this.tailLearningGoal) {
+        if (this.headCompetency && this.tailCompetency && this.relationType && this.headCompetency === this.tailCompetency) {
             this.relationError = CompetencyRelationError.SELF;
             return;
         }
@@ -105,12 +105,12 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    identify(index: number, learningGoal: Competency) {
-        return `${index}-${learningGoal.id}`;
+    identify(index: number, competency: Competency) {
+        return `${index}-${competency.id}`;
     }
 
-    deleteLearningGoal(learningGoalId: number) {
-        this.learningGoalService.delete(learningGoalId, this.courseId).subscribe({
+    deleteCompetency(competencyId: number) {
+        this.competencyService.delete(competencyId, this.courseId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -119,8 +119,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    removePrerequisite(learningGoalId: number) {
-        this.learningGoalService.removePrerequisite(learningGoalId, this.courseId).subscribe({
+    removePrerequisite(competencyId: number) {
+        this.competencyService.removePrerequisite(competencyId, this.courseId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -131,34 +131,34 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
-        this.learningGoalService
+        this.competencyService
             .getAllPrerequisitesForCourse(this.courseId)
             .pipe(map((response: HttpResponse<Competency[]>) => response.body!))
             .subscribe({
-                next: (learningGoals) => {
-                    this.prerequisites = learningGoals;
+                next: (competencies) => {
+                    this.prerequisites = competencies;
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
-        this.learningGoalService
+        this.competencyService
             .getAllForCourse(this.courseId)
             .pipe(
                 switchMap((res) => {
-                    this.learningGoals = res.body!;
+                    this.competencies = res.body!;
 
-                    this.nodes = this.learningGoals.map(
-                        (learningGoal): Node => ({
-                            id: `${learningGoal.id}`,
-                            label: learningGoal.title,
+                    this.nodes = this.competencies.map(
+                        (competency): Node => ({
+                            id: `${competency.id}`,
+                            label: competency.title,
                         }),
                     );
 
-                    const relationsObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getLearningGoalRelations(lg.id!, this.courseId);
+                    const relationsObservable = this.competencies.map((lg) => {
+                        return this.competencyService.getLearningGoalRelations(lg.id!, this.courseId);
                     });
 
-                    const progressObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId);
+                    const progressObservable = this.competencies.map((lg) => {
+                        return this.competencyService.getCourseProgress(lg.id!, this.courseId);
                     });
 
                     return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable)]);
@@ -170,9 +170,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe({
-                next: ([learningGoalRelations, learningGoalProgressResponses]) => {
+                next: ([competencyRelations, competencyProgressResponses]) => {
                     const relations = [
-                        ...learningGoalRelations
+                        ...competencyRelations
                             .flatMap((response) => response.body!)
                             .reduce((a, c) => {
                                 a.set(c.id, c);
@@ -204,9 +204,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                             }),
                         );
 
-                    for (const learningGoalProgressResponse of learningGoalProgressResponses) {
-                        const courseLearningGoalProgress: CourseCompetencyProgress = learningGoalProgressResponse.body!;
-                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.competencyId)!.courseProgress = courseLearningGoalProgress;
+                    for (const competencyProgressResponse of competencyProgressResponses) {
+                        const courseCompetencyProgress: CourseCompetencyProgress = competencyProgressResponse.body!;
+                        this.competencies.find((lg) => lg.id === courseCompetencyProgress.competencyId)!.courseProgress = courseCompetencyProgress;
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -218,9 +218,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
      */
     openPrerequisiteSelectionModal() {
         const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
+        modalRef.componentInstance.disabledIds = this.competencies.concat(this.prerequisites).map((competency) => competency.id);
         modalRef.result.then((result: Competency) => {
-            this.learningGoalService
+            this.competencyService
                 .addPrerequisite(result.id!, this.courseId)
                 .pipe(
                     filter((res: HttpResponse<Competency>) => res.ok),
@@ -240,17 +240,17 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
      */
     openImportModal() {
         const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
-        modalRef.result.then((selectedLearningGoal: Competency) => {
-            this.learningGoalService
-                .import(selectedLearningGoal, this.courseId)
+        modalRef.componentInstance.disabledIds = this.competencies.concat(this.prerequisites).map((competency) => competency.id);
+        modalRef.result.then((selectedCompetency: Competency) => {
+            this.competencyService
+                .import(selectedCompetency, this.courseId)
                 .pipe(
                     filter((res: HttpResponse<Competency>) => res.ok),
                     map((res: HttpResponse<Competency>) => res.body),
                 )
                 .subscribe({
                     next: (res: Competency) => {
-                        this.learningGoals.push(res);
+                        this.competencies.push(res);
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
                 });
@@ -271,8 +271,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        this.learningGoalService
-            .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
+        this.competencyService
+            .createLearningGoalRelation(this.tailCompetency!, this.headCompetency!, this.relationType!, this.courseId)
             .pipe(
                 filter((res: HttpResponse<CompetencyRelation>) => res.ok),
                 map((res: HttpResponse<CompetencyRelation>) => res.body),
@@ -286,7 +286,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     removeRelation(edge: Edge) {
-        this.learningGoalService.removeLearningGoalRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
+        this.competencyService.removeLearningGoalRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
             next: () => {
                 this.loadData();
             },
@@ -295,14 +295,14 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     private containsCircularRelation(): boolean {
-        if (this.headLearningGoal !== this.tailLearningGoal) {
+        if (this.headCompetency !== this.tailCompetency) {
             return !!(
-                this.tailLearningGoal &&
-                this.headLearningGoal &&
+                this.tailCompetency &&
+                this.headCompetency &&
                 this.relationType &&
                 this.doesCreateCircularRelation(this.nodes, this.edges, {
-                    source: this.tailLearningGoal! + '',
-                    target: this.headLearningGoal! + '',
+                    source: this.tailCompetency! + '',
+                    target: this.headCompetency! + '',
                     label: this.relationType!,
                 } as Edge)
             );
@@ -312,7 +312,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     private doesRelationAlreadyExist(): boolean {
-        return this.edges.find((edge) => edge.source === this.tailLearningGoal?.toString() && edge.target === this.headLearningGoal?.toString()) !== undefined;
+        return this.edges.find((edge) => edge.source === this.tailCompetency?.toString() && edge.target === this.headCompetency?.toString()) !== undefined;
     }
 
     /**

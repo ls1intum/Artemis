@@ -4,7 +4,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyRelationError, CourseCompetencyProgress } from 'app/entities/competency.model';
-import { LearningGoalManagementComponent } from 'app/course/competencies/competency-management/learning-goal-management.component';
+import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { ActivatedRoute } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -30,8 +30,8 @@ import '@angular/localize/init';
 class NgxGraphStubComponent {}
 
 describe('LearningGoalManagementComponent', () => {
-    let fixture: ComponentFixture<LearningGoalManagementComponent>;
-    let component: LearningGoalManagementComponent;
+    let fixture: ComponentFixture<CompetencyManagementComponent>;
+    let component: CompetencyManagementComponent;
     let learningGoalService: LearningGoalService;
     let modalService: NgbModal;
 
@@ -44,7 +44,7 @@ describe('LearningGoalManagementComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar],
             declarations: [
-                LearningGoalManagementComponent,
+                CompetencyManagementComponent,
                 LearningGoalCardStubComponent,
                 NgxGraphStubComponent,
                 MockHasAnyAuthorityDirective,
@@ -72,7 +72,7 @@ describe('LearningGoalManagementComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(LearningGoalManagementComponent);
+                fixture = TestBed.createComponent(CompetencyManagementComponent);
                 component = fixture.componentInstance;
                 learningGoalService = TestBed.inject(LearningGoalService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
@@ -126,7 +126,7 @@ describe('LearningGoalManagementComponent', () => {
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getCourseProgressSpy).toHaveBeenCalledTimes(2);
         expect(getLearningGoalRelationsSpy).toHaveBeenCalledTimes(2);
-        expect(component.learningGoals).toHaveLength(2);
+        expect(component.competencies).toHaveLength(2);
     });
 
     it('should load prerequisites', () => {
@@ -141,7 +141,7 @@ describe('LearningGoalManagementComponent', () => {
 
         fixture.detectChanges();
 
-        component.deleteLearningGoal(123);
+        component.deleteCompetency(123);
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(123, 1);
@@ -197,8 +197,8 @@ describe('LearningGoalManagementComponent', () => {
         const createLearningGoalRelationSpy = jest
             .spyOn(learningGoalService, 'createLearningGoalRelation')
             .mockReturnValue(of(new HttpResponse({ body: new Competency(), status: 200 })));
-        component.tailLearningGoal = 123;
-        component.headLearningGoal = 456;
+        component.tailCompetency = 123;
+        component.headCompetency = 456;
         component.relationType = 'assumes';
 
         fixture.detectChanges();
@@ -218,8 +218,8 @@ describe('LearningGoalManagementComponent', () => {
         const edge2 = { id: 'edge2', source: '17', target: '18', label: 'MATCHES' } as Edge;
         component.edges = [edge1, edge2];
 
-        component.tailLearningGoal = 18;
-        component.headLearningGoal = 16;
+        component.tailCompetency = 18;
+        component.headCompetency = 16;
         component.relationType = 'ASSUMES';
 
         component.validate();
@@ -235,8 +235,8 @@ describe('LearningGoalManagementComponent', () => {
         const edge1 = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
         component.edges = [edge1];
 
-        component.tailLearningGoal = 16;
-        component.headLearningGoal = 17;
+        component.tailCompetency = 16;
+        component.headCompetency = 17;
         component.relationType = 'EXTENDS';
 
         component.validate();
@@ -249,8 +249,8 @@ describe('LearningGoalManagementComponent', () => {
         const node2 = { id: '17', label: 'learningGoal2' } as Node;
         component.nodes = [node1, node2];
 
-        component.tailLearningGoal = 16;
-        component.headLearningGoal = 16;
+        component.tailCompetency = 16;
+        component.headCompetency = 16;
         component.relationType = 'EXTENDS';
 
         component.validate();

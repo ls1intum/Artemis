@@ -6,7 +6,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EditLearningGoalComponent } from './edit-competency/edit-learning-goal.component';
-import { LearningGoalManagementComponent } from './competency-management/learning-goal-management.component';
+import { CompetencyManagementComponent } from './competency-management/competency-management.component';
 import { LearningGoalCardComponent } from 'app/course/competencies/competency-card/learning-goal-card.component';
 import { LearningGoalsPopoverComponent } from './competencies-popover/learning-goals-popover.component';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
@@ -21,7 +21,7 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
         LearningGoalRingsComponent,
         CreateLearningGoalComponent,
         EditLearningGoalComponent,
-        LearningGoalManagementComponent,
+        CompetencyManagementComponent,
         LearningGoalCardComponent,
         LearningGoalsPopoverComponent,
         PrerequisiteImportComponent,
