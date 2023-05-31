@@ -74,6 +74,7 @@ public class CommandParser {
 
     private static Date parseDateInput(String input) throws ParseException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         formatter.setLenient(false);
         return formatter.parse(input);
     }
