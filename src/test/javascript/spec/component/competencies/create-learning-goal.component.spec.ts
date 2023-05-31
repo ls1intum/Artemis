@@ -11,7 +11,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -77,8 +77,8 @@ describe('CreateLearningGoal', () => {
             connectedLectureUnits: [textUnit],
         };
 
-        const response: HttpResponse<LearningGoal> = new HttpResponse({
-            body: new LearningGoal(),
+        const response: HttpResponse<Competency> = new HttpResponse({
+            body: new Competency(),
             status: 201,
         });
 
@@ -93,7 +93,7 @@ describe('CreateLearningGoal', () => {
         learningGoalForm.formSubmitted.emit(formData);
 
         return createLearningGoalComponentFixture.whenStable().then(() => {
-            const learningGoal = new LearningGoal();
+            const learningGoal = new Competency();
             learningGoal.title = formData.title;
             learningGoal.description = formData.description;
             learningGoal.lectureUnits = formData.connectedLectureUnits;

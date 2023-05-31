@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { Subscription, forkJoin } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
@@ -21,8 +21,8 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     isLoading = false;
     course?: Course;
-    learningGoals: LearningGoal[] = [];
-    prerequisites: LearningGoal[] = [];
+    learningGoals: Competency[] = [];
+    prerequisites: Competency[] = [];
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -93,7 +93,7 @@ export class CourseLearningGoalsComponent implements OnInit {
      * @param index The index in the list
      * @param learningGoal The competency of the current iteration
      */
-    identify(index: number, learningGoal: LearningGoal) {
+    identify(index: number, learningGoal: Competency) {
         return `${index}-${learningGoal.id}`;
     }
 }

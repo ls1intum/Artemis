@@ -8,7 +8,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -47,7 +47,7 @@ export interface LearningGoalFormData {
     id?: number;
     title?: string;
     description?: string;
-    taxonomy?: LearningGoalTaxonomy;
+    taxonomy?: CompetencyTaxonomy;
     masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
 }
@@ -86,7 +86,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
-    learningGoalTaxonomy = LearningGoalTaxonomy;
+    learningGoalTaxonomy = CompetencyTaxonomy;
 
     @Output()
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();

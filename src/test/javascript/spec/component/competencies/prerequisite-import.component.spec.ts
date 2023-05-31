@@ -10,7 +10,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { LearningGoalPagingService } from 'app/course/competencies/learning-goal-paging.service';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TableColumn } from 'app/shared/import/import-component';
 
@@ -21,9 +21,9 @@ describe('PrerequisiteImportComponent', () => {
     let sortService: SortService;
     let searchForLearningGoalsStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
-    let searchResult: SearchResult<LearningGoal>;
+    let searchResult: SearchResult<Competency>;
     let state: PageableSearch;
-    let learningGoal: LearningGoal;
+    let learningGoal: Competency;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
@@ -46,7 +46,7 @@ describe('PrerequisiteImportComponent', () => {
 
     beforeEach(() => {
         fixture.detectChanges();
-        learningGoal = new LearningGoal();
+        learningGoal = new Competency();
         learningGoal.id = 1;
         searchResult = { numberOfPages: 3, resultsOnPage: [learningGoal] };
         state = {

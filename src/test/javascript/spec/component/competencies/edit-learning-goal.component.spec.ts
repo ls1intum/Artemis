@@ -9,7 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditLearningGoalComponent } from 'app/course/competencies/edit-competency/edit-learning-goal.component';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseLearningGoalProgress, LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -78,18 +78,18 @@ describe('EditLearningGoalComponent', () => {
         const lectureUnit = new TextUnit();
         lectureUnit.id = 1;
 
-        const learningGoalOfResponse = new LearningGoal();
+        const learningGoalOfResponse = new Competency();
         learningGoalOfResponse.id = 1;
         learningGoalOfResponse.title = 'test';
         learningGoalOfResponse.description = 'lorem ipsum';
         learningGoalOfResponse.lectureUnits = [lectureUnit];
 
-        const learningGoalResponse: HttpResponse<LearningGoal> = new HttpResponse({
+        const learningGoalResponse: HttpResponse<Competency> = new HttpResponse({
             body: learningGoalOfResponse,
             status: 200,
         });
-        const learningGoalCourseProgressResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
-            body: { competencyId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress,
+        const learningGoalCourseProgressResponse: HttpResponse<CourseCompetencyProgress> = new HttpResponse({
+            body: { competencyId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseCompetencyProgress,
             status: 200,
         });
 
@@ -131,13 +131,13 @@ describe('EditLearningGoalComponent', () => {
 
         const textUnit = new TextUnit();
         textUnit.id = 1;
-        const learningGoalDatabase: LearningGoal = new LearningGoal();
+        const learningGoalDatabase: Competency = new Competency();
         learningGoalDatabase.id = 1;
         learningGoalDatabase.title = 'test';
         learningGoalDatabase.description = 'lorem ipsum';
         learningGoalDatabase.lectureUnits = [textUnit];
 
-        const findByIdResponse: HttpResponse<LearningGoal> = new HttpResponse({
+        const findByIdResponse: HttpResponse<Competency> = new HttpResponse({
             body: learningGoalDatabase,
             status: 200,
         });
@@ -162,12 +162,12 @@ describe('EditLearningGoalComponent', () => {
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(editLearningGoalComponent.learningGoal).toEqual(learningGoalDatabase);
 
-        const changedUnit: LearningGoal = {
+        const changedUnit: Competency = {
             ...learningGoalDatabase,
             title: 'Changed',
         };
 
-        const updateResponse: HttpResponse<LearningGoal> = new HttpResponse({
+        const updateResponse: HttpResponse<Competency> = new HttpResponse({
             body: changedUnit,
             status: 200,
         });

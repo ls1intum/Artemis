@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
@@ -18,7 +18,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 })
 export class CreateLearningGoalComponent implements OnInit {
     documentationType = DocumentationType.Competencies;
-    learningGoalToCreate: LearningGoal = new LearningGoal();
+    learningGoalToCreate: Competency = new Competency();
     isLoading: boolean;
     courseId: number;
     lecturesWithLectureUnits: Lecture[] = [];
@@ -32,7 +32,7 @@ export class CreateLearningGoalComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.learningGoalToCreate = new LearningGoal();
+        this.learningGoalToCreate = new Competency();
         this.isLoading = true;
         this.activatedRoute
             .parent!.parent!.paramMap.pipe(

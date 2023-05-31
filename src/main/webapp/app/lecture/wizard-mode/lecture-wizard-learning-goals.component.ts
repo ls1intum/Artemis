@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -30,8 +30,8 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     isEditingLearningGoal: boolean;
     isConnectingLearningGoal: boolean;
 
-    currentlyProcessedLearningGoal: LearningGoal;
-    learningGoals: LearningGoal[] = [];
+    currentlyProcessedLearningGoal: Competency;
+    learningGoals: Competency[] = [];
     learningGoalFormData: LearningGoalFormData;
 
     private dialogErrorSource = new Subject<string>();
@@ -73,9 +73,9 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         });
     }
 
-    protected subscribeToLoadLearningGoalsResponse(result: Observable<HttpResponse<LearningGoal[]>>) {
+    protected subscribeToLoadLearningGoalsResponse(result: Observable<HttpResponse<Competency[]>>) {
         result.subscribe({
-            next: (response: HttpResponse<LearningGoal[]>) => this.onLoadLearningGoalsSuccess(response.body!),
+            next: (response: HttpResponse<Competency[]>) => this.onLoadLearningGoalsSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onLoadError(error),
         });
     }
@@ -92,7 +92,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     /**
      * Action on successful competencies fetch
      */
-    protected onLoadLearningGoalsSuccess(learningGoals: LearningGoal[]) {
+    protected onLoadLearningGoalsSuccess(learningGoals: Competency[]) {
         this.isLoadingLearningGoals = false;
 
         this.learningGoals = learningGoals;
@@ -124,7 +124,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         }
 
         const { title, description, taxonomy, connectedLectureUnits } = formData;
-        this.currentlyProcessedLearningGoal = new LearningGoal();
+        this.currentlyProcessedLearningGoal = new Competency();
 
         this.currentlyProcessedLearningGoal.title = title;
         this.currentlyProcessedLearningGoal.description = description;
@@ -141,7 +141,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: (response: HttpResponse<LearningGoal>) => {
+                next: (response: HttpResponse<Competency>) => {
                     this.isAddingLearningGoal = false;
 
                     // The rest api is returning lecture units and exercises separately after creating/editing but we
@@ -179,7 +179,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: (response: HttpResponse<LearningGoal>) => {
+                next: (response: HttpResponse<Competency>) => {
                     this.isEditingLearningGoal = false;
                     this.isConnectingLearningGoal = false;
 
@@ -200,13 +200,13 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
                     }
 
                     this.alertService.success(`Competency ${this.currentlyProcessedLearningGoal.title} was successfully edited.`);
-                    this.currentlyProcessedLearningGoal = new LearningGoal();
+                    this.currentlyProcessedLearningGoal = new Competency();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
-    trackLearningGoalId(index: number, item: LearningGoal) {
+    trackLearningGoalId(index: number, item: Competency) {
         return item.id;
     }
 
@@ -218,7 +218,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
 
-    getConnectedUnitsForLearningGoal(learningGoal: LearningGoal) {
+    getConnectedUnitsForLearningGoal(learningGoal: Competency) {
         const units = learningGoal.lectureUnits?.filter((unit) => this.lecture.lectureUnits?.find((u) => u.id === unit.id));
 
         if (units === undefined || units.length === 0) {
@@ -228,7 +228,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         return units.map((unit) => unit.name).join(', ');
     }
 
-    startEditLearningGoal(learningGoal: LearningGoal) {
+    startEditLearningGoal(learningGoal: Competency) {
         const connectedUnits: LectureUnit[] = [];
         learningGoal.lectureUnits?.forEach((unit) => connectedUnits.push(Object.assign({}, unit)));
 
@@ -247,13 +247,13 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
 
-    startConnectingLearningGoal(learningGoal: LearningGoal) {
+    startConnectingLearningGoal(learningGoal: Competency) {
         this.isConnectingLearningGoal = true;
 
         this.startEditLearningGoal(learningGoal);
     }
 
-    deleteLearningGoal(learningGoal: LearningGoal) {
+    deleteLearningGoal(learningGoal: Competency) {
         this.learningGoalService.delete(learningGoal.id!, this.lecture.course!.id!).subscribe({
             next: () => {
                 this.learningGoals = this.learningGoals.filter((existingLearningGoal) => existingLearningGoal.id !== learningGoal.id);
@@ -269,6 +269,6 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
         this.isConnectingLearningGoal = false;
         this.isLoadingLearningGoalForm = false;
 
-        this.currentlyProcessedLearningGoal = new LearningGoal();
+        this.currentlyProcessedLearningGoal = new Competency();
     }
 }

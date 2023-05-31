@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,7 +20,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     learningGoalId?: number;
     courseId?: number;
     isLoading = false;
-    learningGoal: LearningGoal;
+    learningGoal: Competency;
     showFireworks = false;
 
     readonly LectureUnitType = LectureUnitType;
@@ -76,11 +76,11 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
         }
     }
 
-    getUserProgress(): LearningGoalProgress {
+    getUserProgress(): CompetencyProgress {
         if (this.learningGoal.userProgress?.length) {
             return this.learningGoal.userProgress.first()!;
         }
-        return { progress: 0, confidence: 0 } as LearningGoalProgress;
+        return { progress: 0, confidence: 0 } as CompetencyProgress;
     }
 
     get progress(): number {

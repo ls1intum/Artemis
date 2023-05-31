@@ -20,7 +20,7 @@ import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
@@ -88,7 +88,7 @@ describe('CourseLearningGoalsDetails', () => {
             id: 1,
             lectureUnits: [new TextUnit()],
             exercises: [{ id: 5 } as TextExercise],
-        } as LearningGoal;
+        } as Competency;
         const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
 
         fixture.detectChanges();
@@ -106,7 +106,7 @@ describe('CourseLearningGoalsDetails', () => {
         const learningGoal = {
             id: 1,
             exercises: [{ id: 5 } as ModelingExercise],
-        } as LearningGoal;
+        } as Competency;
         const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
 
         fixture.detectChanges();
@@ -125,9 +125,9 @@ describe('CourseLearningGoalsDetails', () => {
                 {
                     progress: 100,
                     confidence: 100,
-                } as LearningGoalProgress,
+                } as CompetencyProgress,
             ],
-        } as LearningGoal;
+        } as Competency;
         const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
 
         fixture.detectChanges();

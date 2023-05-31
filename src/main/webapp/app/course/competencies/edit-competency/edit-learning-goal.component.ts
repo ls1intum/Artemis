@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,7 +19,7 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 })
 export class EditLearningGoalComponent implements OnInit {
     isLoading = false;
-    learningGoal: LearningGoal;
+    learningGoal: Competency;
     lecturesWithLectureUnits: Lecture[] = [];
     formData: LearningGoalFormData;
     courseId: number;

@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { of } from 'rxjs';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelationError } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyRelationError, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { LearningGoalManagementComponent } from 'app/course/competencies/competency-management/learning-goal-management.component';
 import { ActivatedRoute } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -77,12 +77,12 @@ describe('LearningGoalManagementComponent', () => {
                 learningGoalService = TestBed.inject(LearningGoalService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
-                const learningGoal = new LearningGoal();
+                const learningGoal = new Competency();
                 const textUnit = new TextUnit();
                 learningGoal.id = 1;
                 learningGoal.description = 'test';
                 learningGoal.lectureUnits = [textUnit];
-                const courseLearningGoalProgress = new CourseLearningGoalProgress();
+                const courseLearningGoalProgress = new CourseCompetencyProgress();
                 courseLearningGoalProgress.competencyId = 1;
                 courseLearningGoalProgress.numberOfStudents = 8;
                 courseLearningGoalProgress.numberOfMasteredStudents = 5;
@@ -91,7 +91,7 @@ describe('LearningGoalManagementComponent', () => {
                 getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: [learningGoal, { id: 5 } as LearningGoal],
+                            body: [learningGoal, { id: 5 } as Competency],
                             status: 200,
                         }),
                     ),
@@ -107,7 +107,7 @@ describe('LearningGoalManagementComponent', () => {
                 getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: [{ id: 3 } as LearningGoal],
+                            body: [{ id: 3 } as Competency],
                             status: 200,
                         }),
                     ),
@@ -160,7 +160,7 @@ describe('LearningGoalManagementComponent', () => {
 
     it('should open import modal for prerequisites', () => {
         const modalRef = {
-            result: Promise.resolve({ id: 456 } as LearningGoal),
+            result: Promise.resolve({ id: 456 } as Competency),
             componentInstance: {},
         } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
@@ -177,7 +177,7 @@ describe('LearningGoalManagementComponent', () => {
 
     it('should open import modal for learning goals', () => {
         const modalRef = {
-            result: Promise.resolve({ id: 456 } as LearningGoal),
+            result: Promise.resolve({ id: 456 } as Competency),
             componentInstance: {},
         } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
@@ -196,7 +196,7 @@ describe('LearningGoalManagementComponent', () => {
     it('should create learning goal relation', () => {
         const createLearningGoalRelationSpy = jest
             .spyOn(learningGoalService, 'createLearningGoalRelation')
-            .mockReturnValue(of(new HttpResponse({ body: new LearningGoal(), status: 200 })));
+            .mockReturnValue(of(new HttpResponse({ body: new Competency(), status: 200 })));
         component.tailLearningGoal = 123;
         component.headLearningGoal = 456;
         component.relationType = 'assumes';
@@ -224,7 +224,7 @@ describe('LearningGoalManagementComponent', () => {
 
         component.validate();
 
-        expect(component.relationError).toBe(LearningGoalRelationError.CIRCULAR);
+        expect(component.relationError).toBe(CompetencyRelationError.CIRCULAR);
     });
 
     it('should prevent creating already existing relations', () => {
@@ -241,7 +241,7 @@ describe('LearningGoalManagementComponent', () => {
 
         component.validate();
 
-        expect(component.relationError).toBe(LearningGoalRelationError.EXISTING);
+        expect(component.relationError).toBe(CompetencyRelationError.EXISTING);
     });
 
     it('should prevent creating self relations', () => {
@@ -255,7 +255,7 @@ describe('LearningGoalManagementComponent', () => {
 
         component.validate();
 
-        expect(component.relationError).toBe(LearningGoalRelationError.SELF);
+        expect(component.relationError).toBe(CompetencyRelationError.SELF);
     });
 
     it('should remove learning goal relation', () => {

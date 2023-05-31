@@ -8,7 +8,7 @@ import { LearningGoalService } from 'app/course/competencies/learningGoal.servic
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgModel, ReactiveFormsModule } from '@angular/forms';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -53,7 +53,7 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should get learning goals from cache', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [new LearningGoal()] });
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [new Competency()] });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 
         fixture.detectChanges();
@@ -69,7 +69,7 @@ describe('LearningGoalSelection', () => {
 
     it('should get learning goals from service', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new LearningGoal()] })));
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new Competency()] })));
 
         fixture.detectChanges();
 
@@ -106,11 +106,11 @@ describe('LearningGoalSelection', () => {
     });
 
     it('should select learning goals when value is written', () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as LearningGoal] });
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as Competency] });
 
         fixture.detectChanges();
 
-        component.writeValue([{ id: 1, title: 'other' } as LearningGoal]);
+        component.writeValue([{ id: 1, title: 'other' } as Competency]);
         expect(component.value).toBeArrayOfSize(1);
         expect(component.value.first()?.title).toBe('test');
     });

@@ -1,12 +1,12 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-type EntityResponseType = SearchResult<LearningGoal>;
+type EntityResponseType = SearchResult<Competency>;
 
 @Injectable({ providedIn: 'root' })
 export class LearningGoalPagingService extends PagingService {

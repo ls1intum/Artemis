@@ -6,14 +6,14 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress, CompetencyRelation, CourseCompetencyProgress } from 'app/entities/competency.model';
 
 describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;
     let httpTestingController: HttpTestingController;
-    let defaultLearningGoals: LearningGoal[];
-    let defaultLearningGoalProgress: LearningGoalProgress;
-    let defaultLearningGoalCourseProgress: CourseLearningGoalProgress;
+    let defaultLearningGoals: Competency[];
+    let defaultLearningGoalProgress: CompetencyProgress;
+    let defaultLearningGoalCourseProgress: CourseCompetencyProgress;
     let expectedResultLearningGoal: any;
     let expectedResultLearningGoalProgress: any;
     let expectedResultLearningGoalCourseProgress: any;
@@ -32,15 +32,15 @@ describe('LearningGoalService', () => {
                 }),
             ],
         });
-        expectedResultLearningGoal = {} as HttpResponse<LearningGoal>;
-        expectedResultLearningGoalProgress = {} as HttpResponse<LearningGoalProgress>;
+        expectedResultLearningGoal = {} as HttpResponse<Competency>;
+        expectedResultLearningGoalProgress = {} as HttpResponse<CompetencyProgress>;
 
         learningGoalService = TestBed.inject(LearningGoalService);
         httpTestingController = TestBed.inject(HttpTestingController);
 
-        defaultLearningGoals = [{ id: 0, title: 'title', description: 'description' } as LearningGoal];
-        defaultLearningGoalProgress = { progress: 20, confidence: 50 } as LearningGoalProgress;
-        defaultLearningGoalCourseProgress = { competencyId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress;
+        defaultLearningGoals = [{ id: 0, title: 'title', description: 'description' } as Competency];
+        defaultLearningGoalProgress = { progress: 20, confidence: 50 } as CompetencyProgress;
+        defaultLearningGoalCourseProgress = { competencyId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseCompetencyProgress;
     });
 
     afterEach(() => {
@@ -115,7 +115,7 @@ describe('LearningGoalService', () => {
         const returnedFromService = { ...defaultLearningGoals.first(), id: 0 };
         const expected = { ...returnedFromService };
         learningGoalService
-            .create(new LearningGoal(), 1)
+            .create(new Competency(), 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoal = resp));
 
@@ -152,7 +152,7 @@ describe('LearningGoalService', () => {
     }));
 
     it('should add a LearningGoal relation', fakeAsync(() => {
-        const returnedFromService = { tailCompetency: 1, headCompetency: 2, type: 'assumes' } as LearningGoalRelation;
+        const returnedFromService = { tailCompetency: 1, headCompetency: 2, type: 'assumes' } as CompetencyRelation;
         let result: any;
         learningGoalService
             .createLearningGoalRelation(1, 2, 'assumes', 1)

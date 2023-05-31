@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { LearningGoal, getIcon } from 'app/entities/learningGoal.model';
+import { Competency, getIcon } from 'app/entities/competency.model';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -23,7 +23,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
-    @Input() learningGoals: LearningGoal[];
+    @Input() learningGoals: Competency[];
 
     @Output() valueChange = new EventEmitter();
 
@@ -64,7 +64,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
      * Set the available competencies for selection
      * @param learningGoals The competencies of the course
      */
-    setLearningGoals(learningGoals: LearningGoal[]) {
+    setLearningGoals(learningGoals: Competency[]) {
         this.learningGoals = learningGoals.map((learningGoal) => {
             // Remove unnecessary properties
             learningGoal.course = undefined;
@@ -73,13 +73,13 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
         });
     }
 
-    updateField(newValue: LearningGoal[]) {
+    updateField(newValue: Competency[]) {
         this.value = newValue;
         this._onChange(this.value);
         this.valueChange.emit();
     }
 
-    writeValue(value?: LearningGoal[]): void {
+    writeValue(value?: Competency[]): void {
         if (value && this.learningGoals) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.id);

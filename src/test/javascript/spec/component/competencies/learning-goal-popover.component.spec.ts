@@ -6,7 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LearningGoalsPopoverComponent } from 'app/course/competencies/competencies-popover/learning-goals-popover.component';
 import { By } from '@angular/platform-browser';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { Component } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -58,7 +58,7 @@ describe('LearningGoalPopoverComponent', () => {
     it('should navigate to course learning goals', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
         learningGoalPopoverComponent.navigateTo = 'courseLearningGoals';
-        learningGoalPopoverComponent.learningGoals = [new LearningGoal()];
+        learningGoalPopoverComponent.learningGoals = [new Competency()];
         learningGoalPopoverComponent.courseId = 1;
         learningGoalPopoverComponentFixture.detectChanges();
         const popoverButton = learningGoalPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
@@ -73,7 +73,7 @@ describe('LearningGoalPopoverComponent', () => {
     it('should navigate to learning goal management', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
         learningGoalPopoverComponent.navigateTo = 'learningGoalManagement';
-        learningGoalPopoverComponent.learningGoals = [new LearningGoal()];
+        learningGoalPopoverComponent.learningGoals = [new Competency()];
         learningGoalPopoverComponent.courseId = 1;
         learningGoalPopoverComponentFixture.detectChanges();
         const popoverButton = learningGoalPopoverComponentFixture.debugElement.nativeElement.querySelector('button');

@@ -11,7 +11,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -71,8 +71,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
         });
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -102,8 +102,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
         });
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -128,8 +128,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         const lectureStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -153,8 +153,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -182,8 +182,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -210,8 +210,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -222,7 +222,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         wizardLearningGoalsComponentFixture.detectChanges();
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new Competency();
             wizardLearningGoalsComponent.editLearningGoal({
                 id: 1,
                 title: 'Goal',
@@ -240,8 +240,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -264,8 +264,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goals = [new LearningGoal()];
-        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const goals = [new Competency()];
+        const goalsResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: goals,
             status: 201,
         });
@@ -290,7 +290,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const learningGoal = new LearningGoal();
+        const learningGoal = new Competency();
         learningGoal.id = 12;
         wizardLearningGoalsComponent.startEditLearningGoal(learningGoal);
 
@@ -315,7 +315,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponent.lecture.lectureUnits = [lectureUnit];
 
-        const learningGoal = new LearningGoal();
+        const learningGoal = new Competency();
         learningGoal.id = 12;
         learningGoal.lectureUnits = [lectureUnit];
         const result = wizardLearningGoalsComponent.getConnectedUnitsForLearningGoal(learningGoal);
@@ -332,7 +332,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        const learningGoal = new LearningGoal();
+        const learningGoal = new Competency();
         learningGoal.id = 12;
         const result = wizardLearningGoalsComponent.getConnectedUnitsForLearningGoal(learningGoal);
 
@@ -347,7 +347,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new LearningGoal() })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new Competency() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -377,7 +377,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goal = new LearningGoal();
+        const goal = new Competency();
         const exercise = new TextExercise(undefined, undefined);
         exercise.id = 2;
         goal.exercises = [exercise];
@@ -422,7 +422,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new LearningGoal() })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new Competency() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -447,7 +447,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new LearningGoal() })));
+        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new Competency() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -458,7 +458,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         };
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new Competency();
             wizardLearningGoalsComponent.isEditingLearningGoal = true;
             wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
 
@@ -478,7 +478,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const goal = new LearningGoal();
+        const goal = new Competency();
         const exercise = new TextExercise(undefined, undefined);
         exercise.id = 2;
         goal.exercises = [exercise];
@@ -500,7 +500,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         };
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new Competency();
             wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
             wizardLearningGoalsComponent.isEditingLearningGoal = true;
             wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);

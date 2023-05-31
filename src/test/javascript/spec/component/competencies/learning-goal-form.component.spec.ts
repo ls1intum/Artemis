@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/competencies/competency-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
-import { LearningGoal, LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -49,11 +49,11 @@ describe('LearningGoalFormComponent', () => {
         // stubbing learning goal service for asynchronous validator
         const learningGoalService = TestBed.inject(LearningGoalService);
 
-        const learningGoalOfResponse = new LearningGoal();
+        const learningGoalOfResponse = new Competency();
         learningGoalOfResponse.id = 1;
         learningGoalOfResponse.title = 'test';
 
-        const response: HttpResponse<LearningGoal[]> = new HttpResponse({
+        const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [learningGoalOfResponse],
             status: 200,
         });
@@ -103,7 +103,7 @@ describe('LearningGoalFormComponent', () => {
             title: 'test',
             description: 'lorem ipsum',
             connectedLectureUnits: [textUnit],
-            taxonomy: LearningGoalTaxonomy.ANALYZE,
+            taxonomy: CompetencyTaxonomy.ANALYZE,
         };
         learningGoalFormComponentFixture.detectChanges();
         learningGoalFormComponent.formData = formData;

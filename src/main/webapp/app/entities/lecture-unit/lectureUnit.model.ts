@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java
@@ -18,7 +18,7 @@ export abstract class LectureUnit implements BaseEntity {
     public name?: string;
     public releaseDate?: dayjs.Dayjs;
     public lecture?: Lecture;
-    public competencies?: LearningGoal[];
+    public competencies?: Competency[];
     public type?: LectureUnitType;
     // calculated property
     public visibleToStudents?: boolean;

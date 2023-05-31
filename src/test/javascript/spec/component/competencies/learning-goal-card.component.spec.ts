@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoalCardComponent } from 'app/course/competencies/competency-card/learning-goal-card.component';
-import { LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalRingsComponent } from 'app/course/competencies/competency-rings/learning-goal-rings.component';
@@ -37,9 +37,9 @@ describe('LearningGoalCardComponent', () => {
                 {
                     progress: 45,
                     confidence: 60,
-                } as LearningGoalProgress,
+                } as CompetencyProgress,
             ],
-        } as LearningGoal;
+        } as Competency;
 
         learningGoalCardComponentFixture.detectChanges();
 
@@ -57,9 +57,9 @@ describe('LearningGoalCardComponent', () => {
                 {
                     progress: 100,
                     confidence: 60,
-                } as LearningGoalProgress,
+                } as CompetencyProgress,
             ],
-        } as LearningGoal;
+        } as Competency;
 
         learningGoalCardComponentFixture.detectChanges();
 

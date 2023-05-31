@@ -34,7 +34,7 @@ import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -85,9 +85,9 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    competencies: [new LearningGoal()],
+    competencies: [new Competency()],
     tutorialGroups: [new TutorialGroup()],
-    prerequisites: [new LearningGoal()],
+    prerequisites: [new Competency()],
 };
 
 @Component({
@@ -352,8 +352,8 @@ describe('CourseOverviewComponent', () => {
     it('should have learning goals and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const learningGoalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-            body: [new LearningGoal()],
+        const learningGoalsResponse: HttpResponse<Competency[]> = new HttpResponse({
+            body: [new Competency()],
             status: 200,
         });
         const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({

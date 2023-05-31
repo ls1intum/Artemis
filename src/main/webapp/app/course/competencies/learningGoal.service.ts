@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress, CompetencyRelation, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
-type EntityResponseType = HttpResponse<LearningGoal>;
-type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
+type EntityResponseType = HttpResponse<Competency>;
+type EntityArrayResponseType = HttpResponse<Competency[]>;
 
 @Injectable({
     providedIn: 'root',
@@ -20,33 +20,33 @@ export class LearningGoalService {
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' })
+            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' })
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
+            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());
-        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/student-progress`, {
+        return this.httpClient.get<CompetencyProgress>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/student-progress`, {
             params,
             observe: 'response',
         });
     }
 
     getCourseProgress(competencyId: number, courseId: number) {
-        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/course-progress`, {
+        return this.httpClient.get<CourseCompetencyProgress>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/course-progress`, {
             observe: 'response',
         });
     }
 
     findById(competencyId: number, courseId: number) {
-        return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' }).pipe(
+        return this.httpClient.get<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 this.convertLearningGoalResponseFromServer(res);
                 this.sendTitlesToEntityTitleService(res?.body);
@@ -55,21 +55,21 @@ export class LearningGoalService {
         );
     }
 
-    create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+    create(learningGoal: Competency, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertLearningGoalFromClient(learningGoal);
-        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
+        return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
-    import(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+    import(learningGoal: Competency, courseId: number): Observable<EntityResponseType> {
         const learningGoalCopy = this.convertLearningGoalFromClient(learningGoal);
-        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies/import`, learningGoalCopy, { observe: 'response' });
+        return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/import`, learningGoalCopy, { observe: 'response' });
     }
 
     addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
         return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
     }
 
-    update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+    update(learningGoal: Competency, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertLearningGoalFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
@@ -92,7 +92,7 @@ export class LearningGoalService {
     }
 
     getLearningGoalRelations(competencyId: number, courseId: number) {
-        return this.httpClient.get<LearningGoalRelation[]>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations`, {
+        return this.httpClient.get<CompetencyRelation[]>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations`, {
             observe: 'response',
         });
     }
@@ -114,7 +114,7 @@ export class LearningGoalService {
         return res;
     }
 
-    convertLearningGoalFromClient(learningGoal: LearningGoal): LearningGoal {
+    convertLearningGoalFromClient(learningGoal: Competency): Competency {
         const copy = Object.assign({}, learningGoal);
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
@@ -125,7 +125,7 @@ export class LearningGoalService {
         return copy;
     }
 
-    private sendTitlesToEntityTitleService(learningGoal: LearningGoal | undefined | null) {
+    private sendTitlesToEntityTitleService(learningGoal: Competency | undefined | null) {
         this.entityTitleService.setTitle(EntityType.LEARNING_GOAL, [learningGoal?.id], learningGoal?.title);
     }
 }

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-learning-goal-card',
@@ -11,7 +11,7 @@ export class LearningGoalCardComponent {
     @Input()
     courseId?: number;
     @Input()
-    learningGoal: LearningGoal;
+    learningGoal: Competency;
     @Input()
     isPrerequisite: boolean;
 
@@ -20,11 +20,11 @@ export class LearningGoalCardComponent {
 
     constructor(public translateService: TranslateService) {}
 
-    getUserProgress(): LearningGoalProgress {
+    getUserProgress(): CompetencyProgress {
         if (this.learningGoal.userProgress?.length) {
             return this.learningGoal.userProgress.first()!;
         }
-        return { progress: 0, confidence: 0 } as LearningGoalProgress;
+        return { progress: 0, confidence: 0 } as CompetencyProgress;
     }
 
     get progress(): number {

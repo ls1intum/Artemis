@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -15,7 +15,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     courseId: number;
 
     isLoading = false;
-    prerequisites: LearningGoal[] = [];
+    prerequisites: Competency[] = [];
 
     constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private learningGoalService: LearningGoalService) {}
 
@@ -53,7 +53,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
      * @param index The index in the list
      * @param learningGoal The competency of the current iteration
      */
-    identify(index: number, learningGoal: LearningGoal) {
+    identify(index: number, learningGoal: Competency) {
         return `${index}-${learningGoal.id}`;
     }
 

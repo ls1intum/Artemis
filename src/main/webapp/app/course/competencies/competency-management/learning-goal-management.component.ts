@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, LearningGoalRelationError, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyRelation, CompetencyRelationError, CourseCompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -23,8 +23,8 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
 export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
-    learningGoals: LearningGoal[] = [];
-    prerequisites: LearningGoal[] = [];
+    learningGoals: Competency[] = [];
+    prerequisites: Competency[] = [];
 
     showRelations = false;
     tailLearningGoal?: number;
@@ -33,8 +33,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     nodes: Node[] = [];
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
-    learningGoalRelationError = LearningGoalRelationError;
-    relationError: LearningGoalRelationError = LearningGoalRelationError.NONE;
+    learningGoalRelationError = CompetencyRelationError;
+    relationError: CompetencyRelationError = CompetencyRelationError.NONE;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -74,38 +74,38 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     validate(): void {
         if (this.headLearningGoal && this.tailLearningGoal && this.relationType && this.headLearningGoal === this.tailLearningGoal) {
-            this.relationError = LearningGoalRelationError.SELF;
+            this.relationError = CompetencyRelationError.SELF;
             return;
         }
         if (this.doesRelationAlreadyExist()) {
-            this.relationError = LearningGoalRelationError.EXISTING;
+            this.relationError = CompetencyRelationError.EXISTING;
             return;
         }
         if (this.containsCircularRelation()) {
-            this.relationError = LearningGoalRelationError.CIRCULAR;
+            this.relationError = CompetencyRelationError.CIRCULAR;
             return;
         }
-        this.relationError = LearningGoalRelationError.NONE;
+        this.relationError = CompetencyRelationError.NONE;
     }
 
-    getErrorMessage(error: LearningGoalRelationError): string {
+    getErrorMessage(error: CompetencyRelationError): string {
         switch (error) {
-            case LearningGoalRelationError.CIRCULAR: {
+            case CompetencyRelationError.CIRCULAR: {
                 return 'artemisApp.learningGoal.relation.createsCircularRelation';
             }
-            case LearningGoalRelationError.EXISTING: {
+            case CompetencyRelationError.EXISTING: {
                 return 'artemisApp.learningGoal.relation.relationAlreadyExists';
             }
-            case LearningGoalRelationError.SELF: {
+            case CompetencyRelationError.SELF: {
                 return 'artemisApp.learningGoal.relation.selfRelation';
             }
-            case LearningGoalRelationError.NONE: {
+            case CompetencyRelationError.NONE: {
                 throw new TypeError('There is no error message if there is no error.');
             }
         }
     }
 
-    identify(index: number, learningGoal: LearningGoal) {
+    identify(index: number, learningGoal: Competency) {
         return `${index}-${learningGoal.id}`;
     }
 
@@ -133,7 +133,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.learningGoalService
             .getAllPrerequisitesForCourse(this.courseId)
-            .pipe(map((response: HttpResponse<LearningGoal[]>) => response.body!))
+            .pipe(map((response: HttpResponse<Competency[]>) => response.body!))
             .subscribe({
                 next: (learningGoals) => {
                     this.prerequisites = learningGoals;
@@ -205,7 +205,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                         );
 
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
-                        const courseLearningGoalProgress: CourseLearningGoalProgress = learningGoalProgressResponse.body!;
+                        const courseLearningGoalProgress: CourseCompetencyProgress = learningGoalProgressResponse.body!;
                         this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.competencyId)!.courseProgress = courseLearningGoalProgress;
                     }
                 },
@@ -219,15 +219,15 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     openPrerequisiteSelectionModal() {
         const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
-        modalRef.result.then((result: LearningGoal) => {
+        modalRef.result.then((result: Competency) => {
             this.learningGoalService
                 .addPrerequisite(result.id!, this.courseId)
                 .pipe(
-                    filter((res: HttpResponse<LearningGoal>) => res.ok),
-                    map((res: HttpResponse<LearningGoal>) => res.body),
+                    filter((res: HttpResponse<Competency>) => res.ok),
+                    map((res: HttpResponse<Competency>) => res.body),
                 )
                 .subscribe({
-                    next: (res: LearningGoal) => {
+                    next: (res: Competency) => {
                         this.prerequisites.push(res);
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -241,15 +241,15 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     openImportModal() {
         const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
-        modalRef.result.then((selectedLearningGoal: LearningGoal) => {
+        modalRef.result.then((selectedLearningGoal: Competency) => {
             this.learningGoalService
                 .import(selectedLearningGoal, this.courseId)
                 .pipe(
-                    filter((res: HttpResponse<LearningGoal>) => res.ok),
-                    map((res: HttpResponse<LearningGoal>) => res.body),
+                    filter((res: HttpResponse<Competency>) => res.ok),
+                    map((res: HttpResponse<Competency>) => res.body),
                 )
                 .subscribe({
-                    next: (res: LearningGoal) => {
+                    next: (res: Competency) => {
                         this.learningGoals.push(res);
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -258,15 +258,15 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     createRelation() {
-        if (this.relationError !== LearningGoalRelationError.NONE) {
+        if (this.relationError !== CompetencyRelationError.NONE) {
             switch (this.relationError) {
-                case LearningGoalRelationError.CIRCULAR: {
+                case CompetencyRelationError.CIRCULAR: {
                     throw new TypeError('Creation of circular relations is not allowed.');
                 }
-                case LearningGoalRelationError.EXISTING: {
+                case CompetencyRelationError.EXISTING: {
                     throw new TypeError('Creation of an already existing relation is not allowed.');
                 }
-                case LearningGoalRelationError.SELF: {
+                case CompetencyRelationError.SELF: {
                     throw new TypeError('Creation of a self relation is not allowed.');
                 }
             }
@@ -274,8 +274,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
-                filter((res: HttpResponse<LearningGoalRelation>) => res.ok),
-                map((res: HttpResponse<LearningGoalRelation>) => res.body),
+                filter((res: HttpResponse<CompetencyRelation>) => res.ok),
+                map((res: HttpResponse<CompetencyRelation>) => res.body),
             )
             .subscribe({
                 next: () => {

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-learning-goals-popover',
@@ -12,7 +12,7 @@ export class LearningGoalsPopoverComponent implements OnInit {
     @Input()
     courseId: number;
     @Input()
-    learningGoals: LearningGoal[] = [];
+    learningGoals: Competency[] = [];
     @Input()
     navigateTo: 'learningGoalManagement' | 'courseLearningGoals' = 'courseLearningGoals';
 

@@ -4,7 +4,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -83,8 +83,8 @@ export class Course implements BaseEntity {
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
-    public competencies?: LearningGoal[];
-    public prerequisites?: LearningGoal[];
+    public competencies?: Competency[];
+    public prerequisites?: Competency[];
     public exams?: Exam[];
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];

@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/competencies/learningGoal.service';
 import { of } from 'rxjs';
-import { LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
+import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseLearningGoalsComponent } from 'app/overview/course-competencies/course-learning-goals.component';
@@ -85,8 +85,8 @@ describe('CourseLearningGoals', () => {
 
     it('should load progress for each learning goal in a given course', () => {
         const courseStorageService = TestBed.inject(CourseStorageService);
-        const learningGoal = new LearningGoal();
-        learningGoal.userProgress = [{ progress: 70, confidence: 45 } as LearningGoalProgress];
+        const learningGoal = new Competency();
+        learningGoal.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
         const textUnit = new TextUnit();
         learningGoal.id = 1;
         learningGoal.description = 'Petierunt uti sibi concilium totius';
@@ -112,19 +112,19 @@ describe('CourseLearningGoals', () => {
     });
 
     it('should load prerequisites and learning goals (with associated progress) and display a card for each of them', () => {
-        const learningGoal = new LearningGoal();
+        const learningGoal = new Competency();
         const textUnit = new TextUnit();
         learningGoal.id = 1;
         learningGoal.description = 'test';
         learningGoal.lectureUnits = [textUnit];
-        learningGoal.userProgress = [{ progress: 70, confidence: 45 } as LearningGoalProgress];
+        learningGoal.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
-        const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-            body: [new LearningGoal()],
+        const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
+            body: [new Competency()],
             status: 200,
         });
-        const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-            body: [learningGoal, new LearningGoal()],
+        const learningGoalsOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
+            body: [learningGoal, new Competency()],
             status: 200,
         });
 
