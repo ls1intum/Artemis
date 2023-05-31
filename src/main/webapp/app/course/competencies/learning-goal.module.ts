@@ -11,14 +11,14 @@ import { CompetencyCardComponent } from 'app/course/competencies/competency-card
 import { CompetenciesPopoverComponent } from './competencies-popover/competencies-popover.component';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
-import { LearningGoalRingsComponent } from 'app/course/competencies/competency-rings/learning-goal-rings.component';
+import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule],
     declarations: [
         CompetencyFormComponent,
-        LearningGoalRingsComponent,
+        CompetencyRingsComponent,
         CreateLearningGoalComponent,
         EditLearningGoalComponent,
         CompetencyManagementComponent,
@@ -27,6 +27,6 @@ import { CompetencyImportComponent } from 'app/course/competencies/competency-ma
         PrerequisiteImportComponent,
         CompetencyImportComponent,
     ],
-    exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, LearningGoalRingsComponent],
+    exports: [CompetencyCardComponent, CompetenciesPopoverComponent, CompetencyFormComponent, CompetencyRingsComponent],
 })
 export class ArtemisLearningGoalsModule {}

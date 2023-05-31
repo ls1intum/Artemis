@@ -4,7 +4,7 @@ import { CompetencyCardComponent } from 'app/course/competencies/competency-card
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalRingsComponent } from 'app/course/competencies/competency-rings/learning-goal-rings.component';
+import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 
@@ -14,7 +14,7 @@ describe('LearningGoalCardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
-            declarations: [CompetencyCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(LearningGoalRingsComponent)],
+            declarations: [CompetencyCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
             providers: [MockProvider(TranslateService)],
             schemas: [],
         })

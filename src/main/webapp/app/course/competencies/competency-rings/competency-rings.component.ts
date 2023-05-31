@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-    selector: 'jhi-learning-goal-rings',
-    templateUrl: './learning-goal-rings.component.html',
-    styleUrls: ['./learning-goal-rings.component.scss'],
+    selector: 'jhi-competency-rings',
+    templateUrl: './competency-rings.component.html',
+    styleUrls: ['./competency-rings.component.scss'],
 })
-export class LearningGoalRingsComponent {
+export class CompetencyRingsComponent {
     @Input() progress = 0;
     @Input() confidence = 0;
     @Input() mastery = 0;

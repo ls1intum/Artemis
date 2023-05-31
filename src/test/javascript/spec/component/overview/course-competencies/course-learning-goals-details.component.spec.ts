@@ -13,7 +13,7 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
-import { LearningGoalRingsComponent } from 'app/course/competencies/competency-rings/learning-goal-rings.component';
+import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
@@ -47,7 +47,7 @@ describe('CourseLearningGoalsDetails', () => {
                 MockComponent(TextUnitComponent),
                 MockComponent(VideoUnitComponent),
                 MockComponent(OnlineUnitComponent),
-                MockComponent(LearningGoalRingsComponent),
+                MockComponent(CompetencyRingsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(FaIconComponent),

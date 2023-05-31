@@ -1,23 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalRingsComponent } from 'app/course/competencies/competency-rings/learning-goal-rings.component';
+import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('LearningGoalRings', () => {
-    let fixture: ComponentFixture<LearningGoalRingsComponent>;
-    let component: LearningGoalRingsComponent;
+    let fixture: ComponentFixture<CompetencyRingsComponent>;
+    let component: CompetencyRingsComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
-            declarations: [LearningGoalRingsComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CompetencyRingsComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(LearningGoalRingsComponent);
+                fixture = TestBed.createComponent(CompetencyRingsComponent);
                 component = fixture.componentInstance;
 
                 component.progress = 110;
