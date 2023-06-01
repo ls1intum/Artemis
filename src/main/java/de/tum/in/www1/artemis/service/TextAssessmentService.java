@@ -68,7 +68,7 @@ public class TextAssessmentService extends AssessmentService {
             result = new Result();
             result.setParticipation(participation);
 
-            resultService.createNewRatedManualResult(result, false);
+            resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
             result.setSubmission(textSubmission);
