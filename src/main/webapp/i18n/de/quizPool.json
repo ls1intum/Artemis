@@ -12,6 +12,7 @@
             "groupExplanation": "Fragen in der gleichen Gruppe werden für jeden Schüler nach dem Zufallsprinzip ausgewählt. Fragen, die nicht in einer Gruppe sind, werden allen Schülern zugewiesen.",
             "updated": "Quiz Pool aktualisiert mit ID {{ param }}",
             "invalidReasons": {
+                "groupSameName": "Der Gruppenname muss einmalig sein.",
                 "groupNoQuestion": "Gruppe {{name}}: Die Gruppe hat keine Fragen.",
                 "groupHasDifferentQuestionPoints": "Gruppe {{name}}: Gruppe hat Fragen mit unterschiedlichen Schwerpunkten."
             }

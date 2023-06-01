@@ -12,6 +12,7 @@
             "groupExplanation": "Questions in the same group will be randomly chosen for each student. Questions that are not in a group will be assigned to all students.",
             "updated": "Updated Quiz Pool with identifier {{ param }}",
             "invalidReasons": {
+                "groupSameName": "Group name must be unique.",
                 "groupNoQuestion": "Group {{name}}: Group does not have any question.",
                 "groupHasDifferentQuestionPoints": "Group {{name}}: Group has questions with different points."
             }

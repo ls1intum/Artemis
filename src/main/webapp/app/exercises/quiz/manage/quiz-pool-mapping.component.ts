@@ -3,6 +3,7 @@ import { faExclamationCircle, faPlus, faTimes } from '@fortawesome/free-solid-sv
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { Subject } from 'rxjs';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-quiz-pool-mapping',
@@ -26,6 +27,8 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    constructor(private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.handleUpdate();
@@ -63,6 +66,8 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
             this.quizGroups.push(quizGroup);
             this.quizGroupNameQuestionsMap.set(quizGroup.name, new Array<QuizQuestion>());
             this.onQuizGroupUpdated.emit();
+        } else {
+            this.alertService.error('artemisApp.quizPool.invalidReasons.groupSameName');
         }
     }
 
