@@ -56,7 +56,7 @@ public class Lecture extends DomainObject {
     private Course course;
 
     /**
-     * It is defined here for transferring the value from client.
+     * Used for receiving the value from client.
      */
     @Transient
     private String channelNameTransient;
