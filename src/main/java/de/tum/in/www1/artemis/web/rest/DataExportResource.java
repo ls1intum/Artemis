@@ -13,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -25,7 +24,7 @@ public class DataExportResource {
 
     private final Logger log = LoggerFactory.getLogger(DataExportResource.class);
 
-    public DataExportResource(DataExportService dataExportService, UserRepository userRepository) {
+    public DataExportResource(DataExportService dataExportService) {
         this.dataExportService = dataExportService;
     }
 
