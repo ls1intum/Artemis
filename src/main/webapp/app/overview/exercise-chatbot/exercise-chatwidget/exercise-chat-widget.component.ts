@@ -21,6 +21,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     userMessages: string[] = [];
     newMessage = '';
     componentClass = 'chat-widget';
+    headerClass = 'chat-header';
     userAccepted = false;
     perMessage =
         "By choosing to continue, you agree that your interactions with IrisBot will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'. ";
@@ -48,14 +49,14 @@ export class ExerciseChatWidgetComponent implements OnInit {
         });
     }
 
-    private setFullScreenClass() {
-        // Add logic to set the CSS class for route A
-        this.componentClass = 'chat-widget-fullscreen';
+    private setDefaultClass() {
+        this.componentClass = 'chat-widget ngDraggable ngResizable';
+        this.headerClass = 'chat-header';
     }
 
-    private setDefaultClass() {
-        // Add logic to set the CSS class for route B
-        this.componentClass = 'chat-widget';
+    private setFullScreenClass() {
+        this.componentClass = 'chat-widget-fullscreen';
+        this.headerClass = 'chat-header-fullscreen';
     }
 
     onSend(): void {
@@ -78,7 +79,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     }
 
     openComponentInNewWindow() {
-        window.open('/chat', '_blank', 'width=400,height=600');
+        window.open('/chat', '_blank', 'width=600,height=600');
         this.closeChat();
     }
 

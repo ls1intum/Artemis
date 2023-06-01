@@ -1,9 +1,16 @@
 <div class="container">
     <!-- chat box -->
-    <div [class]="componentClass" ngDraggable ngResizable rzHandles="all" [rzMinWidth]="250" [rzMinHeight]="200">
+    <div
+        [class]="componentClass"
+        [ngDraggable]="componentClass !== 'chat-widget-fullscreen'"
+        [ngResizable]="componentClass !== 'chat-widget-fullscreen'"
+        [rzHandles]="componentClass !== 'chat-widget-fullscreen' ? 'all' : ''"
+        [rzMinWidth]="componentClass !== 'chat-widget-fullscreen' ? 250 : 0"
+        [rzMinHeight]="componentClass !== 'chat-widget-fullscreen' ? 200 : 0"
+    >
         <!-- client -->
         <div class="client">
-            <div class="chat-header">
+            <div [class]="headerClass">
                 <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="openComponentInNewWindow()" class="header-icon">
                     <fa-icon size="lg" [icon]="faExpand"></fa-icon>
                 </button>
