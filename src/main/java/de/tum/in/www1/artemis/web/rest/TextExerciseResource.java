@@ -161,10 +161,10 @@ public class TextExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
         TextExercise result = textExerciseRepository.save(textExercise);
-        if (result.isCourseExercise()) {
-            channelService.createExerciseChannel(result, textExercise.getChannelName());
-        }
+
+        channelService.createExerciseChannel(result, textExercise.getChannelName());
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);

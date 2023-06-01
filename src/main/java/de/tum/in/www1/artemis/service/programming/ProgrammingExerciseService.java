@@ -210,9 +210,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        if (savedProgrammingExercise.isCourseExercise()) {
-            channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
-        }
+        channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
 
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook

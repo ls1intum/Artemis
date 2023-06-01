@@ -57,9 +57,8 @@ public class TextExerciseImportService extends ExerciseImportService {
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);
-        if (newExercise.isCourseExercise()) {
-            channelService.createExerciseChannel(newTextExercise, importedExercise.getChannelName());
-        }
+
+        channelService.createExerciseChannel(newTextExercise, importedExercise.getChannelName());
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }

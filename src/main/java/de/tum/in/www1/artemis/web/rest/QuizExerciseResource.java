@@ -156,9 +156,7 @@ public class QuizExerciseResource {
 
         QuizExercise result = quizExerciseService.save(quizExercise);
 
-        if (result.isCourseExercise()) {
-            channelService.createExerciseChannel(result, quizExercise.getChannelName());
-        }
+        channelService.createExerciseChannel(result, quizExercise.getChannelName());
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

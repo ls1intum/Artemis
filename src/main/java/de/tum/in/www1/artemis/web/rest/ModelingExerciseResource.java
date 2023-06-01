@@ -145,9 +145,7 @@ public class ModelingExerciseResource {
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
-        if (result.isCourseExercise()) {
-            channelService.createExerciseChannel(result, modelingExercise.getChannelName());
-        }
+        channelService.createExerciseChannel(result, modelingExercise.getChannelName());
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 

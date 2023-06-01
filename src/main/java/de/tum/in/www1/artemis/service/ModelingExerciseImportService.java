@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -52,10 +51,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
         ModelingExercise newModelingExercise = modelingExerciseRepository.save(newExercise);
 
-        if (newExercise.isCourseExercise()) {
-            Channel channel = channelService.createExerciseChannel(newModelingExercise, importedExercise.getChannelName());
-            newModelingExercise.setChannelName(channel.getName());
-        }
+        channelService.createExerciseChannel(newModelingExercise, importedExercise.getChannelName());
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newModelingExercise;
     }
