@@ -419,8 +419,8 @@ public class ConversationService {
             if (channel.getExercise() != null) {
                 return channel.getExercise().getReleaseDate() == null || channel.getExercise().getReleaseDate().isBefore(now);
             }
-            else if (channel.getLecture() != null) {
-                return channel.getLecture().getStartDate() == null || channel.getLecture().getStartDate().isBefore(now);
+            else if (channel.getExam() != null) {
+                return channel.getExam().getStartDate() == null || channel.getExam().getStartDate().isBefore(now);
             }
             else {
                 return true;
