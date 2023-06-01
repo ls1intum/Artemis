@@ -48,7 +48,6 @@ import { TitleChannelNameComponent } from './form/title-channel-name/title-chann
         ItemCountComponent,
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
-        TitleChannelNameComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -74,7 +73,6 @@ import { TitleChannelNameComponent } from './form/title-channel-name/title-chann
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
         LearningGoalSelectionComponent,
-        TitleChannelNameComponent,
     ],
 })
 export class ArtemisSharedModule {}
