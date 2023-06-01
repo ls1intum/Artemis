@@ -14,7 +14,7 @@
                 "TEST_REPO_MISSING": "Missing test repository",
                 "TEMPLATE_BUILD_PLAN_MISSING": "Missing template build plan",
                 "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan",
-                "programmingExerciseImportFailed": "Import of programming exercise failed, as the source exercise is inconsistent. Please run the consistency check on the source exercise for more details."
+                "programmingExerciseImportFailed": "Import of programming exercise failed, as the source exercise is inconsistent. Please see the consistency check on the source exercise for more details."
             },
             "noInconsistencies": "No inconsistencies found",
             "inconsistenciesFound": "Following inconsistencies have been found",
