@@ -270,7 +270,7 @@ public class ExamService {
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator);
-        var exercises = studentExam.getExercises();
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
@@ -579,6 +579,9 @@ public class ExamService {
         for (StudentParticipation studentParticipation : participationsOfStudent) {
             Exercise exercise = studentParticipation.getExercise();
 
+            if (exercise == null) {
+                continue;
+            }
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result relevantResult = studentParticipation.getResults().iterator().next();
