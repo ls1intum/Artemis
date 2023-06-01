@@ -56,7 +56,6 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     void setUp() {
-        conversationParticipantRepository.deleteAll();
         this.database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = this.database.createCourse();
         user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
@@ -98,9 +97,10 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
+        var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved
-        conversationMessageRepository.deleteAll();
-        conversationParticipantRepository.deleteAll();
-        conversationRepository.deleteAll();
+        conversationMessageRepository.deleteAllById(List.of(post.getId()));
+        conversationParticipantRepository.deleteAllById(participants.stream().map(ConversationParticipant::getId).toList());
+        conversationRepository.deleteAllById(List.of(oneToOneChat.getId()));
     }
 }
