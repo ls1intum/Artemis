@@ -5,6 +5,9 @@ import { faBan, faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, f
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
 import { MatDialog } from '@angular/material/dialog';
+import { LinkifyService } from 'app/shared/link-preview/linkify/services/linkify.service';
+import { LinkPreviewService } from 'app/shared/link-preview/service/link-preview.service';
+import { DEFAULT_CONFIG, LinkifyConfigToken } from 'app/shared/link-preview/linkify/linkify.module';
 
 @Component({
     selector: 'jhi-posting-content-part',

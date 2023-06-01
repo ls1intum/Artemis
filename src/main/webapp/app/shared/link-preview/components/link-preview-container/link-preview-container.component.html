@@ -1,0 +1,11 @@
+<ng-container *ngIf="!multiple && linkPreviewService.links.length > 0; then first; else list"></ng-container>
+
+<ng-template #first>
+    <!--    <jhi-link-preview [link]="linkPreviewService?.links[0]" [showLoadingsProgress]="showLoadingsProgress"> </jhi-link-preview>-->
+</ng-template>
+<ng-template #list>
+    <div *ngFor="let link of linkPreviewService.links; trackBy: trackLinks">
+        asdfas
+        <jhi-link-preview [link]="link" [showLoadingsProgress]="showLoadingsProgress"> </jhi-link-preview>
+    </div>
+</ng-template>

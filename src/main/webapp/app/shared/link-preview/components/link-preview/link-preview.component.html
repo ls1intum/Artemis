@@ -1,0 +1,26 @@
+<ng-container *ngIf="!this.linkPreview && !this.loaded && this.showLoadingsProgress; then fetch; else preview"> </ng-container>
+<ng-template #preview>
+    <div>
+        <div class="img-container" *ngIf="linkPreview.image">
+            -->
+            <img [src]="linkPreview?.image" />
+        </div>
+        <span>{{ linkPreview?.title }}</span>
+        <span>{{ linkPreview?.description }}</span>
+    </div>
+    <!--    <mat-card *ngIf="this.linkPreview">-->
+
+    <!--        <mat-card-content class="cut-text">-->
+    <!--            <div class="img-container" *ngIf="linkPreview.image">-->
+    <!--                <img mat-card-image [src]="linkPreview?.image" />-->
+    <!--            </div>-->
+    <!--            <div>-->
+    <!--&lt;!&ndash;                <mat-card-title>{{ linkPreview?.title }}</mat-card-title>&ndash;&gt;-->
+    <!--&lt;!&ndash;                <mat-card-subtitle>{{ linkPreview?.description }}</mat-card-subtitle>&ndash;&gt;-->
+    <!--                <a [href]="linkPreview?.url" mat-button >{{ linkPreview?.url }}</a>-->
+    <!--            </div>-->
+    <!--        </mat-card-content>-->
+    <!--    </mat-card>-->
+</ng-template>
+
+<ng-template #fetch> Loading... </ng-template>

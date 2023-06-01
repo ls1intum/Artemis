@@ -1,35 +1,48 @@
-<span
-    class="markdown-preview"
-    *ngIf="postingContentPart.contentBeforeReference"
-    [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown : true : allowedHtmlTags : allowedHtmlAttributes"
-></span>
-<a class="reference" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
-    <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
-</a>
-<a class="reference" *ngIf="postingContentPart.attachmentToReference" (click)="openAttachment(postingContentPart.attachmentToReference)">
-    <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
-</a>
-<div style="max-width: 400px">
-    <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
-        <img
-            class="img-fluid rounded-sm border mt-1 mb-1"
-            *ngIf="postingContentPart.slideToReference && !imageNotFound"
-            [src]="postingContentPart.slideToReference"
-            [alt]="postingContentPart.referenceStr"
-            [title]="postingContentPart.referenceStr"
-            (error)="toggleImageNotFound()"
-            height="auto"
-            width="100%"
-        />
+<div>
+    <span
+        class="markdown-preview"
+        *ngIf="postingContentPart.contentBeforeReference"
+        [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown : true : allowedHtmlTags : allowedHtmlAttributes"
+    ></span>
+    <a class="reference" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
+        <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
     </a>
-    <div *ngIf="imageNotFound" class="card">
-        <h5 class="card-body">
-            <fa-icon class="px-1" [icon]="faBan"></fa-icon><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
-        </h5>
+    <a class="reference" *ngIf="postingContentPart.attachmentToReference" (click)="openAttachment(postingContentPart.attachmentToReference)">
+        <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
+    </a>
+    <div style="max-width: 400px">
+        <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
+            <img
+                class="img-fluid rounded-sm border mt-1 mb-1"
+                *ngIf="postingContentPart.slideToReference && !imageNotFound"
+                [src]="postingContentPart.slideToReference"
+                [alt]="postingContentPart.referenceStr"
+                [title]="postingContentPart.referenceStr"
+                (error)="toggleImageNotFound()"
+                height="auto"
+                width="100%"
+            />
+        </a>
+        <div *ngIf="imageNotFound" class="card">
+            <h5 class="card-body">
+                <fa-icon class="px-1" [icon]="faBan"></fa-icon><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
+            </h5>
+        </div>
     </div>
+    <span
+        class="markdown-preview"
+        *ngIf="postingContentPart.contentAfterReference"
+        [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
+    ></span>
 </div>
-<span
-    class="markdown-preview"
-    *ngIf="postingContentPart.contentAfterReference"
-    [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
-></span>
+<!--<div class="container" fxFlex.xs="100" fxFlex.sm="70" fxFlex="50">-->
+<!--    <div fxLayout="column" fxLayoutAlign="center">-->
+<!--        &lt;!&ndash; here &ndash;&gt;-->
+<!--        <mat-form-field class="demo-full-width" appearance="outline">-->
+<!--            <mat-label>Enter here your text here with few links to preview ;)</mat-label>-->
+<!--            <textarea matInput matTextareaAutosize matLinkPreview minRows="6"></textarea>-->
+<!--            <jhi-link-preview-container [multiple]="true"></jhi-link-preview-container>-->
+<!--        </mat-form-field>-->
+<!--        &lt;!&ndash; #### &ndash;&gt;-->
+<!--    </div>-->
+<!--</div>-->
