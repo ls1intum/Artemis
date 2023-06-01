@@ -640,14 +640,12 @@ export class CourseManagementRequests {
 
     createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
         const body = {
-            lecture: {
-                ...lectureTemplate,
-                course,
-                title,
-                startDate,
-                endDate,
-                channelName: titleLowercase(title),
-            },
+            ...lectureTemplate,
+            course,
+            title,
+            startDate,
+            endDate,
+            channelName: titleLowercase(title),
         };
         return cy.request({
             url: `${BASE_API}lectures`,

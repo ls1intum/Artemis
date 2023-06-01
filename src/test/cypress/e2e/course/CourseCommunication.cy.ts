@@ -13,7 +13,6 @@ let courseShortName: string;
 
 describe('Course communication', () => {
     let course: Course;
-    let courseId: number;
 
     before('Create course', () => {
         cy.login(admin);
@@ -22,7 +21,6 @@ describe('Course communication', () => {
         courseShortName = 'cypress' + uid;
         courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            courseId = course.id!;
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addStudentToCourse(course, studentTwo);
@@ -467,8 +465,8 @@ describe('Course communication', () => {
 
     after('Delete Course', () => {
         cy.login(admin);
-        if (courseId) {
-            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+        if (course.id) {
+            courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
         }
     });
 });
