@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,17 +36,18 @@ public class DataExportResource {
      */
     @PutMapping("data-export")
     @PreAuthorize("hasRole('USER')")
-    public DataExport requestDataExport() {
+    public DataExport requestDataExport() throws IOException {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
         // for now we return the data export object, so the client can make the request to download the export.
 
-        try {
-            return dataExportService.requestDataExport();
-        }
-        catch (Exception e) {
-            log.error("Could not create data export", e);
-            throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
-        }
+        // try {
+        // return dataExportService.requestDataExport();
+        // }
+        // catch (Exception e) {
+        // log.error("Could not create data export", e);
+        // throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
+        // }
+        return dataExportService.requestDataExport();
 
     }
 
