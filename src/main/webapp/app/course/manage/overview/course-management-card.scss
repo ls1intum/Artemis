@@ -13,7 +13,7 @@
         background-color: var(--background-color-for-hover) !important;
 
         &:hover {
-            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 10%) !important;
+            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
         }
         display: flex;
         cursor: pointer;

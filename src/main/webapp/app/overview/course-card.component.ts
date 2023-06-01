@@ -92,6 +92,15 @@ export class CourseCardComponent implements OnChanges {
     }
 
     /**
+     * Returns the background color of the course as a variable
+     */
+    get hoverEffectForBackground(): Record<string, string> {
+        return {
+            '--background-color-for-hover': this.course.color || this.ARTEMIS_DEFAULT_COLOR,
+        };
+    }
+
+    /**
      * Delegates the user to the corresponding course page when clicking on the chart
      */
     onSelect(): void {
