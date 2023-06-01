@@ -47,7 +47,7 @@ The following screenshot illustrates the first section of the form. It consists 
 - **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation.
 - **Points**: Total points of an exercise.
 - **Bonus Points**: Bonus points for an exercise.
-- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for text blocks based on previously graded submissions for this exercise using the Athena service.
+- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for text blocks based on previously graded submissions for this exercise using the |athena| service.
 
     .. figure:: text/create-text-exercise-form-1.png
               :align: center
@@ -127,7 +127,7 @@ Student Submission
 
 Assessment
 ----------
-When the due date is over you can assess the submissions.
+When the due date is over you can assess the submissions. Text exercise
 
 - To assess the submissions, first click on **Assessment Dashboard**.
 
@@ -144,7 +144,7 @@ When the due date is over you can assess the submissions.
     .. figure:: text/exercise-assessment-dashboard.png
               :align: center
 
-- In case you have not assessed a submission of this exercise before, you will get shown the problem statement and a summary of assessment instructions. Once you know what the exercise is about, you can click on the |participate-in-exercise| button.
+- In case you have not assessed a submission of this exercise before, you will get shown the problem statement and a summary of assessment instructions. To learn more about this feature, take a look at Artemis' :ref:`Integrated Training Process <assessment>`.  Once you know what the exercise is about, you can click on the |participate-in-exercise| button.
 
 - In case unassessed submissions are available, you can click on the |start-new-assessment| button. You will then be redirected to the assessment page where you will be able to assess the submission of a random student.
 
@@ -158,10 +158,21 @@ When the due date is over you can assess the submissions.
 
 - Alternatively, you can also assess the text blocks by dragging and dropping assessment instructions from the *Assessment Instructions* section.
 
-- Feedback to the entire submission can also be added by clicking on the |add-new-feedback| button.
+- Feedback to the entire submission can also be added by clicking on the |add-new-feedback| button. The following form will open allowing you to input your feedback:
 
     .. figure:: general/feedback-modal.png
               :align: center
+
+- If automatic assessment suggestions were enabled for the exercise, you would get available suggestions from the service |athena|. More details about this service can be found in the following research papers:
+:cite:t:`bernius2022machine`
+:cite:t:`bernius2021machine`
+:cite:t:`bernius2021computer`
+:cite:t:`bernius2020towards`
+:cite:t:`bernius2020segmenting`
+:cite:t:`bernius2019automatic`
+
+.. bibliography::
+   :list: bullet
 
 Once you're done assessing the solution, you can either:
 
@@ -174,7 +185,10 @@ Once you're done assessing the solution, you can either:
 - Click on |exercise-dashboard-button| to navigate to the **Exercise Dashboard**.
 
 
+.. |athena| `Athena <https://github.com/ls1intum/Athena>`_
+
 .. |course-management| image:: general/course-management.png
+.. |hint| image:: general/hint-icon.png
 .. |create| image:: general/create-button.png
     :scale: 50
 .. |edit| image:: general/edit-button.png
