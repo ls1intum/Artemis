@@ -387,6 +387,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllGroupsForAllCourses() throws Exception {
+        courseTestService.testGetAllGroupsForAllCourses();
+    }
+
+    @Test
     @WithMockUser(username = "ab12cde")
     void testEnrollInCourse() throws Exception {
         bitbucketRequestMockProvider.mockUpdateUserDetails("ab12cde", "ab12cde@test.de", "ab12cdeFirst ab12cdeLast");

@@ -1176,6 +1176,15 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetAllGroupsForAllCourses() throws Exception {
+        Set<String> allGroups = new HashSet<>(request.getList("/api/courses/groups", HttpStatus.OK, String.class));
+        courseRepo.findAll().stream().findAny().ifPresent(course -> {
+            assertThat(allGroups)
+                    .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));
+        });
+    }
+
+    // Test
     public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // create 6 * 4 = 24 submissions

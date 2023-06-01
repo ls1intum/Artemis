@@ -919,6 +919,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllGroupsForAllCourses() throws Exception {
+        courseTestService.testGetAllGroupsForAllCourses();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddUsersToCourseGroup() throws Exception {
         String group = "students";

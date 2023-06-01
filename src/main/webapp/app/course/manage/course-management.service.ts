@@ -303,6 +303,13 @@ export class CourseManagementService {
     }
 
     /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
+    }
+
+    /**
      * finds all courses with quiz exercises using a GET request
      */
     getAllCoursesWithQuizExercises(): Observable<EntityArrayResponseType> {
