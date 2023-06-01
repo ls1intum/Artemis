@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -245,7 +245,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
         AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, HttpStatus.CREATED);
-        database.addLectureUnitsToLecture(lecture, Set.of(attachmentUnit));
+        database.addLectureUnitsToLecture(lecture, List.of(attachmentUnit));
 
         String attachmentPath = attachmentUnit.getAttachment().getLink();
         String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
@@ -462,7 +462,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             unit3 = uploadAttachmentUnit(file3, expectedStatus);
         }
 
-        lecture = database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
+        lecture = database.addLectureUnitsToLecture(lecture, List.of(unit1, unit2, unit3));
 
         return lecture;
     }

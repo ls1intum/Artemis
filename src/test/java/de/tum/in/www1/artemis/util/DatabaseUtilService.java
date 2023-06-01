@@ -883,7 +883,7 @@ public class DatabaseUtilService {
                 TextUnit textUnit = createTextUnit();
                 AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
                 ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
@@ -908,7 +908,7 @@ public class DatabaseUtilService {
         return l;
     }
 
-    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+    public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
         Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
