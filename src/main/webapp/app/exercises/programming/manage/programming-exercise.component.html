@@ -316,7 +316,7 @@
                 class="me-1"
             ></jhi-programming-assessment-repo-export>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
-            <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
+            <button *ngIf="course.isAtLeastEditor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
                 <fa-icon [icon]="faCheckDouble"></fa-icon>
                 <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
             </button>

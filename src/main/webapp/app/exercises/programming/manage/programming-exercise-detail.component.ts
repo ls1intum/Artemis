@@ -383,7 +383,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * This is only run if the user is at least an instructor in the course
      */
     checkAndAlertInconsistencies() {
-        if (this.programmingExercise.isAtLeastInstructor) {
+        if (this.programmingExercise.isAtLeastEditor) {
             this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.programmingExercise.id!).subscribe((inconsistencies) => {
                 if (inconsistencies.length) {
                     this.alertService.warning('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
