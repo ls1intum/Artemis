@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -71,6 +72,13 @@ public class SingleUserNotificationFactory {
         notification = new SingleUserNotification(recipient, title, notificationText, true, placeholderValues);
         notification.setTransientAndStringTarget(createExerciseTarget(exercise, title));
         return notification;
+    }
+
+    public static SingleUserNotification createNotification(DataExport dataExport, User recipient) {
+        var notification = new SingleUserNotification(recipient, DATA_EXPORT_CREATED_TITLE, DATA_EXPORT_CREATED_TEXT, false, new String[0]);
+        notification.setTransientAndStringTarget(createDataExportTarget(dataExport, "data-exports"));
+        return notification;
+
     }
 
     /**

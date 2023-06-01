@@ -62,6 +62,18 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findOneByLogin(String login);
 
+    @Query("""
+            SELECT user
+            FROM User user
+                LEFT JOIN FETCH user.dataExports
+            WHERE user.login = :#{#login}
+            """)
+    Optional<User> findOneWithDataExportsByLogin(String login);
+
+    default User findOneWithDataExportsByLoginElseThrow(String login) {
+        return findOneWithDataExportsByLogin(login).orElseThrow(() -> new EntityNotFoundException("User with login \"" + login + "\" not found"));
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber);
 

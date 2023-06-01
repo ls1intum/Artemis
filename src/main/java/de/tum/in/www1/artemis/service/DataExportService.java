@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -39,7 +40,9 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -59,10 +62,12 @@ public class DataExportService {
 
     private static final String TXT_FILE_EXTENSION = ".txt";
 
+    private static final int DAYS_BETWEEN_DATA_EXPORTS = 14;
+
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
     @Value("${artemis.data-export-path:./data-exports}")
-    private Path dataExportPath;
+    private Path dataExportsPath;
 
     @Value("${artemis.repo-download-clone-path}")
     private Path repoClonePath;
@@ -92,8 +97,6 @@ public class DataExportService {
     // Optional because otherwise the application doesn't start if the apollon profile is not set
     private final Optional<ApollonConversionService> apollonConversionService;
 
-    private Path workingDirectory;
-
     private final StudentExamRepository studentExamRepository;
 
     private final FileService fileService;
@@ -106,12 +109,14 @@ public class DataExportService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
             QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
+            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -130,6 +135,7 @@ public class DataExportService {
         this.answerPostRepository = answerPostRepository;
         this.reactionRepository = reactionRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -150,24 +156,10 @@ public class DataExportService {
 
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
-        if (!Files.exists(dataExportPath)) {
-            Files.createDirectories(dataExportPath);
-        }
         dataExport = dataExportRepository.save(dataExport);
 
-        // ToDo: return from here directly and let the scheduler manage the pending exports in a work queue (part of a follow-up)
-        workingDirectory = Files.createTempDirectory(dataExportPath, "data-export-working-dir");
-
-        dataExport.setDataExportState(DataExportState.IN_CREATION);
-        dataExport = dataExportRepository.save(dataExport);
-
-        var dataExportPath = createDataExport(user);
-        dataExport.setFilePath(dataExportPath.toString());
-        // sending the email will be part of a follow-up, for now this just implies export finished
-        dataExport.setCreationDate(ZonedDateTime.now());
-        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-
-        return dataExportRepository.save(dataExport);
+        createDataExport(dataExport);
+        return dataExport;
     }
 
     /**
@@ -199,12 +191,13 @@ public class DataExportService {
      * Creates the data export for the given user.
      * Retrieves all courses and exercises the user has participated in from the database.
      *
-     * @param user the user for which to create the data export
-     * @return the path to the created data export
-     */
-    private Path createDataExport(User user) throws IOException {
-        // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
+     * @param dataExport the data export to be created
+     **/
+    public void createDataExport(DataExport dataExport) throws IOException {
+        var user = dataExport.getUser();
         var userId = user.getId();
+        var workingDirectory = prepareDataExport(dataExport);
+        // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
         var posts = postRepository.findPostsByAuthorId(userId);
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
         var reactions = reactionRepository.findReactionsByUserId(userId);
@@ -225,8 +218,33 @@ public class DataExportService {
             createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
             createExportForExams(user.getId(), course.getExams(), courseDir);
         }
-        addGeneralUserInformation(user);
-        return createDataExportZipFile(user.getLogin());
+        addGeneralUserInformation(user, workingDirectory);
+        var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
+        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
+        finishDataExportCreation(dataExport, dataExportPath);
+
+    }
+
+    private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
+        dataExport.setFilePath(dataExportPath.toString());
+        // Delete the data export after 7 days TODO this probably needs to go somewhere else
+        fileService.scheduleForDirectoryDeletion(dataExportPath, 10080);
+        dataExport.setCreationDate(ZonedDateTime.now());
+        dataExport = dataExportRepository.save(dataExport);
+        singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExportRepository.save(dataExport);
+    }
+
+    private Path prepareDataExport(DataExport dataExport) throws IOException {
+        if (!Files.exists(dataExportsPath)) {
+            Files.createDirectories(dataExportsPath);
+        }
+        dataExport = dataExportRepository.save(dataExport);
+        Path workingDirectory = Files.createTempDirectory(dataExportsPath, "data-export-working-dir");
+        dataExport.setDataExportState(DataExportState.IN_CREATION);
+        dataExportRepository.save(dataExport);
+        return workingDirectory;
     }
 
     private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
@@ -309,7 +327,7 @@ public class DataExportService {
         }
     }
 
-    private void addGeneralUserInformation(User user) throws IOException {
+    private void addGeneralUserInformation(User user, Path workingDirectory) throws IOException {
         String[] headers = new String[] { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
@@ -680,11 +698,12 @@ public class DataExportService {
         }
     }
 
-    private Path createDataExportZipFile(String userLogin) throws IOException {
+    private Path createDataExportZipFile(String userLogin, Path workingDirectory) throws IOException {
         // There should actually never exist more than one data export for a user at a time (once the feature is fully implemented), but to be sure the name is unique, we add the
         // current timestamp
-        return zipFileService.createZipFileWithFolderContent(dataExportPath.resolve("data-export_" + userLogin + ZonedDateTime.now().toEpochSecond() + ZIP_FILE_EXTENSION),
+        return zipFileService.createZipFileWithFolderContent(dataExportsPath.resolve("data-export_" + userLogin + ZonedDateTime.now().toEpochSecond() + ZIP_FILE_EXTENSION),
                 workingDirectory, null);
+
     }
 
     private void createSubmissionCsvFile(Submission submission, Path outputPath) throws IOException {
@@ -710,6 +729,66 @@ public class DataExportService {
             builder.add(programmingSubmission.getCommitHash());
         }
         return builder.build();
+    }
+
+    public boolean canRequestDataExport() {
+        var login = SecurityUtils.getCurrentUserLogin();
+        if (login.isEmpty()) {
+            return false;
+        }
+        var user = userRepository.findOneWithDataExportsByLoginElseThrow(login.get());
+        if (user.getDataExports().isEmpty()) {
+            return true;
+        }
+        var latestDataExport = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
+        if (latestDataExport.isEmpty()) {
+            return true;
+        }
+        var latestDataExportCreationDate = latestDataExport.get().getRequestDate();
+        return Duration.between(latestDataExportCreationDate, ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
+    }
+
+    public DataExportDTO canDownloadAnyDataExport() {
+        var login = SecurityUtils.getCurrentUserLogin();
+        var cannotDownload = new DataExportDTO(null);
+        if (login.isEmpty()) {
+            return cannotDownload;
+        }
+        var user = userRepository.findOneWithDataExportsByLoginElseThrow(login.get());
+        if (user.getDataExports().isEmpty()) {
+            return cannotDownload;
+        }
+        var latestDataExport = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
+        if (latestDataExport.isEmpty()) {
+            return cannotDownload;
+        }
+        if (latestDataExport.get().getDataExportState().isDownloadable()) {
+            return new DataExportDTO(latestDataExport.get().getId());
+        }
+        else {
+            return cannotDownload;
+        }
+    }
+
+    public boolean canDownloadSpecificDataExport(long dataExportId) {
+        var login = SecurityUtils.getCurrentUserLogin();
+        if (login.isEmpty()) {
+            return false;
+        }
+        var user = userRepository.findOneWithDataExportsByLoginElseThrow(login.get());
+        if (user.getDataExports().isEmpty()) {
+            return false;
+        }
+        var dataExport = user.getDataExports().stream().filter(de -> de.getId() == dataExportId).findFirst();
+        if (dataExport.isEmpty()) {
+            return false;
+        }
+        if (dataExport.get().getDataExportState().isDownloadable()) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
 }

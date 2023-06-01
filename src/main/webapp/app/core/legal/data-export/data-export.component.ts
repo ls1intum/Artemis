@@ -8,6 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { DataExport } from 'app/entities/data-export.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-data-export',
@@ -22,18 +23,37 @@ export class DataExportComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     canDownload = false;
+    canRequestDataExport = false;
 
     currentLogin: string | undefined;
-    isAdmin = false;
     dataExportId: number;
+    downloadMode = false;
 
-    constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService) {}
+    constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService, private route: ActivatedRoute) {}
 
     ngOnInit() {
-        this.accountService.identity().then((account) => {
-            this.currentLogin = account?.login;
-            this.isAdmin = this.accountService.isAdmin();
+        this.currentLogin = this.accountService.userIdentity?.login;
+        this.route.params.subscribe((params) => {
+            if (params['id']) {
+                this.downloadMode = true;
+                this.dataExportId = params['id'];
+            }
         });
+        if (!this.downloadMode) {
+            this.dataExportService.canRequestDataExport().subscribe((canRequestDataExport) => {
+                this.canRequestDataExport = canRequestDataExport;
+            });
+            this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
+                this.canDownload = !!dataExport.id;
+                if (this.canDownload) {
+                    this.dataExportId = dataExport.id!;
+                }
+            });
+        } else {
+            this.dataExportService.canDownloadSpecificDataExport(this.dataExportId).subscribe((canDownloadDataExport) => {
+                this.canDownload = canDownloadDataExport;
+            });
+        }
     }
 
     requestExport() {
@@ -41,7 +61,6 @@ export class DataExportComponent implements OnInit {
             next: (response: DataExport) => {
                 this.dialogErrorSource.next('');
                 this.alertService.success('artemisApp.dataExport.requestSuccess');
-                this.canDownload = true;
                 this.dataExportId = response.id!;
             },
             error: (error: HttpErrorResponse) => {

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
@@ -34,7 +35,7 @@ public class DataExportResource {
      *
      * @return the data export object
      */
-    @PutMapping("data-export")
+    @PutMapping("data-exports")
     @PreAuthorize("hasRole('USER')")
     public DataExport requestDataExport() throws IOException {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
@@ -54,7 +55,7 @@ public class DataExportResource {
      * @param dataExportId the id of the data export to download
      * @return A resource containing the data export zip file
      */
-    @GetMapping("data-export/{dataExportId}")
+    @GetMapping("data-exports/{dataExportId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
         var dataExportPath = dataExportService.downloadDataExport(dataExportId);
@@ -68,6 +69,24 @@ public class DataExportResource {
             throw new InternalServerErrorException("Could not find data export file");
         }
         return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+    }
+
+    @GetMapping("data-exports/can-request")
+    @PreAuthorize("hasRole('USER')")
+    public boolean canRequestExport() {
+        return dataExportService.canRequestDataExport();
+    }
+
+    @GetMapping("data-exports/can-download")
+    @PreAuthorize("hasRole('USER')")
+    public DataExportDTO canDownloadAnyExport() {
+        return dataExportService.canDownloadAnyDataExport();
+    }
+
+    @GetMapping("data-exports/{dataExportId}/can-download")
+    @PreAuthorize("hasRole('USER')")
+    public boolean canDownloadSpecificExport(@PathVariable long dataExportId) {
+        return dataExportService.canDownloadSpecificDataExport(dataExportId);
     }
 
 }

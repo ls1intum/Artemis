@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -24,4 +27,17 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             throw new EntityNotFoundException("Could not find data export with id: " + dataExportId);
         });
     }
+
+    /**
+     * Find all data exports whose creation needs to be scheduled. This includes all data exports that are currently in the state creation (the export was not completed then) or
+     * requested.
+     *
+     * @return a set of data exports that need to be scheduled
+     */
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.dataExportState = 'REQUESTED' OR dataExport.dataExportState = 'IN_CREATION'
+            """)
+    Set<DataExport> findAllThatNeedToBeScheduled();
 }

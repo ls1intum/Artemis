@@ -10,7 +10,9 @@
             "typeLoginToConfirm": "Please enter your login to confirm the data export request",
             "confirmationQuestion": "Do you really want to request a data export?",
             "confirmationHeader": "Request data export",
-            "requestError": "Failed to request data export please try again later"
+            "requestError": "Failed to request data export. Please try again later.",
+            "downloadError": "Failed to download the data export. Please try again later.",
+            "recentlyRequested": "A data export has already been requested recently. Please try again later."
         }
     }
 }

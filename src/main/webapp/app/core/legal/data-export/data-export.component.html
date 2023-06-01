@@ -9,6 +9,7 @@
 
     <div class="column d-flex justify-content-center align-content-center">
         <button
+            *ngIf="!downloadMode"
             id="request-data-export-btn"
             jhiDeleteButton
             [actionType]="ActionType.RequestDataExport"
@@ -23,6 +24,7 @@
             class="mb-1"
         ></button>
         <jhi-button
+            *ngIf="canDownload"
             id="download-data-export-btn"
             [btnSize]="ButtonSize.LARGE"
             [disabled]="!canDownload"
@@ -30,4 +32,7 @@
             (onClick)="downloadDataExport()"
         ></jhi-button>
     </div>
+    <p *ngIf="!canRequestDataExport">
+        {{ 'artemisApp.dataExport.recentlyRequested' | artemisTranslate }}
+    </p>
 </div>

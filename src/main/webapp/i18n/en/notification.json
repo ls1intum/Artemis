@@ -136,7 +136,8 @@
                 "addUserChannel": "You have been added to channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
                 "removeUserGroupChat": "You have been removed from group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
-                "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}."
+                "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "dataExportCreated": "Your data export has been created and can be downloaded."
             }
         },
         "tutorialGroupNotification": {
