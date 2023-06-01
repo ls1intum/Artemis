@@ -28,6 +28,8 @@ import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/m
 import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import dayjs from 'dayjs/esm';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 describe('CourseLearningGoalsDetails', () => {
     let fixture: ComponentFixture<CourseLearningGoalsDetailsComponent>;
@@ -52,6 +54,7 @@ describe('CourseLearningGoalsDetails', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(FireworksComponent),
+                MockPipe(ArtemisTimeAgoPipe),
             ],
             providers: [
                 MockProvider(LectureUnitService),
@@ -142,4 +145,16 @@ describe('CourseLearningGoalsDetails', () => {
         tick(5000);
         expect(component.showFireworks).toBeFalse();
     }));
+
+    it('should detect if due date is passed', () => {
+        const learningGoalFuture = { dueDate: dayjs().add(1, 'days') } as LearningGoal;
+        component.learningGoal = learningGoalFuture;
+        fixture.detectChanges();
+        expect(component.dueDatePassed).toBeFalse();
+
+        const learningGoalPast = { dueDate: dayjs().subtract(1, 'days') } as LearningGoal;
+        component.learningGoal = learningGoalPast;
+        fixture.detectChanges();
+        expect(component.dueDatePassed).toBeTrue();
+    });
 });
