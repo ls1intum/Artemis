@@ -30,7 +30,7 @@ export class IrisHttpSessionService {
      * @param {number} exerciseId of the session in which the message should be created
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
-    createSessionForProgrammingExercise(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.post<EntityResponseType>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, { observe: 'response' });
+    createSessionForProgrammingExercise(exerciseId: number): Observable<IrisSession> {
+        return this.http.post<never>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, {});
     }
 }
