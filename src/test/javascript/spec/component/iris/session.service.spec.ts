@@ -37,9 +37,7 @@ describe('IrisSessionService', () => {
         const exerciseId = 123;
         const sessionId = 456;
         const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
-        const createSessionForProgrammingExerciseMock = jest
-            .spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise')
-            .mockReturnValueOnce(of(new HttpResponse<IrisSession>({ body: { id: sessionId } })));
+        const createSessionForProgrammingExerciseMock = jest.spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise').mockReturnValueOnce(of({ id: sessionId }));
         const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
         // when
