@@ -161,7 +161,7 @@
                 <span *ngIf="course.unenrollmentEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="!course.unenrollmentEnabled">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>
-            <dt *ngIf="course.unenrollmentEnabled"><span jhiTranslate="artemisApp.course.enrollmentEndDate">Latest date to unenroll</span></dt>
+            <dt *ngIf="course.unenrollmentEnabled"><span jhiTranslate="artemisApp.course.unenrollmentEndDate">Latest date to unenroll</span></dt>
             <dd *ngIf="course.unenrollmentEnabled" id="course-unenrollment-end-date">
                 <span>{{ course.unenrollmentEndDate | artemisDate }}</span>
             </dd>
