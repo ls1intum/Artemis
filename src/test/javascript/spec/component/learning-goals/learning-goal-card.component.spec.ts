@@ -7,6 +7,8 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import dayjs from 'dayjs/esm';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
@@ -14,7 +16,13 @@ describe('LearningGoalCardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
-            declarations: [LearningGoalCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(LearningGoalRingsComponent)],
+            declarations: [
+                LearningGoalCardComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockComponent(LearningGoalRingsComponent),
+                MockPipe(ArtemisTimeAgoPipe),
+            ],
             providers: [MockProvider(TranslateService)],
             schemas: [],
         })
@@ -67,5 +75,17 @@ describe('LearningGoalCardComponent', () => {
         expect(learningGoalCardComponent.confidence).toBe(100);
         expect(learningGoalCardComponent.mastery).toBe(100);
         expect(learningGoalCardComponent.isMastered).toBeTrue();
+    });
+
+    it('should detect if due date is passed', () => {
+        const learningGoalFuture = { dueDate: dayjs().add(1, 'days') } as LearningGoal;
+        learningGoalCardComponent.learningGoal = learningGoalFuture;
+        learningGoalCardComponentFixture.detectChanges();
+        expect(learningGoalCardComponent.dueDatePassed).toBeFalse();
+
+        const learningGoalPast = { dueDate: dayjs().subtract(1, 'days') } as LearningGoal;
+        learningGoalCardComponent.learningGoal = learningGoalPast;
+        learningGoalCardComponentFixture.detectChanges();
+        expect(learningGoalCardComponent.dueDatePassed).toBeTrue();
     });
 });
