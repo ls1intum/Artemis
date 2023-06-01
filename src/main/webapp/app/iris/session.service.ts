@@ -38,15 +38,12 @@ export class IrisSessionService {
     }
 
     private createNewSession(exerciseId: number): void {
-        this.httpSessionService
-            .createSessionForProgrammingExercise(exerciseId)
-            .toPromise()
-            .then((irisSessionResponse: HttpResponse<IrisSession>) => {
-                this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.body!.id, []));
-            })
-            .catch(() => {
-                this.dispatchError('Could not create a new session'); // TODO move to messages.json
-            });
+        this.httpSessionService.createSessionForProgrammingExercise(exerciseId).subscribe(
+            (irisSessionResponse: any) => {
+                this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.id, []));
+            },
+            () => this.dispatchError('Could not create a new session'), // TODO move to messages.json
+        );
     }
 
     private dispatchError(error: string): void {
