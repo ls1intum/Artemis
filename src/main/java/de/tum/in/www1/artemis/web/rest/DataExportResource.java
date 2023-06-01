@@ -39,7 +39,6 @@ public class DataExportResource {
     public DataExport requestDataExport() throws IOException {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
         // for now we return the data export object, so the client can make the request to download the export.
-
         try {
             return dataExportService.requestDataExport();
         }
@@ -47,7 +46,6 @@ public class DataExportResource {
             log.error("Could not create data export", e);
             throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
         }
-
     }
 
     /**
@@ -70,7 +68,6 @@ public class DataExportResource {
             throw new InternalServerErrorException("Could not find data export file");
         }
         return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
-
     }
 
 }

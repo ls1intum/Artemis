@@ -394,7 +394,8 @@ public class ExamService {
         // fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForExam(studentExam, studentExam.getUser());
 
-        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
+        List<StudentParticipation> participations = studentExam.getExercises().stream().filter(Objects::nonNull).flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .toList();
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
         return calculateStudentResultWithGradeAndPoints(studentExam, participations);
