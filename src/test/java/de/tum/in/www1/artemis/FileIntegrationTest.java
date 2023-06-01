@@ -405,6 +405,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         try (PDDocument mergedDoc = retrieveMergeResult(lecture)) {
             assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
             PDPage firstPage = mergedDoc.getPage(0);
+            // Verify that attachment 3 (created with a special crop box in createLectureWithLectureUnits) was moved to the start
+            // and is now the first page of the merged pdf
             assertThat(firstPage.getCropBox().getHeight()).isEqualTo(4);
         }
     }
