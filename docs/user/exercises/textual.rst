@@ -69,11 +69,12 @@ The following screenshot illustrates the second section of the form. It consists
 
     .. figure:: general/create-exercise-form-hint.png
               :align: center
+              :scale: 70
 
 The following screenshot illustrates the last section of the form:
 
 - **Linked Competencies**: In case instructors created competencies, they can link them to the exercise here. See :ref:`Learning Analytics <learning-analytics>` for more information.
-- **Assessment Instructions**: Instructions for instructors while assessing the submission.
+- **Assessment Instructions**: Assessment instructions (comparable to grading rubrics) simplify the grading process. They include predefined feedback and points. Reviewers can drag and drop a suitable instruction to the text element to apply it during the assessment. The **Credits** specify the score of the instruction. The **Scale** describes the performance level of the instruction (e.g. excellent, good, average, poor). The **Description** may include additional notes about when to apply this instruction. **Feedback** is an explanatory text for the students in order to better understand their performance level. The **Limit** specifies how many times the score of this instruction may be included in the final score.
 
     .. figure:: text/create-text-exercise-form-3.png
               :align: center
