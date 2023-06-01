@@ -100,10 +100,10 @@
             "enrollmentEndDate": "Einschreibungs Ende",
             "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
             "unenrollmentEnabled": {
-                "title": "Kursauschreibung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs ausschreiben können. Du kannst das späteste Datum zur Ausschreibung einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszuschreiben."
+                "title": "Austragen aus dem Kurs für Studierende aktiviert",
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs austragen können. Du kannst das späteste Datum hierfür einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszutragen."
             },
-            "unenrollmentEndDate": "Spätestes Datum zur Ausschreibung",
+            "unenrollmentEndDate": "Spätestes Datum zur Austragung",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",

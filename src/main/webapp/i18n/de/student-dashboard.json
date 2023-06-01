@@ -91,17 +91,17 @@
                     "endDate": "Ende:",
                     "enrollmentStartDate": "Einschreibung von:",
                     "enrollmentEndDate": "Einschreibung bis:",
-                    "unenrollmentEndDate": "Ausschreibung bis:",
-                    "unenrollmentButton": "Ausschreiben",
+                    "unenrollmentEndDate": "Austragen bis:",
+                    "unenrollmentButton": "Austragen",
                     "unenrollmentModal": {
-                        "title": "Bestätigung der Ausschreibung aus dem Kurs",
-                        "confirmationQuestion": "Bist du dir sicher, dass du dich von folgendem Kurs ausschreiben möchtest:",
+                        "title": "Bestätigung für das Austragen aus dem Kurs",
+                        "confirmationQuestion": "Bist du dir sicher, dass du dich von folgendem Kurs austragen möchtest:",
                         "reenrollmentNotPossible": "Der Kurs erlaubt dir nicht, dich erneut einzuschreiben. Dies ist eine endgültige Entscheidung.",
-                        "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut anzumelden:",
+                        "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut einzuschreiben:",
                         "confirmationInput": "Gib den Titel des Kurses ein:",
                         "cancelButton": "Abbruch",
-                        "acceptButton": "Ja, ich möchte mich ausschreiben.",
-                        "unenrollmentSuccessful": "Ausschreibung erfolgreich"
+                        "acceptButton": "Ja, ich möchte mich austragen.",
+                        "unenrollmentSuccessful": "Austragung erfolgreich"
                     },
                     "upcomingDeadlines": "Bevorstehende Termine:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
