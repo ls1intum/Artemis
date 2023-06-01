@@ -47,7 +47,7 @@ The following screenshot illustrates the first section of the form. It consists 
 - **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation.
 - **Points**: Total points of an exercise.
 - **Bonus Points**: Bonus points for an exercise.
-- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for text blocks based on previously graded submissions for this exercise using the |athena| service.
+- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for text blocks based on previously graded submissions for this exercise using the `Athena <https://github.com/ls1intum/Athena>`_ service.
 
     .. figure:: text/create-text-exercise-form-1.png
               :align: center
@@ -163,7 +163,7 @@ When the due date is over you can assess the submissions. Text exercise
     .. figure:: general/feedback-modal.png
               :align: center
 
-- If automatic assessment suggestions were enabled for the exercise, you would get available suggestions from the service |athena|. More details about this service can be found in the following research papers:
+- If automatic assessment suggestions were enabled for the exercise, you would get available suggestions from the service `Athena <https://github.com/ls1intum/Athena>`_. More details about this service can be found in the following research papers:
 :cite:t:`bernius2022machine`
 :cite:t:`bernius2021machine`
 :cite:t:`bernius2021computer`
@@ -171,8 +171,9 @@ When the due date is over you can assess the submissions. Text exercise
 :cite:t:`bernius2020segmenting`
 :cite:t:`bernius2019automatic`
 
-.. bibliography::
-   :list: bullet
+.. note::
+    .. bibliography::
+       :list: bullet
 
 Once you're done assessing the solution, you can either:
 
@@ -185,10 +186,9 @@ Once you're done assessing the solution, you can either:
 - Click on |exercise-dashboard-button| to navigate to the **Exercise Dashboard**.
 
 
-.. |athena| `Athena <https://github.com/ls1intum/Athena>`_
-
 .. |course-management| image:: general/course-management.png
 .. |hint| image:: general/hint-icon.png
+    :scale: 70
 .. |create| image:: general/create-button.png
     :scale: 50
 .. |edit| image:: general/edit-button.png
