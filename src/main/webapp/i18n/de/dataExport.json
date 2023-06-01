@@ -9,7 +9,8 @@
             "downloadSuccess": "Datenexport erfolgreich heruntergeladen",
             "typeLoginToConfirm": "Bitte gib deine Login-Kennung ein, um den Datenexport zu bestätigen",
             "confirmationQuestion": "Willst du wirklich den Datenexport anfordern?",
-            "confirmationHeader": "Datenexport anfordern"
+            "confirmationHeader": "Datenexport anfordern",
+            "requestError": "Datenexport konnte nicht angefordert werden. Bitte versuche es später erneut."
         }
     }
 }

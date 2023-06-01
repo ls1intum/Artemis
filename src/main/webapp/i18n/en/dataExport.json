@@ -9,7 +9,8 @@
             "downloadSuccess": "Successfully downloaded data export",
             "typeLoginToConfirm": "Please enter your login to confirm the data export request",
             "confirmationQuestion": "Do you really want to request a data export?",
-            "confirmationHeader": "Request data export"
+            "confirmationHeader": "Request data export",
+            "requestError": "Failed to request data export please try again later"
         }
     }
 }
