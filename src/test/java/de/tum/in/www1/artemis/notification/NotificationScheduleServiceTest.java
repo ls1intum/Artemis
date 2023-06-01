@@ -69,6 +69,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(4000).times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
+        verify(mailService, timeout(4000).atLeast(1)).sendNotification(any(), anyList(), any());
     }
 
     @Test
