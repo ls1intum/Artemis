@@ -1496,43 +1496,48 @@ public class CourseTestService {
     // Test
     public void testUnenrollFromCourse() throws Exception {
         User student = database.getUserByLogin(userPrefix + "student1");
-        var groups = new HashSet<String>();
-        groups.add("unenrolltestcourse1");
-        groups.add("unenrolltestcourse2");
-        groups.add("unenrolltestcourse3");
+        var groups = new HashSet<>(Set.of("unenrolltestcourse1", "unenrolltestcourse2", "unenrolltestcourse3"));
         student.setGroups(groups);
         userRepo.save(student);
 
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
-        Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
-        course1.setUnenrollmentEnabled(true);
-        course1.setUnenrollmentEndDate(futureTimestamp);
-        course2.setUnenrollmentEnabled(false);
-        course3.setUnenrollmentEnabled(true);
-        course3.setUnenrollmentEndDate(pastTimestamp);
+        Course[] courses = generateCoursesForUnenrollmentTest();
+        courseRepo.saveAll(Arrays.stream(courses).toList());
 
-        course1 = courseRepo.save(course1);
-        course2 = courseRepo.save(course2);
-        course3 = courseRepo.save(course3);
+        for (Course course : courses) {
+            mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName(), false);
+        }
 
-        mockDelegate.mockRemoveUserFromGroup(student, course1.getStudentGroupName(), false);
-        mockDelegate.mockRemoveUserFromGroup(student, course2.getStudentGroupName(), false);
-        mockDelegate.mockRemoveUserFromGroup(student, course3.getStudentGroupName(), false);
+        testUnenrollFromCourseSuccessfull(courses[0]);
 
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/unenroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is not enrolled in course").doesNotContain(course1.getStudentGroupName());
+        request.postWithResponseBody("/api/courses/" + courses[1].getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
 
+        request.postWithResponseBody("/api/courses/" + courses[2].getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+    }
+
+    private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
+        User updatedStudent = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, User.class, HttpStatus.OK);
+        assertThat(updatedStudent.getGroups()).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
         List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
         assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
-        assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
+        assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course.getTitle());
+    }
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+    private Course[] generateCoursesForUnenrollmentTest() {
+        Course[] courses = new Course[3];
 
-        request.postWithResponseBody("/api/courses/" + course3.getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        courses[0] = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
+        courses[1] = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
+        courses[2] = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
+        courses[0].setUnenrollmentEnabled(true);
+        courses[0].setUnenrollmentEndDate(futureTimestamp);
+        courses[1].setUnenrollmentEnabled(false);
+        courses[2].setUnenrollmentEnabled(true);
+        courses[2].setUnenrollmentEndDate(pastTimestamp);
+
+        return courses;
     }
 
     // Test
