@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
@@ -57,13 +56,13 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("courseTitle", () -> new Tuple<>(course.getId(), course.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    course.setTitle(UUID.randomUUID().toString());
+                    course.setTitle("testEvictsTitleOnUpdateTitleOrDeleteCourse");
                     courseRepository.save(course);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    course.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    course.setDescription("testEvictsTitleOnUpdateTitleOrDeleteCourse"); // Change some other values
                     courseRepository.save(course);
                     return false;
                 },
@@ -81,13 +80,13 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("exerciseTitle", () -> new Tuple<>(exercise.getId(), exercise.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    exercise.setTitle(UUID.randomUUID().toString());
+                    exercise.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExercise");
                     exerciseRepository.save(exercise);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    exercise.setProblemStatement(UUID.randomUUID().toString()); // Change some other values
+                    exercise.setProblemStatement("testEvictsTitleOnUpdateTitleOrDeleteExercise"); // Change some other values
                     exerciseRepository.save(exercise);
                     return false;
                 },
@@ -104,13 +103,13 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("lectureTitle", () -> new Tuple<>(lecture.getId(), lecture.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    lecture.setTitle(UUID.randomUUID().toString());
+                    lecture.setTitle("testEvictsTitleOnUpdateTitleOrDeleteLecture");
                     lectureRepository.save(lecture);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    lecture.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    lecture.setDescription("testEvictsTitleOnUpdateTitleOrDeleteLecture"); // Change some other values
                     lectureRepository.save(lecture);
                     return false;
                 },
@@ -127,13 +126,13 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("organizationTitle", () -> new Tuple<>(org.getId(), org.getName()), List.of(
                 // Should evict as we change the name
                 () -> {
-                    org.setName(UUID.randomUUID().toString());
+                    org.setName("testEvictsTitleOnUpdateNameOrDeleteOrganization");
                     organizationRepository.save(org);
                     return true;
                 },
                 // Should not evict as name remains the same
                 () -> {
-                    org.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    org.setDescription("testEvictsTitleOnUpdateNameOrDeleteOrganization"); // Change some other values
                     organizationRepository.save(org);
                     return false;
                 },
@@ -150,7 +149,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("diagramTitle", () -> new Tuple<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    apollonDiagram.setTitle(UUID.randomUUID().toString());
+                    apollonDiagram.setTitle("testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram");
                     apollonDiagramRepository.save(apollonDiagram);
                     return true;
                 },
@@ -174,13 +173,13 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("examTitle", () -> new Tuple<>(exam.getId(), exam.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    exam.setTitle(UUID.randomUUID().toString());
+                    exam.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExam");
                     examRepository.save(exam);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    exam.setConfirmationEndText(UUID.randomUUID().toString()); // Change some other values
+                    exam.setConfirmationEndText("testEvictsTitleOnUpdateTitleOrDeleteExam"); // Change some other values
                     examRepository.save(exam);
                     return false;
                 },
@@ -200,20 +199,20 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
         testCacheEvicted("exerciseHintTitle", () -> new Tuple<>(exercise.getId() + "-" + hint.getId(), hint.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    hint.setTitle(UUID.randomUUID().toString());
+                    hint.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint");
                     exerciseHintRepository.save(hint);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    hint.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    hint.setDescription("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint"); // Change some other values
                     exerciseHintRepository.save(hint);
                     return false;
                 },
                 // Should not do something if the exercise is missing
                 () -> {
                     hint.setExercise(null);
-                    hint.setTitle(UUID.randomUUID().toString());
+                    hint.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint");
                     exerciseHintRepository.save(hint);
                     return false;
                 },
