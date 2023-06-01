@@ -78,7 +78,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ChannelRepository channelRepository;
-  
+
     @Autowired
     private ExerciseService exerciseService;
 
