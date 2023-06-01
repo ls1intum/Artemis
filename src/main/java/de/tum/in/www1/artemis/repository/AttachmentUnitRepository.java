@@ -20,13 +20,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, Long> {
 
     @Query("""
-            SELECT a
-            FROM Lecture l
-                LEFT JOIN TREAT(l.lectureUnits as AttachmentUnit) a ON l.id = a.lecture.id
-                LEFT JOIN FETCH a.attachment
-            WHERE l.id = :lectureId
-                AND a.attachment.attachmentType = :attachmentType
-            ORDER BY INDEX(a)
+            SELECT attachmentUnit
+            FROM Lecture lecture
+                LEFT JOIN TREAT(lecture.lectureUnits as AttachmentUnit) attachmentUnit
+                LEFT JOIN FETCH attachmentUnit.attachment attachment
+            WHERE lecture.id = :lectureId
+                AND attachment.attachmentType = :attachmentType
+            ORDER BY INDEX(attachmentUnit)
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
