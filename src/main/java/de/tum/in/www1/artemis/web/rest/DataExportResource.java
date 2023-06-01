@@ -40,14 +40,13 @@ public class DataExportResource {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
         // for now we return the data export object, so the client can make the request to download the export.
 
-        // try {
-        // return dataExportService.requestDataExport();
-        // }
-        // catch (Exception e) {
-        // log.error("Could not create data export", e);
-        // throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
-        // }
-        return dataExportService.requestDataExport();
+        try {
+            return dataExportService.requestDataExport();
+        }
+        catch (Exception e) {
+            log.error("Could not create data export", e);
+            throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
+        }
 
     }
 

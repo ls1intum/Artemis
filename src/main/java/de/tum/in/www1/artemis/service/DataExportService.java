@@ -231,7 +231,7 @@ public class DataExportService {
 
     private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
         for (var exam : exams) {
-            // there can be multiple student exam in rare cases because a student can request the creation of multiple student test exams
+            // there can be multiple student exams in rare cases because a student can request the creation of multiple student test exams
             Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             for (var studentExam : studentExams) {
                 var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + studentExam.getId()));

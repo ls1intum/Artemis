@@ -440,7 +440,10 @@ public class ExamService {
         // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
         // available
         for (Exercise exercise : studentExam.getExercises()) {
-            filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+            // exercises can be null if multiple student exams exist for the same student/exam combination
+            if (exercise != null) {
+                filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+            }
         }
     }
 
