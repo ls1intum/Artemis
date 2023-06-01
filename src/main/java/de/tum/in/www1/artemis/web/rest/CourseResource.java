@@ -111,6 +111,7 @@ public class CourseResource {
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
+
     private final ChannelService channelService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
