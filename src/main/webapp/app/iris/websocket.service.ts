@@ -1,6 +1,4 @@
 import { Subscription } from 'rxjs';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
@@ -9,20 +7,10 @@ import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 @Injectable()
 export class IrisWebsocketService implements OnDestroy {
-    private user: User;
     private subscriptionChannel?: string;
     private sessionIdChangedSub: Subscription;
-    private connectionStateSub: Subscription;
 
-    constructor(protected accountService: AccountService, private jhiWebsocketService: JhiWebsocketService, private stateStore: IrisStateStore) {
-        this.accountService.identity().then((user: User) => {
-            this.user = user!;
-        });
-        // this.connectionStateSub = this.jhiWebsocketService.connectionState.subscribe((newState) => {
-        //     if (newState.connected == false) {
-        //         this.messageStore.dispatch(new ConversationErrorOccurred('The connection to Artemis Server has been lost. Please, reload the page.')); // TODO rp + i18n
-        //     }
-        // });
+    constructor(private jhiWebsocketService: JhiWebsocketService, private stateStore: IrisStateStore) {
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (!isSessionReceivedAction(newAction)) return;
             this.changeWebsocketSubscription(newAction.sessionId);
@@ -34,7 +22,6 @@ export class IrisWebsocketService implements OnDestroy {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
         }
         this.sessionIdChangedSub.unsubscribe();
-        // this.connectionStateSub.unsubscribe();
     }
 
     /**
