@@ -1797,6 +1797,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(text);
 
         ExerciseGroup fileUploadGroup = exam.getExerciseGroups().get(2);
+        // todo
         Exercise fileUpload = ModelFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
         fileUploadGroup.addExercise(fileUpload);
         exerciseRepo.save(fileUpload);
