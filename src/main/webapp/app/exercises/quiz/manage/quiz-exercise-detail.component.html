@@ -26,15 +26,16 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="quizExercise.id" readonly />
         </div>
         <div class="edit-quiz">
-            <jhi-title-channel-name
-                [(title)]="quizExercise.title"
-                [(channelName)]="quizExercise.channelName"
-                (ngModelChange)="cacheValidation()"
-                channelNamePrefix="exercise-"
-                [minTitleLength]="3"
-                [emphasizeLabels]="true"
-                [forceChannelName]="!this.isExamMode && this.isImport"
-            ></jhi-title-channel-name>
+            <form name="editForm" role="form" novalidate>
+                <jhi-title-channel-name
+                    [(title)]="quizExercise.title"
+                    [channelName]="quizExercise.channelName"
+                    (channelNameChange)="updateChannelName($event)"
+                    channelNamePrefix="exercise-"
+                    [emphasizeLabels]="true"
+                    [forceChannelName]="!this.isExamMode && this.isImport"
+                ></jhi-title-channel-name>
+            </form>
 
             <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
