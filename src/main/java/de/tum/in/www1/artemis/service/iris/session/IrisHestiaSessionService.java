@@ -158,4 +158,14 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         var exercise = hestiaSession.getCodeHint().getExercise();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
     }
+
+    /**
+     * Not supported for Iris Hestia sessions.
+     *
+     * @param session The session to get a message for
+     */
+    @Override
+    public void checkIsIrisActivated(IrisSession session) {
+        throw new BadRequestException("Iris Hestia Session not supported");
+    }
 }

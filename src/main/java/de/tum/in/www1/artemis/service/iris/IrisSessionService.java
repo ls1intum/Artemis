@@ -38,6 +38,27 @@ public class IrisSessionService {
     }
 
     /**
+     * Checks if the programming exercise for which an Iris operation was requested has Iris activated.
+     * An Iris operation can be performed if the programming exercise has Iris activated.
+     *
+     * @param programmingExercise The programming exercise to check
+     */
+    public void checkIsIrisActivated(ProgrammingExercise programmingExercise) {
+        if (!programmingExercise.isIrisActivated()) {
+            throw new BadRequestException("Iris not activated for Programming Exercise: " + programmingExercise.getId());
+        }
+    }
+
+    /**
+     * Checks if the exercise connected to the session has Iris activated
+     *
+     * @param session the session to check for
+     */
+    public void checkIsIrisActivated(IrisSession session) {
+        getIrisSessionSubService(session).checkIsIrisActivated(session);
+    }
+
+    /**
      * Creates a new Iris session for the given exercise and user.
      * If a session already exists, a BadRequestException is thrown.
      *

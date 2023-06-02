@@ -24,6 +24,13 @@ public interface IrisSessionSubServiceInterface {
      */
     void checkHasAccessToIrisSession(IrisSession irisSession, User user);
 
+    /**
+     * Checks if the exercise connected to the session has Iris activated.
+     *
+     * @param irisSession The session to check
+     */
+    void checkIsIrisActivated(IrisSession irisSession);
+
     default <S extends IrisSession> S castToSessionType(IrisSession irisSession, Class<S> sessionClass) {
         if (!sessionClass.isInstance(irisSession)) {
             throw new IllegalStateException("IrisSession is not of type " + sessionClass.getSimpleName());
