@@ -722,7 +722,6 @@ public class ProgrammingExercise extends Exercise {
      */
     private boolean checkForAssessedResult(Result result) {
         boolean isAssessmentOver = ExerciseDateService.isAfterAssessmentDueDate(this);
-        ;
         return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
     }
 
