@@ -341,20 +341,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-
-        String solutionBuildPlanId = projectKey + "-" + SOLUTION.getName();
-        String templateBuildPlanId = projectKey + "-" + TEMPLATE.getName();
-
-        bambooRequestMockProvider.mockGetNotificationsForJob(solutionBuildPlanId);
-        bambooRequestMockProvider.mockDeleteNotificationsForJob(solutionBuildPlanId, "123456789");
-        bambooRequestMockProvider.mockCreateNotificationForJob();
-
-        bambooRequestMockProvider.mockGetNotificationsForJob(templateBuildPlanId);
-        bambooRequestMockProvider.mockDeleteNotificationsForJob(templateBuildPlanId, "123456789");
-        bambooRequestMockProvider.mockCreateNotificationForJob();
-
-        bambooRequestMockProvider.mockTriggerBuild(templateBuildPlanId);
-        bambooRequestMockProvider.mockTriggerBuild(solutionBuildPlanId);
+        bambooRequestMockProvider.mockTriggerBuild(projectKey + "-" + TEMPLATE.getName());
+        bambooRequestMockProvider.mockTriggerBuild(projectKey + "-" + SOLUTION.getName());
     }
 
     @Override
