@@ -86,52 +86,57 @@ The complaint process is as follows:
 
 2. The reviewer interacts with the "Assessment Dashboard" button of the desired course, which displays the table for all the course exercises.
 
-.. raw:: html
+    +--------------------------------------------------------+--+--------------------------------------------------+
+    | .. figure:: assessment/assessment-dashboard-button.png |  | .. figure:: assessment/assessment-dashboard.png  |
+    |    :alt: Assessment Dashboard button                   |  |    :alt: Assessment Dashboard                    |
+    |    :align: center                                      |  |    :align: center                                |
+    +--------------------------------------------------------+--+--------------------------------------------------+
 
-   <table>
-     <tr>
-       <td>
-         <figure>
-           <img src="assessment/assessment-dashboard-button.png" alt="Assessment Dashboard button" align="left">
-         </figure>
-       </td>
-       <td>
-         <figure>
-           <img src="assessment/assessment-dashboard.png" alt="Assessment Dashboard" align="right">
-         </figure>
-       </td>
-     </tr>
-   </table>
 
-1. By interacting with the respective "Exercise Dashboard" button, the reviewer can open the exercise-specific dashboard and assess students' submissions. 
+3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assess students' submissions. 
    Upon evaluation, the reviewer puts a "lock" on the complaint disabling inconsistency and ambiguity, which expires in 24 hours.
 
     .. figure:: assessment/exercise-dashboard.png
             :alt: Exercise Dashboard
             :align: center
 
-2. For each submission, the reviewer decides on the student's complaint.
-   
-    .. raw:: html
+4. For each submission, the reviewer decides on the student's complaint.
 
-        <div style="display: flex; align-items: center;">
-            <p style="text-align: left; padding: 15px; flex: 3;">In case of a justification, the reviewer adds feedback blocks and interacts with the "Accept complaint" button.</p>
-            <figure style="margin-left: auto; flex: 7;">
-            <img src="assessment/accept-complaint.png" alt="Accept Complaint">
-            </figure>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <p style="text-align: left; padding: 15px; flex: 3;">Otherwise, the reviewer explains why the complaint was rejected and interacts with the "Reject complaint" button.</p>
-            <figure style="margin-left: auto; flex: 7;">
-            <img src="assessment/reject-complaint.png" alt="Reject Complaint">
-            </figure>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <p style="text-align: left; padding: 15px; flex: 3;">If the reviewer cannot decide between accepting and rejecting, it is possible to remove the lock so that another reviewer can evaluate the complaint.</p>
-            <figure style="margin-left: auto; flex: 7;">
-            <img src="assessment/lock.png" alt="Complaint Lock">
-            </figure>
-        </div>
+    +----------------------------------------+----------------------------------------------+
+    | .. role:: raw-html(raw)                | .. figure:: assessment/accept-complaint.png  |
+    |                                        |    :alt: Accept Complaint                    |
+    | .. raw:: html                          |    :align: right                             |
+    |                                        |                                              |
+    |     <div style="padding: 15px;">       |                                              |
+    |     In case of a justification, the    |                                              |
+    |     reviewer adds feedback blocks and  |                                              |
+    |     interacts with the "Accept         |                                              |
+    |     complaint" button.                 |                                              |
+    |     </div>                             |                                              |
+    +----------------------------------------+----------------------------------------------+
+    | .. role:: raw-html(raw)                | .. figure:: assessment/reject-complaint.png  |
+    |                                        |    :alt: Reject Complaint                    |
+    | .. raw:: html                          |    :align: right                             |
+    |                                        |                                              |
+    |     <div style="padding: 15px;">       |                                              |
+    |     Otherwise, the reviewer explains   |                                              |
+    |     why the complaint was rejected     |                                              |
+    |     and interacts with the "Reject     |                                              |
+    |     complaint" button.                 |                                              |
+    |     </div>                             |                                              |
+    +----------------------------------------+----------------------------------------------+
+    | .. role:: raw-html(raw)                | .. figure:: assessment/lock.png              |
+    |                                        |    :alt: Complaint Lock                      |
+    | .. raw:: html                          |    :align: right                             |
+    |                                        |                                              |
+    |     <div style="padding: 15px;">       |                                              |
+    |     If the reviewer cannot decide      |                                              |
+    |     between accepting and rejecting,   |                                              |
+    |     it is possible to remove the lock  |                                              |
+    |     so that another reviewer can       |                                              |
+    |     evaluate the complaint.            |                                              |
+    |     </div>                             |                                              |
+    +----------------------------------------+----------------------------------------------+
 
 
 .. _exercise_more_feedback_request:
