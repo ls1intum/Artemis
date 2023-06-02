@@ -11,6 +11,9 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() channelNamePrefix: string;
     @Input() pattern: string;
     @Input() hideTitleLabel: boolean;
+    @Input() emphasizeLabels = false;
+
+    @Input() forceChannelName: boolean;
 
     @Input() minTitleLength: number;
 
@@ -21,7 +24,7 @@ export class TitleChannelNameComponent implements OnInit {
         if (!this.channelNamePrefix) {
             this.channelNamePrefix = '';
         }
-        if (this.channelName === '') {
+        if (this.channelName === '' || (this.forceChannelName && this.channelName === undefined)) {
             this.channelName = this.channelNamePrefix;
         }
     }
