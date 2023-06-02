@@ -105,7 +105,8 @@ The complaint process is as follows:
     || In case of a justification, the   | .. figure:: assessment/accept-complaint.png |
     || reviewer adds feedback blocks and |    :alt: Accept Complaint                   |
     || interacts with the "Accept        |                                             |
-    || complaint" button.                |                                             |
+    || complaint" button. Feedback points|                                             |
+    || can be both negative and positive.|                                             |
     +------------------------------------+---------------------------------------------+
     || Otherwise, the reviewer explains  | .. figure:: assessment/reject-complaint.png |
     || why the complaint was rejected    |    :alt: Reject Complaint                   |
