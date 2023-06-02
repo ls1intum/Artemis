@@ -233,7 +233,7 @@ public class DataExportService {
 
     private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
         dataExport.setFilePath(dataExportPath.toString());
-        // Delete the data export after 7 days TODO this probably needs to go somewhere else
+        // Delete the data export after 7 days
         fileService.scheduleForDirectoryDeletion(dataExportPath, 10080);
         dataExport.setCreationDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);

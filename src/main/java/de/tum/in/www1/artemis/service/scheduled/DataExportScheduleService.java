@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 
 import javax.annotation.PostConstruct;
 
@@ -14,6 +12,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.DataExportService;
@@ -72,9 +71,15 @@ public class DataExportScheduleService {
                 dataExportService.createDataExport(dataExport);
             }
             catch (IOException e) {
-                throw new RuntimeException(e);
+                handleCreationFailure(dataExport);
             }
         };
+    }
+
+    private void handleCreationFailure(DataExport dataExport) {
+        dataExport.setDataExportState(DataExportState.FAILED);
+        dataExportRepository.save(dataExport);
+
     }
 
     private void checkSecurityUtils() {
@@ -84,6 +89,11 @@ public class DataExportScheduleService {
     }
 
     public void scheduleDataExportCreation(DataExport dataExport) {
+        LocalDate currentDate = LocalDate.now();
+        LocalTime startTime = LocalTime.of(4, 0);
+        LocalDate nextDay = currentDate.plusDays(1);
+        Instant scheduledTime = nextDay.atTime(startTime).atZone(ZoneId.systemDefault()).toInstant();
+        scheduler.schedule(scheduleDataExport(dataExport), scheduledTime);
 
     }
 }
