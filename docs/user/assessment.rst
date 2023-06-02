@@ -82,14 +82,13 @@ The complaint process is as follows:
    
    .. figure:: assessment/complaint-submission.png
             :alt: Complaint submission
-            :align: right
+            :align: center
 
 2. The reviewer interacts with the "Assessment Dashboard" button of the desired course, which displays the table for all the course exercises.
 
     +--------------------------------------------------------+--+--------------------------------------------------+
     | .. figure:: assessment/assessment-dashboard-button.png |  | .. figure:: assessment/assessment-dashboard.png  |
     |    :alt: Assessment Dashboard button                   |  |    :alt: Assessment Dashboard                    |
-    |    :align: center                                      |  |    :align: center                                |
     +--------------------------------------------------------+--+--------------------------------------------------+
 
 
@@ -105,7 +104,7 @@ The complaint process is as follows:
     +----------------------------------------+----------------------------------------------+
     | .. role:: raw-html(raw)                | .. figure:: assessment/accept-complaint.png  |
     |                                        |    :alt: Accept Complaint                    |
-    | .. raw:: html                          |    :align: right                             |
+    | .. raw:: html                          |                                              |
     |                                        |                                              |
     |     <div style="padding: 15px;">       |                                              |
     |     In case of a justification, the    |                                              |
@@ -116,7 +115,7 @@ The complaint process is as follows:
     +----------------------------------------+----------------------------------------------+
     | .. role:: raw-html(raw)                | .. figure:: assessment/reject-complaint.png  |
     |                                        |    :alt: Reject Complaint                    |
-    | .. raw:: html                          |    :align: right                             |
+    | .. raw:: html                          |                                              |
     |                                        |                                              |
     |     <div style="padding: 15px;">       |                                              |
     |     Otherwise, the reviewer explains   |                                              |
@@ -127,7 +126,7 @@ The complaint process is as follows:
     +----------------------------------------+----------------------------------------------+
     | .. role:: raw-html(raw)                | .. figure:: assessment/lock.png              |
     |                                        |    :alt: Complaint Lock                      |
-    | .. raw:: html                          |    :align: right                             |
+    | .. raw:: html                          |                                              |
     |                                        |                                              |
     |     <div style="padding: 15px;">       |                                              |
     |     If the reviewer cannot decide      |                                              |
