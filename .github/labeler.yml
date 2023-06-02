@@ -15,3 +15,6 @@ database:
 
 documentation:
 - docs/**/*
+
+docker:
+- docker/**/*
