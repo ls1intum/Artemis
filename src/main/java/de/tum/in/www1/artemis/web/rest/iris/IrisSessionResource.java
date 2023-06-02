@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -41,8 +42,8 @@ public class IrisSessionResource {
 
     private final IrisMessageService irisMessageService;
 
-    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, IrisChatSessionRepository irisChatSessionRepository,
-            UserRepository userRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService) {
+    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisChatSessionRepository = irisChatSessionRepository;
@@ -85,7 +86,9 @@ public class IrisSessionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
         var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
-        irisMessageService.saveMessage(irisSessionService.createInitialSystemMessage(session), session, IrisMessageSender.ARTEMIS);
+        if (session instanceof IrisChatSession) {
+            irisMessageService.saveMessage(irisSessionService.createInitialSystemMessage((IrisChatSession) session), session, IrisMessageSender.ARTEMIS);
+        }
 
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

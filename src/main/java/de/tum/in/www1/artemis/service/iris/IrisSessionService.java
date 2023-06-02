@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.iris;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,11 +11,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
@@ -168,7 +167,7 @@ public class IrisSessionService {
      * @param session The session to generate the initial system message for
      * @return The created IrisMessage for storing in the database
      */
-    public IrisMessage createInitialSystemMessage(IrisSession session) {
+    public IrisMessage createInitialSystemMessage(IrisChatSession session) {
         var exercise = session.getExercise();
         // TODO: Error handling in the future
         String title = "undefined";
