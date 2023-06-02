@@ -14,7 +14,7 @@ services:
       - ./sorry-cypress.env
 
   director:
-    image: agoldis/sorry-cypress-director
+    image: agoldis/sorry-cypress-director:${SORRY_CYPRESS_TAG:-latest}
     container_name: Director
     hostname: director
     restart: always
@@ -33,7 +33,7 @@ services:
       - mongo
 
   api:
-    image: agoldis/sorry-cypress-api
+    image: agoldis/sorry-cypress-api:${SORRY_CYPRESS_TAG:-latest}
     container_name: API
     hostname: api
     environment:
@@ -44,7 +44,7 @@ services:
       - mongo
 
   dashboard:
-    image: agoldis/sorry-cypress-dashboard
+    image: agoldis/sorry-cypress-dashboard:${SORRY_CYPRESS_TAG:-latest}
     container_name: Dashboard
     hostname: dashboard
     restart: always
@@ -55,7 +55,7 @@ services:
       PORT: 8080
       CI_URL: ''
     expose:
-      - "8080"
+      - '8080'
     depends_on:
       - mongo
       - api
@@ -96,8 +96,18 @@ services:
       - 443:443
     env_file:
       - ./sorry-cypress.env
+    environment:
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
     volumes:
-      - files/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - files/nginx/.htpasswd:/etc/nginx/.htpasswd
-      - files/nginx/fullchain.pem:/etc/certificates/fullchain.pem
-      - files/nginx/privkey.pem:/etc/certificates/privkey.pem
+      - type: bind
+        source: ${NGINX_PROXY_CONFIG_PATH:-files/nginx/nginx.conf}
+        target: '/etc/nginx/templates/nginx.conf.template'
+      - type: bind
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-files/nginx/fullchain.pem}
+        target: '/etc/certificates/fullchain.pem'
+      - type: bind
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-files/nginx/privkey.pem}
+        target: '/etc/certificates/privkey.pem'
+      - type: bind
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-files/nginx/.htpasswd}
+        target: '/etc/nginx/.htpasswd'
