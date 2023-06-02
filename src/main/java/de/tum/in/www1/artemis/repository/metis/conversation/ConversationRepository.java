@@ -56,4 +56,12 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     List<Conversation> findAllUnreadConversationsWhereUserIsParticipant(@Param("userId") Long userId);
 
+    @Query("""
+             SELECT COUNT(c.id) > 0
+             FROM Conversation c
+                 LEFT JOIN c.conversationParticipants cp
+                 LEFT JOIN cp.user user
+             WHERE user.id = :userId AND cp.unreadMessagesCount > 0 AND c.course.id = :courseId
+            """)
+    boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }
