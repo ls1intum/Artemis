@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.fileupload;
+package de.tum.in.www1.artemis.exercise.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -78,7 +78,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitFileUploadAssessment_asInstructor() throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -112,7 +112,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
@@ -136,7 +136,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
@@ -158,7 +158,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
@@ -180,7 +180,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         submission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
@@ -206,7 +206,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmitFileUploadAssessment_withResultOver100Percent() throws Exception {
         afterReleaseFileUploadExercise = (FileUploadExercise) database.addMaxScoreAndBonusPointsToExercise(afterReleaseFileUploadExercise);
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -230,7 +230,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testUpdateFileUploadAssessmentAfterComplaint_studentHidden() throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
         Result fileUploadAssessment = fileUploadSubmission.getLatestResult();
@@ -257,7 +257,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSaveFileUploadAssessment_studentHidden() throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class, HttpStatus.OK);
@@ -270,7 +270,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmitFileUploadAssessment_studentHidden() throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(afterReleaseFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -387,7 +387,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, student, originalAssessor);
         fileUploadSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
         resultRepo.save(fileUploadSubmission.getLatestResult());
@@ -398,7 +398,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         submission = database.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         database.addSampleFeedbackToResults(submission.getLatestResult());
         request.put(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/cancel-assessment", null, expectedStatus);
@@ -432,7 +432,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOwnAssessmentAsStudent() throws Exception {
         FileUploadExercise assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
         Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
@@ -443,7 +443,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getAssessmentOfOtherStudentAsStudent() throws Exception {
         FileUploadExercise assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
         request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
@@ -464,12 +464,12 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
-        FileUploadExercise exercise = ModelFactory.generateFileUploadExerciseForExam("test.pdf", exerciseGroup1);
+        FileUploadExercise exercise = FileUploadTestFactory.generateFileUploadExerciseForExam("test.pdf", exerciseGroup1);
         exercise = fileUploadExerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add student submission
-        var submission = ModelFactory.generateFileUploadSubmission(true);
+        var submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         submission = database.addFileUploadSubmission(exercise, submission, TEST_PREFIX + "student1");
 
         // verify setup

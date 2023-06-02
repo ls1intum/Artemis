@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -85,7 +86,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     private FileUploadExercise createFileuploadExerciseWithSGI(Course course) {
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
         fileUploadExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.fileupload;
+package de.tum.in.www1.artemis.exercise.fileupload;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -52,7 +52,7 @@ public class FileUploadService {
     public FileUploadExercise createFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, String filePattern) {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(releaseDate, dueDate, dueDate.plusHours(1), filePattern, course);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(releaseDate, dueDate, dueDate.plusHours(1), filePattern, course);
         course.setExercises(Set.of(fileUploadExercise));
         courseRepo.save(course);
 

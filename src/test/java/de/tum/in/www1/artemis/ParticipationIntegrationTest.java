@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -789,7 +790,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
-        var submission = database.addFileUploadSubmission(exercise, ModelFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
+        var submission = database.addFileUploadSubmission(exercise, FileUploadTestFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
         submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());

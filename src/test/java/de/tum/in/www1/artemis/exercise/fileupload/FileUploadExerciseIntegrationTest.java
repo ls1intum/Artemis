@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.fileupload;
+package de.tum.in.www1.artemis.exercise.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -163,7 +162,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExerciseForExam() throws Exception {  // TODO
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
@@ -188,7 +187,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
         request.postWithResponseBody("/api/file-upload-exercises", invalidDates.applyTo(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -197,7 +196,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
         fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
 
         request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
@@ -415,9 +414,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
         {
-            final FileUploadSubmission submission1 = ModelFactory.generateFileUploadSubmission(true);
+            final FileUploadSubmission submission1 = FileUploadTestFactory.generateFileUploadSubmission(true);
             database.addFileUploadSubmission(fileUploadExercise, submission1, TEST_PREFIX + "student1");
-            final FileUploadSubmission submission2 = ModelFactory.generateFileUploadSubmission(true);
+            final FileUploadSubmission submission2 = FileUploadTestFactory.generateFileUploadSubmission(true);
             database.addFileUploadSubmission(fileUploadExercise, submission2, TEST_PREFIX + "student2");
 
             final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(fileUploadExercise.getId()));

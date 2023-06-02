@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -633,7 +634,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmittedComplaintsForFileUploadExercise() throws Exception {
         var fileUploadExercise = database.getFirstExerciseWithType(course, FileUploadExercise.class);
-        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        var fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
 
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         courseRepository.save(course);

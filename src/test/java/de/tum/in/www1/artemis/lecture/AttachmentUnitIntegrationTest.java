@@ -34,9 +34,9 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -68,7 +68,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @BeforeEach
     void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.attachment = ModelFactory.generateAttachment(null);
+        this.attachment = FileUploadTestFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);

@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
@@ -85,11 +86,11 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
-                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"),
+                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"),
                         TEST_PREFIX + "student1");
-                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"),
+                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"),
                         TEST_PREFIX + "student2");
-                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"),
+                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"),
                         TEST_PREFIX + "student3");
 
                 try {
