@@ -36,7 +36,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -47,8 +50,10 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -69,9 +74,6 @@ public class CourseResource {
     private static final String ENTITY_NAME = "course";
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
-
-    @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
 
     private final UserRepository userRepository;
 
@@ -103,11 +105,21 @@ public class CourseResource {
 
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
+    private final GradingScaleService gradingScaleService;
+
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
+
+    private final ChannelService channelService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
+            GradingScaleService gradingScaleService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -123,6 +135,9 @@ public class CourseResource {
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
+        this.gradingScaleService = gradingScaleService;
+        this.courseScoreCalculationService = courseScoreCalculationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -139,7 +154,7 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(courseUpdate.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(courseUpdate.getId());
 
         if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -180,15 +195,23 @@ public class CourseResource {
             }
         }
 
+        if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() > 0) {
+            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
+            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
+                throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
+                        "gradedPresentationAlreadySet", true);
+            }
+        }
+
         // Make sure to preserve associations in updated entity
         courseUpdate.setId(courseId);
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
 
-        courseUpdate.validateRegistrationConfirmationMessage();
+        courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
-        courseUpdate.validateOnlineCourseAndRegistrationEnabled();
+        courseUpdate.validateOnlineCourseAndEnrollmentEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         if (!courseUpdate.isValidStartAndEndDate()) {
@@ -265,20 +288,20 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
+     * POST /courses/{courseId}/enroll : Enroll in an existing course. This method enrolls the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
      * database.
      *
      * @param courseId to find the course
-     * @return response entity for user who has been registered to the course
+     * @return response entity for user who has been enrolled in the course
      */
-    @PostMapping("courses/{courseId}/register")
+    @PostMapping("courses/{courseId}/enroll")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<User> enrollInCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
-        courseService.registerUserForCourseOrThrow(user, course);
+        log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
+        courseService.enrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -302,6 +325,26 @@ public class CourseResource {
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
         return userCourses.toList();
+    }
+
+    /**
+     * GET /courses/groups : get all groups for all courses for administration purposes.
+     *
+     * @return the list of groups (the user has access to)
+     */
+    @GetMapping("courses/groups")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
+        log.debug("REST request to get all Groups for all Courses");
+        List<Course> courses = courseRepository.findAll();
+        Set<String> groups = new LinkedHashSet<>();
+        for (Course course : courses) {
+            groups.add(course.getInstructorGroupName());
+            groups.add(course.getEditorGroupName());
+            groups.add(course.getTeachingAssistantGroupName());
+            groups.add(course.getStudentGroupName());
+        }
+        return ResponseEntity.ok().body(groups);
     }
 
     /**
@@ -355,96 +398,109 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/{courseId}/for-registration : get a course by id if the course allows registration and is currently active.
+     * GET /courses/{courseId}/for-enrollment : get a course by id if the course allows enrollment and is currently active.
      *
      * @param courseId the id of the course to retrieve
      * @return the active course
      */
-    @GetMapping("courses/{courseId}/for-registration")
+    @GetMapping("courses/{courseId}/for-enrollment")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
-        log.debug("REST request to get a currently active course for registration");
+    public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
+        log.debug("REST request to get a currently active course for enrollment");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+        authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
     }
 
     /**
-     * GET /courses/for-registration : get all courses that the current user can register to.
-     * Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-enrollment : get all courses that the current user can enroll in.
+     * Decided by the start and end date and if the enrollmentEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
-    @GetMapping("courses/for-registration")
+    @GetMapping("courses/for-enrollment")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForRegistration() {
+    public List<Course> getAllCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
-        Set<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
-        // check whether registration is actually possible for each of the courses
-        return allCoursesToPotentiallyRegister.stream().filter(course -> {
-            boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
-            return authCheckService.isUserAllowedToSelfRegisterForCourse(user, course) && !isAlreadyInCourse;
+        Set<Course> allEnrolledCourses = courseService.findAllActiveForUser(user);
+        List<Course> allCoursesToPotentiallyEnroll = courseRepository.findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites();
+        // check whether enrollment is actually possible for each of the courses
+        return allCoursesToPotentiallyEnroll.stream().filter(course -> {
+            boolean isAlreadyInCourse = allEnrolledCourses.contains(course);
+            return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
         }).toList();
     }
 
     /**
      * GET /courses/{courseId}/for-dashboard
      *
-     * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
      * @param refresh  if true, this request was initiated by the user clicking on a refresh button
-     * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user
+     * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
+     *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Course> getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
+    public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user, refresh);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            // user might be allowed to register for the course
-            // We need the course with organizations so that we can check if the user is allowed to register
+            // user might be allowed to enroll in the course
+            // We need the course with organizations so that we can check if the user is allowed to enroll
             course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
-                // suppress error alert with skipAlert: true so that the client can redirect to the registration page
-                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
-                        "noAccessButCouldRegister", true);
+            if (authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)) {
+                // suppress error alert with skipAlert: true so that the client can redirect to the enrollment page
+                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
+                        "noAccessButCouldEnroll", true);
             }
             else {
-                // user is not even allowed to self-register
+                // user is not even allowed to self-enroll
                 // just normally throw the access forbidden exception
                 throw new AccessForbiddenException(ENTITY_NAME, courseId);
             }
         }
 
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
+        courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
         logDuration(List.of(course), user, timeNanoStart);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(courseForDashboardDTO);
     }
 
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user
+     * @return a DTO containing a list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, the
+     *         DTO contains the total scores for the course, the scores per exercise
+     *         type for each exercise, and the participation result for each participation.
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForDashboard() {
+    public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results", user.getLogin());
+        log.debug(
+                "REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results + the calculated scores the user achieved in each of those courses",
+                user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        for (Course course : courses) {
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+            coursesForDashboard.add(courseForDashboardDTO);
+        }
         logDuration(courses, user, timeNanoStart);
-        return courses;
+        return coursesForDashboard;
     }
 
     private void logDuration(List<Course> courses, User user, long timeNanoStart) {
@@ -978,6 +1034,7 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
+            channelService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {

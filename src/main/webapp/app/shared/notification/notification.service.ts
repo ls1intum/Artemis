@@ -1,16 +1,24 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
 import { Observable, ReplaySubject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Params, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
+    CONVERSATION_ADD_USER_CHANNEL_TITLE,
+    CONVERSATION_ADD_USER_GROUP_CHAT_TITLE,
+    CONVERSATION_CREATE_GROUP_CHAT_TITLE,
+    CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
+    CONVERSATION_REMOVE_USER_CHANNEL_TITLE,
+    CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
@@ -30,10 +38,11 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    public resourceUrl = SERVER_API_URL + 'api/notifications';
+    public resourceUrl = 'api/notifications';
     subscribedTopics: string[] = [];
     notificationObserver: ReplaySubject<Notification>;
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
@@ -43,9 +52,11 @@ export class NotificationService {
         private router: Router,
         private http: HttpClient,
         private accountService: AccountService,
+        private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private serializer: UrlSerializer,
         private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
+        private courseConversationsNotificationsService: CourseConversationsNotificationsService,
     ) {
         this.initNotificationObserver();
     }
@@ -70,6 +81,7 @@ export class NotificationService {
         if (notification.target) {
             const target = JSON.parse(notification.target);
             const targetCourseId = target.course || notification.course?.id;
+            const targetConversationId = target.conversation;
 
             if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.router.navigate([target.mainPage, targetCourseId, 'quiz-exercises', target.id, 'live']);
@@ -103,8 +115,19 @@ export class NotificationService {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (
+                notification.title === CONVERSATION_CREATE_GROUP_CHAT_TITLE ||
+                notification.title === CONVERSATION_ADD_USER_CHANNEL_TITLE ||
+                notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE ||
+                notification.title === CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE ||
+                notification.title === CONVERSATION_REMOVE_USER_CHANNEL_TITLE
+            ) {
+                const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+                const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {
-                this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
+                const routeComponents: RouteComponents = [target.mainPage, targetCourseId, target.entity, target.id];
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
             }
         }
     }
@@ -116,23 +139,29 @@ export class NotificationService {
      * @param {Params} queryParams
      */
     navigateToNotificationTarget(targetCourseId: number, routeComponents: RouteComponents, queryParams: Params): void {
-        const currentCourseId = NotificationService.getCurrentCourseId();
-        // determine if reload is required when notification is clicked
-        // by comparing the id of the course the user is currently in and the course the post associated with the notification belongs to
-        if (currentCourseId === undefined || currentCourseId !== targetCourseId) {
-            const tree = this.router.createUrlTree(routeComponents, { queryParams });
-            // navigate by string url to force reload when switching the course context
-            window.location.href = this.serializer.serialize(tree);
+        const currentCourseId = this.getCurrentCourseId();
+        // determine if component recreation is required when notification is clicked
+        // by comparing the id of the course the user is currently in, the course the post associated with the notification belongs to and if the user is already in the messages tab
+        if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId.toString())) {
+            this.forceComponentReload(routeComponents, queryParams);
         } else {
-            // navigate with router when staying in same course context when clicking on notification
             this.router.navigate(routeComponents, { queryParams });
         }
     }
 
-    private static getCurrentCourseId(): number | undefined {
-        // read course id from url
-        const matchCourseIdInURL = window.location.pathname.match(/.*\/courses\/(\d+)\/.*/);
-        return matchCourseIdInURL ? +matchCourseIdInURL[1] : undefined;
+    private getCurrentCourseId(): number | undefined {
+        return this.activatedRoute.snapshot.firstChild?.params['courseId'];
+    }
+
+    /**
+     * Force component reload. This is used when the user clicks on a notification and the component needs to be recreated.
+     * @param routeComponents
+     * @param queryParams
+     */
+    forceComponentReload(routeComponents: RouteComponents, queryParams: Params): void {
+        this.router.navigate(['/courses'], { skipLocationChange: true }).then(() => {
+            this.router.navigate(routeComponents, { queryParams });
+        });
     }
 
     /**
@@ -162,6 +191,11 @@ export class NotificationService {
                 this.subscribeToTutorialGroupNotificationUpdates(tutorialGroups);
             }
         });
+        this.courseConversationsNotificationsService.getConversationsForNotifications().subscribe((conversations) => {
+            if (conversations) {
+                this.subscribeToConversationNotificationUpdates(conversations);
+            }
+        });
         return this.notificationObserver;
     }
 
@@ -173,8 +207,64 @@ export class NotificationService {
                     this.subscribedTopics.push(userTopic);
                     this.jhiWebsocketService.subscribe(userTopic);
                     this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                        this.addNotificationToObserver(notification);
+                        // Do not add notification to observer if it is a one-to-one conversation creation notification
+                        // and if the author is the current user
+                        if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
+                            this.addNotificationToObserver(notification);
+                        }
+                        if (notification.target) {
+                            const target = JSON.parse(notification.target);
+                            const message = target.message;
+
+                            // subscribe to newly created conversation topic
+                            if (message === 'conversation-creation') {
+                                const conversationId = target.conversation;
+                                const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
+                                this.subscribeToNewlyCreatedConversation(conversationTopic);
+                            }
+
+                            // unsubscribe from deleted conversation topic
+                            if (message === 'conversation-deletion') {
+                                const conversationId = target.conversation;
+                                const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
+                                this.unsubscribeFromDeletedConversation(conversationTopic);
+                            }
+                        }
                     });
+                }
+            }
+        });
+    }
+
+    /**
+     * Check if user is under messages tab.
+     * @returns {boolean} true if user is under messages tab, false otherwise
+     */
+    private isUnderMessagesTabOfSpecificCourse(targetCourseId: string): boolean {
+        return this.router.url.includes(`courses/${targetCourseId}/messages`);
+    }
+
+    /**
+     * Unsubscribe from deleted conversation topic (e.g. when user deletes a conversation or when user is removed from conversation)
+     */
+    private unsubscribeFromDeletedConversation(conversationTopic: string): void {
+        this.jhiWebsocketService.unsubscribe(conversationTopic);
+        this.subscribedTopics = this.subscribedTopics.filter((topic) => topic !== conversationTopic);
+    }
+
+    /**
+     * Subscribe to newly created conversation topic (e.g. when user is added to a new conversation)
+     */
+    private subscribeToNewlyCreatedConversation(conversationTopic: string): void {
+        this.subscribedTopics.push(conversationTopic);
+        this.jhiWebsocketService.subscribe(conversationTopic);
+        this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
+            if (notification.target) {
+                const target = JSON.parse(notification.target);
+                const targetCourseId = target.course;
+                // Do not add if under messages tab of specific course
+                if (!this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                    this.addNotificationToObserver(notification);
                 }
             }
         });
@@ -208,6 +298,26 @@ export class NotificationService {
                 this.jhiWebsocketService.subscribe(tutorialGroupTopic);
                 this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
                     this.addNotificationToObserver(notification);
+                });
+            }
+        });
+    }
+
+    private subscribeToConversationNotificationUpdates(conversations: Conversation[]): void {
+        conversations.forEach((conversation) => {
+            const conversationTopic = '/topic/conversation/' + conversation.id + '/notifications';
+            if (!this.subscribedTopics.includes(conversationTopic)) {
+                this.subscribedTopics.push(conversationTopic);
+                this.jhiWebsocketService.subscribe(conversationTopic);
+                this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
+                    if (notification.target) {
+                        const target = JSON.parse(notification.target);
+                        const targetCourseId = target.course;
+                        // Only add notification if it is not from the current user and the user is not already in the messages tab
+                        if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                            this.addNotificationToObserver(notification);
+                        }
+                    }
                 });
             }
         });

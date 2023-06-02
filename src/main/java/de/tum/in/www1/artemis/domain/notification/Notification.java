@@ -6,7 +6,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +27,11 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "N")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
-        @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
+        @JsonSubTypes.Type(value = SystemNotification.class, name = "system"), @JsonSubTypes.Type(value = ConversationNotification.class, name = "conversation") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification extends DomainObject {
 

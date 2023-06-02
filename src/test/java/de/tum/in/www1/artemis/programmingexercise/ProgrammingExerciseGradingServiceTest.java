@@ -59,6 +59,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -225,7 +228,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         var duplicateFeedbackEntries = result.getFeedbacks().stream()
                 .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).toList();
-        assertThat(result.getScore()).isEqualTo(0D);
+        assertThat(result.getScore()).isZero();
         assertThat(duplicateFeedbackEntries).hasSize(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
@@ -382,12 +385,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result5.getFeedbacks()).hasSize(3);
 
         // Assertions result6 - only negative feedback
-        assertThat(result6.getScore()).isEqualTo(0D);
+        assertThat(result6.getScore()).isZero();
         assertThat(result6.isSuccessful()).isFalse();
         assertThat(result6.getFeedbacks()).hasSize(3);
 
         // Assertions resultBF - build failure
-        assertThat(resultBF.getScore()).isEqualTo(0D);
+        assertThat(resultBF.getScore()).isZero();
         assertThat(resultBF.isSuccessful()).isNull(); // Won't get touched by the service method
         assertThat(resultBF.getFeedbacks()).isEmpty();
 

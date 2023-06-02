@@ -43,6 +43,11 @@ public class SingleUserNotification extends Notification {
         this.setPlaceholderValues(placeholderValues);
     }
 
+    public SingleUserNotification transientAndStringTarget(NotificationTarget transientAndStringTarget) {
+        this.setTransientAndStringTarget(transientAndStringTarget);
+        return this;
+    }
+
     @Override
     public String toString() {
         return "SingleUserNotification{" + "id=" + getId() + "}";

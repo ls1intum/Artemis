@@ -17,18 +17,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExportToCsv } from 'export-to-csv';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 const generateCsv = jest.fn();
-
-jest.mock('export-to-csv', () => ({
-    ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
-    })),
-}));
+jest.mock('export-to-csv', () => {
+    class MockExportToCsv {
+        generateCsv = generateCsv;
+    }
+    return { ExportToCsv: MockExportToCsv };
+});
 
 describe('Detailed Grading System Component', () => {
     let comp: DetailedGradingSystemComponent;
@@ -401,6 +401,7 @@ describe('Detailed Grading System Component', () => {
 
     it('should validate valid grading scale correctly', () => {
         expect(comp.validGradeSteps()).toBeTrue();
+        expect(comp.validPresentationsConfig()).toBeTrue();
         expect(comp.invalidGradeStepsMessage).toBeUndefined();
     });
 
@@ -560,6 +561,22 @@ describe('Detailed Grading System Component', () => {
         expect(comp.invalidGradeStepsMessage).toBe('invalid first grade step');
         expect(translateStub).toHaveBeenCalledWith('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
         expect(translateStub).toHaveBeenCalledOnce();
+    });
+
+    it('should validate grading scale with basic presentations and invalid presentationScore', () => {
+        validateInvalidPresentationsConfig(PresentationType.BASIC, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0);
+    });
+
+    it('should validate grading scale with graded presentations and invalid presentationsWeight', () => {
+        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidPresentationsWeight', 0, 2, 128);
+    });
+
+    it('should validate grading scale with graded presentations and invalid presentationsNumber', () => {
+        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0, 0, 20);
+    });
+
+    it('should validate grading scale with graded presentations and invalid presentationScore', () => {
+        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled', 2, 2, 20);
     });
 
     it('should detect that max points are valid', () => {
@@ -764,9 +781,66 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(ExportToCsv).toHaveBeenCalledTimes(2);
-        expect(generateCsv).toHaveBeenCalledTimes(2);
+        expect(generateCsv).toHaveBeenCalledOnce();
     });
+
+    it('should not show grading steps above max points warning', () => {
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeFalse();
+    });
+
+    it('should show grading steps above max points warning for inclusive bound', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Step',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 101,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+        comp.gradingScale.gradeSteps.push(gradeStep);
+
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeTrue();
+    });
+
+    it('should show grading steps above max points warning for exclusive bound', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Step',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: true,
+        };
+        comp.gradingScale.gradeSteps.push(gradeStep);
+
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeTrue();
+    });
+
+    // validating presentations config
+    function validateInvalidPresentationsConfig(
+        presentationType: PresentationType,
+        message: string,
+        presentationScore?: number,
+        presentationsNumber?: number,
+        presentationsWeight?: number,
+    ) {
+        comp.course = course;
+        comp.course.presentationScore = presentationScore;
+        comp.presentationsConfig = {
+            presentationType: presentationType,
+            presentationsNumber: presentationsNumber,
+            presentationsWeight: presentationsWeight,
+        };
+        translateStub.mockReturnValue('invalid presentations config');
+
+        expect(comp.validPresentationsConfig()).toBeFalse();
+        expect(comp.invalidGradeStepsMessage).toBe('invalid presentations config');
+        expect(translateStub).toHaveBeenCalledWith(message);
+        expect(translateStub).toHaveBeenCalledOnce();
+    }
 });
 
 // validating grade step rows

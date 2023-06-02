@@ -389,7 +389,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
-        textSubmission.getResults().forEach(r -> r.setSubmission(null));
+        textSubmission.getResults().forEach(res -> res.setSubmission(null));
 
         // set result again as it was changed
         if (resultId != null) {
@@ -585,7 +585,6 @@ public class TextAssessmentResource extends AssessmentResource {
             final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
                 tb.setSubmission(textSubmission);
                 tb.setFeedback(feedbackMap.get(tb.getId()));
-                tb.setKnowledge(exercise.getKnowledge());
             }).collect(toSet());
             // Update the feedback_id for existing text blocks
             if (!existingTextBlockIds.isEmpty()) {

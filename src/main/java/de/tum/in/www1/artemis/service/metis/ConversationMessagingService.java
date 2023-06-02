@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -38,6 +40,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class ConversationMessagingService extends PostingService {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final ConversationService conversationService;
 
@@ -85,15 +89,14 @@ public class ConversationMessagingService extends PostingService {
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation = conversationService.updateConversation(conversation);
+
         // update last read date and unread message count of author
-        var authorParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(), author.getId());
-        authorParticipant.setLastRead(ZonedDateTime.now());
-        authorParticipant.setUnreadMessagesCount(0L);
-        conversationParticipantRepository.save(authorParticipant);
+        // invoke async due to db write access to avoid that the client has to wait
+        conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course);
-
+        createdMessage.setConversation(conversation);
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
@@ -117,24 +120,26 @@ public class ConversationMessagingService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
-        Page<Post> conversationPosts;
-        if (postContextFilter.getConversationId() != null) {
-            var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-            var conversation = conversationService.mayInteractWithConversationElseThrow(postContextFilter.getConversationId(), requestingUser);
-            conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
-            // protect sample solution, grading instructions, etc.
-            conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-            setAuthorRoleOfPostings(conversationPosts.getContent());
 
-            var participantOfRequestingUser = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
-                    requestingUser.getId());
-            participantOfRequestingUser.setLastRead(ZonedDateTime.now());
-            participantOfRequestingUser.setUnreadMessagesCount(0L);
-            conversationParticipantRepository.save(participantOfRequestingUser);
+        if (postContextFilter.getConversationId() == null) {
+            throw new BadRequestAlertException("Messages must be associated with a conversion", METIS_POST_ENTITY_NAME, "conversationMissing");
         }
-        else {
-            throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+
+        var requestingUser = userRepository.getUser();
+        if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
+
+        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
+
+        // protect sample solution, grading instructions, etc.
+        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+        setAuthorRoleOfPostings(conversationPosts.getContent());
+
+        // invoke async due to db write access to avoid that the client has to wait
+        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
+
         return conversationPosts;
     }
 
@@ -226,7 +231,7 @@ public class ConversationMessagingService extends PostingService {
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
     }
 }

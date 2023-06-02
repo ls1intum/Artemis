@@ -23,6 +23,8 @@ public interface MockDelegate {
     void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception;
 
+    void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception;
+
     void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception;
 

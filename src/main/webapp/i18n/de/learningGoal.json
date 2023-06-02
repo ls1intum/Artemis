@@ -40,7 +40,19 @@
             },
             "manageLearningGoals": {
                 "title": "Kompetenzmanagement",
+                "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen"
+            },
+            "importCompetency": {
+                "title": "Kompetenz importieren",
+                "search": "Suche nach einer Kompetenz:",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "course": "Kurs",
+                    "semester": "Semester",
+                    "doSelect": "Auswählen"
+                }
             },
             "createLearningGoal": {
                 "title": "Erstelle eine neue Kompetenz",
@@ -125,7 +137,10 @@
                 "assumes": "Setzt voraus",
                 "extends": "Erweitert",
                 "matches": "Stimmt überein mit",
-                "createRelation": "Beziehung erstellen"
+                "createRelation": "Beziehung erstellen",
+                "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
+                "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
+                "relationAlreadyExists": "Diese Beziehung existiert bereits."
             }
         }
     }

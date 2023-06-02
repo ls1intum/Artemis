@@ -6,10 +6,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Subscription, forkJoin } from 'rxjs';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -34,8 +33,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
-        private courseCalculationService: CourseScoreCalculationService,
-        private courseManagementService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
     ) {}
 
@@ -44,14 +42,14 @@ export class CourseLearningGoalsComponent implements OnInit {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.setCourse(this.courseCalculationService.getCourse(this.courseId));
-        this.courseUpdateSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
+        this.setCourse(this.courseStorageService.getCourse(this.courseId));
+        this.courseUpdateSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
     }
 
     private setCourse(course?: Course) {
         this.course = course;
-        if (this.course && this.course.learningGoals && this.course.prerequisites) {
-            this.learningGoals = this.course.learningGoals;
+        if (this.course && this.course.competencies && this.course.prerequisites) {
+            this.learningGoals = this.course.competencies;
             this.prerequisites = this.course.prerequisites;
         } else {
             this.loadData();
@@ -76,7 +74,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     }
 
     /**
-     * Loads all prerequisites and learning goals for the course
+     * Loads all prerequisites and competencies for the course
      */
     loadData() {
         this.isLoading = true;
@@ -91,9 +89,9 @@ export class CourseLearningGoalsComponent implements OnInit {
     }
 
     /**
-     * Calculates a unique identity for each learning goal card shown in the component
+     * Calculates a unique identity for each competency card shown in the component
      * @param index The index in the list
-     * @param learningGoal The learning goal of the current iteration
+     * @param learningGoal The competency of the current iteration
      */
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;

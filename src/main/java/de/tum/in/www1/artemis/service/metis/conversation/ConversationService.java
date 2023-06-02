@@ -86,7 +86,7 @@ public class ConversationService {
      * @return true if the user is a member of the conversation, false otherwise
      */
     public boolean isMember(Long conversationId, Long userId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
+        return conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId);
     }
 
     /**
@@ -106,6 +106,17 @@ public class ConversationService {
         conversations.addAll(channelsOfUser);
         conversations.addAll(groupChatsOfUser);
         return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
+    }
+
+    /**
+     * Determines if the user has unread messages in that course
+     *
+     * @param courseId       the id of the course
+     * @param requestingUser the user for which the conversations should be checked
+     * @return true if the user has unread messages in that course, false otherwise
+     */
+    public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
     }
 
     /**
@@ -378,4 +389,17 @@ public class ConversationService {
         return users;
     }
 
+    /**
+     * Find all conversations for which the given user should be able to receive notifications.
+     *
+     * @param user                    The user for which to find the courses.
+     * @param unreadConversationsOnly Whether to only return conversations that have unread messages.
+     * @return A list of conversations for which the user should receive notifications.
+     */
+    public List<Conversation> findAllConversationsForNotifications(User user, boolean unreadConversationsOnly) {
+        if (unreadConversationsOnly) {
+            return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
+        }
+        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+    }
 }

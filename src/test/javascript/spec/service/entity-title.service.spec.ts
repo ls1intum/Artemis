@@ -3,7 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular-ivy';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;
@@ -50,7 +50,7 @@ describe('EntityTitleService', () => {
             tick(2500);
             expect(result).toBe('Test Entity');
             expect(httpSpy).toHaveBeenCalledOnce();
-            expect(httpSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/${url}/title`, { observe: 'response', responseType: 'text' });
+            expect(httpSpy).toHaveBeenCalledWith(`api/${url}/title`, { observe: 'response', responseType: 'text' });
         }),
     );
 

@@ -179,7 +179,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         for (var feedback : staticCodeAnalysisFeedback2) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(FeedbackRepository.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
+            assertThat(issueJSON.get("filePath")).isEqualTo("notAvailable");
         }
     }
 
@@ -286,7 +286,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(results).hasSize(numberOfStudents / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
-        assertThat(resultWithPoints2).containsExactlyElementsOf(results);
+        assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
@@ -517,44 +517,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(true);
-        submissionRepository.save(modelingSubmission);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult_wrongExerciseId() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(true);
-        submissionRepository.save(modelingSubmission);
-        long randomId = 1874;
-        request.postWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult_notExampleSubmission() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(false);
-        submissionRepository.save(modelingSubmission);
-
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

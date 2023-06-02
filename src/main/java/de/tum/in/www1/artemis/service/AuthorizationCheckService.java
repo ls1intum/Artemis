@@ -35,12 +35,20 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
+    @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+    private Pattern allowedCourseRegistrationUsernamePattern;
+
+    @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
+    private Pattern allowedCourseEnrollmentUsernamePattern;
 
     public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+
+        if (allowedCourseEnrollmentUsernamePattern == null) {
+            allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
+        }
     }
 
     /**
@@ -190,72 +198,72 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * An enum that represents the different reasons why a user is not allowed to self register for a course,
-     * or ALLOWED if the user is allowed to self register for the course.
+     * An enum that represents the different reasons why a user is not allowed to self enroll in a course,
+     * or ALLOWED if the user is allowed to self enroll in the course.
      */
-    private enum RegistrationAuthorization {
-        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, REGISTRATION_STATUS, ONLINE, ORGANIZATIONS
+    private enum EnrollmentAuthorization {
+        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, ENROLLMENT_STATUS, ONLINE, ORGANIZATIONS
     }
 
     /**
-     * Checks if the user is allowed to self register for the given course.
-     * Returns `RegistrationAuthorization.ALLOWED` if the user is allowed to self register for the course,
-     * or the reason why the user is not allowed to self register for the course otherwise.
-     * See also: {@link #checkUserAllowedToSelfRegisterForCourseElseThrow(User, Course)}
+     * Checks if the user is allowed to self enroll in the given course.
+     * Returns `EnrollmentAuthorization.ALLOWED` if the user is allowed to self enroll in the course,
+     * or the reason why the user is not allowed to self enroll in the course otherwise.
+     * See also: {@link #checkUserAllowedToSelfEnrollInCourseElseThrow(User, Course)}
      *
-     * @param user   The user that wants to self register
-     * @param course The course to which the user wants to self register
-     * @return `RegistrationAuthorization.ALLOWED` if the user is allowed to self register for the course,
-     *         or the reason why the user is not allowed to self register for the course otherwise
+     * @param user   The user that wants to self enroll
+     * @param course The course to which the user wants to self enroll
+     * @return `EnrollmentAuthorization.ALLOWED` if the user is allowed to self enroll in the course,
+     *         or the reason why the user is not allowed to self enroll in the course otherwise
      */
-    public RegistrationAuthorization getUserRegistrationAuthorizationForCourse(User user, Course course) {
-        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
-            return RegistrationAuthorization.USERNAME_PATTERN;
+    public EnrollmentAuthorization getUserEnrollmentAuthorizationForCourse(User user, Course course) {
+        if (allowedCourseEnrollmentUsernamePattern != null && !allowedCourseEnrollmentUsernamePattern.matcher(user.getLogin()).matches()) {
+            return EnrollmentAuthorization.USERNAME_PATTERN;
         }
         if (!course.isActive()) {
-            return RegistrationAuthorization.COURSE_STATUS;
+            return EnrollmentAuthorization.COURSE_STATUS;
         }
-        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
-            return RegistrationAuthorization.REGISTRATION_STATUS;
+        if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
+            return EnrollmentAuthorization.ENROLLMENT_STATUS;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
         if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
-            return RegistrationAuthorization.ORGANIZATIONS;
+            return EnrollmentAuthorization.ORGANIZATIONS;
         }
         if (course.isOnlineCourse()) {
-            return RegistrationAuthorization.ONLINE;
+            return EnrollmentAuthorization.ONLINE;
         }
-        return RegistrationAuthorization.ALLOWED;
+        return EnrollmentAuthorization.ALLOWED;
     }
 
     /**
-     * Checks if the user is allowed to self register for the given course.
-     * See also: {@link #checkUserAllowedToSelfRegisterForCourseElseThrow(User, Course)}
+     * Checks if the user is allowed to self enroll in the given course.
+     * See also: {@link #checkUserAllowedToSelfEnrollInCourseElseThrow(User, Course)}
      *
-     * @param user   The user that wants to self register
-     * @param course The course to which the user wants to self register
-     * @return boolean, true if the user is allowed to self register for the course, false otherwise
+     * @param user   The user that wants to self enroll
+     * @param course The course to which the user wants to self enroll
+     * @return boolean, true if the user is allowed to self enroll in the course, false otherwise
      */
-    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
-        return RegistrationAuthorization.ALLOWED.equals(getUserRegistrationAuthorizationForCourse(user, course));
+    public boolean isUserAllowedToSelfEnrollInCourse(User user, Course course) {
+        return EnrollmentAuthorization.ALLOWED.equals(getUserEnrollmentAuthorizationForCourse(user, course));
     }
 
     /**
-     * Checks if the user is allowed to self register for the given course.
-     * Throws an AccessForbiddenException if the user is not allowed to self register for the course.
-     * See also: {@link #getUserRegistrationAuthorizationForCourse(User, Course)}
+     * Checks if the user is allowed to self enroll in the given course.
+     * Throws an AccessForbiddenException if the user is not allowed to self enroll in the course.
+     * See also: {@link #getUserEnrollmentAuthorizationForCourse(User, Course)}
      *
-     * @param user   The user that wants to self register
-     * @param course The course to which the user wants to self register
+     * @param user   The user that wants to self enroll
+     * @param course The course to which the user wants to self enroll
      */
-    public void checkUserAllowedToSelfRegisterForCourseElseThrow(User user, Course course) throws AccessForbiddenException {
-        RegistrationAuthorization auth = getUserRegistrationAuthorizationForCourse(user, course);
+    public void checkUserAllowedToSelfEnrollInCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+        EnrollmentAuthorization auth = getUserEnrollmentAuthorizationForCourse(user, course);
         switch (auth) {
-            case USERNAME_PATTERN -> throw new AccessForbiddenException("Registration with this username is not allowed.");
+            case USERNAME_PATTERN -> throw new AccessForbiddenException("Enrollment with this username is not allowed.");
             case COURSE_STATUS -> throw new AccessForbiddenException("The course is not currently active.");
-            case REGISTRATION_STATUS -> throw new AccessForbiddenException("The course does not allow registration.");
+            case ENROLLMENT_STATUS -> throw new AccessForbiddenException("The course does not allow enrollment.");
             case ORGANIZATIONS -> throw new AccessForbiddenException("User is not member of any organization of this course.");
-            case ONLINE -> throw new AccessForbiddenException("Online courses cannot be registered for.");
+            case ONLINE -> throw new AccessForbiddenException("Online courses cannot be enrolled in.");
         }
     }
 

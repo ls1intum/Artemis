@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -663,11 +663,11 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         FileUploadExercise exercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
-        String title = "LoremIpsum" + UUID.randomUUID();
+        String title = TEST_PREFIX + "testGetAllExercisesOnPageAsEditorSuccess";
         exercise.setTitle(title);
         exercise = fileUploadExerciseRepository.save(exercise);
         final var searchTerm = database.configureSearch(exercise.getTitle());
-        SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        SearchResultPageDTO<Exercise> result = request.getSearchResult("/api/file-upload-exercises", HttpStatus.OK, Exercise.class, database.searchMapping(searchTerm));
         assertThat(result.getResultsOnPage()).hasSize(1);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
 
@@ -716,7 +716,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setExampleSolutionPublicationDate(null);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboard = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         FileUploadExercise fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         if (isStudent) {
@@ -730,7 +732,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         assertThat(fileUploadExerciseFromApi.getExampleSolution()).isEqualTo(fileUploadExercise.getExampleSolution());
@@ -739,7 +743,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        course = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         fileUploadExerciseFromApi = fileUploadExerciseGetter.apply(course);
 
         if (isStudent) {

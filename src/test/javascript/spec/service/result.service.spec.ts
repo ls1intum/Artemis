@@ -22,7 +22,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular-ivy';
 
 describe('ResultService', () => {
     let resultService: ResultService;

@@ -46,4 +46,8 @@ export class DetailedGradingSystemComponent extends BaseGradingSystemComponent {
             });
         });
     }
+
+    shouldShowGradingStepsAboveMaxPointsWarning(): boolean {
+        return this.isAnyGradingStepAboveMaxPoints(this.gradingScale.gradeSteps);
+    }
 }

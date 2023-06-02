@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "es2021",
+        "target": "es2022",
         "module": "es2020",
         "moduleResolution": "node",
         "esModuleInterop": true,
@@ -22,7 +22,7 @@
         "allowSyntheticDefaultImports":true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2021", "dom"],
+        "lib": ["es2022", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],
@@ -30,7 +30,8 @@
         "paths": {
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true
+        "importHelpers": true,
+        "ignoreDeprecations": "5.0"
     },
     "angularCompilerOptions": {
         "genDir": "build/resources/main/aot",
@@ -48,7 +49,6 @@
         "src/main/webapp/app"
     ],
     "exclude": [
-        "node_modules",
-        "webpack"
+        "node_modules"
     ]
 }

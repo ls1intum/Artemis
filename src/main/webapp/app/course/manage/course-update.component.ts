@@ -26,6 +26,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -75,6 +76,7 @@ export class CourseUpdateComponent implements OnInit {
     tutorialGroupsFeatureActivated = false;
 
     constructor(
+        private eventManager: EventManager,
         private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
@@ -189,8 +191,8 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                registrationEnabled: new FormControl(this.course.registrationEnabled),
-                registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
+                registrationEnabled: new FormControl(this.course.enrollmentEnabled),
+                registrationConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
@@ -274,6 +276,14 @@ export class CourseUpdateComponent implements OnInit {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
 
+        // TODO: this has to be removed once the refactoring from course 'registration' to 'enrollment' is complete
+        course['enrollmentEnabled'] = course['registrationEnabled'];
+        delete course['registrationEnabled'];
+        if (course['enrollmentEnabled'] == true) {
+            course['enrollmentConfirmationMessage'] = course['registrationConfirmationMessage'];
+            delete course['registrationConfirmationMessage'];
+        }
+
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
         } else {
@@ -305,6 +315,14 @@ export class CourseUpdateComponent implements OnInit {
      */
     private onSaveSuccess(updatedCourse: Course | null) {
         this.isSaving = false;
+
+        if (this.course != updatedCourse) {
+            this.eventManager.broadcast({
+                name: 'courseModification',
+                content: 'Changed a course',
+            });
+        }
+
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
     }
 
@@ -381,12 +399,12 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable student course registration
      */
     changeRegistrationEnabled() {
-        this.course.registrationEnabled = !this.course.registrationEnabled;
-        if (this.course.registrationEnabled) {
+        this.course.enrollmentEnabled = !this.course.enrollmentEnabled;
+        if (this.course.enrollmentEnabled) {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
         }
-        this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
+        this.courseForm.controls['registrationEnabled'].setValue(this.course.enrollmentEnabled);
     }
 
     /**

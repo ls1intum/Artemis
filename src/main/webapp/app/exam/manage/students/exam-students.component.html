@@ -110,7 +110,7 @@
                 <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template></ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <img [id]="value?.id" class="img-fluid" [src]="value?.studentImagePath ? SERVER_API_URL + value?.studentImagePath : missingImage" />
+                        <img [id]="value?.id" class="img-fluid" [src]="value?.studentImagePath ? value?.studentImagePath : missingImage" />
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200" [maxWidth]="200">
@@ -140,7 +140,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="email" [minWidth]="150" [width]="250" [maxWidth]="250">
+                <ngx-datatable-column prop="email" [minWidth]="200" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.email"> Email </span>
@@ -152,7 +152,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="250">
+                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"> Email </span>
@@ -164,55 +164,78 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="plannedRoom" [minWidth]="100" [width]="120" [maxWidth]="150">
+                <ngx-datatable-column prop="" [minWidth]="100" [width]="120" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('plannedRoom')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exam.examUsers.plannedRoom"> Planned Room </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('plannedRoom')"></fa-icon>
+                        <span class="datatable-header-cell-wrapper">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.room"> Room </span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <div *ngIf="value.actualRoom">
+                            <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ value.plannedRoom }}</del>
+                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ value.actualRoom }}</span>
+                        </div>
+                        <div *ngIf="value.plannedRoom && !value.actualRoom">
+                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ value.plannedRoom }}</span>
+                        </div>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="plannedSeat" [minWidth]="100" [width]="120" [maxWidth]="150">
+                <ngx-datatable-column prop="" [minWidth]="100" [width]="120" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('plannedSeat')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exam.examUsers.plannedSeat"> Planned Seat </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('plannedSeat')"></fa-icon>
+                        <span class="datatable-header-cell-wrapper">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.seat"> Seat </span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <div *ngIf="value.actualSeat">
+                            <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ value.plannedSeat }}</del>
+                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ value.actualSeat }}</span>
+                        </div>
+                        <div *ngIf="value.plannedSeat && !value.actualSeat">
+                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ value.plannedSeat }}</span>
+                        </div>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="actualRoom" [minWidth]="100" [width]="120" [maxWidth]="150">
+                <ngx-datatable-column *ngIf="hasExamEnded" prop="" [minWidth]="70" [width]="70" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('actualRoom')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exam.examUsers.actualRoom"> Actual Room </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('actualRoom')"></fa-icon>
+                        <span class="datatable-header-cell-wrapper" title="{{ 'artemisApp.exam.examUsers.attendanceStatusTitle' | artemisTranslate }}">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.attendanceStatus"> Status </span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <div
+                            *ngIf="
+                                value.didExamUserAttendExam &&
+                                hasExamEnded &&
+                                (!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath)
+                            "
+                            title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}"
+                        >
+                            <fa-icon [icon]="faTimes" style="color: red" class="fa-2x"></fa-icon>
+                        </div>
+                        <div
+                            *ngIf="
+                                value.didExamUserAttendExam &&
+                                value.didCheckLogin &&
+                                value.didCheckImage &&
+                                value.didCheckName &&
+                                value.didCheckRegistrationNumber &&
+                                value.signingImagePath &&
+                                hasExamEnded
+                            "
+                            title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}"
+                        >
+                            <fa-icon [icon]="faCheck" style="color: green" class="fa-2x"></fa-icon>
+                        </div>
+                        <div *ngIf="!value.didExamUserAttendExam" title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
+                            <fa-icon [icon]="faUserTimes" class="fa-2x"></fa-icon>
+                        </div>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="actualSeat" [minWidth]="100" [width]="120" [maxWidth]="150">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('actualSeat')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exam.examUsers.actualSeat"> Actual Seat </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('actualSeat')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column *ngIf="!isTestExam" prop="" [minWidth]="150" [width]="200">
+                <ngx-datatable-column *ngIf="!isTestExam" prop="" [minWidth]="120" [width]="150">
                     <ng-template ngx-datatable-header-template></ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-end">

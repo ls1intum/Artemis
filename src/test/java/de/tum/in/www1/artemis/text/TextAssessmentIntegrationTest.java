@@ -98,7 +98,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 5, 3, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 3, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -486,7 +486,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         for (int i = 0; i < submissionCount; i++) {
             StudentParticipation studentParticipation = participations.next();
             // connect it with a student (!= tutor assessing it)
-            User user = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
+            User user = database.getUserByLogin(TEST_PREFIX + "student" + (i % 2 + 1));
             studentParticipation.setInitializationDate(now());
             studentParticipation.setParticipant(user);
             studentParticipationRepository.save(studentParticipation);

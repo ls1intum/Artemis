@@ -8,9 +8,9 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ModelAssessmentKnowledge;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 
@@ -19,9 +19,15 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  */
 @Entity
 @DiscriminatorValue(value = "M")
+@JsonTypeName("modeling")
 @SecondaryTable(name = "model_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "modeling";
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "diagram_type")
@@ -32,11 +38,6 @@ public class ModelingExercise extends Exercise {
 
     @Column(name = "example_solution_explanation")
     private String exampleSolutionExplanation;
-
-    @ManyToOne
-    @JoinColumn(table = "model_exercise_details")
-    @JsonIgnore
-    private ModelAssessmentKnowledge knowledge;
 
     @Transient
     private ZonedDateTime clusterBuildDate;
@@ -72,14 +73,6 @@ public class ModelingExercise extends Exercise {
 
     public void setClusterBuildDate(ZonedDateTime examEndDate) {
         this.clusterBuildDate = examEndDate;
-    }
-
-    public ModelAssessmentKnowledge getKnowledge() {
-        return knowledge;
-    }
-
-    public void setKnowledge(ModelAssessmentKnowledge knowledge) {
-        this.knowledge = knowledge;
     }
 
     /**

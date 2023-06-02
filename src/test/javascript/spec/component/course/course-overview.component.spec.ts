@@ -1,13 +1,13 @@
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { EMPTY, Subject, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -16,7 +16,6 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -46,6 +45,8 @@ import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/h
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -78,6 +79,7 @@ const course1: Course = {
     description:
         'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
         'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+    courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
 };
 const course2: Course = {
     id: 2,
@@ -85,7 +87,9 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    learningGoals: [new LearningGoal()],
+    competencies: [new LearningGoal()],
+    tutorialGroups: [new TutorialGroup()],
+    prerequisites: [new LearningGoal()],
 };
 
 @Component({
@@ -106,7 +110,7 @@ describe('CourseOverviewComponent', () => {
     let component: CourseOverviewComponent;
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
-    let courseScoreCalculationService: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
     let teamService: TeamService;
     let learningGoalService: LearningGoalService;
     let tutorialGroupsService: TutorialGroupsService;
@@ -116,12 +120,18 @@ describe('CourseOverviewComponent', () => {
     let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
     let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
+    let route: ActivatedRoute;
+    let findOneForRegistrationStub: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
-    const course = { id: 1 } as Course;
+
+    const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
 
     beforeEach(fakeAsync(() => {
-        metisConversationService = {} as MetisConversationService;
+        route = {
+            params: of({ courseId: course1.id }) as Params,
+            snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
+        } as ActivatedRoute;
         router = new MockRouter();
 
         TestBed.configureTestingModule({
@@ -145,12 +155,7 @@ describe('CourseOverviewComponent', () => {
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseExerciseService),
-                MockProvider(CourseScoreCalculationService),
                 MockProvider(LearningGoalService),
-                {
-                    provide: ActivatedRoute,
-                    useValue: { params: of({ courseId: course1.id }), snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } } },
-                },
                 MockProvider(TeamService),
                 MockProvider(JhiWebsocketService),
                 MockProvider(ArtemisServerDateService),
@@ -161,37 +166,33 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 { provide: Router, useValue: router },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.overrideComponent(CourseOverviewComponent, {
-                    set: {
-                        providers: [
-                            {
-                                provide: MetisConversationService,
-                                useValue: metisConversationService,
-                            },
-                        ],
-                    },
-                }).createComponent(CourseOverviewComponent);
-
-                Object.defineProperty(metisConversationService, 'course', { get: () => course });
-                Object.defineProperty(metisConversationService, 'setUpConversationService', { value: () => EMPTY });
+                fixture = TestBed.createComponent(CourseOverviewComponent);
 
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
                 learningGoalService = TestBed.inject(LearningGoalService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
+                metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                // default for findOneForRegistrationStub is to return the course as well
+                findOneForRegistrationStub = jest
+                    .spyOn(courseService, 'findOneForRegistration')
+                    .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
             });
     }));
 
@@ -203,7 +204,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should call all methods on init', async () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
@@ -214,6 +215,45 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
+    });
+
+    it('loads conversations when switching to message tab once', async () => {
+        const metisConversationServiceStub = jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        getCourseStub.mockReturnValue(course1);
+
+        await component.ngOnInit();
+
+        expect(getCourseStub).toHaveBeenCalled();
+
+        expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
+
+        const tabs = ['messages', 'exercises', 'messages'];
+        tabs.forEach((tab) => {
+            route.snapshot.firstChild!.routeConfig!.path = tab;
+            component.onSubRouteActivate({ controlConfiguration: undefined });
+
+            expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+        });
+    });
+
+    it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
+        const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
+        metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+
+        route.snapshot.firstChild!.routeConfig!.path = 'exercises';
+        component.onSubRouteActivate({ controlConfiguration: undefined });
+
+        expect(component.hasUnreadMessages).toBe(hasNewMessages);
+
+        const tabs = ['messages', 'exercises', 'messages'];
+        tabs.forEach((tab) => {
+            route.snapshot.firstChild!.routeConfig!.path = tab;
+            component.onSubRouteActivate({ controlConfiguration: undefined });
+
+            expect(spy).toHaveBeenCalledOnce();
+        });
     });
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
@@ -245,20 +285,82 @@ describe('CourseOverviewComponent', () => {
     }));
 
     it('should call load Course methods on init', async () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledTimes(2);
+        expect(getCourseStub).toHaveBeenCalledOnce();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
+    it('should show an alert when loading the course fails', async () => {
+        findOneForDashboardStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
+        const alertService = TestBed.inject(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
+
+        component.loadCourse().subscribe(
+            () => {
+                throw new Error('should not happen');
+            },
+            (error) => {
+                expect(error).toBeDefined();
+            },
+        );
+
+        expect(alertServiceSpy).toHaveBeenCalled();
+    });
+
+    it('should return false for canRegisterForCourse if the server returns 403', fakeAsync(() => {
+        findOneForRegistrationStub.mockReturnValue(throwError(new HttpResponse({ status: 403 })));
+
+        // test that canRegisterForCourse subscribe gives false
+        component.canRegisterForCourse().subscribe((canRegister) => {
+            expect(canRegister).toBeFalse();
+        });
+
+        // wait for the observable to complete
+        tick();
+    }));
+
+    it('should throw for unexpected registration responses from the server', fakeAsync(() => {
+        findOneForRegistrationStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
+
+        // test that canRegisterForCourse throws
+        component.canRegisterForCourse().subscribe(
+            () => {
+                throw new Error('should not be called');
+            },
+            (error) => {
+                expect(error).toEqual(new HttpResponse({ status: 404 }));
+            },
+        );
+
+        // wait for the observable to complete
+        tick();
+    }));
+
+    it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
+        // check that loadCourse already subscribes to the course itself
+
+        // create observable httpResponse with course1, where we detect whether it was called
+        const findOneForDashboardResponse = new Observable((subscriber) => {
+            subscriber.next(course1);
+            subscriber.complete();
+        });
+        const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
+        findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
+
+        component.loadCourse();
+
+        expect(subscribeStub).toHaveBeenCalledOnce();
+    });
+
     it('should have visible exams', () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course1);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
@@ -270,7 +372,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should not have visible exams', () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
@@ -282,7 +384,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should have learning goals and tutorial groups', () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
         const learningGoalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [new LearningGoal()],
@@ -309,13 +411,13 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasLearningGoals()).toBeTrue();
         expect(component.hasTutorialGroups()).toBeTrue();
-        expect(component.course?.learningGoals).not.toBeEmpty();
+        expect(component.course?.competencies).not.toBeEmpty();
         expect(component.course?.prerequisites).not.toBeEmpty();
         expect(component.course?.tutorialGroups).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         const teamAssignmentUpdatesStub = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
         getCourseStub.mockReturnValue(course2);
         teamAssignmentUpdatesStub.mockReturnValue(Promise.resolve(of({ exerciseId: 6, teamId: 1, studentParticipations: [] })));
@@ -327,7 +429,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should subscribeForQuizChanges', () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
@@ -349,7 +451,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should render controls if child has configuration', () => {
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
