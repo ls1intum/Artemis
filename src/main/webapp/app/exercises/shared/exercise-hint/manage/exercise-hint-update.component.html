@@ -50,6 +50,18 @@
                     />
                 </div>
 
+                <div *ngIf="exerciseHint.type === HintType.CODE" class="d-flex justify-content-end">
+                    <jhi-button
+                        id="generateDescriptionButton"
+                        (click)="generateDescriptionForCodeHint()"
+                        [shouldSubmit]="false"
+                        [isLoading]="isGeneratingDescription"
+                        [title]="'artemisApp.codeHint.management.step4.iris.generateDescription.label'"
+                        [tooltip]="'artemisApp.codeHint.management.step4.iris.generateDescription.tooltip'"
+                        >Generate description
+                    </jhi-button>
+                </div>
+
                 <div class="form-group hint-form__editor-wrapper">
                     <jhi-markdown-editor
                         [markdown]="exerciseHint.content"
