@@ -120,6 +120,11 @@ The complaint process is as follows:
     || evaluate the complaint.           |                                             |
     +------------------------------------+---------------------------------------------+
 
+5. After receiving the complaint result, the student gives feedback to the reviewer.
+   
+    .. figure:: assessment/student-feedback.png
+            :alt: Student Feedback
+            :align: center
 
 .. _exercise_more_feedback_request:
 
