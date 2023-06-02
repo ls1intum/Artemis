@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.1.8"
+version = "6.2.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -231,6 +231,7 @@ dependencies {
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
     // https://search.maven.org/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2023.6"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -252,6 +253,9 @@ dependencies {
 
     implementation "org.springdoc:springdoc-openapi-ui:1.7.0"
     implementation "com.vdurmont:semver4j:3.1.0"
+
+    implementation 'com.github.docker-java:docker-java-core:3.3.0'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.0'
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
@@ -301,6 +305,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.92.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.6"
     implementation "org.springframework:spring-messaging:5.3.25"
+    implementation "org.springframework.retry:spring-retry:2.0.0"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"

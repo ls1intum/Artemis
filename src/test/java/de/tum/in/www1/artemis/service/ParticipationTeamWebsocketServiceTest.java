@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +56,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubscribeToParticipationTeamWebsocketTopic() {
-        participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock());
+        participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
         verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
@@ -73,8 +72,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnsubscribeFromParticipationTeamWebsocketTopic() {
-        StompHeaderAccessor stompHeaderAccessor1 = getStompHeaderAccessorMock();
-        StompHeaderAccessor stompHeaderAccessor2 = getStompHeaderAccessorMock();
+        StompHeaderAccessor stompHeaderAccessor1 = getStompHeaderAccessorMock("fakeSessionId1");
+        StompHeaderAccessor stompHeaderAccessor2 = getStompHeaderAccessorMock("fakeSessionId2");
 
         participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor1);
         participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor2);
@@ -85,8 +84,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
     }
 
-    private StompHeaderAccessor getStompHeaderAccessorMock() {
-        String fakeSessionId = UUID.randomUUID().toString();
+    private StompHeaderAccessor getStompHeaderAccessorMock(String fakeSessionId) {
         StompHeaderAccessor stompHeaderAccessor = mock(StompHeaderAccessor.class, RETURNS_MOCKS);
         when(stompHeaderAccessor.getSessionId()).thenReturn(fakeSessionId);
         return stompHeaderAccessor;

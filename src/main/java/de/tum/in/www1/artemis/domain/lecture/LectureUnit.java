@@ -37,12 +37,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Column(name = "release_date")
     protected ZonedDateTime releaseDate;
 
-    // This is explicitly required by Hibernate for the indexed collection (OrderColumn)
-    // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
-    @Column(name = "lecture_unit_order")
-    @Transient
-    private int order;
-
     @ManyToOne
     @JoinColumn(name = "lecture_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -53,7 +47,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @OrderBy("title")
     @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    protected Set<LearningGoal> learningGoals = new HashSet<>();
+    protected Set<Competency> competencies = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
@@ -65,10 +59,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     public void setName(String name) {
         this.name = name != null ? name.strip() : null;
-    }
-
-    public int getOrder() {
-        return order;
     }
 
     public Lecture getLecture() {
@@ -87,12 +77,12 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.releaseDate = releaseDate;
     }
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     @JsonIgnore(false)

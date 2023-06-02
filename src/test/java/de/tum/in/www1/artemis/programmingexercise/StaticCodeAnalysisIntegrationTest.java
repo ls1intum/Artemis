@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -329,10 +328,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(sourceExercise.getId());
         for (var category : categories) {
             category.setState(CategoryState.GRADED);
-            double rand1 = ThreadLocalRandom.current().nextDouble(10);
-            double rand2 = ThreadLocalRandom.current().nextDouble(10);
-            category.setMaxPenalty(Math.max(rand1, rand2));
-            category.setPenalty(Math.min(rand1, rand2));
+            category.setMaxPenalty(10.0);
+            category.setPenalty(5.0);
         }
 
         staticCodeAnalysisCategoryRepository.saveAll(categories);

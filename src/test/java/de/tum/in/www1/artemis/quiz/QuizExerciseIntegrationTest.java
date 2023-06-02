@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -16,6 +15,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -40,6 +42,8 @@ import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "quizexerciseintegration";
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -73,6 +77,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+
+    @Autowired
+    private ExerciseService exerciseService;
 
     private QuizExercise quizExercise;
 
@@ -834,30 +841,29 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        String exerciseTitle = setupFilterTestCase(TEST_PREFIX + "testCourseAndExamFiltersAsInstructor");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", exerciseTitle);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        String exerciseTitle = setupFilterTestCase(TEST_PREFIX + "testCourseAndExamFiltersAsAdmin");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", exerciseTitle);
     }
 
-    private String setupFilterTestCase() {
-        String randomString = UUID.randomUUID().toString();
+    private String setupFilterTestCase(String exerciseTitle) {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle(randomString + "-Morpork");
+        quizExercise.setTitle(exerciseTitle + "-Morpork");
         quizExerciseRepository.save(quizExercise);
 
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
-        exercise.setTitle(randomString);
+        exercise.setTitle(exerciseTitle);
         quizExerciseRepository.save(exercise);
-        return randomString;
+        return exerciseTitle;
     }
 
     @Test
@@ -980,7 +986,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
-        System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
+        log.debug("QuizPointStatistic before re-evaluate: {}", quizExercise.getQuizPointStatistic());
 
         // check that the statistic is correct before any re-evaluate
         assertQuizPointStatisticsPointCounters(quizExercise, Map.of(0.0, pc30, 3.0, pc20, 4.0, pc20, 6.0, pc20, 7.0, pc10));
@@ -990,7 +996,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 QuizExercise.class, HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
-        System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after re-evaluate (without changes): {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         // remove wrong answer option and reevaluate
         var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -1008,7 +1014,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
-        System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after 1st re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
 
@@ -1025,7 +1031,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
-        System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after 2nd re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc20, 5.0, pc20, 6.0, pc50, 9.0, pc10));
 
         // delete a question and reevaluate
@@ -1039,7 +1045,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // max score should be less
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
-        System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after 3rd re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc40, 6.0, pc60));
     }
 
@@ -1089,14 +1095,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
-        System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
+        log.debug("QuizPointStatistic before re-evaluate: {}", quizExercise.getQuizPointStatistic());
 
         // reevaluate without changing anything and check if statistics are still correct
         QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
                 QuizExercise.class, HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
-        System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after re-evaluate (without changes): {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         // remove wrong answer option and reevaluate
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
@@ -1108,7 +1114,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
 
-        System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after 1st re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc02, 3.0, pc02, 4.0, pc03, 6.0, pc02, 7.0, pc01));
 
@@ -1120,7 +1126,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
-        System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after 2nd re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc02, 5.0, pc02, 6.0, pc05, 9.0, pc01));
 
@@ -1131,7 +1137,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
         // max score should be less
-        System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        log.debug("QuizPointStatistic after 3rd re-evaluate: {}", quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc04, 6.0, pc06));
@@ -1683,7 +1689,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         quizExercise = quizExerciseService.save(quizExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName(TEST_PREFIX + "testImportQuizExercise_individual_modeChange");
         teamRepository.save(quizExercise, team);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -1835,6 +1841,23 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFilterForCourseDashboard_QuizSubmissionButNoParticipation() {
+        Course course = database.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
+        database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+
+        quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student1", quizSubmission);
+
+        exerciseService.filterForCourseDashboard(quizExercise, List.of(), TEST_PREFIX + "student1", true);
+
+        assertThat(quizExercise.getStudentParticipations()).hasSize(1);
+        assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+    }
+
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {
         Course course = database.createCourse();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
@@ -1887,22 +1910,22 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             if (statistic instanceof MultipleChoiceQuestionStatistic mcStatistic) {
                 assertThat(mcStatistic.getAnswerCounters()).isNotEmpty();
                 for (var counter : mcStatistic.getAnswerCounters()) {
-                    System.out.println("AnswerCounters: " + counter.toString());
-                    System.out.println("MultipleChoiceQuestionStatistic: " + counter.getMultipleChoiceQuestionStatistic());
+                    log.debug("AnswerCounters: {}", counter.toString());
+                    log.debug("MultipleChoiceQuestionStatistic: {}", counter.getMultipleChoiceQuestionStatistic());
                 }
             }
             else if (statistic instanceof DragAndDropQuestionStatistic dndStatistic) {
                 assertThat(dndStatistic.getDropLocationCounters()).isNotEmpty();
                 for (var counter : dndStatistic.getDropLocationCounters()) {
-                    System.out.println("DropLocationCounters: " + counter.toString());
-                    System.out.println("DragAndDropQuestionStatistic: " + counter.getDragAndDropQuestionStatistic());
+                    log.debug("DropLocationCounters: {}", counter.toString());
+                    log.debug("DragAndDropQuestionStatistic: {}", counter.getDragAndDropQuestionStatistic());
                 }
             }
             else if (statistic instanceof ShortAnswerQuestionStatistic saStatistic) {
                 assertThat(saStatistic.getShortAnswerSpotCounters()).isNotEmpty();
                 for (var counter : saStatistic.getShortAnswerSpotCounters()) {
-                    System.out.println("ShortAnswerSpotCounters: " + counter.toString());
-                    System.out.println("ShortAnswerQuestionStatistic: " + counter.getShortAnswerQuestionStatistic());
+                    log.debug("ShortAnswerSpotCounters: {}", counter.toString());
+                    log.debug("ShortAnswerQuestionStatistic: {}", counter.getShortAnswerQuestionStatistic());
                 }
             }
         }
