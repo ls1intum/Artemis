@@ -5,7 +5,7 @@ import { mockClientMessage, mockConversation, mockServerMessage } from '../../he
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
 
-describe('HTTP Message Service', () => {
+describe('Iris Http Message Service', () => {
     let service: IrisHttpMessageService;
     let httpMock: HttpTestingController;
 

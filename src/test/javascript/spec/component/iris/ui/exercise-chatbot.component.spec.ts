@@ -111,7 +111,6 @@ describe('ExerciseChatbotComponent', () => {
 
     it('should subscribe to route.params and call sessionService.getCurrentSessionOrCreate', waitForAsync(async () => {
         const mockExerciseId = 123;
-        const mockParams = { exerciseId: mockExerciseId };
         const spy = jest.spyOn(sessionService, 'getCurrentSessionOrCreate');
 
         mockParamsSubject.next(mockExerciseId);
