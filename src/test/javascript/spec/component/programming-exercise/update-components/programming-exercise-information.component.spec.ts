@@ -81,18 +81,4 @@ describe('ProgrammingExerciseInformationComponent', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
     }));
-
-    it('should update channelName', () => {
-        const newChannelName = 'New Channel Name';
-        let emittedChannelName: string | undefined;
-        comp.channelNameChange.subscribe((channelName: string) => {
-            emittedChannelName = channelName;
-        });
-
-        const titleChannelNameElement = fixture.debugElement.query(By.css('jhi-title-channel-name'));
-        titleChannelNameElement.triggerEventHandler('channelNameChange', newChannelName);
-
-        expect(comp.channelName).toBe(newChannelName);
-        expect(emittedChannelName).toBe(newChannelName);
-    });
 });

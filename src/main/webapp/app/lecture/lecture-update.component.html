@@ -6,7 +6,6 @@
             [saveLectureFunction]="saveLectureFunction"
             [validateDatesFunction]="onDatesValuesChanged"
             [lecture]="lecture"
-            [(channelName)]="channelName"
             [isSaving]="isSaving"
             [startDate]="startDate"
             [endDate]="endDate"
@@ -34,7 +33,7 @@
                 </div>
                 <jhi-title-channel-name
                     [(title)]="lecture.title"
-                    [(channelName)]="channelName"
+                    [(channelName)]="lecture.channelName"
                     channelNamePrefix="lecture-"
                     [hideChannelName]="this.lecture.id !== undefined && this.lecture.channelName === undefined"
                 ></jhi-title-channel-name>
