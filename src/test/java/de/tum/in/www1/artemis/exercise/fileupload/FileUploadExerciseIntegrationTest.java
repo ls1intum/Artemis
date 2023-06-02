@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.fileupload;
+package de.tum.in.www1.artemis.exercise.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,19 +21,12 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
-
-    @Autowired
-    private FeedbackRepository feedbackRepository;
-
-    @Autowired
-    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -401,9 +394,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
         {
-            final FileUploadSubmission submission1 = ModelFactory.generateFileUploadSubmission(true);
+            final FileUploadSubmission submission1 = FileUploadTestFactory.generateFileUploadSubmission(true);
             database.addFileUploadSubmission(fileUploadExercise, submission1, TEST_PREFIX + "student1");
-            final FileUploadSubmission submission2 = ModelFactory.generateFileUploadSubmission(true);
+            final FileUploadSubmission submission2 = FileUploadTestFactory.generateFileUploadSubmission(true);
             database.addFileUploadSubmission(fileUploadExercise, submission2, TEST_PREFIX + "student2");
 
             final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(fileUploadExercise.getId()));

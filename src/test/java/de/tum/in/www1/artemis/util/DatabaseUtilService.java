@@ -68,6 +68,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -924,7 +925,7 @@ public class DatabaseUtilService {
 
     public AttachmentUnit createAttachmentUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
+        Attachment attachmentOfAttachmentUnit = withFile ? FileUploadTestFactory.generateAttachmentWithFile(started) : FileUploadTestFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -936,7 +937,7 @@ public class DatabaseUtilService {
 
     public AttachmentUnit createAttachmentUnitWithSlides(int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = ModelFactory.generateAttachment(started);
+        Attachment attachmentOfAttachmentUnit = FileUploadTestFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -1002,7 +1003,7 @@ public class DatabaseUtilService {
         textExercise.getCategories().add("Text");
         course1.addExercises(textExercise);
 
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
         fileUploadExercise.setExampleSolution("Example Solution");
         addGradingInstructionsToExercise(fileUploadExercise);
@@ -1020,13 +1021,13 @@ public class DatabaseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        Attachment attachment1 = withFiles ? FileUploadTestFactory.generateAttachmentWithFile(pastTimestamp) : FileUploadTestFactory.generateAttachment(pastTimestamp);
         attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        Attachment attachment2 = withFiles ? FileUploadTestFactory.generateAttachmentWithFile(pastTimestamp) : FileUploadTestFactory.generateAttachment(pastTimestamp);
         attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
         course1.addLectures(lecture2);
@@ -1365,7 +1366,7 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course);
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, assessmentTimestamp, QuizMode.SYNCHRONIZED, course);
 
@@ -1462,7 +1463,7 @@ public class DatabaseUtilService {
         // Setup submissions and connect with participations
         ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission("model1", true);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         QuizSubmission quizSubmission = ModelFactory.generateQuizSubmission(true);
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
 
@@ -1554,7 +1555,7 @@ public class DatabaseUtilService {
                 submission = submissionRepository.save(submission);
             }
             else if (exercise instanceof FileUploadExercise fileUploadExercise) {
-                submission = saveFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                submission = saveFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmission(false), instructor.getLogin());
             }
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setTestRun(true);
@@ -1798,7 +1799,7 @@ public class DatabaseUtilService {
 
         ExerciseGroup fileUploadGroup = exam.getExerciseGroups().get(2);
         // todo
-        Exercise fileUpload = ModelFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
+        Exercise fileUpload = FileUploadTestFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
         fileUploadGroup.addExercise(fileUpload);
         exerciseRepo.save(fileUpload);
 
@@ -1872,8 +1873,8 @@ public class DatabaseUtilService {
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
 
-        FileUploadExercise fileUploadExercise1 = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
-        FileUploadExercise fileUploadExercise2 = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
+        FileUploadExercise fileUploadExercise1 = FileUploadTestFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
+        FileUploadExercise fileUploadExercise2 = FileUploadTestFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
         exerciseGroup2.setExercises(Set.of(fileUploadExercise1, fileUploadExercise2));
         exerciseRepo.save(fileUploadExercise1);
         exerciseRepo.save(fileUploadExercise2);
@@ -2395,7 +2396,7 @@ public class DatabaseUtilService {
 
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepo.save(fileUploadExercise);
     }
 
@@ -2940,7 +2941,7 @@ public class DatabaseUtilService {
         textExercise.setTitle("Text");
         course.addExercises(textExercise);
 
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
         fileUploadExercise.setTitle("FileUpload");
         course.addExercises(fileUploadExercise);
 
@@ -2959,11 +2960,11 @@ public class DatabaseUtilService {
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
 
-        FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise releasedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
-        FileUploadExercise finishedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise finishedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
         finishedFileUploadExercise.setTitle("finished");
-        FileUploadExercise assessedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
@@ -2996,13 +2997,13 @@ public class DatabaseUtilService {
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
 
-        FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise releasedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
-        FileUploadExercise finishedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise finishedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
         finishedFileUploadExercise.setTitle("finished");
-        FileUploadExercise assessedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
-        FileUploadExercise noDueDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, null, pastTimestamp, "png,pdf", course);
+        FileUploadExercise noDueDateFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, null, pastTimestamp, "png,pdf", course);
         noDueDateFileUploadExercise.setTitle("noDueDate");
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
@@ -3042,7 +3043,7 @@ public class DatabaseUtilService {
     // todo: this
     public Course addCourseWithFileUploadExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        FileUploadExercise assessedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
         course.addExercises(assessedFileUploadExercise);
         courseRepo.save(course);
@@ -3108,7 +3109,7 @@ public class DatabaseUtilService {
                 course = addCourseWithFileUploadExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
@@ -3237,13 +3238,14 @@ public class DatabaseUtilService {
                 }
             }
             else { // i.e. (i % 3) == 2
-                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf", course);
+                FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf",
+                        course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);
                 course = courseRepo.save(course);
                 exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
-                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
@@ -4629,7 +4631,7 @@ public class DatabaseUtilService {
 
     // todo: this
     public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
-        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        var fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
 
         // Create a dummy file
@@ -4649,7 +4651,7 @@ public class DatabaseUtilService {
 
         // Create a file upload exercise with a dummy submission file
         var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
-        var fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
+        var fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
         createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
         exerciseGroup1.addExercise(fileUploadExercise);
@@ -4691,7 +4693,7 @@ public class DatabaseUtilService {
             submission = ModelFactory.generateTextSubmission("test", Language.ENGLISH, true);
         }
         if (exercise instanceof FileUploadExercise) {
-            submission = ModelFactory.generateFileUploadSubmission(true);
+            submission = FileUploadTestFactory.generateFileUploadSubmission(true);
         }
         if (exercise instanceof ModelingExercise) {
             submission = ModelFactory.generateModelingSubmission(null, true);

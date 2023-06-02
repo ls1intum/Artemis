@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static java.time.ZonedDateTime.now;
-import static org.assertj.core.api.Assertions.fail;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -13,9 +9,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
-
-import org.apache.commons.io.FileUtils;
-import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -35,9 +28,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.in.www1.artemis.exercise.ExerciseTestFactory;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -60,44 +52,6 @@ public class ModelFactory {
         return lecture;
     }
 
-    /**
-     * Create a dummy attachment for testing
-     *
-     * @param date The optional upload and release date to set on the attachment
-     * @return Attachment that was created
-     */
-    public static Attachment generateAttachment(ZonedDateTime date) {
-        Attachment attachment = new Attachment();
-        attachment.setAttachmentType(AttachmentType.FILE);
-        if (date != null) {
-            attachment.setReleaseDate(date);
-            attachment.setUploadDate(date);
-        }
-        attachment.setName("TestAttachment");
-        attachment.setVersion(1);
-        return attachment;
-    }
-
-    /**
-     * Create a dummy attachment for testing with a placeholder image file on disk
-     *
-     * @param startDate The release date to set on the attachment
-     * @return Attachment that was created with its link set to a testing file on disk
-     */
-    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
-        Attachment attachment = generateAttachment(startDate);
-        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
-        try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
-        }
-        catch (IOException ex) {
-            fail("Failed while copying test attachment files", ex);
-        }
-        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
-        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
-        return attachment;
-    }
-
     public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {
         var quizBatch = new QuizBatch();
         quizBatch.setQuizExercise(quizExercise);
@@ -106,7 +60,7 @@ public class ModelFactory {
     }
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
-        var quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
+        var quizExercise = (QuizExercise) ExerciseTestFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -128,7 +82,7 @@ public class ModelFactory {
     }
 
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
-        var quizExercise = (QuizExercise) populateExerciseForExam(new QuizExercise(), exerciseGroup);
+        var quizExercise = (QuizExercise) ExerciseTestFactory.populateExerciseForExam(new QuizExercise(), exerciseGroup);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -156,7 +110,7 @@ public class ModelFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course, ProgrammingLanguage programmingLanguage) {
-        var programmingExercise = (ProgrammingExercise) populateExercise(new ProgrammingExercise(), releaseDate, dueDate, null, course);
+        var programmingExercise = (ProgrammingExercise) ExerciseTestFactory.populateExercise(new ProgrammingExercise(), releaseDate, dueDate, null, course);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
@@ -166,7 +120,7 @@ public class ModelFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
-        var programmingExercise = (ProgrammingExercise) populateExerciseForExam(new ProgrammingExercise(), exerciseGroup);
+        var programmingExercise = (ProgrammingExercise) ExerciseTestFactory.populateExerciseForExam(new ProgrammingExercise(), exerciseGroup);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
@@ -196,7 +150,7 @@ public class ModelFactory {
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
-        var modelingExercise = (ModelingExercise) populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        var modelingExercise = (ModelingExercise) ExerciseTestFactory.populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
         modelingExercise.setDiagramType(diagramType);
         modelingExercise.setExampleSolutionModel("This is my example solution model");
         modelingExercise.setExampleSolutionExplanation("This is my example solution model");
@@ -204,7 +158,7 @@ public class ModelFactory {
     }
 
     public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
-        var modelingExercise = (ModelingExercise) populateExerciseForExam(new ModelingExercise(), exerciseGroup);
+        var modelingExercise = (ModelingExercise) ExerciseTestFactory.populateExerciseForExam(new ModelingExercise(), exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
         modelingExercise.setExampleSolutionModel("This is my example solution model");
         modelingExercise.setExampleSolutionExplanation("This is my example solution model");
@@ -212,73 +166,19 @@ public class ModelFactory {
     }
 
     public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
-        var textExercise = (TextExercise) populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        var textExercise = (TextExercise) ExerciseTestFactory.populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setExampleSolution("This is my example solution");
         return textExercise;
     }
 
     public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup) {
-        var textExercise = (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup);
+        var textExercise = (TextExercise) ExerciseTestFactory.populateExerciseForExam(new TextExercise(), exerciseGroup);
         textExercise.setExampleSolution("This is my example solution");
         return textExercise;
     }
 
-    public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
-            Course course) {
-        var fileUploadExercise = (FileUploadExercise) populateExercise(new FileUploadExercise(), releaseDate, dueDate, assessmentDueDate, course);
-        fileUploadExercise.setFilePattern(filePattern);
-        fileUploadExercise.setExampleSolution("This is my example solution");
-        return fileUploadExercise;
-    }
-
-    public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup) {
-        FileUploadExercise fileUploadExercise = new FileUploadExercise();
-        fileUploadExercise.setFilePattern(filePattern);
-        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
-    }
-
     public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
         return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
-    }
-
-    private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
-        exercise.setTitle(UUID.randomUUID().toString());
-        exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
-        exercise.setProblemStatement("Problem Statement");
-        exercise.setMaxPoints(5.0);
-        exercise.setBonusPoints(0.0);
-        exercise.setReleaseDate(releaseDate);
-        exercise.setDueDate(dueDate);
-        exercise.setAssessmentDueDate(assessmentDueDate);
-        exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setMode(ExerciseMode.INDIVIDUAL);
-        exercise.getCategories().add("Category");
-        exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
-        exercise.setCourse(course);
-        exercise.setExerciseGroup(null);
-        return exercise;
-    }
-
-    private static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup) {
-        exercise.setTitle(UUID.randomUUID().toString());
-        exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
-        exercise.setProblemStatement("Exam Problem Statement");
-        exercise.setMaxPoints(5.0);
-        exercise.setBonusPoints(0.0);
-        // these values are set to null explicitly
-        exercise.setReleaseDate(null);
-        exercise.setDueDate(null);
-        exercise.setAssessmentDueDate(null);
-        exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setMode(ExerciseMode.INDIVIDUAL);
-        exercise.getCategories().add("Category");
-        exercise.setExerciseGroup(exerciseGroup);
-        exercise.setCourse(null);
-        if (!(exercise instanceof QuizExercise)) {
-            exercise.setGradingInstructions("Grading instructions");
-            exercise.setGradingCriteria(List.of(new GradingCriterion()));
-        }
-        return exercise;
     }
 
     public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
@@ -483,31 +383,6 @@ public class ModelFactory {
             programmingSubmission.setSubmissionDate(now().minusDays(1));
         }
         return programmingSubmission;
-    }
-
-    public static FileUploadSubmission generateFileUploadSubmission(boolean submitted) {
-        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
-        fileUploadSubmission.setSubmitted(submitted);
-        if (submitted) {
-            fileUploadSubmission.setSubmissionDate(now().minusDays(1));
-        }
-        return fileUploadSubmission;
-    }
-
-    public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
-        FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
-        fileUploadSubmission.setFilePath(filePath);
-        if (submitted) {
-            fileUploadSubmission.setSubmissionDate(now().minusDays(1));
-        }
-        return fileUploadSubmission;
-    }
-
-    public static FileUploadSubmission generateLateFileUploadSubmission() {
-        FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
-        fileUploadSubmission.setSubmitted(true);
-        fileUploadSubmission.setSubmissionDate(now().plusDays(1));
-        return fileUploadSubmission;
     }
 
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
