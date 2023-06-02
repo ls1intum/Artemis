@@ -37,7 +37,7 @@ To keep track of the manual assessments, Artemis offers the assessment dashboard
 It shows the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
 It also shows the average rating the students have given to each exercise.
 
-    .. figure:: assessment/assessment_dashboard.png
+    .. figure:: assessment/assessment-dashboard.png
             :alt: A picture of the assessment dashboard (of an exam)
             :align: center
 
@@ -48,7 +48,7 @@ Structured Grading Criteria
 
 To ensure consistency, fairness, and transparency and simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
 
-    .. figure:: assessment/grading_criteria.png
+    .. figure:: assessment/grading-criteria.png
             :alt: A picture of the assessment user interface with grading criteria, student submission and example solution
             :align: center
 
@@ -63,10 +63,96 @@ Double-blind Grading
 
 The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are "blind" to the identity of each other, ensuring that their expectations or biases do not influence the results. 
     
-    .. figure:: assessment/double_blind.png
+    .. figure:: assessment/double-blind.png
             :alt: Double-blind grading
             :align: center
    
+.. _exercise_complaints:
+
+Complaints
+^^^^^^^^^^
+
+After receiving a grade, students can complain about an exercise assessment if the instructor enabled this option, the complaint deadline is still ongoing, and the students think the evaluation needs to be revised. 
+The instructor can set a maximum number of allowed complaints per course. These so-called tokens are used for each complaint. The token is returned to the student if the tutor accepts the complaint. 
+It means a student can submit as many complaints as they want, as long as they are accepted.
+
+The complaint process is as follows:
+
+1. The student opens the related exercise, interacts with the "Complain" button below the exercise instructions, and writes additional text before submitting a complaint to justify the reevaluation.
+   
+   .. figure:: assessment/complaint-submission.png
+            :alt: Complaint submission
+            :align: right
+
+2. The reviewer interacts with the "Assessment Dashboard" button of the desired course, which displays the table for all the course exercises.
+
+.. raw:: html
+
+   <table>
+     <tr>
+       <td>
+         <figure>
+           <img src="assessment/assessment-dashboard-button.png" alt="Assessment Dashboard button" align="left">
+         </figure>
+       </td>
+       <td>
+         <figure>
+           <img src="assessment/assessment-dashboard.png" alt="Assessment Dashboard" align="right">
+         </figure>
+       </td>
+     </tr>
+   </table>
+
+1. By interacting with the respective "Exercise Dashboard" button, the reviewer can open the exercise-specific dashboard and assess students' submissions. 
+   Upon evaluation, the reviewer puts a "lock" on the complaint disabling inconsistency and ambiguity, which expires in 24 hours.
+
+    .. figure:: assessment/exercise-dashboard.png
+            :alt: Exercise Dashboard
+            :align: center
+
+2. For each submission, the reviewer decides on the student's complaint.
+   
+    .. raw:: html
+
+        <div style="display: flex; align-items: center;">
+            <p style="text-align: left; padding: 15px; flex: 3;">In case of a justification, the reviewer adds feedback blocks and interacts with the "Accept complaint" button.</p>
+            <figure style="margin-left: auto; flex: 7;">
+            <img src="assessment/accept-complaint.png" alt="Accept Complaint">
+            </figure>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <p style="text-align: left; padding: 15px; flex: 3;">Otherwise, the reviewer explains why the complaint was rejected and interacts with the "Reject complaint" button.</p>
+            <figure style="margin-left: auto; flex: 7;">
+            <img src="assessment/reject-complaint.png" alt="Reject Complaint">
+            </figure>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <p style="text-align: left; padding: 15px; flex: 3;">If the reviewer cannot decide between accepting and rejecting, it is possible to remove the lock so that another reviewer can evaluate the complaint.</p>
+            <figure style="margin-left: auto; flex: 7;">
+            <img src="assessment/lock.png" alt="Complaint Lock">
+            </figure>
+        </div>
+
+
+.. _exercise_more_feedback_request:
+
+More Feedback Requests
+^^^^^^^^^^^^^^^^^^^^^^
+
+Another possibility after receiving an assessment is the *More Feedback Request*.
+Compared to the complaints, they do not cost a token, but the tutor cannot change the score after a feedback request.
+
+    .. figure:: assessment/more-feedback.png
+            :alt: Exercise Dashboard
+            :align: center
+
+For the reviewers, the process is identical to the complaint process.
+
+.. warning::
+    Sending a *More Feedback Request* removes the option to complain about the assessment entirely.
+    The score cannot be changed even if the tutor made a mistake during the first assessment and acknowledges this during the *More Feedback Request*.
+
+
 Grading Leaderboard
 ^^^^^^^^^^^^^^^^^^^
 
@@ -87,40 +173,3 @@ For quiz exercises this is the only mode of assessment available. Artemis automa
 
 For programming exercises, this is done via instructor-written test cases that are run for each submission either during or after the deadline. See the section about :ref:`programming` for detailed information about this.
 Instructors can enable complaints for automatically graded programming exercises.
-
-
-.. _exercise_complaints:
-
-Complaints
-----------
-
-After receiving an assessment, students can complain once about the assessment of an exercise if the instructor enabled this option and the students think the assessment is erroneous.
-The student has to write an additional text when submitting a complaint to justify the reevaluation.
-
-    .. figure:: assessment/complaint.png
-            :alt: The student complains about the assessment of an exercise
-            :align: center
-
-A complaint leads to a reevaluation of the submission by another tutor. This tutor sees the existing assessment and the complaint reason. The tutor can then either accept or reject the complaint.
-Only if the tutor accepts the complaint, they can modify the assessment's score.
-
-    .. figure:: assessment/complaint_response.png
-        :alt: A tutor answers the complaint of a student
-        :align: center
-
-The instructor can set a maximum number of allowed complaints per course. These so-called tokens are used for each complaint.
-The token is given back to the student if the tutor accepts the complaint.
-This means a student can submit as many complaints as they want, as long as they are accepted.
-
-
-.. _exercise_more_feedback_request:
-
-More Feedback Requests
-^^^^^^^^^^^^^^^^^^^^^^
-
-Another possibility after receiving an assessment is the *More Feedback Request*.
-Compared to the complaints, they do not cost a token, but the tutor cannot change the score after a feedback request.
-
-.. warning::
-    Sending a *More Feedback Request* removes the option to complain about the assessment entirely.
-    The score cannot be changed even if the tutor made a mistake during the first assessment and acknowledges this during the *More Feedback Request*.
