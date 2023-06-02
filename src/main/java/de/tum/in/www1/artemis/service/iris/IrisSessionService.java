@@ -140,6 +140,7 @@ public class IrisSessionService {
      */
     public IrisMessage createInitialSystemMessage(IrisSession session) {
         var exercise = session.getExercise();
+        // TODO: Error handling in the future
         String title = "undefined";
         if (exercise.getCourseViaExerciseGroupOrCourseMember() != null && exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() != null) {
             title = exercise.getCourseViaExerciseGroupOrCourseMember().getTitle();
@@ -162,113 +163,60 @@ public class IrisSessionService {
     private static class ProblemStatementUtils {
 
         /**
-         * Removes all unnecessary information from problem statements
+         * Removes all unnecessary information from problem statements and cuts it to 2000 characters max length
+         * The maximum length is enforced because we cannot waste too many tokens on the problem statement
          *
          * @param problemStatement The problem statement to be truncated
          * @return The condensed problem statement cut with length <= 2000 characters
          */
         public static String truncateProblemStatement(String problemStatement) {
             if (problemStatement == null || "".equals(problemStatement)) {
+                // TODO: Error handling in the future
                 return "undefined";
             }
-            String temp = problemStatement;
-            temp = removeBold(temp);
-            temp = removeItalic(temp);
-            temp = removeImgTags(temp);
-            temp = removeSceneTags(temp);
-            temp = removeNamedTags(temp);
-            temp = removeNamedLinks(temp);
+            String temp = problemStatement.replace("\r", " ").replace("\n", " ");
+            // removes bold delimiters
+            temp = removeControlStructure(temp, "(\\*\\*)(.*?)(\\*\\*)");
+            // removes italics delimiters
+            temp = removeControlStructure(temp, "(\\*)(.*?)(\\*)");
+            // removes image tags (![image](*))
+            temp = removeControlStructureReplaceWithSpace(temp, "(!\\[image)(.*?)(]\\()(.*?)(\\))");
+            // removes scene tags (![scene](*))
+            temp = removeControlStructureReplaceWithSpace(temp, "(!\\[scene)(.*?)(]\\()(.*?)(\\))");
+            // removes named tag (![<name>](*)) but keeps <name>
+            temp = removeControlStructure(temp, "(!\\[)(.*?)(]\\()(.*?)(\\))");
+            // removes named link ([<name>](*)) but keeps <name>
+            temp = removeControlStructure(temp, "(\\[)(.*?)(]\\()(.*?)(\\))");
+            // removes headers (# <header>) but keeps <header>
             temp = removeHeaders(temp);
-            temp = removeHrs(temp);
-            temp = removeUML(temp);
-            temp = removeTasks(temp);
-            temp = removeDiv(temp);
-            temp = removeSpan(temp);
-            temp = removeColor(temp);
-            temp = removeStyle(temp);
-            temp = removeHTMLTags(temp);
+            temp = removeMarks(temp);
+            // removes @startuml * @enduml blocks
+            temp = removeControlStructureReplaceWithSpace(temp, "(@startuml)(.*?)(@enduml)");
+            // removes tasks ([task][<name>][*]) but keeps <name>
+            temp = removeControlStructure(temp, "(\\[task]\\[)(.*?)(]\\()(.*?)(\\))");
+            // removes opening divs (<div *>)
+            temp = removeControlStructureReplaceWithSpace(temp, "(<div)(.*?)(>)");
+            // removes opening span (<span *>)
+            temp = removeControlStructureReplaceWithSpace(temp, "(<span)(.*?)(>)");
+            // removes opening color (<color *>)
+            temp = removeControlStructureReplaceWithSpace(temp, "(<color)(.*?)(>)");
+            // removes opening style (<style *>)
+            temp = removeControlStructureReplaceWithSpace(temp, "(<style)(.*?)(>)");
+            temp = removeNonParameterHTMLTags(temp);
             temp = removeLineBreaks(temp);
             temp = temp.trim().replaceAll(" +", " ");
             return temp.substring(0, Math.min(temp.length(), 2000));
         }
 
         /**
-         * Removes all markdown bold markers (**) from the problem statement
+         * Removes control structures in the form (<begin> <name> <end>) but keeps the <name>
          *
          * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without bold markers
+         * @param pString          The String which represents the regex of the control structure
+         * @return The problem statement without control structures to be removed
          */
-        private static String removeBold(String problemStatement) {
+        private static String removeControlStructure(String problemStatement, String pString) {
             String temp = problemStatement;
-            String pString = "(\\*\\*)(.*?)(\\*\\*)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), matcher.group(matcher.groupCount() - 1));
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all markdown italics markers (*) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without italics markers
-         */
-        private static String removeItalic(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(\\*)(.*?)(\\*)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), matcher.group(matcher.groupCount() - 1));
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all image tags (![image](*)) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without image tags
-         */
-        private static String removeImgTags(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(!\\[image)(.*?)(]\\()(.*?)(\\))";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), " ");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all scene tags (![scene](*)) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without scene tags
-         */
-        private static String removeSceneTags(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(!\\[scene)(.*?)(]\\()(.*?)(\\))";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), " ");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all named tags (![*](*)) from the problem statement but keeps the name
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without named tags
-         */
-        private static String removeNamedTags(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(!\\[)(.*?)(]\\()(.*?)(\\))";
             Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(problemStatement);
             while (matcher.find()) {
@@ -278,24 +226,24 @@ public class IrisSessionService {
         }
 
         /**
-         * Removes all named links ([*](*)) from the problem statement but keeps the name
+         * Removes control structures and replaces them with " "
          *
          * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without named links
+         * @param pString          The String which represents the regex of the control structure
+         * @return The problem statement without control structures to be removed
          */
-        private static String removeNamedLinks(String problemStatement) {
+        private static String removeControlStructureReplaceWithSpace(String problemStatement, String pString) {
             String temp = problemStatement;
-            String pString = "(\\[)(.*?)(]\\()(.*?)(\\))";
             Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(problemStatement);
             while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), matcher.group(2));
+                temp = temp.replace(matcher.group(0), " ");
             }
             return temp;
         }
 
         /**
-         * Removes all headers (#) from the problem statement but keeps the text
+         * Removes all headers (# <text>) from the problem statement but keeps the <text>
          *
          * @param problemStatement The problem statement to be truncated
          * @return Problem statement without headers
@@ -319,7 +267,7 @@ public class IrisSessionService {
          * @param problemStatement The problem statement to be truncated
          * @return Problem statement without specific markdown marks
          */
-        private static String removeHrs(String problemStatement) {
+        private static String removeMarks(String problemStatement) {
             String temp = problemStatement;
             temp = temp.replace("---", "");
             temp = temp.replace("***", "");
@@ -329,114 +277,12 @@ public class IrisSessionService {
         }
 
         /**
-         * Removes all uml notation (@startuml * @enduml) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without uml notation
-         */
-        private static String removeUML(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(@startuml)(.*?)(@enduml)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), "");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all tasks ([task][*](*)) from the problem statement but keeps the task name
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without tasks
-         */
-        private static String removeTasks(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(\\[task]\\[)(.*?)(]\\()(.*?)(\\))";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), matcher.group(2));
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all opening divs (<div *>) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without opening div tags
-         */
-        private static String removeDiv(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(<div)(.*?)(>)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), " ");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all opening spans (<span *>) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without opening span tags
-         */
-        private static String removeSpan(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(<span)(.*?)(>)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), " ");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all opening colors (<color *>) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without opening color tags
-         */
-        private static String removeColor(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(<color)(.*?)(>)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), " ");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes all opening styles (<style *>) from the problem statement
-         *
-         * @param problemStatement The problem statement to be truncated
-         * @return Problem statement without opening style tags
-         */
-        private static String removeStyle(String problemStatement) {
-            String temp = problemStatement;
-            String pString = "(<style)(.*?)(>)";
-            Pattern pattern = Pattern.compile(pString, Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(problemStatement);
-            while (matcher.find()) {
-                temp = temp.replace(matcher.group(0), " ");
-            }
-            return temp;
-        }
-
-        /**
-         * Removes other non-parameter or closing tags (span, color, style, div, ins, del) from the problem statement
+         * Removes other non-parameter or closing tags (/span, /color, /style, /div, ins, del) from the problem statement
          *
          * @param problemStatement The problem statement to be truncated
          * @return Problem statement without specific tags
          */
-        private static String removeHTMLTags(String problemStatement) {
+        private static String removeNonParameterHTMLTags(String problemStatement) {
             String temp = problemStatement;
             temp = temp.replace("</span>", "");
             temp = temp.replace("</color>", "");
