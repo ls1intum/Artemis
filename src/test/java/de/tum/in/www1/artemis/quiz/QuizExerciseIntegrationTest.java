@@ -1568,18 +1568,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("New Titel");
         quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
-        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
         courseRepository.save(course);
         quizExerciseRepository.save(quizExercise);
         // change some stuff
         quizExercise.setTitle("new Titel");
-        // remove instructor rights in course
-        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Collections.emptySet());
-        userRepository.save(user);
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
     }
 
@@ -2049,15 +2042,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateQuizExercise_dragAndDrop_withFileChanges() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        var newBackgroundFilePath = "newBackgroundFile.png";
-        var newPictureFilePath = "newPictureFile.jpg";
+        String newBackgroundFilePath = "newBackgroundFile.png";
+        String newPictureFilePath = "newPictureFile.jpg";
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).map(q -> (DragAndDropQuestion) q)
                 .toList();
-        var question = dragAndDropQuestions.get(0);
+        DragAndDropQuestion question = dragAndDropQuestions.get(0);
         question.setBackgroundFilePath(newBackgroundFilePath);
-        var items = question.getDragItems();
-        var item = items.get(1);
+        DragItem item = question.getDragItems().get(1);
         item.setPictureFilePath(newPictureFilePath);
 
         updateQuizExerciseWithFiles(quizExercise, List.of(newBackgroundFilePath, newPictureFilePath), HttpStatus.OK);

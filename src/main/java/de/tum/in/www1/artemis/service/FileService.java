@@ -315,22 +315,26 @@ public class FileService implements DisposableBean {
                 }
             }
         }
-        // check if newFilePath is a temp file
-        if (newFilePath != null && newFilePath.contains("files/temp")) {
+
+        return moveFileIfTemporaryAndReturnPath(newFilePath, targetFolder, entityId, keepFileName);
+    }
+
+    private String moveFileIfTemporaryAndReturnPath(String path, String targetFolder, Long entityId, Boolean keepFileName) {
+        if (path != null && path.contains("files/temp")) {
             // rename and move file
             try {
-                Path source = Path.of(actualPathForPublicPathOrThrow(newFilePath));
-                File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
+                Path source = Path.of(actualPathForPublicPathOrThrow(path));
+                File targetFile = generateTargetFile(path, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
-                newFilePath = publicPathForActualPathOrThrow(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
+                return publicPathForActualPathOrThrow(target.toString(), entityId);
             }
             catch (IOException e) {
-                log.error("Error moving file: {}", newFilePath);
+                log.error("Error moving file: {}", path);
             }
         }
-        return newFilePath;
+        return path;
     }
 
     /**
