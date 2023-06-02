@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -25,6 +28,9 @@ public class FileUploadService {
 
     @Autowired
     private CourseRepository courseRepo;
+
+    @Autowired
+    private ExamRepository examRepo;
 
     /**
      * creates and saves a file upload exercise in the repository
@@ -91,9 +97,43 @@ public class FileUploadService {
         courseRepo.save(course);
     }
 
-    // todo:
+    // todo: javadoc
     public FileUploadExercise findFileUploadExercise(Long id) {
         return fileUploadExerciseRepository.findById(id).orElse(null);
+    }
+
+    // todo: javadoc
+    public FileUploadExercise createAndSaveExamFileUploadExercise(ZonedDateTime startDate, ZonedDateTime endDate, String filePattern) {
+        FileUploadExercise fileUploadExercise = createExamFileUploadExercise(startDate, endDate, filePattern);
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        return fileUploadExercise;
+    }
+
+    // todo: javddoc
+    public FileUploadExercise createExamFileUploadExercise(ZonedDateTime startDate, ZonedDateTime endDate, String filePattern) {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+
+        Exam exam = ModelFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
+
+        courseRepo.save(course);
+        examRepo.save(exam);
+
+        return ModelFactory.generateFileUploadExerciseForExam(filePattern, exerciseGroup);
+    }
+
+    public FileUploadExercise createExamActiveFileUploadExercise(String filePattern) {
+        return createExamFileUploadExercise(pastTimestamp, futureTimestamp, filePattern);
+    }
+
+    public FileUploadExercise createAndSaveExamActiveFileUploadExercise(String filePattern) {
+        return createAndSaveExamFileUploadExercise(pastTimestamp, futureTimestamp, filePattern);
+    }
+
+    public void setExampleSolutionPublicationDateAndSave(FileUploadExercise fileUploadExercise, ZonedDateTime solutionPublicationDate) {
+        fileUploadExercise.setExampleSolutionPublicationDate(solutionPublicationDate);
+        fileUploadExerciseRepository.save(fileUploadExercise);
     }
 
 }
