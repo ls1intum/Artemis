@@ -21,6 +21,7 @@
             [(channelName)]="modelingExercise.channelName"
             channelNamePrefix="exercise-"
             [minTitleLength]="3"
+            [emphasizeLabels]="true"
         ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>

@@ -32,6 +32,7 @@
                 (ngModelChange)="cacheValidation()"
                 channelNamePrefix="exercise-"
                 [minTitleLength]="3"
+                [emphasizeLabels]="true"
             ></jhi-title-channel-name>
 
             <div *ngIf="!isExamMode" class="form-group position-relative">
