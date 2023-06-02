@@ -108,13 +108,6 @@ public class Feedback extends DomainObject {
     @JsonSerialize
     private Long suggestedFeedbackParticipationReference;
 
-    // TODO: JP remove these two references as they are not really needed
-    @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
-    private List<FeedbackConflict> firstConflicts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
-    private List<FeedbackConflict> secondConflicts = new ArrayList<>();
-
     public String getText() {
         return text;
     }
@@ -362,22 +355,6 @@ public class Feedback extends DomainObject {
         this.suggestedFeedbackOriginSubmissionReference = submissionId;
         this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationId;
         return this;
-    }
-
-    public List<FeedbackConflict> getFirstConflicts() {
-        return firstConflicts;
-    }
-
-    public void setFirstConflicts(List<FeedbackConflict> firstConflicts) {
-        this.firstConflicts = firstConflicts;
-    }
-
-    public List<FeedbackConflict> getSecondConflicts() {
-        return secondConflicts;
-    }
-
-    public void setSecondConflicts(List<FeedbackConflict> secondConflicts) {
-        this.secondConflicts = secondConflicts;
     }
 
     /**
