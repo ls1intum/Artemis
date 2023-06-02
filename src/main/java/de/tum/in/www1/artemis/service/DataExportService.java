@@ -227,7 +227,7 @@ public class DataExportService {
             // there can be multiple student exams in rare cases because a student can request the creation of multiple student test exams
             Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             for (var studentExam : studentExams) {
-                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + studentExam.getId()));
+                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + studentExam.getExam().getSanitizedExamTitle() + "_" + studentExam.getId()));
                 createStudentExamExport(studentExam, examWorkingDir);
             }
         }
@@ -259,8 +259,8 @@ public class DataExportService {
         List<String> headers = new ArrayList<>();
         var examResults = getExamResultsStreamToPrint(studentResult, headers);
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)),
-                csvFormat)) {
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(
+                examWorkingDir.resolve("exam_" + studentExam.getExam().getSanitizedExamTitle() + "_" + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(examResults);
             printer.flush();
         }
@@ -295,7 +295,9 @@ public class DataExportService {
         String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
+        try (final var printer = new CSVPrinter(
+                Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getExam().getSanitizedExamTitle() + "_" + studentExam.getId() + CSV_FILE_EXTENSION)),
+                csvFormat)) {
             printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
                     studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
             printer.flush();
@@ -306,7 +308,7 @@ public class DataExportService {
         String[] headers = new String[] { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("general_user_information" + CSV_FILE_EXTENSION)), csvFormat)) {
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("general_user_information" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
             printer.flush();
         }
@@ -529,7 +531,7 @@ public class DataExportService {
                 .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.println();
             printer.print("Messages/Posts");
             printer.println();
@@ -656,8 +658,7 @@ public class DataExportService {
         }
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(exercisePath.resolve("plagiarism_case_" + plagiarismCase.getId() + CSV_FILE_EXTENSION)),
-                csvFormat)) {
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(exercisePath.resolve("plagiarism_case_" + plagiarismCase.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(dataStreamBuilder.build());
             printer.flush();
         }
@@ -688,7 +689,7 @@ public class DataExportService {
         }
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(
+        try (final var printer = new CSVPrinter(
                 Files.newBufferedWriter(outputPath.resolve("participation_" + submission.getParticipation().getId() + "_submission_" + submission.getId() + CSV_FILE_EXTENSION)),
                 csvFormat)) {
             printer.printRecord(getSubmissionStreamToPrint(submission));
