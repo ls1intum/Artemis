@@ -1,23 +1,23 @@
 package de.tum.in.www1.artemis.exercise.fileupload;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class FileUploadService {
+public class FileUploadTestService {
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
@@ -31,6 +31,15 @@ public class FileUploadService {
 
     @Autowired
     private ExamRepository examRepo;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     /**
      * creates and saves a file upload exercise in the repository
@@ -120,7 +129,7 @@ public class FileUploadService {
         courseRepo.save(course);
         examRepo.save(exam);
 
-        return ModelFactory.generateFileUploadExerciseForExam(filePattern, exerciseGroup);
+        return FileUploadTestFactory.generateFileUploadExerciseForExam(filePattern, exerciseGroup);
     }
 
     public FileUploadExercise createExamActiveFileUploadExercise(String filePattern) {
@@ -134,6 +143,60 @@ public class FileUploadService {
     public void setExampleSolutionPublicationDateAndSave(FileUploadExercise fileUploadExercise, ZonedDateTime solutionPublicationDate) {
         fileUploadExercise.setExampleSolutionPublicationDate(solutionPublicationDate);
         fileUploadExerciseRepository.save(fileUploadExercise);
+    }
+
+    public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise, boolean save) {
+        GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        instructionWithNoCriteria.get(0).setCredits(1);
+        instructionWithNoCriteria.get(0).setUsageCount(0);
+        emptyCriterion.setExercise(exercise);
+        emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+
+        GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
+        testCriterion.setStructuredGradingInstructions(instructions);
+
+        GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
+        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
+
+        testCriterion.setExercise(exercise);
+        var criteria = new ArrayList<GradingCriterion>();
+        criteria.add(emptyCriterion);
+        criteria.add(testCriterion);
+        criteria.add(testCriterion2);
+        exercise.setGradingCriteria(criteria);
+
+        if (save) {
+            gradingCriterionRepository.saveAll(criteria);
+        }
+
+        return exercise.getGradingCriteria();
+    }
+
+    // todo javadoc
+    public Feedback createAndSaveFeedback(GradingInstruction gradingInstruction) {
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(gradingInstruction);
+        feedbackRepository.save(feedback);
+        return feedback;
+    }
+
+    public ArrayList<StudentParticipation> setIndividualDueDate(FileUploadExercise fileUploadExercise, ArrayList<ZonedDateTime> dueDates) {
+        var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(fileUploadExercise.getId()));
+
+        int min = Math.min(participations.size(), dueDates.size());
+        for (int i = 0; i < min; i++) {
+            participations.get(i).setIndividualDueDate(dueDates.get(i));
+        }
+
+        studentParticipationRepository.saveAll(participations);
+        return participations;
+    }
+
+    public Set<StudentParticipation> getParticipationsOfExercise(FileUploadExercise fileUploadExercise) {
+        return studentParticipationRepository.findByExerciseId(fileUploadExercise.getId());
     }
 
 }
