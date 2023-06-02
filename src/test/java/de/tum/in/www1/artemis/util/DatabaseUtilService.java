@@ -2928,6 +2928,7 @@ public class DatabaseUtilService {
         return course;
     }
 
+    // todo: thos
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -2950,6 +2951,7 @@ public class DatabaseUtilService {
         return course;
     }
 
+    // todo: this
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
@@ -2971,6 +2973,7 @@ public class DatabaseUtilService {
         return fileUploadExercises;
     }
 
+    // todo: this
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
@@ -2983,6 +2986,7 @@ public class DatabaseUtilService {
         return course;
     }
 
+    // todo: this
     public List<FileUploadExercise> createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(String studentGroupName, String teachingAssistantGroupName,
             String editorGroupName, String instructorGroupName) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, teachingAssistantGroupName, editorGroupName,
@@ -3009,11 +3013,13 @@ public class DatabaseUtilService {
         return fileUploadExercises;
     }
 
+    // todo: this
     public Course addCourseWithFourFileUploadExercise() {
         var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment("tumuser", "tutor", "editor", "instructor");
         return addFileUploadExercisesToCourse(fileUploadExercises);
     }
 
+    // todo: this
     public Course addCourseWithFourFileUploadExercisesAndCustomUserGroups(String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
             String instructorGroupName) {
         var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(studentGroupName, teachingAssistantGroupName, editorGroupName,
@@ -3021,6 +3027,7 @@ public class DatabaseUtilService {
         return addFileUploadExercisesToCourse(fileUploadExercises);
     }
 
+    // todo: this
     private Course addFileUploadExercisesToCourse(List<FileUploadExercise> fileUploadExercises) {
         assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
         exerciseRepo.saveAll(fileUploadExercises);
@@ -3032,6 +3039,7 @@ public class DatabaseUtilService {
         return course;
     }
 
+    // todo: this
     public Course addCourseWithFileUploadExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         FileUploadExercise assessedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
@@ -3476,6 +3484,7 @@ public class DatabaseUtilService {
         return null;
     }
 
+    // todo: this
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
         participation.addSubmission(fileUploadSubmission);
@@ -4618,6 +4627,7 @@ public class DatabaseUtilService {
         return course;
     }
 
+    // todo: this
     public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
@@ -4633,6 +4643,7 @@ public class DatabaseUtilService {
         fileUploadSubmissionRepo.save(fileUploadSubmission);
     }
 
+    // todo: this
     public Course createCourseWithExamAndExercises(String loginPrefix) throws IOException {
         var course = addEmptyCourse();
 
