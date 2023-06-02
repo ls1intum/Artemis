@@ -16,6 +16,7 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() forceChannelName: boolean;
 
     @Input() minTitleLength: number;
+    @Input() isTestExam?: boolean;
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
