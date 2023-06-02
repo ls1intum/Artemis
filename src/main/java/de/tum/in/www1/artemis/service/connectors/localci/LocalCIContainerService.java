@@ -132,6 +132,17 @@ public class LocalCIContainerService {
     }
 
     /**
+     * Retrieve an archive from a running Docker container.
+     *
+     * @param containerId the id of the container.
+     * @param path        the path to the file or directory to be retrieved.
+     * @return a {@link TarArchiveInputStream} that can be used to read the archive.
+     */
+    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
+        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
+    }
+
+    /**
      * Retrieve the commit hash of the latest commit to a given repository on a given container for a given branch.
      * This is the commit hash that was checked out by the build job.
      *
@@ -143,8 +154,8 @@ public class LocalCIContainerService {
      */
     public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, String branchName) throws IOException {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
-        TarArchiveInputStream repositoryTarInputStream = new TarArchiveInputStream(
-                dockerClient.copyArchiveFromContainerCmd(containerId, "/repositories/" + repositoryType.toString() + "-repository/.git/refs/heads/" + branchName).exec());
+        TarArchiveInputStream repositoryTarInputStream = getArchiveFromContainer(containerId,
+                "/repositories/" + repositoryType.toString() + "-repository/.git/refs/heads/" + branchName);
         repositoryTarInputStream.getNextTarEntry();
         String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
         repositoryTarInputStream.close();

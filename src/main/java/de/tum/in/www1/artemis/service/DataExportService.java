@@ -36,14 +36,12 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
@@ -141,12 +139,7 @@ public class DataExportService {
     public DataExport requestDataExport() throws IOException {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        var login = SecurityUtils.getCurrentUserLogin();
-        if (login.isEmpty()) {
-            throw new AccessForbiddenException("Cannot request data export for anonymous user");
-        }
-        var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login.get())
-                .orElseThrow(() -> new EntityNotFoundException("User with login " + login.get() + " does not exist"));
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
