@@ -25,14 +25,14 @@ export class TitleChannelNameComponent implements OnInit {
             this.channelNamePrefix = '';
         }
         if (this.channelName === '' || (this.forceChannelName && this.channelName === undefined)) {
-            this.channelName = this.channelNamePrefix;
+            this.updateTitle(this.title || '');
         }
     }
 
     updateTitle(newTitle: string) {
         this.title = newTitle;
         this.titleChange.emit(this.title);
-        if (this.channelName !== undefined) {
+        if (this.channelName !== undefined || this.forceChannelName) {
             this.formatChannelName(this.channelNamePrefix + this.title);
         }
     }
