@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.HostConfig;
@@ -53,8 +52,6 @@ public class LocalCIBuildJobExecutionService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final DockerClient dockerClient;
-
     private final LocalCIContainerService localCIContainerService;
 
     /**
@@ -68,11 +65,10 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService, DockerClient dockerClient,
+    public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
             LocalCIContainerService localCIContainerService, XMLInputFactory localCIXMLInputFactory) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
-        this.dockerClient = dockerClient;
         this.localCIContainerService = localCIContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
@@ -196,7 +192,7 @@ public class LocalCIBuildJobExecutionService {
         // Get an input stream of the test result files.
         TarArchiveInputStream testResultsTarInputStream;
         try {
-            testResultsTarInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, testResultsPath).exec());
+            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, testResultsPath);
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.

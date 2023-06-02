@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.MailService;
 
 @Service
 public class SingleUserNotificationService {
@@ -40,19 +39,19 @@ public class SingleUserNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final MailService mailService;
+    private final GeneralInstantNotificationService notificationService;
 
     private final NotificationSettingsService notificationSettingsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
-            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService,
+            SimpMessageSendingOperations messagingTemplate, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
-        this.mailService = mailService;
+        this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -346,7 +345,7 @@ public class SingleUserNotificationService {
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
-     * Also creates and sends an email.
+     * Also creates and sends an instant notification.
      *
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
@@ -357,11 +356,13 @@ public class SingleUserNotificationService {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
-        boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
-        if (isAllowedBySettings) {
+        boolean isWebappNotificationAllowed = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification,
+                notification.getRecipient(), WEBAPP);
+        if (isWebappNotificationAllowed) {
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
-            prepareSingleUserNotificationEmail(notification, notificationSubject);
         }
+
+        prepareSingleUserInstantNotification(notification, notificationSubject);
     }
 
     private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
@@ -379,21 +380,17 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
-     * If the checks are successful creates and sends a corresponding email
+     * Checks if an instant notification should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
+     * If the checks are successful creates and sends a corresponding instant notification
      *
      * @param notification        that should be checked
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
+    private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject) {
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         // checks if this notification type has email support
-        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
-            boolean isAllowedBySettingsForEmail = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(),
-                    EMAIL);
-            if (isAllowedBySettingsForEmail) {
-                mailService.sendNotificationEmail(notification, notification.getRecipient(), notificationSubject);
-            }
+        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
+            notificationService.sendNotification(notification, notification.getRecipient(), notificationSubject);
         }
     }
 }
