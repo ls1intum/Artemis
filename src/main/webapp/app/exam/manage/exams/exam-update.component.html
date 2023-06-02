@@ -27,8 +27,7 @@
                     [(channelName)]="exam.channelName"
                     channelNamePrefix="exam-"
                     [hideTitleLabel]="true"
-                    [forceChannelName]="this.isImport"
-                    [isTestExam]="exam.testExam"
+                    [hideChannelName]="exam.testExam || (exam.id !== undefined && exam.channelName === undefined)"
                 >
                 </jhi-title-channel-name>
             </div>

@@ -204,8 +204,10 @@ public class LectureResource {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
+        if (lectureChannel != null) {
+            lecture.setChannelName(lectureChannel.getName());
+        }
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
-        lecture.setChannelName(lectureChannel.getName());
         return ResponseEntity.ok(lecture);
     }
 

@@ -14,11 +14,8 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() pattern: string;
     @Input() hideTitleLabel: boolean;
     @Input() emphasizeLabels = false;
-
-    @Input() forceChannelName: boolean;
-
+    @Input() hideChannelName?: boolean;
     @Input() minTitleLength: number;
-    @Input() isTestExam?: boolean;
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
@@ -32,13 +29,13 @@ export class TitleChannelNameComponent implements OnInit {
     updateTitle(newTitle: string) {
         this.title = newTitle;
         this.titleChange.emit(this.title);
-        if (this.channelName !== undefined || this.forceChannelName) {
+        if (this.channelName !== undefined && !this.hideChannelName) {
             this.formatChannelName(this.channelNamePrefix + this.title);
         }
     }
 
     formatChannelName(newName: string) {
-        if (!this.isTestExam) {
+        if (!this.hideChannelName) {
             this.channelName = newName.toLowerCase().slice(0, 30).replaceAll(' ', '-');
             this.channelNameChange.emit(this.channelName);
         }

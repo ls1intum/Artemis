@@ -12,7 +12,7 @@
         [pattern]="infoInputs.titleNamePattern"
         [hideTitleLabel]="true"
         [emphasizeLabels]="true"
-        [forceChannelName]="!this.isEdit"
+        [hideChannelName]="this.isExamMode || (this.isEdit && channelName === undefined)"
     ></jhi-title-channel-name>
 </div>
 
