@@ -11,6 +11,10 @@ import { IrisMessage } from 'app/entities/iris/iris-message.model';
 export class IrisSessionService {
     constructor(private readonly stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService, private httpMessageService: IrisHttpMessageService) {}
 
+    /**
+     * Get current session and create if not exists;
+     * @param exerciseId the exercise id to which this session will be attached
+     */
     getCurrentSessionOrCreate(exerciseId: number): void {
         let sessionId: number;
         this.httpSessionService
