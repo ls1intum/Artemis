@@ -26,7 +26,7 @@
             </div>
             <div *ngIf="learningGoal.dueDate" class="col-3" style="text-align: right">
                 <span> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
-                <span *ngIf="!dueDatePassed" class="badge" [ngClass]="getBadgeClass()"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
+                <span class="badge" [ngClass]="getBadgeClass()"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
             </div>
             <div class="col-2">
                 <a
