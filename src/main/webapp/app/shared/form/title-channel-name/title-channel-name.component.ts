@@ -29,9 +29,7 @@ export class TitleChannelNameComponent implements OnInit {
     updateTitle(newTitle: string) {
         this.title = newTitle;
         this.titleChange.emit(this.title);
-        if (this.channelName !== undefined && !this.hideChannelName) {
-            this.formatChannelName(this.channelNamePrefix + this.title);
-        }
+        this.formatChannelName(this.channelNamePrefix + this.title);
     }
 
     formatChannelName(newName: string) {
