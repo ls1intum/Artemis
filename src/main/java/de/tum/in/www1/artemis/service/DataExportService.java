@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -123,10 +122,6 @@ public class DataExportService {
     public DataExport requestDataExport() throws IOException {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        var login = SecurityUtils.getCurrentUserLogin();
-        if (login.isEmpty()) {
-            throw new AccessForbiddenException("Cannot request data export for anonymous user");
-        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         dataExport.setUser(user);
