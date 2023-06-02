@@ -41,6 +41,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public messagesRouteLoaded: boolean;
 
     private conversationServiceInstantiated = false;
+    private checkedForUnreadMessages = false;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -100,11 +101,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
-        this.setUpConversationService();
     }
 
     private setUpConversationService() {
-        if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated) {
+        if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated && this.messagesRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -115,6 +115,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                         this.subscribeToHasUnreadMessages();
                     },
                 });
+        } else if (!this.checkedForUnreadMessages) {
+            this.metisConversationService.checkForUnreadMessages(this.course!);
+            this.subscribeToHasUnreadMessages();
+            this.checkedForUnreadMessages = true;
         }
     }
 
@@ -140,6 +144,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+
+        this.setUpConversationService();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
@@ -227,7 +233,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.course = res.body;
                 }
 
-                this.setUpConversationService();
+                if (refresh) {
+                    this.setUpConversationService();
+                }
 
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             }),
