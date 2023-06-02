@@ -141,7 +141,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         }
         catch (FilePathParsingException e) {
             // if the file path is invalid, we don't need to delete it
-            log.warn("Could not delete file with path " + pictureFilePath + ". Assume already deleted, entity can be removed.", e);
+            log.warn("Could not delete file with path {}. Assume already deleted, entity can be removed.", pictureFilePath, e);
         }
     }
 
