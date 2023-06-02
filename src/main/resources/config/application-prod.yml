@@ -19,6 +19,9 @@ management:
             prometheus:
                 enabled: false
 
+artemis:
+    push-notification-relay: https://hermes.artemis.cit.tum.de
+
 spring:
     devtools:
         restart:

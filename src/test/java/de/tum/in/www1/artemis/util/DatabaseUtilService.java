@@ -3892,29 +3892,29 @@ public class DatabaseUtilService {
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
             dragItem1.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem1);
+            log.debug(dragItem1.toString());
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem2);
+            log.debug(dragItem2.toString());
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
             dragItem3.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem3);
+            log.debug(dragItem3.toString());
             DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
             dragItem4.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem4);
+            log.debug(dragItem4.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation1);
+            log.debug(dropLocation1.toString());
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation2);
+            log.debug(dropLocation2.toString());
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
             dropLocation3.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation3);
+            log.debug(dropLocation3.toString());
             DropLocation dropLocation4 = ((DragAndDropQuestion) question).getDropLocations().get(3);
             dropLocation4.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation4);
+            log.debug(dropLocation4.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
@@ -3971,23 +3971,23 @@ public class DatabaseUtilService {
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
             dragItem1.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem1);
+            log.debug(dragItem1.toString());
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem2);
+            log.debug(dragItem2.toString());
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
             dragItem3.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dragItem3);
+            log.debug(dragItem3.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation1);
+            log.debug(dropLocation1.toString());
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation2);
+            log.debug(dropLocation2.toString());
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
             dropLocation3.setQuestion((DragAndDropQuestion) question);
-            System.out.println(dropLocation3);
+            log.debug(dropLocation3.toString());
 
             submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
             submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
@@ -4151,8 +4151,8 @@ public class DatabaseUtilService {
         shortAnswerSpot1.addMappings(mapping1);
         assertThat(shortAnswerSolution1.getMappings()).isNotEmpty();
         assertThat(shortAnswerSpot1.getMappings()).isNotEmpty();
-        System.out.println(shortAnswerSolution1);
-        System.out.println(shortAnswerSpot1);
+        log.debug(shortAnswerSolution1.toString());
+        log.debug(shortAnswerSpot1.toString());
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
@@ -4163,8 +4163,8 @@ public class DatabaseUtilService {
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
         // invoke some util methods
-        System.out.println("ShortAnswer: " + sa);
-        System.out.println("ShortAnswer.hashCode: " + sa.hashCode());
+        log.debug("ShortAnswer: {}", sa);
+        log.debug("ShortAnswer.hashCode: {}", sa.hashCode());
         sa.copyQuestionId();
         return sa;
     }
@@ -4225,8 +4225,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping4);
         dnd.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println("DnD: " + dnd);
-        System.out.println("DnD.hashCode: " + dnd.hashCode());
+        log.debug("DnD: {}", dnd);
+        log.debug("DnD.hashCode: {}", dnd.hashCode());
         dnd.copyQuestionId();
         return dnd;
     }
@@ -4243,8 +4243,8 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println("MC: " + mc);
-        System.out.println("MC.hashCode: " + mc.hashCode());
+        log.debug("MC: {}", mc);
+        log.debug("MC.hashCode: {}", mc.hashCode());
         mc.copyQuestionId();
         return mc;
     }
