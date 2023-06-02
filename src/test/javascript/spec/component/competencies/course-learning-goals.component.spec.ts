@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { CourseLearningGoalsComponent } from 'app/overview/course-competencies/course-learning-goals.component';
+import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -36,8 +36,8 @@ const mockActivatedRoute = new MockActivatedRoute({
     }),
 });
 describe('CourseLearningGoals', () => {
-    let courseLearningGoalsComponentFixture: ComponentFixture<CourseLearningGoalsComponent>;
-    let courseLearningGoalsComponent: CourseLearningGoalsComponent;
+    let courseLearningGoalsComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
+    let courseLearningGoalsComponent: CourseCompetenciesComponent;
     let learningGoalService: CompetencyService;
     const mockCourseStorageService = {
         getCourse: () => {},
@@ -48,7 +48,7 @@ describe('CourseLearningGoals', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseCompetenciesComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
@@ -63,7 +63,7 @@ describe('CourseLearningGoals', () => {
         })
             .compileComponents()
             .then(() => {
-                courseLearningGoalsComponentFixture = TestBed.createComponent(CourseLearningGoalsComponent);
+                courseLearningGoalsComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
                 courseLearningGoalsComponent = courseLearningGoalsComponentFixture.componentInstance;
                 learningGoalService = TestBed.inject(CompetencyService);
                 const accountService = TestBed.inject(AccountService);
@@ -107,7 +107,7 @@ describe('CourseLearningGoals', () => {
         expect(getCourseStub).toHaveBeenCalledOnce();
         expect(getCourseStub).toHaveBeenCalledWith(1);
         expect(courseLearningGoalsComponent.course).toEqual(course);
-        expect(courseLearningGoalsComponent.learningGoals).toEqual([learningGoal]);
+        expect(courseLearningGoalsComponent.competencies).toEqual([learningGoal]);
         expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
     });
 
@@ -138,6 +138,6 @@ describe('CourseLearningGoals', () => {
         expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);
+        expect(courseLearningGoalsComponent.competencies).toHaveLength(2);
     });
 });

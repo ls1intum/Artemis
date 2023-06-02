@@ -11,17 +11,17 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
-    selector: 'jhi-course-learning-goals',
-    templateUrl: './course-learning-goals.component.html',
+    selector: 'jhi-course-competencies',
+    templateUrl: './course-competencies.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseLearningGoalsComponent implements OnInit {
+export class CourseCompetenciesComponent implements OnInit {
     @Input()
     courseId: number;
 
     isLoading = false;
     course?: Course;
-    learningGoals: Competency[] = [];
+    competencies: Competency[] = [];
     prerequisites: Competency[] = [];
 
     isCollapsed = true;
@@ -34,7 +34,7 @@ export class CourseLearningGoalsComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseStorageService: CourseStorageService,
-        private learningGoalService: CompetencyService,
+        private competencyService: CompetencyService,
     ) {}
 
     ngOnInit(): void {
@@ -49,19 +49,19 @@ export class CourseLearningGoalsComponent implements OnInit {
     private setCourse(course?: Course) {
         this.course = course;
         if (this.course && this.course.competencies && this.course.prerequisites) {
-            this.learningGoals = this.course.competencies;
+            this.competencies = this.course.competencies;
             this.prerequisites = this.course.prerequisites;
         } else {
             this.loadData();
         }
     }
 
-    get countLearningGoals() {
-        return this.learningGoals.length;
+    get countCompetencies() {
+        return this.competencies.length;
     }
 
-    get countMasteredLearningGoals() {
-        return this.learningGoals.filter((lg) => {
+    get countMasteredCompetencies() {
+        return this.competencies.filter((lg) => {
             if (lg.userProgress?.length && lg.masteryThreshold) {
                 return lg.userProgress.first()!.progress == 100 && lg.userProgress.first()!.confidence! >= lg.masteryThreshold!;
             }
@@ -78,9 +78,9 @@ export class CourseLearningGoalsComponent implements OnInit {
      */
     loadData() {
         this.isLoading = true;
-        forkJoin([this.learningGoalService.getAllForCourse(this.courseId), this.learningGoalService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
-            next: ([learningGoals, prerequisites]) => {
-                this.learningGoals = learningGoals.body!;
+        forkJoin([this.competencyService.getAllForCourse(this.courseId), this.competencyService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
+            next: ([competencies, prerequisites]) => {
+                this.competencies = competencies.body!;
                 this.prerequisites = prerequisites.body!;
                 this.isLoading = false;
             },
@@ -91,9 +91,9 @@ export class CourseLearningGoalsComponent implements OnInit {
     /**
      * Calculates a unique identity for each competency card shown in the component
      * @param index The index in the list
-     * @param learningGoal The competency of the current iteration
+     * @param competency The competency of the current iteration
      */
-    identify(index: number, learningGoal: Competency) {
-        return `${index}-${learningGoal.id}`;
+    identify(index: number, competency: Competency) {
+        return `${index}-${competency.id}`;
     }
 }
