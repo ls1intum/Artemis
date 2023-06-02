@@ -2,8 +2,13 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
+    ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
+    HistoryMessageLoadedAction,
     MessageStoreAction,
     MessageStoreState,
+    SessionReceivedAction,
+    StudentMessageSentAction,
     isActiveConversationMessageLoadedAction,
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
@@ -116,16 +121,18 @@ export class IrisStateStore implements OnDestroy {
             };
         }
         if (isHistoryMessageLoadedAction(action)) {
+            const castedAction = action as HistoryMessageLoadedAction;
             return {
                 ...state,
-                messages: [...state.messages, action.message],
+                messages: [...state.messages, castedAction.message],
                 isLoading: false,
                 error: '',
             };
         }
         if (isActiveConversationMessageLoadedAction(action)) {
+            const castedAction = action as ActiveConversationMessageLoadedAction;
             return {
-                messages: [...state.messages, action.message],
+                messages: [...state.messages, castedAction.message],
                 sessionId: state.sessionId,
                 isLoading: false,
                 numNewMessages: state.numNewMessages + 1,
@@ -133,24 +140,27 @@ export class IrisStateStore implements OnDestroy {
             };
         }
         if (isConversationErrorOccurredAction(action)) {
+            const castedAction = action as ConversationErrorOccurredAction;
             return {
                 ...state,
                 isLoading: false,
-                error: action.errorMessage,
+                error: castedAction.errorMessage,
             };
         }
         if (isSessionReceivedAction(action)) {
+            const castedAction = action as SessionReceivedAction;
             return {
                 ...state,
-                messages: action.messages,
-                sessionId: action.sessionId,
+                messages: castedAction.messages,
+                sessionId: castedAction.sessionId,
                 error: '',
             };
         }
         if (isStudentMessageSentAction(action)) {
+            const castedAction = action as StudentMessageSentAction;
             return {
                 ...state,
-                messages: [...state.messages, action.message],
+                messages: [...state.messages, castedAction.message],
                 isLoading: true,
                 error: '',
             };

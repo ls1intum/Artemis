@@ -12,7 +12,7 @@ export enum ActionType {
 export class NumNewMessagesResetAction {
     readonly type: ActionType;
 
-    public constructor(private readonly tmp: number = 1) {
+    public constructor() {
         this.type = ActionType.NUM_NEW_MESSAGES_RESET;
     }
 }
