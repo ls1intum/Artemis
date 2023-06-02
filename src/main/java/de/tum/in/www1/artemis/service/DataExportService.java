@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionServic
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
@@ -128,8 +127,7 @@ public class DataExportService {
         if (login.isEmpty()) {
             throw new AccessForbiddenException("Cannot request data export for anonymous user");
         }
-        var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login.get())
-                .orElseThrow(() -> new EntityNotFoundException("User with login " + login.get() + " does not exist"));
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
