@@ -4,7 +4,6 @@ import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
