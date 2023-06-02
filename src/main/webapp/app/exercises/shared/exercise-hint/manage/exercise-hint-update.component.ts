@@ -16,6 +16,8 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { onError } from 'app/shared/util/global.utils';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
@@ -37,6 +39,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     tasks: ProgrammingExerciseServerSideTask[];
 
     isSaving: boolean;
+    isGeneratingDescription: boolean;
     paramSub: Subscription;
 
     domainCommands = [new KatexCommand()];
@@ -51,6 +54,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         protected alertService: AlertService,
         private modalService: NgbModal,
+        protected codeHintService: CodeHintService,
         protected exerciseHintService: ExerciseHintService,
         private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -63,6 +67,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.isSaving = false;
+            this.isGeneratingDescription = false;
         });
         this.route.data.subscribe(({ exerciseHint, exercise }) => {
             this.exercise = exercise;
@@ -134,6 +139,21 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         } else {
             this.subscribeToSaveResponse(this.exerciseHintService.create(this.exercise.id!, this.exerciseHint));
         }
+    }
+
+    generateDescriptionForCodeHint() {
+        this.isGeneratingDescription = true;
+        this.codeHintService.generateDescriptionForCodeHint(this.exercise.id!, this.exerciseHint.id!).subscribe({
+            next: (response) => {
+                this.exerciseHint.description = response.body!.description;
+                this.exerciseHint.content = response.body!.content;
+                this.isGeneratingDescription = false;
+            },
+            error: (error) => {
+                this.isGeneratingDescription = false;
+                onError(this.alertService, error);
+            },
+        });
     }
 
     protected subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseHint>>) {

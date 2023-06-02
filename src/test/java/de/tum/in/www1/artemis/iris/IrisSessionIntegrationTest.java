@@ -11,15 +11,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 
 class IrisSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "irissessionintegration";
 
     @Autowired
-    private IrisSessionRepository irisSessionRepository;
+    private IrisChatSessionRepository irisChatSessionRepository;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private ProgrammingExercise exercise;
 
@@ -29,13 +34,15 @@ class IrisSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setIrisActivated(true);
+        programmingExerciseRepository.save(exercise);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession() throws Exception {
-        var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
-        var actualIrisSession = irisSessionRepository.findByIdElseThrow(irisSession.getId());
+        var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisChatSession.class, HttpStatus.CREATED);
+        var actualIrisSession = irisChatSessionRepository.findByIdElseThrow(irisSession.getId());
         assertEquals(database.getUserByLogin(TEST_PREFIX + "student1"), actualIrisSession.getUser());
         assertEquals(exercise, actualIrisSession.getExercise());
     }
