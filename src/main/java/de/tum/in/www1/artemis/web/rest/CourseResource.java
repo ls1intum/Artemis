@@ -36,7 +36,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -71,9 +74,6 @@ public class CourseResource {
     private static final String ENTITY_NAME = "course";
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
-
-    @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
 
     private final UserRepository userRepository;
 
@@ -110,6 +110,9 @@ public class CourseResource {
     private final CourseScoreCalculationService courseScoreCalculationService;
 
     private final GradingScaleRepository gradingScaleRepository;
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     private final ChannelService channelService;
 
@@ -328,6 +331,26 @@ public class CourseResource {
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
         return userCourses.toList();
+    }
+
+    /**
+     * GET /courses/groups : get all groups for all courses for administration purposes.
+     *
+     * @return the list of groups (the user has access to)
+     */
+    @GetMapping("courses/groups")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
+        log.debug("REST request to get all Groups for all Courses");
+        List<Course> courses = courseRepository.findAll();
+        Set<String> groups = new LinkedHashSet<>();
+        for (Course course : courses) {
+            groups.add(course.getInstructorGroupName());
+            groups.add(course.getEditorGroupName());
+            groups.add(course.getTeachingAssistantGroupName());
+            groups.add(course.getStudentGroupName());
+        }
+        return ResponseEntity.ok().body(groups);
     }
 
     /**
