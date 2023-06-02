@@ -15,20 +15,8 @@ function getExerciseGroups(equalPoints: boolean) {
         {
             id: 1,
             exercises: [
-                {
-                    id: 3,
-                    maxPoints: 100,
-                    numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-                {
-                    id: 2,
-                    maxPoints: 100,
-                    numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
+                { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                { id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
             ],
         },
     ];
