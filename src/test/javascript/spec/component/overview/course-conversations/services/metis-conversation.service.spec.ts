@@ -323,4 +323,18 @@ describe('MetisConversationService', () => {
             });
         });
     });
+
+    it.each([true, false])('should update subscription for unread messages', (unreadMessages: boolean) => {
+        jest.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
+        let numberOfSubscriptions = 0;
+
+        metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
+            expect(hasUnreadMessages).toBeTrue();
+            numberOfSubscriptions++;
+        });
+
+        metisConversationService.checkForUnreadMessages(course);
+
+        expect(numberOfSubscriptions).toBe(unreadMessages ? 1 : 0);
+    });
 });
