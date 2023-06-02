@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ResultService {
@@ -43,8 +42,6 @@ public class ResultService {
     private final RatingRepository ratingRepository;
 
     private final FeedbackRepository feedbackRepository;
-
-    private final SubmissionRepository submissionRepository;
 
     private final ComplaintRepository complaintRepository;
 
@@ -66,8 +63,8 @@ public class ResultService {
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
@@ -79,7 +76,6 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
-        this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
@@ -94,12 +90,11 @@ public class ResultService {
     /**
      * Handle the manual creation of a new result potentially including feedback
      *
-     * @param result                            newly created Result
-     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
-     * @param ratedResult                       override value for rated property of result
+     * @param result      newly created Result
+     * @param ratedResult override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
-    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
+    public Result createNewManualResult(Result result, boolean ratedResult) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -128,8 +123,8 @@ public class ResultService {
         return savedResult;
     }
 
-    public Result createNewRatedManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
-        return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
+    public Result createNewRatedManualResult(Result result) {
+        return createNewManualResult(result, true);
     }
 
     /**
@@ -164,26 +159,6 @@ public class ResultService {
             participantScoreRepository.clearAllByResultId(resultId);
         }
         feedbackConflictRepository.deleteAllByResultId(resultId);
-    }
-
-    /**
-     * Create a new example result for the provided submission ID.
-     *
-     * @param submissionId                      The ID of the submission (that is connected to an example submission) for which a result should get created
-     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
-     * @return The newly created (and empty) example result
-     */
-    public Result createNewExampleResultForSubmissionWithExampleSubmission(long submissionId, boolean isProgrammingExerciseWithFeedback) {
-        final var submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("No example submission with ID " + submissionId + " found!"));
-        if (!submission.isExampleSubmission()) {
-            throw new IllegalArgumentException("Submission is no example submission! Example results are not allowed!");
-        }
-
-        final var newResult = new Result();
-        newResult.setSubmission(submission);
-        newResult.setExampleResult(true);
-        return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
     }
 
     /**
