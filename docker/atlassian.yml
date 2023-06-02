@@ -4,21 +4,9 @@
 
 services:
     jira:
-        container_name: artemis-jira
-        hostname: jira
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-jira:9.4.3
-        pull_policy: always
-        volumes:
-          - artemis-jira-data:/var/atlassian/application-data/jira
-        ports:
-            - "8081:8080"
-        # expose the port to make it reachable docker internally even if the external port mapping changes
-        expose:
-            - "8080"
-        networks:
-            - artemis
+        extends:
+            file: ./jira.yml
+            service: jira
     bitbucket:
         container_name: artemis-bitbucket
         hostname: bitbucket
