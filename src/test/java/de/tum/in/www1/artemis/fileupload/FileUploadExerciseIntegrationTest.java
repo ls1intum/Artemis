@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.exercise.fileupload;
+package de.tum.in.www1.artemis.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
