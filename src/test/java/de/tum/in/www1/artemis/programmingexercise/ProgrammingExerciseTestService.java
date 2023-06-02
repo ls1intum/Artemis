@@ -915,6 +915,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
         // Import the exam
+        targetExam.setChannelName("testchannel-imported");
         final Exam received = request.postWithResponseBody("/api/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
 
         // Extract the programming exercise from the exam
