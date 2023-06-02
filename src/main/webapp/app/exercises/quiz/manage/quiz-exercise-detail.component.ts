@@ -598,4 +598,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.quizExercise.channelName = newName;
         this.cacheValidation();
     }
+
+    updateTitle(newTitle: string) {
+        this.quizExercise.title = newTitle;
+        this.cacheValidation();
+    }
 }

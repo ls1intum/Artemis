@@ -28,7 +28,8 @@
         <div class="edit-quiz">
             <form name="editForm" role="form" novalidate>
                 <jhi-title-channel-name
-                    [(title)]="quizExercise.title"
+                    [title]="quizExercise.title"
+                    (titleChange)="updateTitle($event)"
                     [channelName]="quizExercise.channelName"
                     (channelNameChange)="updateChannelName($event)"
                     channelNamePrefix="exercise-"
