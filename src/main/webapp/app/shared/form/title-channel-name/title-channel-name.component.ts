@@ -25,7 +25,7 @@ export class TitleChannelNameComponent implements OnInit {
         if (!this.channelNamePrefix) {
             this.channelNamePrefix = '';
         }
-        if (this.channelName === '' || (this.forceChannelName && this.channelName === undefined)) {
+        if ((this.channelName === '' || (this.forceChannelName && this.channelName === undefined)) && !this.isTestExam) {
             this.updateTitle(this.title || '');
         }
     }
@@ -39,7 +39,9 @@ export class TitleChannelNameComponent implements OnInit {
     }
 
     formatChannelName(newName: string) {
-        this.channelName = newName.toLowerCase().slice(0, 30).replaceAll(' ', '-');
-        this.channelNameChange.emit(this.channelName);
+        if (!this.isTestExam) {
+            this.channelName = newName.toLowerCase().slice(0, 30).replaceAll(' ', '-');
+            this.channelNameChange.emit(this.channelName);
+        }
     }
 }
