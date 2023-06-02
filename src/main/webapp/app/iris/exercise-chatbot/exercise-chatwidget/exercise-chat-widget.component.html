@@ -16,7 +16,8 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody>
-            <div *ngFor="let message of messages">
+            <div *ngFor="let message of messages; let i = index">
+                <p *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</p>
                 <div *ngFor="let content of message.content">
                     <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
                         <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>

@@ -6,6 +6,7 @@
             "inputMessage": "Write a message...",
             "accept": "Accept",
             "decline": "Decline",
+            "unreadMessages": "Unread messages",
             "buttonTooltip": "Start chatting with Iris!"
         }
     }
