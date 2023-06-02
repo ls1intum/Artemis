@@ -16,6 +16,13 @@ export class CourseAdminService {
     constructor(private http: HttpClient, private courseManagementService: CourseManagementService) {}
 
     /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
+    }
+
+    /**
      * creates a course using a POST request
      * @param course - the course to be created on the server
      * @param courseImage - the course icon file

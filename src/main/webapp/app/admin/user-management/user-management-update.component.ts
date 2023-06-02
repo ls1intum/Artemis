@@ -19,6 +19,7 @@ import { AdminUserService } from 'app/core/user/admin-user.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -59,6 +60,7 @@ export class UserManagementUpdateComponent implements OnInit {
         private languageHelper: JhiLanguageHelper,
         private userService: AdminUserService,
         private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private route: ActivatedRoute,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
@@ -85,7 +87,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 });
             }
         });
-        this.courseManagementService.getAllGroupsForAllCourses().subscribe((groups) => {
+        this.courseAdminService.getAllGroupsForAllCourses().subscribe((groups) => {
             this.allGroups = [];
             if (groups.body) {
                 groups.body.forEach((group) => {

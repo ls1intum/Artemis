@@ -328,26 +328,6 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/groups : get all groups for all courses for administration purposes.
-     *
-     * @return the list of groups (the user has access to)
-     */
-    @GetMapping("courses/groups")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
-        log.debug("REST request to get all Groups for all Courses");
-        List<Course> courses = courseRepository.findAll();
-        Set<String> groups = new LinkedHashSet<>();
-        for (Course course : courses) {
-            groups.add(course.getInstructorGroupName());
-            groups.add(course.getEditorGroupName());
-            groups.add(course.getTeachingAssistantGroupName());
-            groups.add(course.getStudentGroupName());
-        }
-        return ResponseEntity.ok().body(groups);
-    }
-
-    /**
      * GET /courses/courses-with-quiz : get all courses with quiz exercises for administration purposes.
      *
      * @return the list of courses
