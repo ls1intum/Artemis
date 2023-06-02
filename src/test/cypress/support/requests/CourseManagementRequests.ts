@@ -645,7 +645,7 @@ export class CourseManagementRequests {
             title,
             startDate,
             endDate,
-            channelName: titleLowercase(title),
+            channelName: 'lecture-' + titleLowercase(title),
         };
         return cy.request({
             url: `${BASE_API}lectures`,

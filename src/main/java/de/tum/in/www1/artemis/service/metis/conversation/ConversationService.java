@@ -126,6 +126,17 @@ public class ConversationService {
     }
 
     /**
+     * Determines if the user has unread messages in that course
+     *
+     * @param courseId       the id of the course
+     * @param requestingUser the user for which the conversations should be checked
+     * @return true if the user has unread messages in that course, false otherwise
+     */
+    public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
+    }
+
+    /**
      * Updates a conversation
      *
      * @param conversation the conversation to be updated
