@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionServic
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -111,12 +112,15 @@ public class DataExportService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final DataExportScheduleService dataExportScheduleService;
+
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
             QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService) {
+            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService,
+            DataExportScheduleService dataExportScheduleService) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -136,6 +140,7 @@ public class DataExportService {
         this.reactionRepository = reactionRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.dataExportScheduleService = dataExportScheduleService;
     }
 
     /**
@@ -157,6 +162,7 @@ public class DataExportService {
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
+        dataExportScheduleService.scheduleDataExportCreation(dataExport);
 
         createDataExport(dataExport);
         return dataExport;
