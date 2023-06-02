@@ -3,7 +3,6 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet id="20230530110000" author="anzinger" >
-        <!-- Add columns to grading_scale table to support grading for presentations -->
         <addColumn tableName="learning_goal">
             <column name="due_date" type="datetime(3)">
                 <constraints nullable="true"/>
