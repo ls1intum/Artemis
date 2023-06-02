@@ -86,10 +86,10 @@ The complaint process is as follows:
 
 2. The reviewer interacts with the "Assessment Dashboard" button of the desired course, which displays the table for all the course exercises.
 
-    +--------------------------------------------------------+--+--------------------------------------------------+
-    | .. figure:: assessment/assessment-dashboard-button.png |  | .. figure:: assessment/assessment-dashboard.png  |
-    |    :alt: Assessment Dashboard button                   |  |    :alt: Assessment Dashboard                    |
-    +--------------------------------------------------------+--+--------------------------------------------------+
+    +---------------------------------------------------------+--------------------------------------------------+
+    | .. figure:: assessment/assessment-dashboard-button.png  | .. figure:: assessment/assessment-dashboard.png  |
+    |    :alt: Assessment Dashboard button                    |    :alt: Assessment Dashboard                    |
+    +---------------------------------------------------------+--------------------------------------------------+
 
 
 3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assess students' submissions. 
@@ -101,22 +101,23 @@ The complaint process is as follows:
 
 4. For each submission, the reviewer decides on the student's complaint.
 
-    +----------------------------------------+----------------------------------------------+
-    | In case of a justification, the        | .. figure:: assessment/accept-complaint.png  |
-    | reviewer adds feedback blocks and      |    :alt: Accept Complaint                    |
-    | interacts with the "Accept             |                                              |
-    | complaint" button.                     |                                              |
-    +----------------------------------------+----------------------------------------------+
-    | Otherwise, the reviewer explains       | .. figure:: assessment/reject-complaint.png  |
-    | why the complaint was rejected         |    :alt: Reject Complaint                    |
-    | and interacts with the "Reject         |                                              |
-    +----------------------------------------+----------------------------------------------+
-    | If the reviewer cannot decide          | .. figure:: assessment/lock.png              |
-    | between accepting and rejecting,       |    :alt: Complaint Lock                      |
-    | it is possible to remove the lock      |                                              |
-    | so that another reviewer can           |                                              |
-    | evaluate the complaint.                |                                              |
-    +----------------------------------------+----------------------------------------------+
+    +------------------------------------+---------------------------------------------+
+    || In case of a justification, the   | .. figure:: assessment/accept-complaint.png |
+    || reviewer adds feedback blocks and |    :alt: Accept Complaint                   |
+    || interacts with the "Accept        |                                             |
+    || complaint" button.                |                                             |
+    +------------------------------------+---------------------------------------------+
+    || Otherwise, the reviewer explains  | .. figure:: assessment/reject-complaint.png |
+    || why the complaint was rejected    |    :alt: Reject Complaint                   |
+    || and interacts with the "Reject    |                                             |
+    || complaint" button.                |                                             |
+    +------------------------------------+---------------------------------------------+
+    || If the reviewer cannot decide     | .. figure:: assessment/lock.png             |
+    || between accepting and rejecting,  |    :alt: Complaint Lock                     |
+    || it is possible to remove the lock |                                             |
+    || so that another reviewer can      |                                             |
+    || evaluate the complaint.           |                                             |
+    +------------------------------------+---------------------------------------------+
 
 
 .. _exercise_more_feedback_request:
