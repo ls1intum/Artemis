@@ -98,8 +98,7 @@ describe('LectureUpdateComponent', () => {
     });
 
     it('should create lecture', fakeAsync(() => {
-        lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
-        lectureUpdateComponent.channelName = 'test1';
+        lectureUpdateComponent.lecture = { title: 'test1', channelName: 'test1' } as Lecture;
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
@@ -128,8 +127,7 @@ describe('LectureUpdateComponent', () => {
     }));
 
     it('should create lecture in wizard mode', () => {
-        lectureUpdateComponent.lecture = { title: '' } as Lecture;
-        lectureUpdateComponent.channelName = '';
+        lectureUpdateComponent.lecture = { title: '', channelName: '' } as Lecture;
         lectureUpdateComponent.isShowingWizardMode = true;
         lectureUpdateComponent.wizardComponent = lectureUpdateWizardComponent;
 
@@ -175,8 +173,7 @@ describe('LectureUpdateComponent', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
         lectureUpdateComponentFixture.detectChanges();
-        lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
-        lectureUpdateComponent.channelName = 'test1Updated';
+        lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated', channelName: 'test1Updated' } as Lecture;
 
         const updateSpy = jest.spyOn(lectureService, 'update').mockReturnValue(
             of<HttpResponse<Lecture>>(
@@ -252,8 +249,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
         lectureUpdateComponent.fileName = 'testFile';
         lectureUpdateComponent.processUnitMode = true;
-        lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
-        lectureUpdateComponent.channelName = 'test1';
+        lectureUpdateComponent.lecture = { title: 'test1', channelName: 'test1' } as Lecture;
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
