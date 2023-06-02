@@ -108,6 +108,22 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
+     * GET /api/courses/:courseId/unread-messages : Checks for unread messages of the current user
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
+     */
+    @GetMapping("/{courseId}/unread-messages")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
+    }
+
+    /**
      * GET /api/courses/:courseId/conversations/:conversationId/members/search: Searches for members of a conversation
      *
      * @param courseId       the id of the course
