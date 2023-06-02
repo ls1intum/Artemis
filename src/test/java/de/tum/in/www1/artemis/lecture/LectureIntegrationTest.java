@@ -50,7 +50,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         var lecture = this.course1.getLectures().stream().findFirst().get();
-        lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
+        lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(lecture);
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course

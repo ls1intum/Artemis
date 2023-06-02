@@ -35,6 +35,8 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -89,6 +91,8 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
  */
 @Service
 public class ProgrammingExerciseTestService {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -787,7 +791,7 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName("testImportProgrammingExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
         database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
@@ -1930,7 +1934,7 @@ public class ProgrammingExerciseTestService {
             try (Git git = new Git(repository)) {
                 List<DiffEntry> diffs = git.diff().setNewTree(newTreeIter).setOldTree(oldTreeIter).call();
                 for (DiffEntry entry : diffs) {
-                    System.out.println("Entry: " + entry);
+                    log.debug("Entry: {}", entry.toString());
                 }
                 return diffs;
             }

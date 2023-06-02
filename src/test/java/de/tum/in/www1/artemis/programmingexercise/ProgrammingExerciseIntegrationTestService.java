@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -1666,11 +1665,8 @@ class ProgrammingExerciseIntegrationTestService {
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, database.getDefaultPlagiarismOptions());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
+
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            // var entries = zipFile.entries();
-            // while(entries.hasMoreElements()) {
-            // System.out.println(entries.nextElement().getName());
-            // }
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
             assertThat(zipFile.getEntry("files/Submission-1.java/Submission-1.java")).isNotNull();
             assertThat(zipFile.getEntry("files/Submission-2.java/Submission-2.java")).isNotNull();
@@ -2042,13 +2038,12 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        String uniqueExerciseTitle = String.format("Title%d%d", System.nanoTime(), ThreadLocalRandom.current().nextInt(100));
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
-        programmingExercise.setShortName(uniqueExerciseTitle);
-        programmingExercise.setTitle(uniqueExerciseTitle);
+        programmingExercise.setShortName("ExerciseTitle");
+        programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
