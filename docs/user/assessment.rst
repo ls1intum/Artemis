@@ -102,39 +102,20 @@ The complaint process is as follows:
 4. For each submission, the reviewer decides on the student's complaint.
 
     +----------------------------------------+----------------------------------------------+
-    | .. role:: raw-html(raw)                | .. figure:: assessment/accept-complaint.png  |
-    |                                        |    :alt: Accept Complaint                    |
-    | .. raw:: html                          |                                              |
-    |                                        |                                              |
-    |     <div style="padding: 15px;">       |                                              |
-    |     In case of a justification, the    |                                              |
-    |     reviewer adds feedback blocks and  |                                              |
-    |     interacts with the "Accept         |                                              |
-    |     complaint" button.                 |                                              |
-    |     </div>                             |                                              |
+    | In case of a justification, the        | .. figure:: assessment/accept-complaint.png  |
+    | reviewer adds feedback blocks and      |    :alt: Accept Complaint                    |
+    | interacts with the "Accept             |                                              |
+    | complaint" button.                     |                                              |
     +----------------------------------------+----------------------------------------------+
-    | .. role:: raw-html(raw)                | .. figure:: assessment/reject-complaint.png  |
-    |                                        |    :alt: Reject Complaint                    |
-    | .. raw:: html                          |                                              |
-    |                                        |                                              |
-    |     <div style="padding: 15px;">       |                                              |
-    |     Otherwise, the reviewer explains   |                                              |
-    |     why the complaint was rejected     |                                              |
-    |     and interacts with the "Reject     |                                              |
-    |     complaint" button.                 |                                              |
-    |     </div>                             |                                              |
+    | Otherwise, the reviewer explains       | .. figure:: assessment/reject-complaint.png  |
+    | why the complaint was rejected         |    :alt: Reject Complaint                    |
+    | and interacts with the "Reject         |                                              |
     +----------------------------------------+----------------------------------------------+
-    | .. role:: raw-html(raw)                | .. figure:: assessment/lock.png              |
-    |                                        |    :alt: Complaint Lock                      |
-    | .. raw:: html                          |                                              |
-    |                                        |                                              |
-    |     <div style="padding: 15px;">       |                                              |
-    |     If the reviewer cannot decide      |                                              |
-    |     between accepting and rejecting,   |                                              |
-    |     it is possible to remove the lock  |                                              |
-    |     so that another reviewer can       |                                              |
-    |     evaluate the complaint.            |                                              |
-    |     </div>                             |                                              |
+    | If the reviewer cannot decide          | .. figure:: assessment/lock.png              |
+    | between accepting and rejecting,       |    :alt: Complaint Lock                      |
+    | it is possible to remove the lock      |                                              |
+    | so that another reviewer can           |                                              |
+    | evaluate the complaint.                |                                              |
     +----------------------------------------+----------------------------------------------+
 
 
