@@ -23,11 +23,11 @@ plan_key = "TESTS"
 repo_path = "../.."  # relative to this file
 
 
-def environ_or_required(key):
+def environ_or_required(key, required=True):
     # https://stackoverflow.com/a/45392259/4306257
     return (
-        {'default': os.environ.get(key)} if os.environ.get(key)
-        else {'required': True}
+        {'default': os.environ[key]} if key in os.environ and os.environ[key] != ""
+        else {'required': required}
     )
 
 
@@ -145,7 +145,7 @@ def coverage_to_table(covs, exclude_urls=False):
         filename_only = cov[0].rsplit("/", 1)[1]
         class_file = filename_only if exclude_urls else f"[{filename_only}]({cov[1]})"
         line_coverage = "N/A" if cov[2] is None else cov[2]
-        confirmation = "\u274C" if cov[2] is None else "\u2705\u274C"
+        confirmation = "❌" if cov[2] is None else "✅❌"
         table_data.append(f"| {class_file} | {line_coverage}% | {confirmation} |")
 
     table = "\n".join([header] + table_data)
@@ -163,7 +163,7 @@ def main(argv):
     )
     parser.add_argument(
         "--password", help="Bamboo password (optional, will be prompted if not provided)",
-        **environ_or_required("BAMBOO_PASSWORD")
+        **environ_or_required("BAMBOO_PASSWORD", required=False)
     )
     parser.add_argument(
         "--branch-name", default=None, help="Name of the Git branch you want to compare with the base branch (default: origin/develop)"
@@ -192,6 +192,8 @@ def main(argv):
     args = parser.parse_args(argv)
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
+    if args.password is None:
+        args.password = getpass.getpass("Please enter your Bamboo password: ")
     if args.branch_name is None:
         args.branch_name = get_branch_name()
         logging.info(f"Using current branch: {args.branch_name}")
@@ -201,8 +203,6 @@ def main(argv):
     if args.build_number is None:
         args.build_number = get_latest_build_number(args.username, args.password, args.build_id)
         logging.info(f"Using latest build number: {args.build_number}")
-    if args.password is None:
-        args.password = getpass.getpass("Please enter your Bamboo password: ")
 
     project_key = "ARTEMIS-TESTS"
 
@@ -230,14 +230,16 @@ def main(argv):
     if server_file_names:
         result += f"#### Server\n\n{server_table}\n\n"
 
-    logging.info("Info: \u2705\u274C in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
+    logging.info("Info: ✅❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
     logging.info("") # newline
 
     if args.print_results:
         print(result)
     else:
-        pyperclip.copy(result)
-        logging.info("Code coverage report copied to clipboard.")
+        result_utf16 = result.encode('utf-16le') + b'\x00\x00'
+        pyperclip.copy(result_utf16.decode('utf-16le'))
+        logging.info("Code coverage report copied to clipboard. Use --print-results to print it to console instead.")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
