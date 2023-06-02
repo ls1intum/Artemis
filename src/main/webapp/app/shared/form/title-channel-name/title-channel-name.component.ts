@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ControlContainer, NgForm } from '@angular/forms';
 
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     styleUrls: ['./title-channel-name.component.scss'],
+    viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
 })
 export class TitleChannelNameComponent implements OnInit {
     @Input() title?: string;
