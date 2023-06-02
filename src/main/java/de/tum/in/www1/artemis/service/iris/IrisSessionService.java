@@ -50,6 +50,15 @@ public class IrisSessionService {
     }
 
     /**
+     * Checks if the exercise connected to the session has Iris activated
+     *
+     * @param session the session to check for
+     */
+    public void checkIsIrisActivated(IrisSession session) {
+        getIrisSessionSubService(session).checkIsIrisActivated(session);
+    }
+
+    /**
      * Creates a new Iris session for the given exercise and user.
      * If a session already exists, a BadRequestException is thrown.
      *

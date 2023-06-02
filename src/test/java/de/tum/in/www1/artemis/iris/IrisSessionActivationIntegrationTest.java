@@ -61,7 +61,7 @@ class IrisSessionActivationIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void createMessageUnauthorized() throws Exception {
-        var irisSession = irisSessionService.createSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student3"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student3"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
@@ -72,7 +72,7 @@ class IrisSessionActivationIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void getMessagesUnauthorized() throws Exception {
-        var irisSession = irisSessionService.createSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student4"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student4"));
         var message1 = new IrisMessage();
         message1.setSession(irisSession);
         message1.setSentAt(ZonedDateTime.now());
