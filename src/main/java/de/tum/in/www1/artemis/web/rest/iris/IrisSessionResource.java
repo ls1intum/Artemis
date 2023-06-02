@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -31,17 +31,17 @@ public class IrisSessionResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final IrisSessionRepository irisSessionRepository;
+    private final IrisChatSessionRepository irisChatSessionRepository;
 
     private final UserRepository userRepository;
 
     private final IrisSessionService irisSessionService;
 
-    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            UserRepository userRepository, IrisSessionService irisSessionService) {
+    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.irisSessionRepository = irisSessionRepository;
+        this.irisChatSessionRepository = irisChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
     }
@@ -56,11 +56,11 @@ public class IrisSessionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSessionService.checkIrisActivated(exercise);
+        irisSessionService.checkIsIrisActivated(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var session = irisSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        var session = irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         irisSessionService.checkHasAccessToIrisSession(session, user);
         return ResponseEntity.ok(session);
     }
@@ -75,10 +75,10 @@ public class IrisSessionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSessionService.checkIrisActivated(exercise);
+        irisSessionService.checkIsIrisActivated(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        var session = irisSessionService.createSessionForProgrammingExercise(exercise, user);
+        var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
 
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
