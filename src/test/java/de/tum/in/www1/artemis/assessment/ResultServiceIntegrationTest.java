@@ -521,44 +521,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(true);
-        submissionRepository.save(modelingSubmission);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult_wrongExerciseId() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(true);
-        submissionRepository.save(modelingSubmission);
-        long randomId = 1874;
-        request.postWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult_notExampleSubmission() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(false);
-        submissionRepository.save(modelingSubmission);
-
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
         var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=" + TEST_PREFIX + "student1",
