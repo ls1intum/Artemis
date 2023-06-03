@@ -244,7 +244,7 @@ public class FileUploadTestService {
             storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
             assertThat(storedParticipation).isPresent();
         }
-        return storedParticipation.get();
+        return studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     public FileUploadSubmission addFileUploadSubmissionAndParticipation(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
