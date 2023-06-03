@@ -142,3 +142,19 @@
 .button:hover {
     background-color: #f5f5f5;
 }
+
+.scroll-to-bottom {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--secondary);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+}

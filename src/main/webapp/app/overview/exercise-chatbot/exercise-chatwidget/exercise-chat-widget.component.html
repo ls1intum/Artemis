@@ -22,7 +22,7 @@
         </div>
 
         <!-- main chat section -->
-        <div class="chat-body" #chatBody>
+        <div class="chat-body" #chatBody (scroll)="onChatScroll()">
             <div class="p-chat" *ngIf="!userAccepted">
                 <div class="message-text">{{ perMessage }}</div>
                 <div class="button-container">
@@ -32,6 +32,9 @@
             </div>
             <div *ngFor="let message of irisMessages" class="client-chat">{{ message }}</div>
             <div *ngFor="let message of userMessages" class="my-chat">{{ message }}</div>
+            <div class="scroll-to-bottom" *ngIf="!isScrolledToBottom" (click)="scrollToBottomOnClick()">
+                <fa-icon [icon]="faArrowDown"></fa-icon>
+            </div>
         </div>
 
         <!-- input field section -->

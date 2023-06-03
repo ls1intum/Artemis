@@ -2,6 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faExpand } from '@fortawesome/free-solid-svg-icons';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -26,12 +27,15 @@ export class ExerciseChatWidgetComponent implements OnInit {
     perMessage =
         "By choosing to continue, you agree that your interactions with IrisBot will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'. ";
     public firstName: string | undefined;
+    isScrolledToBottom = true;
+
     constructor(private dialog: MatDialog, private route: ActivatedRoute, private localStorage: LocalStorageService, private accountService: AccountService) {}
 
     // Icons
     faPaperPlane = faPaperPlane;
     faExpand = faExpand;
     faXmark = faXmark;
+    faArrowDown = faArrowDown;
 
     ngOnInit() {
         //localStorage.removeItem('ge86let');
@@ -92,5 +96,21 @@ export class ExerciseChatWidgetComponent implements OnInit {
 
         this.userAccepted = true;
         this.irisMessages.push('Hey! How can I help you?');
+    }
+
+    scrollToBottomOnClick() {
+        const chatBody = this.chatBody.nativeElement;
+        chatBody.scrollTop = chatBody.scrollHeight;
+        this.isScrolledToBottom = true;
+    }
+
+    onChatScroll() {
+        const chatBody = this.chatBody.nativeElement;
+        const scrollHeight = chatBody.scrollHeight;
+        const scrollTop = chatBody.scrollTop;
+        const clientHeight = chatBody.clientHeight;
+        const isScrollAtBottom = scrollHeight - scrollTop === clientHeight;
+
+        this.isScrolledToBottom = isScrollAtBottom;
     }
 }
