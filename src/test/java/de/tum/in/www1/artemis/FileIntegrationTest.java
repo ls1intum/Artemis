@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 
@@ -51,6 +52,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private LectureRepository lectureRepo;
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     @BeforeEach
     void initTestCase() {
@@ -158,10 +162,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = fileUploadTestService.createAndSaveActiveFileUploadExercise("some pattern");
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadTestService.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);

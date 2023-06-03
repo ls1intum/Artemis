@@ -387,10 +387,10 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         {
             final FileUploadSubmission submission1 = FileUploadTestFactory.generateFileUploadSubmission(true);
-            database.addFileUploadSubmission(fileUploadExercise, submission1, TEST_PREFIX + "student1");
+            fileUploadTestService.addFileUploadSubmission(fileUploadExercise, submission1, TEST_PREFIX + "student1");
 
             final FileUploadSubmission submission2 = FileUploadTestFactory.generateFileUploadSubmission(true);
-            database.addFileUploadSubmission(fileUploadExercise, submission2, TEST_PREFIX + "student2");
+            fileUploadTestService.addFileUploadSubmission(fileUploadExercise, submission2, TEST_PREFIX + "student2");
 
             fileUploadTestService.setIndividualDueDate(fileUploadExercise, new ArrayList<>(List.of(ZonedDateTime.now().plusHours(2), individualDueDate)));
         }

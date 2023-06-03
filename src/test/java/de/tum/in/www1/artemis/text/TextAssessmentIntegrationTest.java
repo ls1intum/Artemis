@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
@@ -93,6 +94,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private TextAssessmentService textAssessmentService;
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     private TextExercise textExercise;
 
@@ -513,7 +517,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        database.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+        fileUploadTestService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 new ArrayList<>());
 
         final Participation participation = request.get("/api/exercises/" + fileUploadExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST,
@@ -543,7 +547,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        database.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+        fileUploadTestService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 new ArrayList<>());
 
         request.get("/api/text-editor/" + fileUploadSubmission.getParticipation().getId(), HttpStatus.BAD_REQUEST, Participation.class);

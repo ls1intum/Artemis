@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -85,6 +86,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private GradingScaleService gradingScaleService;
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -756,7 +760,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateExamExercise() throws Exception {
-        final FileUploadExercise exercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
+        final FileUploadExercise exercise = fileUploadTestService.createAndSaveExamActiveFileUploadExercise("file pattern");
         StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise,
                 database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
@@ -785,12 +789,11 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateOk() throws Exception {
-        final var course = database.addCourseWithFileUploadExercise();
-        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().orElseThrow();
+        FileUploadExercise exercise = fileUploadTestService.createAndSaveActiveFileUploadExercise("jpg");
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
-        var submission = database.addFileUploadSubmission(exercise, FileUploadTestFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
+        var submission = fileUploadTestService.addFileUploadSubmission(exercise, FileUploadTestFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
         submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());

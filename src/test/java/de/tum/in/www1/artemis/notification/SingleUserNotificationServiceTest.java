@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
@@ -73,6 +74,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     private User user;
 
@@ -321,8 +325,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testNotifyUsersAboutAssessedExerciseSubmission() {
-        Course testCourse = database.addCourseWithFileUploadExercise();
-        Exercise testExercise = testCourse.getExercises().iterator().next();
+        Exercise testExercise = fileUploadTestService.createAndSaveActiveFileUploadExercise("pdf");
+        Course testCourse = testExercise.getCourseViaExerciseGroupOrCourseMember();
 
         User studentWithParticipationAndSubmissionAndAutomaticResult = database.getUserByLogin(TEST_PREFIX + "student1");
         User studentWithParticipationAndSubmissionAndManualResult = database.getUserByLogin(TEST_PREFIX + "student2");

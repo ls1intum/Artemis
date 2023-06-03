@@ -1,10 +1,15 @@
 package de.tum.in.www1.artemis.exercise.fileupload;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +45,18 @@ public class FileUploadTestService {
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
+    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     /**
      * creates and saves a file upload exercise in the repository
@@ -197,6 +214,153 @@ public class FileUploadTestService {
 
     public Set<StudentParticipation> getParticipationsOfExercise(FileUploadExercise fileUploadExercise) {
         return studentParticipationRepository.findByExerciseId(fileUploadExercise.getId());
+    }
+
+    /**
+     * Stores participation of the user with the given login for the given exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param login    login of the user
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                login, false);
+        if (storedParticipation.isEmpty()) {
+            User user = getUserByLogin(login);
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setParticipant(user);
+            participation.setExercise(exercise);
+            studentParticipationRepository.save(participation);
+            storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            assertThat(storedParticipation).isPresent();
+        }
+        return studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
+    // todo: and participation
+    public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmission(fileUploadSubmission);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        studentParticipationRepository.save(participation);
+        return fileUploadSubmission;
+    }
+
+    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        fileUploadSubmissionRepository.save(submission);
+        return submission;
+    }
+
+    public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
+        var fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
+
+        // Create a dummy file
+        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
+        if (!Files.exists(uploadedFilePath)) {
+            Files.createDirectories(uploadedFileDir);
+            Files.createFile(uploadedFilePath);
+        }
+        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        fileUploadSubmissionRepository.save(fileUploadSubmission);
+    }
+
+    // todo: put into different Service!!
+    public User getUserByLogin(String login) {
+        // we convert to lowercase for convenience, because logins have to be lower case
+        return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+    }
+
+    @NotNull
+    public FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
+        Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
+        if (exercise.isEmpty()) {
+            fail("Could not find file upload exercise with title " + title);
+        }
+        else {
+            if (exercise.get() instanceof FileUploadExercise) {
+                return (FileUploadExercise) exercise.get();
+            }
+        }
+        fail("Could not find file upload exercise with title " + title);
+        // just to prevent compiler warnings, we have failed anyway here
+        return new FileUploadExercise();
+    }
+
+    public Course addCourseWithFourFileUploadExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp.plusHours(1), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        courseRepo.save(course);
+
+        var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(course);
+        fileUploadExerciseRepository.saveAll(fileUploadExercises);
+        course.setExercises(new HashSet<>(fileUploadExercises));
+
+        return course;
+    }
+
+    public Set<FileUploadExercise> createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(Course course) {
+        FileUploadExercise releasedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureTimestamp.plusHours(1), "png,pdf",
+                course);
+        releasedFileUploadExercise.setTitle("released");
+        FileUploadExercise finishedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureTimestamp.plusHours(1), "png,pdf",
+                course);
+        finishedFileUploadExercise.setTitle("finished");
+        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        assessedFileUploadExercise.setTitle("assessed");
+        FileUploadExercise noDueDateFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, null, pastTimestamp, "png,pdf", course);
+        noDueDateFileUploadExercise.setTitle("noDueDate");
+
+        var fileUploadExercises = new HashSet<FileUploadExercise>();
+        fileUploadExercises.add(releasedFileUploadExercise);
+        fileUploadExercises.add(finishedFileUploadExercise);
+        fileUploadExercises.add(assessedFileUploadExercise);
+        fileUploadExercises.add(noDueDateFileUploadExercise);
+        return fileUploadExercises;
+    }
+
+    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin, List<Feedback> feedbacks) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+
+        submissionRepository.save(fileUploadSubmission);
+
+        participation.addSubmission(fileUploadSubmission);
+        Result result = new Result();
+        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setScore(100D);
+        result.setParticipation(participation);
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
+        result.setFeedbacks(feedbacks);
+        result = resultRepository.save(result);
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
+        result = resultRepository.save(result);
+        result.setSubmission(fileUploadSubmission);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmission.addResult(result);
+        fileUploadSubmission.getParticipation().addResult(result);
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        studentParticipationRepository.save(participation);
+        return fileUploadSubmission;
+    }
+
+    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
     }
 
 }

@@ -10,8 +10,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -69,6 +67,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -348,6 +347,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
@@ -1555,7 +1557,7 @@ public class DatabaseUtilService {
                 submission = submissionRepository.save(submission);
             }
             else if (exercise instanceof FileUploadExercise fileUploadExercise) {
-                submission = saveFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                submission = fileUploadTestService.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmission(false), instructor.getLogin());
             }
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setTestRun(true);
@@ -1798,7 +1800,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(text);
 
         ExerciseGroup fileUploadGroup = exam.getExerciseGroups().get(2);
-        // todo
+
         Exercise fileUpload = FileUploadTestFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
         fileUploadGroup.addExercise(fileUpload);
         exerciseRepo.save(fileUpload);
@@ -2394,12 +2396,6 @@ public class DatabaseUtilService {
         return exerciseRepo.save(textExercise);
     }
 
-    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
-        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
-        return exerciseRepo.save(fileUploadExercise);
-    }
-
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
@@ -2929,7 +2925,6 @@ public class DatabaseUtilService {
         return course;
     }
 
-    // todo: thos
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -2949,105 +2944,6 @@ public class DatabaseUtilService {
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
         exerciseRepo.save(fileUploadExercise);
-        return course;
-    }
-
-    // todo: this
-    public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
-        courseRepo.save(course);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
-
-        FileUploadExercise releasedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
-        releasedFileUploadExercise.setTitle("released");
-        FileUploadExercise finishedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
-        finishedFileUploadExercise.setTitle("finished");
-        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
-        assessedFileUploadExercise.setTitle("assessed");
-
-        var fileUploadExercises = new ArrayList<FileUploadExercise>();
-        fileUploadExercises.add(releasedFileUploadExercise);
-        fileUploadExercises.add(finishedFileUploadExercise);
-        fileUploadExercises.add(assessedFileUploadExercise);
-        return fileUploadExercises;
-    }
-
-    // todo: this
-    public Course addCourseWithThreeFileUploadExercise() {
-        var fileUploadExercises = createFileUploadExercisesWithCourse();
-        assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
-        exerciseRepo.saveAll(fileUploadExercises);
-        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
-        Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
-        List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises).as("three exercises got stored").hasSize(3);
-        assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
-        return course;
-    }
-
-    // todo: this
-    public List<FileUploadExercise> createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(String studentGroupName, String teachingAssistantGroupName,
-            String editorGroupName, String instructorGroupName) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, teachingAssistantGroupName, editorGroupName,
-                instructorGroupName);
-        int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
-        courseRepo.save(course);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
-
-        FileUploadExercise releasedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
-        releasedFileUploadExercise.setTitle("released");
-        FileUploadExercise finishedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
-        finishedFileUploadExercise.setTitle("finished");
-        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
-        assessedFileUploadExercise.setTitle("assessed");
-        FileUploadExercise noDueDateFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, null, pastTimestamp, "png,pdf", course);
-        noDueDateFileUploadExercise.setTitle("noDueDate");
-
-        var fileUploadExercises = new ArrayList<FileUploadExercise>();
-        fileUploadExercises.add(releasedFileUploadExercise);
-        fileUploadExercises.add(finishedFileUploadExercise);
-        fileUploadExercises.add(assessedFileUploadExercise);
-        fileUploadExercises.add(noDueDateFileUploadExercise);
-        return fileUploadExercises;
-    }
-
-    // todo: this
-    public Course addCourseWithFourFileUploadExercise() {
-        var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment("tumuser", "tutor", "editor", "instructor");
-        return addFileUploadExercisesToCourse(fileUploadExercises);
-    }
-
-    // todo: this
-    public Course addCourseWithFourFileUploadExercisesAndCustomUserGroups(String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-            String instructorGroupName) {
-        var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(studentGroupName, teachingAssistantGroupName, editorGroupName,
-                instructorGroupName);
-        return addFileUploadExercisesToCourse(fileUploadExercises);
-    }
-
-    // todo: this
-    private Course addFileUploadExercisesToCourse(List<FileUploadExercise> fileUploadExercises) {
-        assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
-        exerciseRepo.saveAll(fileUploadExercises);
-        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
-        Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
-        List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises).as("four exercises got stored").hasSize(4);
-        assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
-        return course;
-    }
-
-    // todo: this
-    public Course addCourseWithFileUploadExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        FileUploadExercise assessedFileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
-        assessedFileUploadExercise.setTitle("assessed");
-        course.addExercises(assessedFileUploadExercise);
-        courseRepo.save(course);
-        exerciseRepo.save(assessedFileUploadExercise);
         return course;
     }
 
@@ -3106,11 +3002,12 @@ public class DatabaseUtilService {
                 return course;
             }
             case "file-upload" -> {
-                course = addCourseWithFileUploadExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
+                exercise = fileUploadTestService.createAndSaveActiveFileUploadExercise("jpg");
+                course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
+                    fileUploadTestService.addFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             }
@@ -3246,7 +3143,7 @@ public class DatabaseUtilService {
                 exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
+                    fileUploadTestService.addFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
                         saveResultInParticipation(submission, result);
@@ -3484,61 +3381,6 @@ public class DatabaseUtilService {
             return programmingSubmissionRepo.save((ProgrammingSubmission) submission);
         }
         return null;
-    }
-
-    // todo: this
-    public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
-        participation.addSubmission(fileUploadSubmission);
-        fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmissionRepo.save(fileUploadSubmission);
-        studentParticipationRepo.save(participation);
-        return fileUploadSubmission;
-    }
-
-    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
-            String assessorLogin, List<Feedback> feedbacks) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-
-        submissionRepository.save(fileUploadSubmission);
-
-        participation.addSubmission(fileUploadSubmission);
-        Result result = new Result();
-        result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100D);
-        result.setParticipation(participation);
-        if (exercise.getReleaseDate() != null) {
-            result.setCompletionDate(exercise.getReleaseDate());
-        }
-        else { // exam exercises do not have a release date
-            result.setCompletionDate(ZonedDateTime.now());
-        }
-        result.setFeedbacks(feedbacks);
-        result = resultRepo.save(result);
-        for (Feedback feedback : feedbacks) {
-            feedback.setResult(result);
-        }
-        result = resultRepo.save(result);
-        result.setSubmission(fileUploadSubmission);
-        fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmission.addResult(result);
-        fileUploadSubmission.getParticipation().addResult(result);
-        fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
-        studentParticipationRepo.save(participation);
-        return fileUploadSubmission;
-    }
-
-    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
-            String assessorLogin) {
-        return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
-    }
-
-    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        participation.addSubmission(submission);
-        submission.setParticipation(participation);
-        fileUploadSubmissionRepo.save(submission);
-        return submission;
     }
 
     public QuizSubmission saveQuizSubmission(QuizExercise exercise, QuizSubmission submission, String login) {
@@ -4614,7 +4456,7 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
 
         var fileUploadExercise = findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
-        createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
+        fileUploadTestService.createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
 
         var textExercise = findTextExerciseWithTitle(course.getExercises(), "Text");
         var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
@@ -4629,23 +4471,6 @@ public class DatabaseUtilService {
         return course;
     }
 
-    // todo: this
-    public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
-        var fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
-
-        // Create a dummy file
-        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
-        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
-        if (!Files.exists(uploadedFilePath)) {
-            Files.createDirectories(uploadedFileDir);
-            Files.createFile(uploadedFilePath);
-        }
-        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
-        fileUploadSubmissionRepo.save(fileUploadSubmission);
-    }
-
-    // todo: this
     public Course createCourseWithExamAndExercises(String loginPrefix) throws IOException {
         var course = addEmptyCourse();
 
@@ -4653,7 +4478,7 @@ public class DatabaseUtilService {
         var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
         var fileUploadExercise = FileUploadTestFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
-        createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
+        fileUploadTestService.createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
         exerciseGroup1.addExercise(fileUploadExercise);
         exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
 

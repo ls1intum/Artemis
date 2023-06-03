@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -52,6 +53,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     private ModelingExercise modelingExercise;
 
@@ -636,7 +640,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         var fileUploadExercise = database.getFirstExerciseWithType(course, FileUploadExercise.class);
         var fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
 
-        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        fileUploadSubmission = fileUploadTestService.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         courseRepository.save(course);
         database.addComplaintToSubmission(fileUploadSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         var fileUploadComplaint = complaintRepo.findByResultId(fileUploadSubmission.getResultWithComplaint().getId()).orElseThrow();

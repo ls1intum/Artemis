@@ -13,6 +13,7 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -22,12 +23,16 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
+import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "submissionexportintegration";
+
+    @Autowired
+    private FileUploadTestService fileUploadTestService;
 
     private ModelingExercise modelingExercise;
 
@@ -86,12 +91,12 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
-                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"),
-                        TEST_PREFIX + "student1");
-                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"),
-                        TEST_PREFIX + "student2");
-                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"),
-                        TEST_PREFIX + "student3");
+                fileUploadSubmission1 = fileUploadTestService.addFileUploadSubmission(fileUploadExercise,
+                        FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
+                fileUploadSubmission2 = fileUploadTestService.addFileUploadSubmission(fileUploadExercise,
+                        FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
+                fileUploadSubmission3 = fileUploadTestService.addFileUploadSubmission(fileUploadExercise,
+                        FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
 
                 try {
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
