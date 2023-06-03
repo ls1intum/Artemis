@@ -55,6 +55,7 @@ class ArchitectureTest {
     @Test
     void testNoJunitJupiterAssertions() {
         ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
+
         noJunitJupiterAssertions.check(testClasses);
     }
 }
