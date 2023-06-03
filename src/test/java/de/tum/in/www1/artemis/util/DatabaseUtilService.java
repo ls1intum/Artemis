@@ -1557,7 +1557,8 @@ public class DatabaseUtilService {
                 submission = submissionRepository.save(submission);
             }
             else if (exercise instanceof FileUploadExercise fileUploadExercise) {
-                submission = fileUploadTestService.addFileUploadSubmission(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                submission = fileUploadTestService.addFileUploadSubmissionAndParticipation(fileUploadExercise, FileUploadTestFactory.generateFileUploadSubmission(false),
+                        instructor.getLogin());
             }
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setTestRun(true);
@@ -3007,7 +3008,7 @@ public class DatabaseUtilService {
 
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    fileUploadTestService.addFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
+                    fileUploadTestService.addFileUploadSubmissionAndParticipation((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             }
@@ -3143,7 +3144,7 @@ public class DatabaseUtilService {
                 exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     FileUploadSubmission submission = FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    fileUploadTestService.addFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
+                    fileUploadTestService.addFileUploadSubmissionAndParticipation(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
                         saveResultInParticipation(submission, result);

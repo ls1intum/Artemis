@@ -91,11 +91,11 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
-                fileUploadSubmission1 = fileUploadTestService.addFileUploadSubmission(fileUploadExercise,
+                fileUploadSubmission1 = fileUploadTestService.addFileUploadSubmissionAndParticipation(fileUploadExercise,
                         FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
-                fileUploadSubmission2 = fileUploadTestService.addFileUploadSubmission(fileUploadExercise,
+                fileUploadSubmission2 = fileUploadTestService.addFileUploadSubmissionAndParticipation(fileUploadExercise,
                         FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
-                fileUploadSubmission3 = fileUploadTestService.addFileUploadSubmission(fileUploadExercise,
+                fileUploadSubmission3 = fileUploadTestService.addFileUploadSubmissionAndParticipation(fileUploadExercise,
                         FileUploadTestFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
 
                 try {

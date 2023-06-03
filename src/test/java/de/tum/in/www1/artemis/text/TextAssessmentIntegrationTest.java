@@ -512,8 +512,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getParticipationForNonTextExercise() throws Exception {
-        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        FileUploadExercise fileUploadExercise = FileUploadTestFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), ZonedDateTime.now().plusDays(2), "png,pdf",
+                textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);

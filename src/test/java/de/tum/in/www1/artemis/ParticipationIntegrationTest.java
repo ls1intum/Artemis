@@ -793,7 +793,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
-        var submission = fileUploadTestService.addFileUploadSubmission(exercise, FileUploadTestFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
+        var submission = fileUploadTestService.addFileUploadSubmissionAndParticipation(exercise, FileUploadTestFactory.generateFileUploadSubmission(true),
+                TEST_PREFIX + "student1");
         submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());

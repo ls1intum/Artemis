@@ -164,7 +164,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadTestService.createAndSaveActiveFileUploadExercise("some pattern");
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadTestService.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);

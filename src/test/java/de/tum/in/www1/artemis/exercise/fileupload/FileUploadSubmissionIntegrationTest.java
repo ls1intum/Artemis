@@ -194,8 +194,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllSubmissionsOfExercise() throws Exception {
-        FileUploadSubmission submission1 = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, notSubmittedFileUploadSubmission, TEST_PREFIX + "student1");
-        FileUploadSubmission submission2 = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student2");
+        FileUploadSubmission submission1 = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, notSubmittedFileUploadSubmission,
+                TEST_PREFIX + "student1");
+        FileUploadSubmission submission2 = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student2");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK,
                 FileUploadSubmission.class);
@@ -221,7 +223,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void canSeeStudentDetailsInSubmissionListAsInstructor() throws Exception {
-        FileUploadSubmission submission1 = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
+        FileUploadSubmission submission1 = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student1");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true",
                 HttpStatus.OK, FileUploadSubmission.class);
@@ -235,7 +238,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getAllSubmissionsOfExerciseAsStudent() throws Exception {
-        fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
 
         request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
@@ -243,8 +246,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllSubmittedSubmissionsOfExercise() throws Exception {
-        FileUploadSubmission submission1 = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
-        fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, notSubmittedFileUploadSubmission, TEST_PREFIX + "student2");
+        FileUploadSubmission submission1 = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student1");
+        fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, notSubmittedFileUploadSubmission, TEST_PREFIX + "student2");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true",
                 HttpStatus.OK, FileUploadSubmission.class);
@@ -267,9 +271,11 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmissionWithoutAssessment() throws Exception {
-        FileUploadSubmission submission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
-        fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student2"); // tests prioritizing in-time submissions
-                                                                                                                                       // over late
+        FileUploadSubmission submission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student1");
+        fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student2"); // tests prioritizing in-time
+                                                                                                                                                       // submissions
+        // over late
         // submissions
 
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -291,7 +297,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void getLateSubmissionWithoutAssessment() throws Exception {
         fileUploadTestService.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
-        FileUploadSubmission lateSubmission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student1");
+        FileUploadSubmission lateSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, lateFileUploadSubmission,
+                TEST_PREFIX + "student1");
 
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -311,7 +318,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void testGetLateSubmissionWithoutAssessmentLock() throws Exception {
         fileUploadTestService.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
-        FileUploadSubmission lateSubmission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student1");
+        FileUploadSubmission lateSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, lateFileUploadSubmission,
+                TEST_PREFIX + "student1");
 
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -342,7 +350,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getFileUploadSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
-        fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, submittedFileUploadSubmission, TEST_PREFIX + "student1");
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.FORBIDDEN, FileUploadSubmission.class);
@@ -592,7 +600,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmissionById_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
@@ -604,7 +612,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmissionByID_asTA_withResult() throws Exception {
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
         Participation studentParticipation = fileUploadTestService.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
         Result result = database.addResultToParticipation(studentParticipation, fileUploadSubmission);
 
@@ -619,7 +627,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmissionById_asTA_withResult_wrongResultId() throws Exception {
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
         Participation studentParticipation = database.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
         Result result = database.addResultToParticipation(studentParticipation, fileUploadSubmission);
 
@@ -650,7 +658,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSubmissionByID_asStudent() throws Exception {
         FileUploadSubmission fileUploadSubmission = FileUploadTestFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadTestService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadTestService.addFileUploadSubmissionAndParticipation(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.FORBIDDEN, FileUploadSubmission.class);
