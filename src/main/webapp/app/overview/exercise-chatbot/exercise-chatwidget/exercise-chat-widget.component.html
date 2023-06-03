@@ -39,13 +39,14 @@
 
         <!-- input field section -->
         <div class="chat-input">
-            <input
+            <textarea
                 [(ngModel)]="newMessage"
+                rows="1"
                 type="text"
                 class="form-control"
                 (keyup.enter)="onSend()"
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
-            />
+            ></textarea>
             <button [disabled]="!userAccepted" (click)="onSend()" class="btn btn-primary btn-md btn-circle">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
