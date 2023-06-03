@@ -33,10 +33,6 @@ describe('IrisWebsocketService', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(irisWebsocketService).toBeTruthy();
-    });
-
     it('should subscribe to a channel, get session updates and notify store about new messages', fakeAsync(() => {
         const websocketSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(newMessageObservable);

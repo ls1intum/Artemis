@@ -7,16 +7,26 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 
+/**
+ * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
+ */
 @Injectable()
 export class IrisSessionService {
+    /**
+     * Creates an instance of IrisSessionService.
+     * @param stateStore The IrisStateStore for managing the state of the application.
+     * @param httpSessionService The IrisHttpSessionService for HTTP operations related to sessions.
+     * @param httpMessageService The IrisHttpMessageService for HTTP operations related to messages.
+     */
     constructor(private readonly stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService, private httpMessageService: IrisHttpMessageService) {}
 
     /**
-     * Get current session and create if not exists;
-     * @param exerciseId the exercise id to which this session will be attached
+     * Retrieves the current session or creates a new one if it doesn't exist.
+     * @param exerciseId The exercise ID to which the session will be attached.
      */
     getCurrentSessionOrCreate(exerciseId: number): void {
         let sessionId: number;
+
         this.httpSessionService
             .getCurrentSession(exerciseId)
             .toPromise()
@@ -41,6 +51,10 @@ export class IrisSessionService {
             });
     }
 
+    /**
+     * Creates a new session for the given exercise ID.
+     * @param exerciseId The exercise ID for which to create a new session.
+     */
     private createNewSession(exerciseId: number): void {
         this.httpSessionService.createSessionForProgrammingExercise(exerciseId).subscribe(
             (irisSessionResponse: any) => {
@@ -50,6 +64,10 @@ export class IrisSessionService {
         );
     }
 
+    /**
+     * Dispatches an error action with the specified error message.
+     * @param error The error message.
+     */
     private dispatchError(error: string): void {
         this.stateStore.dispatch(new ConversationErrorOccurredAction(error));
     }
