@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.util.Objects;
 
+import javax.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,20 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         if (!Objects.equals(chatSession.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
+    }
+
+    /**
+     * Checks if the exercise connected to IrisChatSession has Iris enabled
+     *
+     * @param session The session to check
+     */
+    @Override
+    public void checkIsIrisActivated(IrisSession session) {
+        var chatSession = castToSessionType(session, IrisChatSession.class);
+        if (!chatSession.getExercise().isIrisActivated()) {
+            throw new BadRequestException("Iris is not activated for exercise " + chatSession.getExercise().getId());
+        }
+
     }
 
     /**
