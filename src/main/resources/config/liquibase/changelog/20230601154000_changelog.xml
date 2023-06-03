@@ -2,15 +2,22 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet author="baboci" id="20230601154000" context="prod">
+    <changeSet author="baboci" id="20230601154000">
         <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
         <comment>Step 1: Create channels for lectures that do not have a channel and update post</comment>
         <sql>
             INSERT INTO conversation (id, course_id, lecture_id, name, description,discriminator, is_public, is_announcement, creation_date)
-            SELECT null, l.course_id, l.id, CONCAT(LOWER(REPLACE(LEFT(l.title, 20), ' ', '-')), '-', l.id), CONCAT('Description of lecture: ', l.title), 'C', true, false, CURRENT_TIMESTAMP
+            SELECT null, l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), CONCAT('Description of lecture: ', l.title), 'C', true, false, NOW()
             FROM lecture l
             LEFT JOIN conversation c ON l.id = c.lecture_id
-            WHERE c.lecture_id IS NULL;
+            LEFT JOIN course c2 on l.course_id = c2.id
+            WHERE c.lecture_id IS NULL
+              AND c2.info_sharing_config != 0
+              AND NOT EXISTS (
+                        SELECT 1
+                        FROM conversation
+                        WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id)
+                    );
         </sql>
         <sql>
             UPDATE post p
@@ -21,11 +28,18 @@
         </sql>
         <comment>Step 2: Create channels for exercises that do not have a channel</comment>
         <sql>
-            INSERT INTO conversation (id, course_id, lecture_id, name, description,discriminator, is_public, is_announcement, creation_date)
-            SELECT null, e.course_id, e.id, CONCAT(LOWER(REPLACE(LEFT(e.title, 20), ' ', '-')), '-', e.id), CONCAT('Description of exercise: ', e.title), 'C', true, false, CURRENT_TIMESTAMP
+            INSERT INTO conversation (id, course_id, exercise_id, name, description,discriminator, is_public, is_announcement, creation_date)
+            SELECT null, e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), CONCAT('Description of exercise: ', e.title), 'C', true, false, NOW()
             FROM exercise e
             LEFT JOIN conversation c ON e.id = c.exercise_id
-            WHERE c.exercise_id IS NULL;
+            LEFT JOIN course c2 on e.course_id = c2.id
+            WHERE c.exercise_id IS NULL
+              AND c2.info_sharing_config != 0
+              AND NOT EXISTS (
+                        SELECT 1
+                        FROM conversation
+                        WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id)
+                    );
         </sql>
         <sql>
             UPDATE post p
@@ -33,6 +47,51 @@
             LEFT JOIN conversation c ON e.id = c.exercise_id
             SET p.exercise_id = null, p.conversation_id = c.id
             WHERE p.conversation_id IS NULL;
+        </sql>
+        <comment>Step 3: Create conversation participants for channels of lectures or exercises that do not have participants at all</comment>
+        <sql>
+            INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
+            SELECT uid, convid, MAX(is_moderator), is_hidden, is_favorite, NOW(), 0
+            FROM (
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator, false as is_hidden, false as is_favorite, NOW(), 0
+                     FROM conversation conv
+                              LEFT JOIN lecture l ON conv.lecture_id = l.id
+                              JOIN course c ON l.course_id = c.id
+                              JOIN user_groups ug ON c.student_group_name = ug.`groups` OR c.instructor_group_name = ug.`groups` OR c.teaching_assistant_group_name = ug.`groups`
+                              JOIN jhi_user u ON ug.user_id = u.id
+                              JOIN jhi_user_authority jua ON u.id = jua.user_id
+                              JOIN jhi_authority r ON jua.authority_name = r.name
+                              LEFT JOIN conversation_participant cp ON conv.id = cp.conversation_id AND u.id = cp.user_id
+                     WHERE (
+                               SELECT COUNT(*)
+                               FROM conversation_participant cp
+                                        JOIN conversation c2 ON c2.id = cp.conversation_id
+                               WHERE c2.lecture_id = l.id
+                           ) = 0
+                 ) AS subquery
+            GROUP BY uid, convid;
+        </sql>
+        <sql>
+            INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
+            SELECT uid, convid, MAX(is_moderator), is_hidden, is_favorite, NOW(), 0
+            FROM (
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator, false as is_hidden, false as is_favorite, NOW(), 0
+                     FROM conversation conv
+                              LEFT JOIN exercise e ON conv.exercise_id = e.id
+                              JOIN course c ON e.course_id = c.id
+                              JOIN user_groups ug ON c.student_group_name = ug.`groups` OR c.instructor_group_name = ug.`groups` OR c.teaching_assistant_group_name = ug.`groups`
+                              JOIN jhi_user u ON ug.user_id = u.id
+                              JOIN jhi_user_authority jua ON u.id = jua.user_id
+                              JOIN jhi_authority r ON jua.authority_name = r.name
+                              LEFT JOIN conversation_participant cp ON conv.id = cp.conversation_id AND u.id = cp.user_id
+                     WHERE (
+                               SELECT COUNT(*)
+                               FROM conversation_participant cp
+                                        JOIN conversation c2 ON c2.id = cp.conversation_id
+                               WHERE c2.exercise_id = e.id
+                           ) = 0
+                 ) AS subquery
+            GROUP BY uid, convid;
         </sql>
     </changeSet>
 </databaseChangeLog>
