@@ -1,8 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import { faExpand } from '@fortawesome/free-solid-svg-icons';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircleInfo, faExpand, faPaperPlane, faRobot, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -36,6 +33,8 @@ export class ExerciseChatWidgetComponent implements OnInit {
     faExpand = faExpand;
     faXmark = faXmark;
     faArrowDown = faArrowDown;
+    faRobot = faRobot;
+    faCircleInfo = faCircleInfo;
 
     ngOnInit() {
         //localStorage.removeItem('ge86let');
@@ -109,8 +108,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
         const scrollHeight = chatBody.scrollHeight;
         const scrollTop = chatBody.scrollTop;
         const clientHeight = chatBody.clientHeight;
-        const isScrollAtBottom = scrollHeight - scrollTop === clientHeight;
-
-        this.isScrolledToBottom = isScrollAtBottom;
+        this.isScrolledToBottom = scrollHeight - scrollTop === clientHeight;
     }
 }

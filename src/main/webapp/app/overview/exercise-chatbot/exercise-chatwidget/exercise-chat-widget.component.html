@@ -12,11 +12,17 @@
         <div class="client">
             <div [class]="headerClass">
                 <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="openComponentInNewWindow()" class="header-icon">
-                    <fa-icon size="lg" [icon]="faExpand"></fa-icon>
+                    <fa-icon size="sm" [icon]="faExpand"></fa-icon>
                 </button>
-                <h2 style="text-align: center">Iris</h2>
+                <h3 style="text-align: center">
+                    <fa-icon size="xs" [icon]="faRobot"></fa-icon>
+                    Iris
+                    <a [routerLink]="'/about'" target="_blank">
+                        <fa-icon size="2xs" style="vertical-align: middle" [icon]="faCircleInfo" class="header-icon"></fa-icon>
+                    </a>
+                </h3>
                 <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="closeChat()" class="header-icon">
-                    <fa-icon size="lg" [icon]="faXmark"></fa-icon>
+                    <fa-icon size="sm" [icon]="faXmark"></fa-icon>
                 </button>
             </div>
         </div>
