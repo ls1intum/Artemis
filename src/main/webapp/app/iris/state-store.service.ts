@@ -9,7 +9,7 @@ import {
     isHistoryMessageLoadedAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
-} from 'app/iris/message-store.model';
+} from 'app/iris/state-store.model';
 
 type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: string) => void };
 

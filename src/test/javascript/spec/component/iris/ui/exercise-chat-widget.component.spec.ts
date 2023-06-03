@@ -8,7 +8,7 @@ import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { SessionReceivedAction, StudentMessageSentAction } from 'app/iris/message-store.model';
+import { SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

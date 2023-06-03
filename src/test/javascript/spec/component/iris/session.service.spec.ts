@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/message-store.model';
+import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';

@@ -7,7 +7,7 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ActiveConversationMessageLoadedAction, SessionReceivedAction } from 'app/iris/message-store.model';
+import { ActiveConversationMessageLoadedAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { mockServerMessage } from '../../helpers/sample/iris-sample-data';
 
 describe('IrisWebsocketService', () => {

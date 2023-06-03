@@ -7,7 +7,7 @@ import {
     MessageStoreState,
     SessionReceivedAction,
     StudentMessageSentAction,
-} from 'app/iris/message-store.model';
+} from 'app/iris/state-store.model';
 import { skip, take } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';

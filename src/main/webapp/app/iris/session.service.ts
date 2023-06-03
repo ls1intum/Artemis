@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/message-store.model';
+import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
