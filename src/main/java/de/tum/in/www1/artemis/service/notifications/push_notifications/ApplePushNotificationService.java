@@ -22,7 +22,7 @@ public class ApplePushNotificationService extends PushNotificationService {
 
     private final PushNotificationDeviceConfigurationRepository repository;
 
-    @Value("${artemis.push-notification-relay:#{Optional.empty()}}")
+    @Value("${artemis.push-notification-relay:#{null}}")
     private Optional<String> relayServerBaseUrl;
 
     public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {

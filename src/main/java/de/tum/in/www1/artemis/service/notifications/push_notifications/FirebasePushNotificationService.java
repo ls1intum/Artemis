@@ -24,7 +24,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
 
     private final PushNotificationDeviceConfigurationRepository repository;
 
-    @Value("${artemis.push-notification-relay:#{Optional.empty()}}")
+    @Value("${artemis.push-notification-relay:#{null}}")
     private Optional<String> relayServerBaseUrl;
 
     public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate) {
@@ -37,7 +37,6 @@ public class FirebasePushNotificationService extends PushNotificationService {
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl) {
         // The relay server accepts at most 500 messages per batch
         List<List<RelayNotificationRequest>> batches = Lists.partition(requests, 500);
-        ;
         var futures = batches.stream().map(batch -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl))).toList()
                 .toArray(new CompletableFuture[0]);
 
