@@ -46,6 +46,8 @@ public class NotificationConstants {
 
     public static final String DATA_EXPORT_CREATED_TITLE = "artemisApp.singleUserNotification.title.dataExportCreated";
 
+    public static final String DATA_EXPORT_FAILED_TITLE = "artemisApp.singleUserNotification.title.dataExportFailed";
+
     public static final String COURSE_ARCHIVE_STARTED_TITLE = "artemisApp.groupNotification.title.courseArchiveStarted";
 
     public static final String COURSE_ARCHIVE_FINISHED_TITLE = "artemisApp.groupNotification.title.courseArchiveFinished";
@@ -126,6 +128,8 @@ public class NotificationConstants {
     public static final String FILE_SUBMISSION_SUCCESSFUL_TEXT = "artemisApp.singleUserNotification.text.fileSubmissionSuccessful";
 
     public static final String DATA_EXPORT_CREATED_TEXT = "artemisApp.singleUserNotification.text.dataExportCreated";
+
+    public static final String DATA_EXPORT_FAILED_TEXT = "artemisApp.singleUserNotification.text.dataExportFailed";
 
     public static final String COURSE_ARCHIVE_STARTED_TEXT = "artemisApp.groupNotification.text.courseArchiveStarted";
 
@@ -231,7 +235,8 @@ public class NotificationConstants {
             .put(CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE).put(CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_CREATE_GROUP_CHAT_TITLE)
             .put(CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_ADD_USER_CHANNEL_TITLE).put(CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
             .put(CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE).put(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
-            .put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE).put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE).build();
+            .put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE).put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE)
+            .put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

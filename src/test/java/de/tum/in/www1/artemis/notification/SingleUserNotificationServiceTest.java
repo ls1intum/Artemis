@@ -112,6 +112,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Channel channel;
 
+    private DataExport dataExport;
+
     /**
      * Sets up all needed mocks and their wanted behavior
      */
@@ -203,6 +205,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         channel.setCreator(userTwo);
         channel.setCreationDate(ZonedDateTime.now());
         channel.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
+
+        dataExport = new DataExport();
+        dataExport.setUser(user);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -512,6 +517,22 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
                 .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testDataExportNotification_dataExportCreated() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+        singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
+        verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_CREATED_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testDataExportNotification_dataExportFailed() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED));
+        singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
+        verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_FAILED_TITLE);
         verifyEmail();
     }
 

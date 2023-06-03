@@ -74,11 +74,41 @@ public class SingleUserNotificationFactory {
         return notification;
     }
 
-    public static SingleUserNotification createNotification(DataExport dataExport, User recipient) {
-        var notification = new SingleUserNotification(recipient, DATA_EXPORT_CREATED_TITLE, DATA_EXPORT_CREATED_TEXT, false, new String[0]);
-        notification.setTransientAndStringTarget(createDataExportTarget(dataExport, "data-exports"));
+    /**
+     * Creates an instance of SingleUserNotification for a successful data export creation.
+     *
+     * @param dataExport the data export that was created
+     * @param recipient  the user that should be notified (the requester of the data export)
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(DataExport dataExport, NotificationType type, User recipient) {
+        var title = DATA_EXPORT_CREATED_TITLE;
+        var text = DATA_EXPORT_CREATED_TEXT;
+        if (type == NotificationType.DATA_EXPORT_FAILED) {
+            title = DATA_EXPORT_FAILED_TITLE;
+            text = DATA_EXPORT_FAILED_TEXT;
+        }
+        var notification = new SingleUserNotification(recipient, title, text, false, new String[0]);
+        if (type == NotificationType.DATA_EXPORT_FAILED) {
+            notification.setPriority(HIGH);
+        }
+        if (type == NotificationType.DATA_EXPORT_CREATED) {
+            notification.setTransientAndStringTarget(createDataExportTarget(dataExport, "data-exports"));
+        }
+        else {
+            notification.setTransientAndStringTarget(new NotificationTarget());
+        }
         return notification;
+    }
 
+    /**
+     * Creates an instance of SingleUserNotification for a failed data export creation.
+     *
+     * @param recipient the user that should be notified (the requester of the data export)
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotificationDataExportFailed(User recipient) {
+        return new SingleUserNotification(recipient, DATA_EXPORT_FAILED_TITLE, DATA_EXPORT_FAILED_TEXT, false, new String[0]);
     }
 
     /**

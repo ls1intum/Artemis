@@ -312,6 +312,9 @@ public class NotificationTargetFactory {
      */
     public static String extractNotificationUrl(Notification notification, String baseUrl) {
         NotificationTarget target = notification.getTargetTransient();
+        if (target == null) {
+            return "";
+        }
         StringBuilder url = new StringBuilder(baseUrl);
         if (target.getMainPage() != null) {
             url.append("/").append(target.getMainPage());

@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
     template: `
         <h3 jhiTranslate="legal.privacy.title">Datenschutzerklärung</h3>
         <div [innerHTML]="privacyStatement"></div>
-        <a *ngIf="isAuthenticated" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-export']"> </a>
+        <a *ngIf="isAuthenticated" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
     `,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -10,4 +10,8 @@ public enum DataExportState {
     public boolean isDownloadable() {
         return this == DOWNLOADED || this == EMAIL_SENT;
     }
+
+    public boolean hasBeenDownloaded() {
+        return this == DOWNLOADED || this == DOWNLOADED_DELETED;
+    }
 }

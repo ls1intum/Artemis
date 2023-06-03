@@ -15,6 +15,8 @@ import { HttpResponse } from '@angular/common/http';
 import { DataExport } from 'app/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('DataExportComponent', () => {
     let fixture: ComponentFixture<DataExportComponent>;
@@ -22,6 +24,7 @@ describe('DataExportComponent', () => {
     let dataExportService: DataExportService;
     let accountService: AccountService;
     let alertService: AlertService;
+    let route: ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -32,7 +35,14 @@ describe('DataExportComponent', () => {
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),
             ],
-            providers: [MockProvider(AlertService), { provide: AccountService, useClass: MockAccountService }],
+            providers: [
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute(),
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -41,6 +51,7 @@ describe('DataExportComponent', () => {
                 dataExportService = TestBed.inject(DataExportService);
                 accountService = TestBed.inject(AccountService);
                 alertService = TestBed.inject(AlertService);
+                route = TestBed.inject(ActivatedRoute);
             });
     });
 
@@ -69,8 +80,6 @@ describe('DataExportComponent', () => {
         component.requestExport();
         expect(dataExportServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnceWith('artemisApp.dataExport.requestSuccess');
-
-        expect(component.canDownload).toBeTrue();
     });
     it('should call alert service when requesting fails', () => {
         jest.spyOn(dataExportService, 'requestDataExport').mockReturnValue(throwError({ status: 500 }));
@@ -79,11 +88,32 @@ describe('DataExportComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnceWith('artemisApp.dataExport.requestError');
         expect(component.canDownload).toBeFalse();
     });
-    it('should call data export service when data export is downloaded', fakeAsync(() => {
+    it('should call data export service when data export is downloaded', () => {
         const dataExportServiceSpy = jest.spyOn(dataExportService, 'downloadDataExport').mockReturnValue(of<HttpResponse<Blob>>({} as unknown as HttpResponse<Blob>));
         component.canDownload = true;
         component.dataExportId = 1;
         component.downloadDataExport();
         expect(dataExportServiceSpy).toHaveBeenCalledOnceWith(1);
-    }));
+    });
+    it.each([true, false])('should execute correct checks on init on init', (downloadMode: boolean) => {
+        if (downloadMode) {
+            route.params = of({ id: 1 });
+        }
+        const canRequestSpy = jest.spyOn(dataExportService, 'canRequestDataExport').mockReturnValue(of(true));
+        const canDownloadAnyDataExportSpy = jest.spyOn(dataExportService, 'canDownloadAnyDataExport').mockReturnValue(of({ id: 1 } as DataExport));
+        const canDownloadSpecificDataExportSpy = jest.spyOn(dataExportService, 'canDownloadSpecificDataExport').mockReturnValue(of(true));
+        component.ngOnInit();
+        if (downloadMode) {
+            expect(component.canRequestDataExport).toBeFalse();
+            expect(canRequestSpy).not.toHaveBeenCalled();
+            expect(canDownloadAnyDataExportSpy).not.toHaveBeenCalled();
+            expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnceWith(1);
+            expect(component.canDownload).toBeTrue();
+            expect(component.dataExportId).toBe(1);
+        } else {
+            expect(canRequestSpy).toHaveBeenCalledOnce();
+            expect(canDownloadAnyDataExportSpy).toHaveBeenCalledOnce();
+            expect(component.canRequestDataExport).toBeTrue();
+        }
+    });
 });

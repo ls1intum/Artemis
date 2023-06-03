@@ -62,14 +62,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findOneByLogin(String login);
 
-    @Query("""
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.dataExports
-            WHERE user.login = :#{#login}
-            """)
-    Optional<User> findOneWithDataExportsByLogin(String login);
-
     default User findOneWithDataExportsByLoginElseThrow(String login) {
         return findOneWithDataExportsByLogin(login).orElseThrow(() -> new EntityNotFoundException("User with login \"" + login + "\" not found"));
     }
@@ -82,6 +74,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "dataExports" })
+    Optional<User> findOneWithDataExportsByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
@@ -378,6 +373,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
+    @NotNull
+    default User getUserWithDataExports() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithDataExportsByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
     /**
      * Retrieve a user by its login, or else throw exception
      *
@@ -617,9 +619,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
-    }
-
-    default User findOneWithGroupsAndAuthoritiesByIdOrElseThrow(long userId) {
-        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 }

@@ -28,15 +28,36 @@ describe('DataExportService', () => {
         dataExport.requestDate = dayjs();
         dataExport.creationDate = dayjs();
         service.requestDataExport().subscribe((resp) => expect(resp).toEqual(dataExport));
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/data-export` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/data-exports` });
         req.flush(dataExport);
         tick();
     }));
 
     it('should make GET request to download data export', fakeAsync(() => {
         service.downloadDataExport(1).subscribe();
-        const req = httpMock.expectOne({ method: 'GET', url: `api/data-export/1` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/data-exports/1` });
         req.flush(new Blob());
+        tick();
+    }));
+
+    it('should make GET request to check if any data export can be downloaded', fakeAsync(() => {
+        service.canDownloadAnyDataExport().subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `api/data-exports/can-download` });
+        req.flush(true);
+        tick();
+    }));
+
+    it('should make GET request to check if a specific data export can be downloaded', fakeAsync(() => {
+        service.canDownloadSpecificDataExport(1).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `api/data-exports/1/can-download` });
+        req.flush(true);
+        tick();
+    }));
+
+    it('should make GET request to check if a data export can be requested', fakeAsync(() => {
+        service.canRequestDataExport().subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `api/data-exports/can-request` });
+        req.flush(true);
         tick();
     }));
 });

@@ -38,14 +38,12 @@ public class DataExportResource {
     @PutMapping("data-exports")
     @PreAuthorize("hasRole('USER')")
     public DataExport requestDataExport() throws IOException {
-        // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
-        // for now we return the data export object, so the client can make the request to download the export.
         try {
             return dataExportService.requestDataExport();
         }
         catch (Exception e) {
-            log.error("Could not create data export", e);
-            throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
+            log.error("Could not request data export", e);
+            throw new InternalServerErrorException("Could not request data export:" + e.getMessage());
         }
     }
 

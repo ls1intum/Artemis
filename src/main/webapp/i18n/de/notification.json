@@ -113,7 +113,9 @@
                 "addUserChannel": "Du wurdest zu einem Kanal hinzugefügt",
                 "removeUserGroupChat": "Du wurdest aus einem Gruppenchat entfernt",
                 "addUserGroupChat": "Du wurdest zu einem Gruppenchat hinzugefügt",
-                "createGroupChat": "Neuer Gruppenchat"
+                "createGroupChat": "Neuer Gruppenchat",
+                "dataExportCreated": "Datenexport erstellt",
+                "dataExportFailed": "Datenexport fehlgeschlagen"
             },
             "text": {
                 "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
@@ -137,7 +139,8 @@
                 "removeUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} im Kurs {{ placeholderValues.0 }} aus dem Gruppenchat entfernt.",
                 "addUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
                 "createGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
-                "dataExportCreated": "Dein Datenexport wurde erstellt und kann nun heruntergeladen werden."
+                "dataExportCreated": "Dein Datenexport wurde erstellt und kann nun heruntergeladen werden.",
+                "dataExportFailed": "Dein Datenexport konnte nicht erstellt werden. Bitte versuche es später erneut."
             }
         },
         "tutorialGroupNotification": {

@@ -113,7 +113,9 @@
                 "addUserChannel": "You have been added to a channel",
                 "removeUserGroupChat": "You have been removed from a group chat",
                 "addUserGroupChat": "You have been added to a group chat",
-                "createGroupChat": "New group chat"
+                "createGroupChat": "New group chat",
+                "dataExportCreated": "Data export created",
+                "dataExportFailed": "Data export failed"
             },
             "text": {
                 "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
@@ -137,7 +139,8 @@
                 "removeUserGroupChat": "You have been removed from group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
-                "dataExportCreated": "Your data export has been created and can be downloaded."
+                "dataExportCreated": "Your data export has been created and can be downloaded.",
+                "dataExportFailed": "Your data export could not be created. Please try again later."
             }
         },
         "tutorialGroupNotification": {

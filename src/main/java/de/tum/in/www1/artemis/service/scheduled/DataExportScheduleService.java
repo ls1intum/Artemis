@@ -1,22 +1,23 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import java.io.IOException;
 import java.time.*;
 
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.DataExport;
-import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.service.DataExportCreationService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 
 @Service
 @Profile("scheduling")
@@ -28,15 +29,20 @@ public class DataExportScheduleService {
 
     private final DataExportRepository dataExportRepository;
 
-    private final DataExportService dataExportService;
+    private final DataExportCreationService dataExportCreationService;
 
     private final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
 
-    public DataExportScheduleService(ProfileService profileService, TaskScheduler scheduler, DataExportRepository dataExportRepository, DataExportService dataExportService) {
+    private final FileService fileService;
+
+    public DataExportScheduleService(ProfileService profileService, @Qualifier("taskScheduler") TaskScheduler scheduler, DataExportRepository dataExportRepository,
+            DataExportCreationService dataExportCreationService, SingleUserNotificationService singleUserNotificationService, FileService fileService) {
         this.profileService = profileService;
         this.scheduler = scheduler;
         this.dataExportRepository = dataExportRepository;
-        this.dataExportService = dataExportService;
+        this.dataExportCreationService = dataExportCreationService;
+
+        this.fileService = fileService;
     }
 
     @PostConstruct
@@ -64,22 +70,12 @@ public class DataExportScheduleService {
         }
     }
 
-    Runnable scheduleDataExport(DataExport dataExport) {
+    Runnable createDataExport(DataExport dataExport) {
         return () -> {
             checkSecurityUtils();
-            try {
-                dataExportService.createDataExport(dataExport);
-            }
-            catch (IOException e) {
-                handleCreationFailure(dataExport);
-            }
+            dataExportCreationService.createDataExport(dataExport);
+            scheduleDataExportDeletion(dataExport);
         };
-    }
-
-    private void handleCreationFailure(DataExport dataExport) {
-        dataExport.setDataExportState(DataExportState.FAILED);
-        dataExportRepository.save(dataExport);
-
     }
 
     private void checkSecurityUtils() {
@@ -91,9 +87,29 @@ public class DataExportScheduleService {
     public void scheduleDataExportCreation(DataExport dataExport) {
         LocalDate currentDate = LocalDate.now();
         LocalTime startTime = LocalTime.of(4, 0);
-        LocalDate nextDay = currentDate.plusDays(1);
-        Instant scheduledTime = nextDay.atTime(startTime).atZone(ZoneId.systemDefault()).toInstant();
-        scheduler.schedule(scheduleDataExport(dataExport), scheduledTime);
+        LocalDate day = currentDate;
+        // only add one day if the data export is scheduled after 4 am and before midnight
+        if (LocalTime.now().isAfter(startTime)) {
+            day = currentDate.plusDays(1);
+        }
+
+        Instant scheduledTime = day.atTime(startTime).atZone(ZoneId.systemDefault()).toInstant();
+        log.info("Scheduling data export for {}", dataExport.getUser().getLogin());
+        // for local testing you can use the line below instead
+        // var scheduledTime = ZonedDateTime.now().plusMinutes(3).toInstant();
+        scheduler.schedule(createDataExport(dataExport), scheduledTime);
 
     }
+
+    public void scheduleDataExportDeletion(DataExport dataExport) {
+        scheduler.schedule(deleteDataExport(dataExport), ZonedDateTime.now().plusDays(7).toInstant());
+    }
+
+    private Runnable deleteDataExport(DataExport dataExport) {
+        return () -> {
+            checkSecurityUtils();
+            dataExportCreationService.deleteDataExportAndSetDataExportState(dataExport);
+        };
+    }
+
 }

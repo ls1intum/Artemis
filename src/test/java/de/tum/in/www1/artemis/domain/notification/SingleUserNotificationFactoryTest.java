@@ -81,6 +81,8 @@ class SingleUserNotificationFactoryTest {
 
     private String expectedText;
 
+    private boolean expectedIsPlaceHolder = true;
+
     private String expectedPlaceholderValues;
 
     private NotificationTarget expectedTransientTarget;
@@ -104,6 +106,10 @@ class SingleUserNotificationFactoryTest {
     private static Set<PlagiarismSubmission<?>> plagiarismSubmissionSet;
 
     private static PlagiarismCase plagiarismCase;
+
+    private static final String DATA_EXPORTS = "data-exports";
+
+    private static DataExport dataExport;
 
     /**
      * sets up all needed mocks and their wanted behavior once for all test cases.
@@ -177,6 +183,8 @@ class SingleUserNotificationFactoryTest {
         answerPost.setAuthor(instructor);
         answerPost.setContent(ANSWER_POST_CONTENT);
         answerPost.setCreationDate(CURRENT_TIME);
+        dataExport = new DataExport();
+        dataExport.setUser(tutorialGroupStudent);
     }
 
     /// Test for Notifications based on Posts
@@ -205,6 +213,11 @@ class SingleUserNotificationFactoryTest {
         checkNotification();
     }
 
+    private void createAndCheckDataExportNotification() {
+        createdNotification = createNotification(dataExport, notificationType, dataExport.getUser());
+        checkNotification();
+    }
+
     private void createAndCheckTutorialGroupNotification(User responsibleUser) {
         createdNotification = createNotification(tutorialGroup, notificationType, Set.of(tutorialGroupStudent), responsibleUser);
         checkNotification();
@@ -216,7 +229,7 @@ class SingleUserNotificationFactoryTest {
     private void checkNotification() {
         assertThat(createdNotification.getTitle()).as("Created notification title should be equal to the expected one").isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).as("Created notification text should be equal to the expected one").isEqualTo(expectedText);
-        assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(true);
+        assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(expectedIsPlaceHolder);
         assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholders should be equal to the expected ones").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
@@ -349,6 +362,28 @@ class SingleUserNotificationFactoryTest {
         expectedPriority = MEDIUM;
         expectedTransientTarget = createTutorialGroupTarget(tutorialGroup, COURSE_ID, isManagement, isDetailPage);
         createAndCheckTutorialGroupNotification(responsibleUser);
+    }
+
+    @Test
+    void createNotification_withNotificationType_DataExportCreated() {
+        notificationType = DATA_EXPORT_CREATED;
+        expectedTitle = DATA_EXPORT_CREATED_TITLE;
+        expectedText = DATA_EXPORT_CREATED_TEXT;
+        expectedPriority = MEDIUM;
+        expectedIsPlaceHolder = false;
+        expectedTransientTarget = createDataExportTarget(dataExport, DATA_EXPORTS);
+        createAndCheckDataExportNotification();
+    }
+
+    @Test
+    void createNotification_withNotificationType_DataExportFailed() {
+        notificationType = DATA_EXPORT_FAILED;
+        expectedTitle = DATA_EXPORT_FAILED_TITLE;
+        expectedText = DATA_EXPORT_FAILED_TEXT;
+        expectedIsPlaceHolder = false;
+        expectedPriority = HIGH;
+        expectedTransientTarget = new NotificationTarget();
+        createAndCheckDataExportNotification();
     }
 
     private static Stream<Arguments> provideTutorialGroupTestParameters() {
