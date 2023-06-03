@@ -66,7 +66,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         TextUnit textUnit = database.createTextUnit();
         addAttachmentToLecture();
 
-        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
+        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
     }
 
     private void addAttachmentToLecture() {
@@ -159,7 +159,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture lectureWithSlides = ModelFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
         lectureWithSlides = lectureRepository.save(lectureWithSlides);
         AttachmentUnit attachmentUnitWithSlides = database.createAttachmentUnitWithSlides(numberOfSlides);
-        lectureWithSlides = database.addLectureUnitsToLecture(lectureWithSlides, Set.of(attachmentUnitWithSlides));
+        lectureWithSlides = database.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentUnitWithSlides));
 
         List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
 
