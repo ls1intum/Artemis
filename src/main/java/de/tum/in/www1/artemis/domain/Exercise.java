@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismChecksConfig;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -139,6 +140,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
+
+    @Column(name = "continuous_plagiarism_control_enabled")
+    private boolean continuousPlagiarismControlEnabled = false;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private PlagiarismChecksConfig plagiarismChecksConfig;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -389,6 +397,22 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
         this.plagiarismCases = plagiarismCases;
+    }
+
+    public boolean isContinuousPlagiarismControlEnabled() {
+        return continuousPlagiarismControlEnabled;
+    }
+
+    public void setContinuousPlagiarismControlEnabled(boolean continuousPlagiarismControlEnabled) {
+        this.continuousPlagiarismControlEnabled = continuousPlagiarismControlEnabled;
+    }
+
+    public PlagiarismChecksConfig getPlagiarismChecksConfig() {
+        return plagiarismChecksConfig;
+    }
+
+    public void setPlagiarismChecksConfig(PlagiarismChecksConfig plagiarismChecksConfig) {
+        this.plagiarismChecksConfig = plagiarismChecksConfig;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
