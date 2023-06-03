@@ -57,6 +57,10 @@ public class DataExportService {
 
     private static final String TXT_FILE_EXTENSION = ".txt";
 
+    private static final String COURSE_DIRECTORY_PREFIX = "course_";
+
+    private static final String EXAM_DIRECTORY_PREFIX = "exam_";
+
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
     @Value("${artemis.data-export-path:./data-exports}")
@@ -90,8 +94,6 @@ public class DataExportService {
     // Optional because otherwise the application doesn't start if the apollon profile is not set
     private final Optional<ApollonConversionService> apollonConversionService;
 
-    private Path workingDirectory;
-
     private final StudentExamRepository studentExamRepository;
 
     private final FileService fileService;
@@ -107,7 +109,7 @@ public class DataExportService {
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
             QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService, Path workingDirectory,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
@@ -149,12 +151,12 @@ public class DataExportService {
         dataExport = dataExportRepository.save(dataExport);
 
         // ToDo: return from here directly and let the scheduler manage the pending exports in a work queue (part of a follow-up)
-        workingDirectory = Files.createTempDirectory(dataExportPath, "data-export-working-dir");
+        var workingDirectory = Files.createTempDirectory(dataExportPath, "data-export-working-dir");
 
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExport = dataExportRepository.save(dataExport);
 
-        var dataExportPath = createDataExport(user);
+        var dataExportPath = createDataExport(user, workingDirectory);
         dataExport.setFilePath(dataExportPath.toString());
         // sending the email will be part of a follow-up, for now this just implies export finished
         dataExport.setCreationDate(ZonedDateTime.now());
@@ -195,7 +197,7 @@ public class DataExportService {
      * @param user the user for which to create the data export
      * @return the path to the created data export
      */
-    private Path createDataExport(User user) throws IOException {
+    private Path createDataExport(User user, Path workingDirectory) throws IOException {
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
         var userId = user.getId();
         var posts = postRepository.findPostsByAuthorId(userId);
@@ -204,9 +206,12 @@ public class DataExportService {
 
         var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
-            Path courseDir = Files.createDirectory(workingDirectory.resolve("course_" + course.getShortName()));
             Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
                     user.getId());
+            Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
+            if (!exercises.isEmpty()) {
+                courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
+            }
             for (var exercise : exercises) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     createProgrammingExerciseExport(programmingExercise, courseDir, userId);
@@ -218,8 +223,8 @@ public class DataExportService {
             createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
             createExportForExams(user.getId(), course.getExams(), courseDir);
         }
-        addGeneralUserInformation(user);
-        return createDataExportZipFile(user.getLogin());
+        addGeneralUserInformation(user, workingDirectory);
+        return createDataExportZipFile(user.getLogin(), workingDirectory);
     }
 
     private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
@@ -227,7 +232,9 @@ public class DataExportService {
             // there can be multiple student exams in rare cases because a student can request the creation of multiple student test exams
             Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             for (var studentExam : studentExams) {
-                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + studentExam.getExam().getSanitizedExamTitle() + "_" + studentExam.getId()));
+                var examTitle = studentExam.getExam().getSanitizedExamTitle();
+                var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
+                var examWorkingDir = Files.createDirectories(courseWorkingDir.resolve(examDirectoryName));
                 createStudentExamExport(studentExam, examWorkingDir);
             }
         }
@@ -259,8 +266,9 @@ public class DataExportService {
         List<String> headers = new ArrayList<>();
         var examResults = getExamResultsStreamToPrint(studentResult, headers);
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
-        try (final var printer = new CSVPrinter(Files.newBufferedWriter(
-                examWorkingDir.resolve("exam_" + studentExam.getExam().getSanitizedExamTitle() + "_" + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)), csvFormat)) {
+        var examTitle = studentExam.getExam().getSanitizedExamTitle();
+        var examResultsFileName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId() + "_result" + CSV_FILE_EXTENSION;
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(examResultsFileName)), csvFormat)) {
             printer.printRecord(examResults);
             printer.flush();
         }
@@ -294,17 +302,16 @@ public class DataExportService {
     private void addGeneralExamInformation(StudentExam studentExam, Path examWorkingDir) throws IOException {
         String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
-
-        try (final var printer = new CSVPrinter(
-                Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getExam().getSanitizedExamTitle() + "_" + studentExam.getId() + CSV_FILE_EXTENSION)),
-                csvFormat)) {
+        var examTitle = studentExam.getExam().getSanitizedExamTitle();
+        var examGeneralInformationFileName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId() + CSV_FILE_EXTENSION;
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(examGeneralInformationFileName)), csvFormat)) {
             printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
                     studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
             printer.flush();
         }
     }
 
-    private void addGeneralUserInformation(User user) throws IOException {
+    private void addGeneralUserInformation(User user, Path workingDirectory) throws IOException {
         String[] headers = new String[] { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
@@ -472,15 +479,6 @@ public class DataExportService {
         var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
         stringBuilder.append("Your answer: ").append("\n");
         stringBuilder.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
-        var shortAnswerQuestion = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
-        var mappings = shortAnswerQuestion.getCorrectMappings();
-        for (var mapping : mappings) {
-            var spot = mapping.getSpot();
-            var solution = mapping.getSolution();
-            shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-            stringBuilder.append("\n").append("Spot: ").append(spot).append("\n").append("Solution: ").append(solution).append("\n");
-        }
-
         for (Map.Entry<String, ShortAnswerSubmittedText> entry : spotToSubmittedTextMap.entrySet()) {
             Pattern pattern = Pattern.compile(entry.getKey());
             Matcher matcher = pattern.matcher(stringBuilder);
@@ -529,6 +527,18 @@ public class DataExportService {
         var answerPostReactionsInCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
                 .filter(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo() != null)
                 .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
+        if (!postsInCourse.isEmpty() || !answerPostsInCourse.isEmpty() || !postReactionsInCourse.isEmpty() || !answerPostReactionsInCourse.isEmpty()) {
+            // if no exercise participations exist, the course directory is not created
+            if (!Files.exists(courseDir)) {
+                Files.createDirectory(courseDir);
+            }
+            createCommunicationCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
+        }
+
+    }
+
+    private static void createCommunicationCsvFile(Path courseDir, List<Post> postsInCourse, List<AnswerPost> answerPostsInCourse, List<Reaction> postReactionsInCourse,
+            List<Reaction> answerPostReactionsInCourse) throws IOException {
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final var printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -558,7 +568,6 @@ public class DataExportService {
             }
             printer.flush();
         }
-
     }
 
     private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
@@ -674,7 +683,7 @@ public class DataExportService {
         }
     }
 
-    private Path createDataExportZipFile(String userLogin) throws IOException {
+    private Path createDataExportZipFile(String userLogin, Path workingDirectory) throws IOException {
         // There should actually never exist more than one data export for a user at a time (once the feature is fully implemented), but to be sure the name is unique, we add the
         // current timestamp
         return zipFileService.createZipFileWithFolderContent(dataExportPath.resolve("data-export_" + userLogin + ZonedDateTime.now().toEpochSecond() + ZIP_FILE_EXTENSION),
