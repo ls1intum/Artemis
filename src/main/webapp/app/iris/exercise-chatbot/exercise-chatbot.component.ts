@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
@@ -55,6 +55,12 @@ export class ExerciseChatbotComponent implements OnDestroy, OnInit {
             this.dialogRef.close();
         }
         this.stateSubscription.unsubscribe();
+    }
+
+    @HostListener('document:keydown.escape', ['$event'])
+    onEscapeKeyDown(event: KeyboardEvent): void {
+        event.preventDefault();
+        this.handleButtonClick();
     }
 
     handleButtonClick() {

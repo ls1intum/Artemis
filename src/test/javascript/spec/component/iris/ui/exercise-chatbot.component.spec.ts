@@ -173,4 +173,18 @@ describe('ExerciseChatbotComponent', () => {
         // then
         expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
     });
+
+    it('should call action to reset number of new messages when press escape key', () => {
+        // given
+        const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
+        jest.spyOn(stateStore, 'dispatch');
+        stateStore.dispatch(new SessionReceivedAction(0, []));
+        component.openChat();
+
+        // when
+        component.onEscapeKeyDown(eventMock);
+
+        // then
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
+    });
 });
