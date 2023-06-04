@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Files;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         assertThat(participation.isTestRun()).isFalse();
         assertThat(participation.getStudent()).contains(user);
         LocalVCRepositoryUrl studentAssignmentRepositoryUrl = new LocalVCRepositoryUrl(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
-        assertThat(Files.exists(studentAssignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(studentAssignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
 
         templateRepository.resetLocalRepo();
     }
