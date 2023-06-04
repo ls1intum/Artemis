@@ -17,7 +17,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,29 +59,25 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     void testShouldLoadJavaFileFromClasspath() throws IOException {
         FileUtils.writeStringToFile(javaPath.toFile(), "filesystem", Charset.defaultCharset());
-        try (InputStream inputStream = resourceLoaderService.getResource(javaPath).getInputStream()) {
-            String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            assertThat(fileContent.trim()).isEqualTo("classpath");
+        try (InputStream inputStream = resourceLoaderService.getResource(javaPath).getInputStream()) {
+            assertThat(inputStream).hasContent("classpath");
         }
     }
 
     @Test
     void testShouldLoadJenkinsFileFromFilesystem() throws IOException {
         FileUtils.writeStringToFile(jenkinsPath.toFile(), "filesystem", Charset.defaultCharset());
-        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
-            String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            assertThat(fileContent.trim()).isEqualTo("filesystem");
+        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
+            assertThat(inputStream).hasContent("filesystem");
         }
     }
 
     @Test
     void testShouldLoadJenkinsFileFromClasspathIfNotPresentInFileSystem() throws IOException {
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
-            String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
-
-            assertThat(fileContent.trim()).isEqualTo("classpath");
+            assertThat(inputStream).hasContent("classpath");
         }
     }
 
@@ -96,8 +91,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(resources).hasSize(2);
 
         for (final Resource resource : resources) {
-            final String actualContent = Files.readString(resource.getFile().toPath());
-            assertThat(actualContent).isEqualTo(content);
+            assertThat(resource.getFile()).hasContent(content);
         }
     }
 
@@ -114,8 +108,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         Resource[] resources = resourceLoaderService.getResources(Path.of("templates", "java"), pathPattern);
         assertThat(resources).hasSize(1);
 
-        final String actualContent = Files.readString(resources[0].getFile().toPath());
-        assertThat(actualContent.trim()).isEqualTo("classpath");
+        assertThat(resources[0].getFile()).hasContent("classpath");
     }
 
     @Test
@@ -150,7 +143,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
 
         // Verify the temporary file was created.
-        assertThat(Files.exists(resourceFilePath)).isTrue();
+        assertThat(resourceFilePath).exists();
 
         // Clean up the temporary file.
         Files.deleteIfExists(resourceFilePath);
