@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { By } from '@angular/platform-browser';
 
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
@@ -87,5 +88,15 @@ describe('LearningGoalCardComponent', () => {
         learningGoalCardComponent.learningGoal = learningGoalPast;
         learningGoalCardComponentFixture.detectChanges();
         expect(learningGoalCardComponent.dueDatePassed).toBeTrue();
+    });
+
+    it.each([
+        { learningGoal: { dueDate: dayjs().add(1, 'days') } as LearningGoal, expectedBadge: 'bg-success' },
+        { learningGoal: { dueDate: dayjs().subtract(1, 'days') } as LearningGoal, expectedBadge: 'bg-danger' },
+    ])('should have [ngClass] resolve to correct date badge', ({ learningGoal, expectedBadge }) => {
+        learningGoalCardComponent.learningGoal = learningGoal;
+        learningGoalCardComponentFixture.detectChanges();
+        const badge = learningGoalCardComponentFixture.debugElement.query(By.css('#date-badge'));
+        expect(badge.attributes['ng-reflect-ng-class']).toBe(expectedBadge);
     });
 });
