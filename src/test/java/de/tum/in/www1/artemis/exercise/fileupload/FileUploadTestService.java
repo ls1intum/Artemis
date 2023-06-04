@@ -29,7 +29,7 @@ public class FileUploadTestService {
     private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
     @Autowired
-    private FileUploadExerciseRepository fileUploadExerciseRepository;
+    private FileUploadExerciseRepository fileUploadExerciseRepo;
 
     @Autowired
     private CourseRepository courseRepo;
@@ -38,25 +38,22 @@ public class FileUploadTestService {
     private ExamRepository examRepo;
 
     @Autowired
-    private GradingCriterionRepository gradingCriterionRepository;
+    private GradingCriterionRepository gradingCriterionRepo;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
     private UserRepository userRepo;
 
     @Autowired
-    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     @Autowired
     private ResultRepository resultRepository;
-
-    @Autowired
-    private SubmissionRepository submissionRepository;
 
     /**
      * creates and saves a file upload exercise in the repository
@@ -68,7 +65,7 @@ public class FileUploadTestService {
      */
     public FileUploadExercise createAndAndSaveFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, String filePattern) {
         FileUploadExercise fileUploadExercise = generateFileUploadExercise(releaseDate, dueDate, filePattern);
-        fileUploadExerciseRepository.save(fileUploadExercise);
+        fileUploadExerciseRepo.save(fileUploadExercise);
 
         return fileUploadExercise;
     }
@@ -121,7 +118,7 @@ public class FileUploadTestService {
      */
     public FileUploadExercise createAndSaveExamFileUploadExercise(ZonedDateTime startDate, ZonedDateTime endDate, String filePattern) {
         FileUploadExercise fileUploadExercise = generateExamFileUploadExercise(startDate, endDate, filePattern);
-        fileUploadExerciseRepository.save(fileUploadExercise);
+        fileUploadExerciseRepo.save(fileUploadExercise);
 
         return fileUploadExercise;
     }
@@ -173,17 +170,7 @@ public class FileUploadTestService {
      * @return the exercise with the given id or null
      */
     public FileUploadExercise findFileUploadExercise(Long id) {
-        return fileUploadExerciseRepository.findById(id).orElse(null);
-    }
-
-    /**
-     * finds participations of an exercise based on its id
-     *
-     * @param id the id of the exercise
-     * @return participations found in the studentParticipationRepository
-     */
-    public Set<StudentParticipation> findParticipationsOfExercise(Long id) {
-        return studentParticipationRepository.findByExerciseId(id);
+        return fileUploadExerciseRepo.findById(id).orElse(null);
     }
 
     @NotNull
@@ -202,57 +189,12 @@ public class FileUploadTestService {
         return new FileUploadExercise();
     }
 
-    /**
-     * sets the example publication date and saves the file upload exercise
-     *
-     * @param fileUploadExercise      exercise of which the date is to be changed
-     * @param solutionPublicationDate new date
-     */
-    public void setExampleSolutionPublicationDateAndSave(FileUploadExercise fileUploadExercise, ZonedDateTime solutionPublicationDate) {
-        fileUploadExercise.setExampleSolutionPublicationDate(solutionPublicationDate);
-        fileUploadExerciseRepository.save(fileUploadExercise);
-    }
-
-    /**
-     * creates feedback, sets its grading instructions and saves it to the repository
-     *
-     * @param gradingInstruction the grading instruction of the feedback
-     */
-    public void createAndSaveFeedback(GradingInstruction gradingInstruction) {
-        Feedback feedback = new Feedback();
-        feedback.setGradingInstruction(gradingInstruction);
-        feedbackRepository.save(feedback);
-    }
-
-    /**
-     * Stores participation of the user with the given login for the given exercise
-     *
-     * @param exercise the exercise for which the participation will be created
-     * @param login    login of the user
-     * @return eagerly loaded representation of the participation object stored in the database
-     */
-    public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
-                login, false);
-        if (storedParticipation.isEmpty()) {
-            User user = getUserByLogin(login);
-            StudentParticipation participation = new StudentParticipation();
-            participation.setInitializationDate(ZonedDateTime.now());
-            participation.setParticipant(user);
-            participation.setExercise(exercise);
-            studentParticipationRepository.save(participation);
-            storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
-            assertThat(storedParticipation).isPresent();
-        }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
-    }
-
     public FileUploadSubmission addFileUploadSubmissionAndParticipation(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
         participation.addSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmissionRepository.save(fileUploadSubmission);
-        studentParticipationRepository.save(participation);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
         return fileUploadSubmission;
     }
 
@@ -268,7 +210,7 @@ public class FileUploadTestService {
             Files.createFile(uploadedFilePath);
         }
         fileUploadSubmission.setFilePath(uploadedFilePath.toString());
-        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
     }
 
     public Course addCourseWithFourFileUploadExercise() {
@@ -276,7 +218,7 @@ public class FileUploadTestService {
         courseRepo.save(course);
 
         var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(course);
-        fileUploadExerciseRepository.saveAll(fileUploadExercises);
+        fileUploadExerciseRepo.saveAll(fileUploadExercises);
         course.setExercises(new HashSet<>(fileUploadExercises));
 
         return course;
@@ -306,7 +248,7 @@ public class FileUploadTestService {
             String assessorLogin, List<Feedback> feedbacks) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
 
-        submissionRepository.save(fileUploadSubmission);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
 
         participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
@@ -329,8 +271,8 @@ public class FileUploadTestService {
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
         fileUploadSubmission.getParticipation().addResult(result);
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        studentParticipationRepository.save(participation);
+        fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
         return fileUploadSubmission;
     }
 
@@ -339,7 +281,62 @@ public class FileUploadTestService {
         return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
     }
 
-    // these two methods could be put into the ExerciseTestService
+    // these methods could be put into the ExerciseTestService
+
+    /**
+     * sets the example publication date and saves the file upload exercise
+     *
+     * @param fileUploadExercise      exercise of which the date is to be changed
+     * @param solutionPublicationDate new date
+     */
+    public void setExampleSolutionPublicationDateAndSave(FileUploadExercise fileUploadExercise, ZonedDateTime solutionPublicationDate) {
+        fileUploadExercise.setExampleSolutionPublicationDate(solutionPublicationDate);
+        fileUploadExerciseRepo.save(fileUploadExercise);
+    }
+
+    /**
+     * creates feedback, sets its grading instructions and saves it to the repository
+     *
+     * @param gradingInstruction the grading instruction of the feedback
+     */
+    public void createAndSaveFeedback(GradingInstruction gradingInstruction) {
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(gradingInstruction);
+        feedbackRepository.save(feedback);
+    }
+
+    /**
+     * Stores participation of the user with the given login for the given exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param login    login of the user
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
+                false);
+        if (storedParticipation.isEmpty()) {
+            User user = getUserByLogin(login);
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setParticipant(user);
+            participation.setExercise(exercise);
+            studentParticipationRepo.save(participation);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            assertThat(storedParticipation).isPresent();
+        }
+        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
+    /**
+     * finds participations of an exercise based on its id
+     *
+     * @param id the id of the exercise
+     * @return participations found in the studentParticipationRepository
+     */
+    public Set<StudentParticipation> findParticipationsOfExercise(Long id) {
+        return studentParticipationRepo.findByExerciseId(id);
+    }
 
     /**
      * sets individual due dates of participations and saves them in the repository
@@ -348,14 +345,14 @@ public class FileUploadTestService {
      * @param dueDates new due dates that get set
      */
     public void setIndividualDueDate(Long id, List<ZonedDateTime> dueDates) {
-        var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(id));
+        var participations = new ArrayList<>(studentParticipationRepo.findByExerciseId(id));
 
         int min = Math.min(participations.size(), dueDates.size());
         for (int i = 0; i < min; i++) {
             participations.get(i).setIndividualDueDate(dueDates.get(i));
         }
 
-        studentParticipationRepository.saveAll(participations);
+        studentParticipationRepo.saveAll(participations);
     }
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise, boolean save) {
@@ -382,7 +379,7 @@ public class FileUploadTestService {
         exercise.setGradingCriteria(criteria);
 
         if (save) {
-            gradingCriterionRepository.saveAll(criteria);
+            gradingCriterionRepo.saveAll(criteria);
         }
 
         return exercise.getGradingCriteria();
