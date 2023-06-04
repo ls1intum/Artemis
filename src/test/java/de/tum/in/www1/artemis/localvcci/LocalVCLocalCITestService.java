@@ -507,10 +507,10 @@ public class LocalVCLocalCITestService {
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
         LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }
