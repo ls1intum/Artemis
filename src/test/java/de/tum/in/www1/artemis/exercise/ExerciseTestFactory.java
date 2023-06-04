@@ -12,6 +12,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
+/**
+ * Factory to create exercises for testing.
+ */
 public class ExerciseTestFactory {
 
     /**

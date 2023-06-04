@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.util;
 
 import static java.time.ZonedDateTime.now;
+import static org.assertj.core.api.Assertions.fail;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -9,6 +13,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -30,6 +37,8 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.exercise.ExerciseTestFactory;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -50,6 +59,44 @@ public class ModelFactory {
         lecture.setEndDate(endDate);
         lecture.setCourse(course);
         return lecture;
+    }
+
+    /**
+     * Creates a dummy attachment for testing.
+     *
+     * @param date The optional upload and release date to set on the attachment
+     * @return Attachment that was created
+     */
+    public static Attachment generateAttachment(ZonedDateTime date) {
+        Attachment attachment = new Attachment();
+        attachment.setAttachmentType(AttachmentType.FILE);
+        if (date != null) {
+            attachment.setReleaseDate(date);
+            attachment.setUploadDate(date);
+        }
+        attachment.setName("TestAttachment");
+        attachment.setVersion(1);
+        return attachment;
+    }
+
+    /**
+     * Creates a dummy attachment for testing with a placeholder image file on disk.
+     *
+     * @param startDate The release date to set on the attachment
+     * @return Attachment that was created with its link set to a testing file on disk
+     */
+    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
+        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
+        return attachment;
     }
 
     public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {

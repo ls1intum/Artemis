@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -218,7 +219,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lecture.setDescription("Test");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        Attachment attachment = FileUploadTestFactory.generateAttachment(ZonedDateTime.now());
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
         attachment.setLecture(lecture);
 
         // create file

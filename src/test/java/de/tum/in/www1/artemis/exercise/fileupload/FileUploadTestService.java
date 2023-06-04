@@ -21,6 +21,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+/**
+ * Service responsible for creating file upload exercises on the database for use in tests.
+ */
 @Service
 public class FileUploadTestService {
 

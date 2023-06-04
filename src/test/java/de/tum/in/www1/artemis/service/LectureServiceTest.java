@@ -15,9 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -56,7 +56,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
 
         // Add a custom attachment for filtering tests
-        testAttachment = FileUploadTestFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
+        testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
         lecture.addAttachments(testAttachment);
         lectureRepository.save(lecture);
 

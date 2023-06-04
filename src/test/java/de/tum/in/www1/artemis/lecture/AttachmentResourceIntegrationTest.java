@@ -16,8 +16,8 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exercise.fileupload.FileUploadTestFactory;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -42,7 +42,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
-        attachment = FileUploadTestFactory.generateAttachment(null);
+        attachment = ModelFactory.generateAttachment(null);
         attachment.setLink("files/temp/example.txt");
 
         var course = database.addCourseWithOneReleasedTextExercise();
