@@ -155,7 +155,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false } as ProfileInfo;
+                const profileInfo = { inProduction: false, irisEnabled: false } as ProfileInfo;
                 const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
                 getProfileInfoMock.mockReturnValue(profileInfoSubject);
 
@@ -192,6 +192,7 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         tick(500);
         expect(comp.inProductionEnvironment).toBeFalse();
+        expect(comp.irisProfileEnabled).toBeFalse();
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.hasMoreResults).toBeFalse();
@@ -328,7 +329,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.hasSubmissionPolicy).toBeTrue();
-        expect(comp.irisActivated).toBeTrue();
+        expect(comp.irisActivated).toBeFalse();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);

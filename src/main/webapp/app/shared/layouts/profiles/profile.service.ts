@@ -41,6 +41,7 @@ export class ProfileService {
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
+                            profileInfo.irisEnabled = profileInfo.activeProfiles.includes('iris-gpt3_5');
                         }
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
 
