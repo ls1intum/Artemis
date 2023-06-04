@@ -3,9 +3,12 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
+import java.util.List;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -23,9 +26,13 @@ public class ConversationNotificationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository, SimpMessageSendingOperations messagingTemplate) {
+    private final GeneralInstantNotificationService generalInstantNotificationService;
+
+    public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository, SimpMessageSendingOperations messagingTemplate,
+            GeneralInstantNotificationService generalInstantNotificationService) {
         this.conversationNotificationRepository = conversationNotificationRepository;
         this.messagingTemplate = messagingTemplate;
+        this.generalInstantNotificationService = generalInstantNotificationService;
     }
 
     /**
@@ -58,6 +65,9 @@ public class ConversationNotificationService {
     private void saveAndSend(ConversationNotification notification) {
         conversationNotificationRepository.save(notification);
         sendNotificationViaWebSocket(notification);
+
+        final List<User> users = notification.getConversation().getConversationParticipants().stream().map((u) -> u.getUser()).toList();
+        generalInstantNotificationService.sendNotification(notification, users, null);
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification) {
