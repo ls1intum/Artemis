@@ -56,6 +56,7 @@ export type ProblemStepInputs = {
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     updateTemplate: boolean;
     selectedProjectType: ProjectType;
+    irisProfileEnabled: boolean;
 };
 
 @Component({
