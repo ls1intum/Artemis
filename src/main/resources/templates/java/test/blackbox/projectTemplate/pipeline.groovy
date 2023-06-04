@@ -8,7 +8,7 @@ runDejagnuTests = fileExists("./dejagnu")
 tool = getToolName()
 hasSecretTestFiles = secretTestFilesFolderExists()
 
-dockerImage = "registry.git.fim.uni-passau.de/artemis/artemis-docker-images/dejagnu:20.0.1"
+dockerImage = "ghcr.io/uni-passau-artemis/artemis-dejagnu:20"
 dockerFlags = ""
 secretTestVolume = "prog2_${tool}-secret"
 secret_volume_mount_path = "/secrets"
