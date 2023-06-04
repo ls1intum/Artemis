@@ -18,10 +18,12 @@ public class Policy {
      */
     public void configure() {
         if (this.context.getDates().size() > DATES_SIZE_THRESHOLD) {
-            System.out.println("More than " + DATES_SIZE_THRESHOLD + " dates, choosing merge sort!");
+            System.out.println("More than " + DATES_SIZE_THRESHOLD
+                + " dates, choosing merge sort!");
             this.context.setSortAlgorithm(new MergeSort());
         } else {
-            System.out.println("Less or equal than " + DATES_SIZE_THRESHOLD + " dates. choosing quick sort!");
+            System.out.println("Less or equal than " + DATES_SIZE_THRESHOLD
+                + " dates. choosing quick sort!");
             this.context.setSortAlgorithm(new BubbleSort());
         }
     }
