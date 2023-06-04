@@ -172,6 +172,39 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownloadSpecificExport_dataExportNotDownloadable_false() throws Exception {
+        var dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.REQUESTED);
+        dataExport.setRequestDate(ZonedDateTime.now());
+        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport = dataExportRepository.save(dataExport);
+        var canDownload = request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.OK, Boolean.class);
+        assertThat(canDownload).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequestDataExportIfNeverRequested() throws Exception {
+        dataExportRepository.deleteAll();
+        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequestDataExportIfLastOneFailed() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.FAILED);
+        dataExport.setRequestDate(ZonedDateTime.now());
+        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanDownloadSpecificExport_dataExportBelongsToOtherUser_forbidden() throws Exception {
         var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
         var dataExport = new DataExport();

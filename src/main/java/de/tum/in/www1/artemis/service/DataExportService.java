@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -84,11 +83,7 @@ public class DataExportService {
     }
 
     public boolean canRequestDataExport() {
-        var login = SecurityUtils.getCurrentUserLogin();
-        if (login.isEmpty()) {
-            return false;
-        }
-        var user = userRepository.findOneWithDataExportsByLoginElseThrow(login.get());
+        var user = userRepository.getUserWithDataExports();
         if (user.getDataExports().isEmpty()) {
             return true;
         }
@@ -97,7 +92,8 @@ public class DataExportService {
             return true;
         }
         var latestDataExportCreationDate = latestDataExport.get().getRequestDate();
-        return Duration.between(latestDataExportCreationDate, ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
+        // allow requesting a new data export if the latest data export is older than 14 days or its creation has failed
+        return Duration.between(latestDataExportCreationDate, ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS || latestDataExport.get().getDataExportState().hasFailed();
     }
 
     public DataExportDTO canDownloadAnyDataExport() {
@@ -121,11 +117,7 @@ public class DataExportService {
     }
 
     public boolean canDownloadSpecificDataExport(long dataExportId) {
-        var dataExportOptional = dataExportRepository.findById(dataExportId);
-        if (dataExportOptional.isEmpty()) {
-            return false;
-        }
-        var dataExport = dataExportOptional.get();
+        var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
         return dataExport.getDataExportState().isDownloadable();
     }

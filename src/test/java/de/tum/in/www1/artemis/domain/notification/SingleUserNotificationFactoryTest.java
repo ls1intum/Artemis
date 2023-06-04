@@ -371,7 +371,7 @@ class SingleUserNotificationFactoryTest {
         expectedText = DATA_EXPORT_CREATED_TEXT;
         expectedPriority = MEDIUM;
         expectedIsPlaceHolder = false;
-        expectedTransientTarget = createDataExportTarget(dataExport, DATA_EXPORTS);
+        expectedTransientTarget = createDataExportCreatedTarget(dataExport, DATA_EXPORTS);
         createAndCheckDataExportNotification();
     }
 
@@ -382,7 +382,7 @@ class SingleUserNotificationFactoryTest {
         expectedText = DATA_EXPORT_FAILED_TEXT;
         expectedIsPlaceHolder = false;
         expectedPriority = HIGH;
-        expectedTransientTarget = new NotificationTarget();
+        expectedTransientTarget = createDataExportFailedTarget(DATA_EXPORTS);
         createAndCheckDataExportNotification();
     }
 

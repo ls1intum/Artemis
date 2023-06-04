@@ -1,10 +1,10 @@
 <div>
     <h1>
-        {{ 'artemisApp.dataExport.title' | artemisTranslate }}
+        {{ this.titleKey | artemisTranslate }}
     </h1>
 
     <p>
-        {{ 'artemisApp.dataExport.description' | artemisTranslate }}
+        {{ this.description | artemisTranslate }}
     </p>
 
     <div class="column d-flex justify-content-center align-content-center">
@@ -16,6 +16,7 @@
             [buttonSize]="ButtonSize.LARGE"
             [buttonType]="ButtonType.PRIMARY"
             [entityTitle]="currentLogin!"
+            [disabled]="!canRequestDataExport"
             deleteQuestion="artemisApp.dataExport.confirmationQuestion"
             (delete)="requestExport()"
             [dialogError]="dialogError$"
@@ -32,7 +33,15 @@
             (onClick)="downloadDataExport()"
         ></jhi-button>
     </div>
-    <p *ngIf="!canRequestDataExport">
-        {{ 'artemisApp.dataExport.recentlyRequested' | artemisTranslate }}
-    </p>
+    <div class="mt-3 row d-flex align-content-center">
+        <p *ngIf="!canRequestDataExport && !downloadMode">
+            {{ 'artemisApp.dataExport.recentlyRequested' | artemisTranslate }}
+        </p>
+        <p *ngIf="!canDownload && downloadMode">
+            {{ 'artemisApp.dataExport.notDownloadable' | artemisTranslate }}
+        </p>
+        <p *ngIf="!canDownload && !downloadMode">
+            {{ 'artemisApp.dataExport.mostRecentNotDownloadable' | artemisTranslate }}
+        </p>
+    </div>
 </div>

@@ -28,6 +28,8 @@ export class DataExportComponent implements OnInit {
     currentLogin: string | undefined;
     dataExportId: number;
     downloadMode = false;
+    titleKey: string;
+    description: string;
 
     constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService, private route: ActivatedRoute) {}
 
@@ -39,19 +41,24 @@ export class DataExportComponent implements OnInit {
                 this.dataExportId = params['id'];
             }
         });
-        if (!this.downloadMode) {
+
+        if (this.downloadMode) {
+            this.titleKey = 'artemisApp.dataExport.titleDownload';
+            this.description = 'artemisApp.dataExport.descriptionDownload';
+            this.dataExportService.canDownloadSpecificDataExport(this.dataExportId).subscribe((canDownloadDataExport) => {
+                this.canDownload = canDownloadDataExport;
+            });
+        } else {
+            this.titleKey = 'artemisApp.dataExport.title';
+            this.description = 'artemisApp.dataExport.description';
             this.dataExportService.canRequestDataExport().subscribe((canRequestDataExport) => {
                 this.canRequestDataExport = canRequestDataExport;
             });
             this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
-                this.canDownload = !!dataExport.id;
+                //this.canDownload = !!dataExport.id;
                 if (this.canDownload) {
                     this.dataExportId = dataExport.id!;
                 }
-            });
-        } else {
-            this.dataExportService.canDownloadSpecificDataExport(this.dataExportId).subscribe((canDownloadDataExport) => {
-                this.canDownload = canDownloadDataExport;
             });
         }
     }

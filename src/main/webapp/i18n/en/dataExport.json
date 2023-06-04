@@ -2,7 +2,9 @@
     "artemisApp": {
         "dataExport": {
             "title": "Data export",
+            "titleDownload": "Download data export",
             "description": "Here you can request a data export in accordance with Art. 15 GDPR Right of Access. Once the export has been created, you will receive an email. In the following seven days you can download the export. Afterward, it will be deleted.",
+            "descriptionDownload": "Here you can download your requested data export.",
             "request": "Request data export",
             "download": "Download data export",
             "requestSuccess": "Successfully requested data export",
@@ -12,7 +14,9 @@
             "confirmationHeader": "Request data export",
             "requestError": "Failed to request data export. Please try again later.",
             "downloadError": "Failed to download the data export. Please try again later.",
-            "recentlyRequested": "A data export has already been requested recently. Please try again later."
+            "recentlyRequested": "A data export has already been requested recently. Please try again later.",
+            "notDownloadable": "This data export can no longer be downloaded because it doesn't exist (anymore).",
+            "mostRecentNotDownloadable": "The most recently requested data export can not be downloaded because it either has already been deleted or has not yet been created."
         }
     }
 }

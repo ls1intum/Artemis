@@ -2752,8 +2752,16 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) throws IOException {
-        QuizExercise quizExercise = createAndSaveQuizWithAllQuestionTypes(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean assessmentDueDateInTheFuture) throws IOException {
+        QuizExercise quizExercise;
+        if (assessmentDueDateInTheFuture) {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED);
+
+        }
+        else {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, pastTimestamp, QuizMode.SYNCHRONIZED);
+
+        }
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -3432,15 +3440,30 @@ public class DatabaseUtilService {
      */
     public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
             int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        return addCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+                typeComplaint, numberComplaintResponses, validModel, true);
+    }
+
+    public Course addCourseWithExercisesAndSubmissions(String shortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
+            int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast) {
+        Course course = ModelFactory.generateCourse(null, shortName, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
+        ZonedDateTime assessmentDueDate;
+        ZonedDateTime releaseDate = pastTimestamp;
+        ZonedDateTime dueDate = pastTimestamp.plusHours(1);
+        if (assessmentDueDateInThePast) {
+            assessmentDueDate = pastTimestamp.plusHours(2);
+        }
+        else {
+            assessmentDueDate = futureTimestamp.plusHours(2);
+
+        }
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 
             if ((i % 3) == 0) {
-                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp.plusHours(1), pastTimestamp.plusHours(2),
-                        DiagramType.ClassDiagram, course);
+                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(releaseDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
                 modelingExercise.setTitle("Modeling" + i);
                 course.addExercises(modelingExercise);
                 course = courseRepo.save(course);
@@ -3463,7 +3486,7 @@ public class DatabaseUtilService {
 
             }
             else if ((i % 3) == 1) {
-                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(1), pastTimestamp.plusHours(2), course);
+                TextExercise textExercise = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
                 textExercise.setTitle("Text" + i);
                 course.addExercises(textExercise);
                 course = courseRepo.save(course);
@@ -3481,8 +3504,7 @@ public class DatabaseUtilService {
                 }
             }
             else { // i.e. (i % 3) == 2
-                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), pastTimestamp.plusHours(2), "png,pdf",
-                        course);
+                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(releaseDate, dueDate, assessmentDueDate, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);
                 course = courseRepo.save(course);
@@ -3501,6 +3523,12 @@ public class DatabaseUtilService {
         }
         course = courseRepo.save(course);
         return course;
+    }
+
+    public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
+            int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+                typeComplaint, numberComplaintResponses, validModel, false);
     }
 
     private void saveResultInParticipation(Submission submission, Result result) {
@@ -4278,7 +4306,7 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
-    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExerciseWithAllQuestionTypes(quizExercise);
         return quizExerciseRepository.save(quizExercise);

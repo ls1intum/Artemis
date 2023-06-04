@@ -14,4 +14,8 @@ public enum DataExportState {
     public boolean hasBeenDownloaded() {
         return this == DOWNLOADED || this == DOWNLOADED_DELETED;
     }
+
+    public boolean hasFailed() {
+        return this == FAILED;
+    }
 }

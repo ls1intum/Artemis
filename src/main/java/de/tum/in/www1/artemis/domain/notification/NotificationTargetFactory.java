@@ -118,10 +118,17 @@ public class NotificationTargetFactory {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
     }
 
-    public static NotificationTarget createDataExportTarget(DataExport dataExport, String message) {
+    public static NotificationTarget createDataExportCreatedTarget(DataExport dataExport, String message) {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setEntity(message);
         notificationTarget.setIdentifier(dataExport.getId());
+        notificationTarget.setMainPage(PRIVACY);
+        return notificationTarget;
+    }
+
+    public static NotificationTarget createDataExportFailedTarget(String message) {
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setEntity(message);
         notificationTarget.setMainPage(PRIVACY);
         return notificationTarget;
     }

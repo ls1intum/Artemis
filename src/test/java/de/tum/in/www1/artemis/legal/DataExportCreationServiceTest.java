@@ -99,7 +99,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
-        prepareCourseDataForDataExportCreation();
+        boolean assessmentDueDateInTheFuture = false;
+        prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
@@ -117,20 +118,46 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true));
+        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
 
     }
 
-    private void prepareCourseDataForDataExportCreation() throws Exception {
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportDoesntLeakResultsIfAssessmentDueDateInTheFuture() throws Exception {
+        boolean assessmentDueDateInTheFuture = true;
+        prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var dataExport = initDataExport();
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "shortPast");
+        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+    }
+
+    private void prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
-        Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
-        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
+        Course course1;
+        if (assessmentDueDateInTheFuture) {
+            course1 = database.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("shortPast", TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+        }
+        else {
+            course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+        }
+        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        var programmingExercise = database.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusSeconds(1));
+        ProgrammingExercise programmingExercise;
+        if (assessmentDueDateInTheFuture) {
+            programmingExercise = database.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().plusMinutes(1));
+        }
+        else {
+            programmingExercise = database.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
+        }
         var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         var submission = database.createProgrammingSubmission(participation, false, "abc");
@@ -201,12 +228,15 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(exerciseDirPath).isDirectoryNotContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result"));
     }
 
-    private void assertCorrectContentForExercise(Path exerciseDirPath, boolean courseExercise) {
+    private void assertCorrectContentForExercise(Path exerciseDirPath, boolean courseExercise, boolean assessmentDueDateInTheFuture) {
         Predicate<Path> resultsFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result");
         Predicate<Path> submissionFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("submission");
         assertThat(exerciseDirPath).isDirectoryContaining(submissionFile);
+        if (assessmentDueDateInTheFuture) {
+            assertThat(exerciseDirPath).isDirectoryNotContaining(resultsFile);
+        }
         // quizzes do not have a result file
-        if (!exerciseDirPath.toString().contains("quiz")) {
+        if (!exerciseDirPath.toString().contains("quiz") && !assessmentDueDateInTheFuture) {
             assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
         }
         if (exerciseDirPath.toString().contains("Programming")) {
@@ -262,7 +292,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
-        getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false));
+        getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false, false));
     }
 
     @Test

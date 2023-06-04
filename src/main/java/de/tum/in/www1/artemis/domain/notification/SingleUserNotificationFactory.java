@@ -91,24 +91,15 @@ public class SingleUserNotificationFactory {
         var notification = new SingleUserNotification(recipient, title, text, false, new String[0]);
         if (type == NotificationType.DATA_EXPORT_FAILED) {
             notification.setPriority(HIGH);
+            notification.setTransientAndStringTarget(createDataExportFailedTarget("data-exports"));
         }
         if (type == NotificationType.DATA_EXPORT_CREATED) {
-            notification.setTransientAndStringTarget(createDataExportTarget(dataExport, "data-exports"));
+            notification.setTransientAndStringTarget(createDataExportCreatedTarget(dataExport, "data-exports"));
         }
         else {
             notification.setTransientAndStringTarget(new NotificationTarget());
         }
         return notification;
-    }
-
-    /**
-     * Creates an instance of SingleUserNotification for a failed data export creation.
-     *
-     * @param recipient the user that should be notified (the requester of the data export)
-     * @return an instance of SingleUserNotification
-     */
-    public static SingleUserNotification createNotificationDataExportFailed(User recipient) {
-        return new SingleUserNotification(recipient, DATA_EXPORT_FAILED_TITLE, DATA_EXPORT_FAILED_TEXT, false, new String[0]);
     }
 
     /**
