@@ -16,10 +16,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
@@ -29,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -37,9 +35,15 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "P")
+@JsonTypeName("programming")
 @SecondaryTable(name = "programming_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "programming";
+    }
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
@@ -291,6 +295,12 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    /**
+     * Getter for the stored default branch of the exercise.
+     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
+     *
+     * @return the name of the default branch or null if not yet stored in Artemis
+     */
     @JsonIgnore
     public String getBranch() {
         return branch;

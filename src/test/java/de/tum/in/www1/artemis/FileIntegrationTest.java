@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -244,8 +244,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Lecture lecture = database.createCourseWithLecture(true);
 
         MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
-        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, lecture.getId(), HttpStatus.CREATED);
-        database.addLectureUnitsToLecture(lecture, Set.of(attachmentUnit));
+        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, HttpStatus.CREATED);
+        database.addLectureUnitsToLecture(lecture, List.of(attachmentUnit));
 
         String attachmentPath = attachmentUnit.getAttachment().getLink();
         String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
@@ -334,7 +334,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void uploadFileUnsupportedFileExtension() throws Exception {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "something.exotic", "application/json", "some data".getBytes());
@@ -345,8 +345,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
-        Lecture lecture = createLectureWithLectureUnits();
-
         request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
     }
 
@@ -362,23 +360,68 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
 
-        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentUnit) lectureUnit).getAttachment())
-                .findFirst().orElseThrow();
-        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
-        attachmentRepo.save(attachment);
+        adjustReleaseDateToFuture(lecture);
 
         // The unit is hidden but a tutor can still see it
         // -> the merged result should contain the unit
         callAndCheckMergeResult(lecture, 5);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetLecturePdfAttachmentsMerged_NoAccessToUnreleasedUnits() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+
+        adjustReleaseDateToFuture(lecture);
+
+        // The test setup needs at least TA right for creating a lecture with files.
+        database.changeUser(TEST_PREFIX + "student1");
+
+        // The unit is hidden, students should not see it in the merged result
+        callAndCheckMergeResult(lecture, 2);
+    }
+
+    private void adjustReleaseDateToFuture(Lecture lecture) {
+        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentUnit) lectureUnit).getAttachment())
+                .findFirst().orElseThrow();
+        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
+        attachmentRepo.save(attachment);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetLecturePdfAttachmentsMerged_correctOrder() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+
+        // Change order of units
+        LectureUnit unit3 = lecture.getLectureUnits().get(2);
+        lecture.getLectureUnits().remove(unit3);
+        lecture.getLectureUnits().add(0, unit3);
+        lectureRepo.save(lecture);
+
+        // The test setup needs at least TA right for creating a lecture with files.
+        database.changeUser(TEST_PREFIX + "student1");
+
+        try (PDDocument mergedDoc = retrieveMergeResult(lecture)) {
+            assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
+            PDPage firstPage = mergedDoc.getPage(0);
+            // Verify that attachment 3 (created with a special crop box in createLectureWithLectureUnits) was moved to the start
+            // and is now the first page of the merged pdf
+            assertThat(firstPage.getCropBox().getHeight()).isEqualTo(4);
+        }
+    }
+
     private void callAndCheckMergeResult(Lecture lecture, int expectedPages) throws Exception {
+        try (PDDocument mergedDoc = retrieveMergeResult(lecture)) {
+            assertThat(mergedDoc.getNumberOfPages()).isEqualTo(expectedPages);
+        }
+    }
+
+    private PDDocument retrieveMergeResult(Lecture lecture) throws Exception {
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf", HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
-        try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
-            assertEquals(expectedPages, mergedDoc.getNumberOfPages());
-        }
+        return PDDocument.load(receivedFile);
     }
 
     private Lecture createLectureWithLectureUnits() throws Exception {
@@ -393,8 +436,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
         lectureRepo.save(lecture);
 
-        Long lectureId = lecture.getId();
-
         // create pdf file 1
         AttachmentUnit unit1;
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
@@ -403,30 +444,32 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+            unit1 = uploadAttachmentUnit(file1, expectedStatus);
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        AttachmentUnit unit2 = uploadAttachmentUnit(file2, lectureId, expectedStatus);
+        AttachmentUnit unit2 = uploadAttachmentUnit(file2, expectedStatus);
 
         // create pdf file 3
         AttachmentUnit unit3;
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
-            doc2.addPage(new PDPage());
+            // Add first page with extra cropBox to make it distinguishable in the later tests
+            PDPage page = new PDPage();
+            page.setCropBox(new PDRectangle(1, 2, 3, 4));
+            doc2.addPage(page);
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
+            unit3 = uploadAttachmentUnit(file3, expectedStatus);
         }
 
-        lecture = database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
+        lecture = database.addLectureUnitsToLecture(lecture, List.of(unit1, unit2, unit3));
 
         return lecture;
     }
 
-    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureRepo.findByIdWithLectureUnits(lectureId).get();
+    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 

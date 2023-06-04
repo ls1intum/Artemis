@@ -22,13 +22,13 @@
             <tbody>
                 <tr *ngFor="let organization of organizations; trackBy: trackIdentity">
                     <td>
-                        <ngb-highlight [result]="organization.id!.toString()"></ngb-highlight>
+                        <span>{{ organization.id }}</span>
                     </td>
                     <td>
-                        <ngb-highlight [result]="organization.name!"></ngb-highlight>
+                        <span>{{ organization.name }}</span>
                     </td>
                     <td>
-                        <ngb-highlight [result]="organization.shortName"></ngb-highlight>
+                        <span>{{ organization.shortName }}</span>
                     </td>
                     <td>{{ organization.url }}</td>
                     <td>{{ organization.description }}</td>
