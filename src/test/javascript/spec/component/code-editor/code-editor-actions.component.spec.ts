@@ -272,7 +272,7 @@ describe('CodeEditorActionsComponent', () => {
         flush();
     }));
 
-    it.each([false, true])(
+    it.each([true, false])(
         'should autosave unsaved files after 30 seconds if autosave is not disabled',
         fakeAsync((disableAutoSave: boolean) => {
             const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
