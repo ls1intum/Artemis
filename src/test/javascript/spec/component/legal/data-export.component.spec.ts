@@ -63,6 +63,7 @@ describe('DataExportComponent', () => {
         const user = new User();
         user.login = 'admin';
         user.id = 1;
+        route.params = of({});
         accountService.userIdentity = user;
         component.ngOnInit();
         tick();
