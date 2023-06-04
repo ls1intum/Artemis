@@ -31,13 +31,14 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     /**
      * Find all data exports whose creation needs to be scheduled. This includes all data exports that are currently in the state creation (the export was not completed then) or
      * requested.
+     * 0 = REQUESTED, 1 = IN_CREATION
      *
      * @return a set of data exports that need to be scheduled
      */
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
-            WHERE dataExport.dataExportState = 'REQUESTED' OR dataExport.dataExportState = 'IN_CREATION'
+            WHERE dataExport.dataExportState = 0 OR dataExport.dataExportState = 1
             """)
     Set<DataExport> findAllThatNeedToBeScheduled();
 }

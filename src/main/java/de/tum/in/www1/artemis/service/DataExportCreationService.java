@@ -584,7 +584,10 @@ public class DataExportCreationService {
                     if (feedback.getDetailText() != null) {
                         resultScoreAndFeedbacks.append(feedback.getDetailText()).append("\t");
                     }
-                    resultScoreAndFeedbacks.append(feedback.getCredits()).append("\n");
+                    if (feedback.getCredits() != null) {
+                        resultScoreAndFeedbacks.append(feedback.getCredits());
+                    }
+                    resultScoreAndFeedbacks.append("\n");
                 }
                 Files.writeString(outputDir.resolve("submission_" + submission.getId() + "_result_" + result.getId() + TXT_FILE_EXTENSION), resultScoreAndFeedbacks);
             }

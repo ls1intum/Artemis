@@ -48,20 +48,17 @@ public class DataExportScheduleService {
     @PostConstruct
     public void scheduleDataExportOnStartup() {
         try {
-            if (profileService.isDev()) {
-                // only execute this on production server, i.e. when the prod profile is active
-                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-                return;
-            }
+            // if (profileService.isDev()) {
+            // // only execute this on production server, i.e. when the prod profile is active
+            // // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            // return;
+            // }
             SecurityUtils.setAuthorizationObject();
             var dataExportsToBeScheduled = dataExportRepository.findAllThatNeedToBeScheduled();
 
-            ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
             for (var dataExport : dataExportsToBeScheduled) {
-
+                scheduler.schedule(createDataExport(dataExport), retrieveScheduledDateTime());
             }
-            // For local testing
-            // scheduler.scheduleAtFixedRate(scheduleEmailSummaries(), ZonedDateTime.now().toLocalDateTime().toInstant(zoneOffset), Duration.ofMinutes(3));
 
             log.info("Scheduled data exports on start up.");
         }
@@ -85,19 +82,8 @@ public class DataExportScheduleService {
     }
 
     public void scheduleDataExportCreation(DataExport dataExport) {
-        LocalDate currentDate = LocalDate.now();
-        LocalTime startTime = LocalTime.of(4, 0);
-        LocalDate day = currentDate;
-        // only add one day if the data export is scheduled after 4 am and before midnight
-        if (LocalTime.now().isAfter(startTime)) {
-            day = currentDate.plusDays(1);
-        }
-
-        Instant scheduledTime = day.atTime(startTime).atZone(ZoneId.systemDefault()).toInstant();
         log.info("Scheduling data export for {}", dataExport.getUser().getLogin());
-        // for local testing you can use the line below instead
-        // var scheduledTime = ZonedDateTime.now().plusMinutes(3).toInstant();
-        scheduler.schedule(createDataExport(dataExport), scheduledTime);
+        scheduler.schedule(createDataExport(dataExport), retrieveScheduledDateTime());
 
     }
 
@@ -110,6 +96,19 @@ public class DataExportScheduleService {
             checkSecurityUtils();
             dataExportCreationService.deleteDataExportAndSetDataExportState(dataExport);
         };
+    }
+
+    private Instant retrieveScheduledDateTime() {
+        LocalDate currentDate = LocalDate.now();
+        LocalTime startTime = LocalTime.of(4, 0);
+        LocalDate day = currentDate;
+        // only add one day if the data export is scheduled after 4 am and before midnight
+        if (LocalTime.now().isAfter(startTime)) {
+            day = currentDate.plusDays(1);
+        }
+
+        // for local testing you can e.g. use var scheduledTime = ZonedDateTime.now().plusMinutes(3).toInstant();
+        return day.atTime(startTime).atZone(ZoneId.systemDefault()).toInstant();
     }
 
 }
