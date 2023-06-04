@@ -48,11 +48,11 @@ public class DataExportScheduleService {
     @PostConstruct
     public void scheduleDataExportOnStartup() {
         try {
-            // if (profileService.isDev()) {
-            // // only execute this on production server, i.e. when the prod profile is active
-            // // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-            // return;
-            // }
+            if (profileService.isDev()) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
             SecurityUtils.setAuthorizationObject();
             var dataExportsToBeScheduled = dataExportRepository.findAllThatNeedToBeScheduled();
 
@@ -67,7 +67,7 @@ public class DataExportScheduleService {
         }
     }
 
-    Runnable createDataExport(DataExport dataExport) {
+    private Runnable createDataExport(DataExport dataExport) {
         return () -> {
             checkSecurityUtils();
             dataExportCreationService.createDataExport(dataExport);
