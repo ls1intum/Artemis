@@ -54,6 +54,10 @@ public class DataExportCreationService {
 
     private static final String TXT_FILE_EXTENSION = ".txt";
 
+    private static final String COURSE_DIRECTORY_PREFIX = "course_";
+
+    private static final String EXAM_DIRECTORY_PREFIX = "exam_";
+
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
     @Value("${artemis.data-export-path:./data-exports}")
@@ -142,9 +146,12 @@ public class DataExportCreationService {
         var reactions = reactionRepository.findReactionsByUserId(userId);
         var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
-            Path courseDir = Files.createDirectory(workingDirectory.resolve("course_" + course.getShortName()));
             Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
                     user.getId());
+            Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
+            if (!exercises.isEmpty()) {
+                courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
+            }
             for (var exercise : exercises) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     createProgrammingExerciseExport(programmingExercise, courseDir, userId);
@@ -204,7 +211,9 @@ public class DataExportCreationService {
             // there can be multiple student exams in rare cases because a student can request the creation of multiple student test exams
             Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             for (var studentExam : studentExams) {
-                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + studentExam.getId()));
+                var examTitle = studentExam.getExam().getSanitizedExamTitle();
+                var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
+                var examWorkingDir = Files.createDirectories(courseWorkingDir.resolve(examDirectoryName));
                 createStudentExamExport(studentExam, examWorkingDir);
             }
         }
@@ -495,6 +504,20 @@ public class DataExportCreationService {
         var answerPostReactionsInCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
                 .filter(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo() != null)
                 .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
+
+        if (!postsInCourse.isEmpty() || !answerPostsInCourse.isEmpty() || !postReactionsInCourse.isEmpty() || !answerPostReactionsInCourse.isEmpty()) {
+            // if no exercise participations exist, the course directory is not yet created
+            if (!Files.exists(courseDir)) {
+                Files.createDirectory(courseDir);
+            }
+            createCommunicationDataCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
+        }
+        createCommunicationDataCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
+
+    }
+
+    private void createCommunicationDataCsvFile(Path courseDir, List<Post> postsInCourse, List<AnswerPost> answerPostsInCourse, List<Reaction> postReactionsInCourse,
+            List<Reaction> answerPostReactionsInCourse) throws IOException {
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -524,7 +547,6 @@ public class DataExportCreationService {
             }
             printer.flush();
         }
-
     }
 
     private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
