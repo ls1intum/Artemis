@@ -109,7 +109,7 @@ public class DataExportService {
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
             QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService, Path workingDirectory,
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
@@ -232,7 +232,7 @@ public class DataExportService {
             // there can be multiple student exams in rare cases because a student can request the creation of multiple student test exams
             Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             for (var studentExam : studentExams) {
-                var examTitle = studentExam.getExam().getSanitizedExamTitle();
+                var examTitle = exam.getSanitizedExamTitle();
                 var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
                 var examWorkingDir = Files.createDirectories(courseWorkingDir.resolve(examDirectoryName));
                 createStudentExamExport(studentExam, examWorkingDir);

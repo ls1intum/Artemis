@@ -25,7 +25,6 @@ public class StringUtil {
      * @param input String to sanitize
      * @return sanitized string
      */
-
     public static String sanitizeStringForFileName(String input) {
         return input.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
     }

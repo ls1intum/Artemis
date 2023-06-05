@@ -140,6 +140,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var submission = database.createProgrammingSubmission(participation, false, "abc");
         var submission2 = database.createProgrammingSubmission(participation, false, "def");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
+        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
@@ -166,7 +167,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.createPlagiarismCaseForUserForExercise(programmingExercise, database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
         database.createPlagiarismCaseForUserForExercise(exercises.get(0), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
         database.createPlagiarismCaseForUserForExercise(exercises.get(1), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
-        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {

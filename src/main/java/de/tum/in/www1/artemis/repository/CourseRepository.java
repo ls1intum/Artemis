@@ -293,7 +293,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT c
             FROM Course c
-            LEFT JOIN FETCH c.exams exams
+                LEFT JOIN FETCH c.exams exams
             WHERE (:isAdmin = TRUE
                    OR c.studentGroupName IN :userGroups
                    OR c.teachingAssistantGroupName IN :userGroups
