@@ -6,6 +6,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
@@ -19,9 +20,10 @@ export class LearningGoalService {
     constructor(private httpClient: HttpClient, private entityTitleService: EntityTitleService, private lectureUnitService: LectureUnitService) {}
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' })
-            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+        return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => LearningGoalService.convertArrayResponseDatesFromServer(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
     }
 
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -104,6 +106,9 @@ export class LearningGoalService {
     }
 
     convertLearningGoalResponseFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body?.dueDate) {
+            res.body.dueDate = convertDateFromServer(res.body.dueDate);
+        }
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
         }
@@ -115,7 +120,9 @@ export class LearningGoalService {
     }
 
     convertLearningGoalFromClient(learningGoal: LearningGoal): LearningGoal {
-        const copy = Object.assign({}, learningGoal);
+        const copy = Object.assign({}, learningGoal, {
+            dueDate: convertDateFromClient(learningGoal.dueDate),
+        });
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
         }
@@ -123,6 +130,16 @@ export class LearningGoalService {
             copy.exercises = copy.exercises.map((exercise) => ExerciseService.convertExerciseFromClient(exercise));
         }
         return copy;
+    }
+
+    /**
+     * Helper methods for date conversion from server and client
+     */
+    private static convertArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.map((learningGoal: LearningGoal) => (learningGoal.dueDate = convertDateFromServer(learningGoal.dueDate)));
+        }
+        return res;
     }
 
     private sendTitlesToEntityTitleService(learningGoal: LearningGoal | undefined | null) {
