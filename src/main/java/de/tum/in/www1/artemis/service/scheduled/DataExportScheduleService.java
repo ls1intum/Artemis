@@ -15,9 +15,7 @@ import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 
 @Service
 @Profile("scheduling")
@@ -33,16 +31,13 @@ public class DataExportScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
 
-    private final FileService fileService;
-
     public DataExportScheduleService(ProfileService profileService, @Qualifier("taskScheduler") TaskScheduler scheduler, DataExportRepository dataExportRepository,
-            DataExportCreationService dataExportCreationService, SingleUserNotificationService singleUserNotificationService, FileService fileService) {
+            DataExportCreationService dataExportCreationService) {
         this.profileService = profileService;
         this.scheduler = scheduler;
         this.dataExportRepository = dataExportRepository;
         this.dataExportCreationService = dataExportCreationService;
 
-        this.fileService = fileService;
     }
 
     @PostConstruct

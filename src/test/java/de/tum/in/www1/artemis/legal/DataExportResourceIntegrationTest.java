@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 
 @ExtendWith(MockitoExtension.class)
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -143,23 +144,37 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "DELETED", "DOWNLOADED_DELETED", "FAILED" })
     @ParameterizedTest
-    void testCanDownload_noDataExportInCorrectState_false(DataExportState state) throws Exception {
+    void testCanDownload_noDataExportInCorrectState_dataExportIdNull(DataExportState state) throws Exception {
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(state);
         dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        var canDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, Boolean.class);
-        assertThat(canDownload).isFalse();
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isNull();
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(value = DataExportState.class, names = { "IN_CREATION", "DOWNLOADED" })
+    void testCanDownload_dataExportInCorrectState_dataExportIdReturned() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setRequestDate(ZonedDateTime.now());
+        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport = dataExportRepository.save(dataExport);
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isEqualTo(dataExport.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCanDownload_noDataExport_false() throws Exception {
+    void testCanDownload_noDataExport_dataExportIdNull() throws Exception {
         dataExportRepository.deleteAll();
-        var canDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, Boolean.class);
-        assertThat(canDownload).isFalse();
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isNull();
     }
 
     @Test

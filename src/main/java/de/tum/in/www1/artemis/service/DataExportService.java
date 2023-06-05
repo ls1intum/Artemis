@@ -84,9 +84,6 @@ public class DataExportService {
 
     public boolean canRequestDataExport() {
         var user = userRepository.getUserWithDataExports();
-        if (user.getDataExports().isEmpty()) {
-            return true;
-        }
         var latestDataExport = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
         if (latestDataExport.isEmpty()) {
             return true;
@@ -99,9 +96,6 @@ public class DataExportService {
     public DataExportDTO canDownloadAnyDataExport() {
         var cannotDownload = new DataExportDTO(null);
         var user = userRepository.getUserWithDataExports();
-        if (user.getDataExports().isEmpty()) {
-            return cannotDownload;
-        }
         var latestDataExportOptional = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
         if (latestDataExportOptional.isEmpty()) {
             return cannotDownload;

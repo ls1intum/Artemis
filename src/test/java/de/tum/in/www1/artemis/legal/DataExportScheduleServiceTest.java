@@ -100,6 +100,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void scheduleOnStartupHandlesExceptionGracefully() {
+        createDataExportWithState(DataExportState.REQUESTED);
         doThrow(new RuntimeException("error")).when(scheduler).schedule(any(Runnable.class), any(Instant.class));
         assertThatCode(() -> dataExportScheduleService.scheduleDataExportOnStartup()).doesNotThrowAnyException();
     }
@@ -149,6 +150,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExport.setRequestDate(ZonedDateTime.of(2023, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
         dataExport.setDataExportState(state);
         dataExport.setUser(database.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport.setFilePath("path");
         return dataExportRepository.save(dataExport);
     }
 

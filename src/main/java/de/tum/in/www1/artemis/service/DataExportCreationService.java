@@ -211,7 +211,7 @@ public class DataExportCreationService {
             // there can be multiple student exams in rare cases because a student can request the creation of multiple student test exams
             Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             for (var studentExam : studentExams) {
-                var examTitle = studentExam.getExam().getSanitizedExamTitle();
+                var examTitle = exam.getSanitizedExamTitle();
                 var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
                 var examWorkingDir = Files.createDirectories(courseWorkingDir.resolve(examDirectoryName));
                 createStudentExamExport(studentExam, examWorkingDir);
@@ -245,8 +245,8 @@ public class DataExportCreationService {
         List<String> headers = new ArrayList<>();
         var examResults = getExamResultsStreamToPrint(studentResult, headers);
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)),
-                csvFormat)) {
+        try (final CSVPrinter printer = new CSVPrinter(
+                Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(examResults);
             printer.flush();
         }
@@ -281,7 +281,8 @@ public class DataExportCreationService {
         String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + CSV_FILE_EXTENSION)),
+                csvFormat)) {
             printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
                     studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
             printer.flush();
@@ -376,10 +377,11 @@ public class DataExportCreationService {
                 }
             }
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers.txt"), multipleChoiceQuestionsSubmissions);
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION),
+                        multipleChoiceQuestionsSubmissions);
             }
             if (!shortAnswerQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers.txt"), shortAnswerQuestionsSubmissions);
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION), shortAnswerQuestionsSubmissions);
             }
         }
 

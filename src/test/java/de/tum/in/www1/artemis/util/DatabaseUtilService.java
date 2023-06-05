@@ -4308,7 +4308,7 @@ public class DatabaseUtilService {
     }
 
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         initializeQuizExerciseWithAllQuestionTypes(quizExercise);
         return quizExerciseRepository.save(quizExercise);
     }
