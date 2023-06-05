@@ -8,11 +8,11 @@ Textual exercise
 Overview
 --------
 
-Conducting a Text exercise consists of 3 steps:
+Conducting a text exercise consists of 3 steps:
 
-1. **Instructor prepares exercise:** Creates and configures the text exercise in Artemis.
+1. **Instructor prepares exercise:** Instructor creates and configures the text exercise in Artemis.
 2. **Student solves exercise:** Student works on the exercise and submits the solution.
-3. **Tutor assesses submissions:** Reviews the submitted exercises and creates results for the students.
+3. **Tutor assesses submissions:** Tutor reviews the submitted exercises and creates results for the students.
 
 
 Setup
@@ -26,7 +26,7 @@ The following sections describe the supported features and the process of creati
     .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
 
-Create new Text Exercise
+Create Text Exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Click on **Create new text exercise**.
@@ -41,7 +41,7 @@ The following screenshot illustrates the first section of the form. It consists 
 - **Difficulty**: Difficulty of an exercise. (No Level, Easy, Medium or Hard).
 - **Mode**: Solving mode of an exercise. *This cannot be changed afterward* (Individual or Team).
 - **Release Date**: Date after which the exercise is released to the students.
-- **Release Date**: Date after which students can start the exercise.
+- **Start Date**: Date after which students can start the exercise.
 - **Due Date**: Date till when students can work on the exercise.
 - **Assessment Due Date**: Date after which students can view the feedback of the assessments from the instructors.
 - **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation.
@@ -95,7 +95,7 @@ Import Text Exercise
               :align: center
               :scale: 50
 
-- Once you import one of the exercises, you will then be redirected to a form that is similar to *Create new text exercise* form with all the fields filled from the imported exercise. You can now modify the fields as per your necessity to create a new Text Exercise.
+- Once you import one of the exercises, you will then be redirected to a form that is similar to *Create text exercise* form with all the fields filled from the imported exercise. You can now modify the fields as necessary to create a text exercise.
 
 Result
 ^^^^^^
@@ -121,7 +121,7 @@ Student Submission
 
 - Once they start the exercise, they will now have the option to work on it in an online text editor by clicking on the |open-text-editor| button.
 
-- The screenshot below depicts the exercise interface for students. They can read the Problem Statement on the right and fill in their solution in the textbox on the left. To submit, you need to click on the |submit| button on the top right.
+- The screenshot below depicts the exercise interface for students. They can read the problem statement on the right and fill in their solution in the textbox on the left. To submit, you need to click on the |submit| button on the top right.
 
     .. figure:: text/text-exercise-students-interface.png
               :align: center
