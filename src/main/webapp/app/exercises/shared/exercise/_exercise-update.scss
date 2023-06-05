@@ -16,3 +16,33 @@ label {
     font-size: 17px;
     font-weight: bolder;
 }
+
+.plagiarism-option {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+
+    &.disabled .form-control {
+        opacity: 0.4;
+    }
+
+    &-label {
+        flex-shrink: 0;
+        width: 12rem;
+    }
+
+    &-checkbox {
+        margin-right: 0.5rem;
+    }
+
+    #plagiarism-similarity-threshold,
+    #plagiarism-minimum-score,
+    #plagiarism-minimum-size {
+        margin-right: 0.5rem;
+        width: 4rem;
+    }
+
+    .form-control {
+        padding-right: 0;
+    }
+}

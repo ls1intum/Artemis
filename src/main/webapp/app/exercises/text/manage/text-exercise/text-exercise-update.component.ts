@@ -21,7 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
@@ -47,6 +47,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
+    plagiarismChecksSimilarityThresholdPercentage = 50;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -55,6 +56,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     // Icons
     faSave = faSave;
+    faQuestionCircle = faQuestionCircle;
     faBan = faBan;
 
     constructor(
@@ -179,6 +181,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+        this.textExercise.plagiarismChecksConfig.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.textExercise, this.isExamMode, this.notificationText)

@@ -59,8 +59,10 @@ describe('TextExercise Management Update Component', () => {
             it('should call update service on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
+                comp.plagiarismChecksSimilarityThresholdPercentage = 55;
 
                 const entity = { ...textExercise };
+                entity.plagiarismChecksConfig.similarityThreshold = 0.55;
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
