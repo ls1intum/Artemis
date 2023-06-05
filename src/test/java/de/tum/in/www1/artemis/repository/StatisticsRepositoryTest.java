@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -102,7 +102,8 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // depending on the graph type, we inject the view that is not supported for it
         StatisticsView view = graphType == GraphType.POSTS || graphType == GraphType.RESOLVED_POSTS ? StatisticsView.ARTEMIS : StatisticsView.EXERCISE;
-        assertThrows(UnsupportedOperationException.class, () -> statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, SpanType.WEEK, startDate, endDate, view, null));
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, SpanType.WEEK, startDate, endDate, view, null));
     }
 
     /**

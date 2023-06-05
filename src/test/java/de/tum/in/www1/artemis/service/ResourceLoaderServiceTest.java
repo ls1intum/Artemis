@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -47,13 +47,13 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     void testShouldNotAllowAbsolutePathsSingleResource() {
         final Path path = javaPath.toAbsolutePath();
-        assertThatThrownBy(() -> resourceLoaderService.getResource(path)).isInstanceOf(IllegalArgumentException.class);
+        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResource(path));
     }
 
     @Test
     void testShouldNotAllowAbsolutePathsMultipleResources() {
         final Path path = javaPath.toAbsolutePath();
-        assertThatThrownBy(() -> resourceLoaderService.getResources(path)).isInstanceOf(IllegalArgumentException.class);
+        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResources(path));
     }
 
     @Test
