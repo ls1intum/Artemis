@@ -174,10 +174,7 @@ public class ExamResource {
             instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
         }
 
-        if (!savedExam.isTestExam()) {
-            Channel createdChannel = channelService.createExamChannel(savedExam, exam.getChannelName());
-            channelService.registerUsersToChannelAsynchronously(false, true, true, List.of(), createdChannel.getCourse(), createdChannel);
-        }
+        channelService.createExamChannel(savedExam, exam.getChannelName());
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }

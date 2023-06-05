@@ -285,7 +285,7 @@ public class ChannelService {
     }
 
     /**
-     * Create a channel for a lecture
+     * Creates a channel for a lecture and sets the channel name of the lecture accordingly. Also adds all course members asynchronously.
      *
      * @param lecture     the lecture to create the channel for
      * @param channelName the name of the channel
@@ -299,11 +299,14 @@ public class ChannelService {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription("Channel for lecture: " + lecture.getTitle());
         channelToCreate.setLecture(lecture);
-        return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        lecture.setChannelName(createdChannel.getName());
+        registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
+        return createdChannel;
     }
 
     /**
-     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly
+     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly. Also adds all course members asynchronously.
      *
      * @param exercise    the exercise to create the channel for
      * @param channelName the name of the channel
@@ -328,7 +331,7 @@ public class ChannelService {
     }
 
     /**
-     * Create a channel for an exam
+     * Creates a channel for a real exam and sets the channel name of the exam accordingly. Also adds all course members asynchronously.
      *
      * @param exam        the exam to create the channel for
      * @param channelName the name of the channel
@@ -345,7 +348,10 @@ public class ChannelService {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription("Channel for exam: " + exam.getTitle());
         channelToCreate.setExam(exam);
-        return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        exam.setChannelName(createdChannel.getName());
+        registerUsersToChannelAsynchronously(false, true, true, List.of(), createdChannel.getCourse(), createdChannel);
+        return createdChannel;
     }
 
     /**
