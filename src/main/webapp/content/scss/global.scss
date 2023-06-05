@@ -946,22 +946,6 @@ Course Info Bar
     min-width: fit-content;
 }
 
-/* This stretches the div containing the mat-select dropdown to the bottom of the screen,
-   so that the height of the dropdown can be increased */
-.cdk-overlay-pane {
-    bottom: 0;
-}
-
-/* This makes the mat-select dropdown fill as much vertical space as available in the window, if needed,
-   while preventing it from overflowing outside the window */
-.cdk-overlay-container .cdk-overlay-pane .mat-select-panel {
-    max-height: fit-content;
-    height: -moz-max-content;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-}
-
 .mat-form-field-outline {
     top: -0.1rem !important;
     color: $mat-form-field-outline;
