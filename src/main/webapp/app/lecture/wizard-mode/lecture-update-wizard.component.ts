@@ -21,8 +21,6 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() isSaving: boolean;
     @Input() startDate: string;
     @Input() endDate: string;
-    @Input() channelName: string | undefined;
-    @Output() channelNameChange = new EventEmitter<string>();
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
     @ViewChild(LectureUpdateWizardLearningGoalsComponent, { static: false }) learningGoalsComponent: LectureUpdateWizardLearningGoalsComponent;
@@ -109,10 +107,5 @@ export class LectureUpdateWizardComponent implements OnInit {
         } else {
             this.router.navigate(['course-management', this.lecture.course!.id, 'lectures', this.lecture.id]);
         }
-    }
-
-    updateChannelName(newChannelName: string) {
-        this.channelName = newChannelName;
-        this.channelNameChange.emit(newChannelName);
     }
 }

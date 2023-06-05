@@ -40,6 +40,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 @Component({
     template: '',
@@ -90,6 +91,7 @@ describe('Exam Update Component', () => {
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
+                    MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -495,6 +497,7 @@ describe('Exam Update Component', () => {
                     MockComponent(DifficultyBadgeComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
+                    MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },

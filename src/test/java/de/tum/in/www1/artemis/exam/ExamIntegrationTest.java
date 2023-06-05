@@ -905,7 +905,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
         // Test examAccessService.
         Exam examE = ModelFactory.generateExam(course1, "examE");
-        examE.setTitle(" Exam 123 ");
+        examE.setTitle("          Exam 123              ");
         URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
@@ -1025,14 +1025,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testUpdateExam_asInstructor() throws Exception {
         // Create instead of update if no id was set
         Exam exam = ModelFactory.generateExam(course1, "exam1");
-        exam.setTitle("Over 9000");
+        exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
         Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
         assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());
         // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
-        assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate", "channel").isEqualTo(createdExam);
+        assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
         // No course is set -> bad request
         exam = ModelFactory.generateExam(course1);
@@ -3245,6 +3245,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam exam = database.addExam(course1);
         exam.setId(null);
 
+        exam.setChannelName("channelname-imported");
         final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
@@ -3276,7 +3277,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testImportExamWithExercises_successfulWithExercises() throws Exception {
         Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setId(null);
-
+        exam.setChannelName("testchannelname-imported");
         final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
@@ -3291,7 +3292,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
         exam.setCourse(course1);
         exam.setId(null);
-
+        exam.setChannelName("testchannelname");
         final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
         assertThat(received.getExerciseGroups()).hasSize(4);
 

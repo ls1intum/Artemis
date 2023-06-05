@@ -5,12 +5,13 @@
     </div>
     <jhi-title-channel-name
         [(title)]="programmingExercise.title"
-        [channelName]="channelName"
-        (channelNameChange)="updateChannelName($event)"
+        [(channelName)]="programmingExercise.channelName"
         channelNamePrefix="exercise-"
         [minTitleLength]="3"
         [pattern]="infoInputs.titleNamePattern"
         [hideTitleLabel]="true"
+        [emphasizeLabels]="true"
+        [hideChannelName]="isExamMode || (isEdit && programmingExercise.channelName === undefined)"
     ></jhi-title-channel-name>
 </div>
 

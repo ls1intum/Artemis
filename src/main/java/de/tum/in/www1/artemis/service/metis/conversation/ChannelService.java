@@ -303,13 +303,17 @@ public class ChannelService {
     }
 
     /**
-     * Create a channel for an exercise
+     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly
      *
      * @param exercise    the exercise to create the channel for
      * @param channelName the name of the channel
      * @return the created channel
      */
     public Channel createExerciseChannel(Exercise exercise, @NotNull String channelName) {
+        if (!exercise.isCourseExercise()) {
+            return null;
+        }
+
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(true);
@@ -317,7 +321,9 @@ public class ChannelService {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(String.format("Channel for %s exercise: %s", exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle()));
         channelToCreate.setExercise(exercise);
-        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        exercise.setChannelName(createdChannel.getName());
+        return createdChannel;
     }
 
     /**
@@ -328,6 +334,9 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createExamChannel(Exam exam, @NotNull String channelName) {
+        if (exam.isTestExam()) {
+            return null;
+        }
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(false);

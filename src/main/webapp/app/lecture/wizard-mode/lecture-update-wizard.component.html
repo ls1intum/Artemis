@@ -1,12 +1,5 @@
 <div>
-    <jhi-lecture-update-wizard-title
-        class="form-step"
-        *ngIf="currentStep >= 1"
-        [currentStep]="currentStep"
-        [lecture]="lecture"
-        [channelName]="channelName"
-        (channelNameChange)="this.updateChannelName($event)"
-    ></jhi-lecture-update-wizard-title>
+    <jhi-lecture-update-wizard-title class="form-step" *ngIf="currentStep >= 1" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
     <jhi-lecture-update-wizard-period
         class="form-step"
         *ngIf="currentStep >= 2"

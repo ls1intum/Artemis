@@ -184,7 +184,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private Long numberOfRatingsTransient;
 
     /**
-     * It is defined here for transferring the value from client.
+     * Used for receiving the value from client.
      */
     @Transient
     private String channelNameTransient;

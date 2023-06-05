@@ -29,7 +29,6 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -412,10 +411,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     },
                                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                                 });
-                                // Set empty channel name for new programming exercise
-                                if (this.programmingExercise.id === undefined && this.programmingExercise.channelName === undefined) {
-                                    this.programmingExercise.channelName = '';
-                                }
                             });
                         }
                     }

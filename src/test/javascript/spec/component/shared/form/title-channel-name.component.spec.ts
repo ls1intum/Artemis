@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
+import { NgForm } from '@angular/forms';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -13,6 +14,7 @@ describe('TitleChannelNameComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [TitleChannelNameComponent],
+            providers: [NgForm],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TitleChannelNameComponent);
@@ -42,19 +44,8 @@ describe('TitleChannelNameComponent', () => {
         });
     }));
 
-    it('should only display title input field for undefined title', () => {
-        fixture.detectChanges();
-
-        const titleInput = fixture.debugElement.query(By.css('#field_title'));
-        expect(titleInput).not.toBeNull();
-
-        const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
-        expect(channelNameInput).toBeNull();
-    });
-
-    it('should only display title input field for undefined channel name', () => {
-        component.title = 'Test';
-
+    it('should only display title input field if channel name is hidden', () => {
+        component.hideChannelName = true;
         fixture.detectChanges();
 
         const titleInput = fixture.debugElement.query(By.css('#field_title'));
@@ -81,17 +72,6 @@ describe('TitleChannelNameComponent', () => {
         expect(component.title).toBe(newTitle);
         expect(component.channelName).toBe('new-0123-@()[]{}-!?.-_-$%&-too');
     }));
-
-    it('set channel name to prefix if empty', () => {
-        const prefix = 'test-';
-        component.channelName = '';
-        component.channelNamePrefix = prefix;
-
-        component.ngOnInit();
-
-        expect(component.channelNamePrefix).toBe(prefix);
-        expect(component.channelName).toBe(prefix);
-    });
 
     it('init prefix if undefined without influencing channel name', () => {
         component.channelName = 'test';

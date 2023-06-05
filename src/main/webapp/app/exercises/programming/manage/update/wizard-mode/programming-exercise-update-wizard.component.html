@@ -1,4 +1,4 @@
-<div>
+<form name="editForm" role="form" novalidate>
     <jhi-programming-exercise-update-wizard-info
         class="form-step"
         *ngIf="currentStep >= 1"
@@ -7,8 +7,6 @@
         [programmingExercise]="programmingExercise"
         [infoStepInputs]="infoStepInputs"
         [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
-        [channelName]="channelName"
-        (channelNameChange)="updateChannelName($event)"
     ></jhi-programming-exercise-update-wizard-info>
 
     <jhi-programming-exercise-update-wizard-difficulty
@@ -50,4 +48,4 @@
         [isSaving]="isSaving"
         [getInvalidReasons]="getInvalidReasons"
     ></jhi-programming-exercise-update-wizard-bottom-bar>
-</div>
+</form>

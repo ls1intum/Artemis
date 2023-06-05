@@ -167,10 +167,8 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         TextExercise result = textExerciseRepository.save(textExercise);
-        if (result.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(result, textExercise.getChannelName());
-            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
-        }
+
+        channelService.createExerciseChannel(result, textExercise.getChannelName());
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);

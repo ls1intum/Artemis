@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashMap;
-import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -48,11 +46,8 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
 
         FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
-        if (newExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(newFileUploadExercise, importedExercise.getChannelName());
-            newFileUploadExercise.setChannelName(createdChannel.getName());
-            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
-        }
+
+        channelService.createExerciseChannel(newFileUploadExercise, importedExercise.getChannelName());
         return newFileUploadExercise;
     }
 

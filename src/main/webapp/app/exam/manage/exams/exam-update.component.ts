@@ -60,7 +60,7 @@ export class ExamUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
 
-            if (this.exam.id == undefined) {
+            if (this.exam.id == undefined && this.exam.testExam !== true) {
                 this.exam.channelName = '';
             }
             // Tap the URL to determine, if the Exam should be imported

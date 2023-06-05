@@ -128,10 +128,8 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        if (result.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(result, fileUploadExercise.getChannelName());
-            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
-        }
+
+        channelService.createExerciseChannel(result, fileUploadExercise.getChannelName());
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);

@@ -192,7 +192,6 @@ public class ProgrammingExerciseService {
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
-
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
@@ -211,10 +210,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        if (savedProgrammingExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
-            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
-        }
+        channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
 
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook

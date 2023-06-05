@@ -141,7 +141,8 @@ public class ProgrammingExerciseImportBasicService {
         }
 
         programmingExerciseRepository.save(newExercise);
-        if (newExercise.isCourseExercise() && newExercise.getChannelName() != null) {
+
+        if (newExercise.getChannelName() != null) {
             channelService.createExerciseChannel(newExercise, newExercise.getChannelName());
         }
 

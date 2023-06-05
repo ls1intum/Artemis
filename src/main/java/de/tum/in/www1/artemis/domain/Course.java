@@ -196,7 +196,7 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties(value = "course")
+    @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
     @ManyToMany

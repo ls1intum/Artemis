@@ -915,6 +915,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
         // Import the exam
+        targetExam.setChannelName("testchannel-imported");
         final Exam received = request.postWithResponseBody("/api/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
 
         // Extract the programming exercise from the exam
@@ -1721,11 +1722,11 @@ public class ProgrammingExerciseTestService {
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
-        assertThat(Files.exists(teamLocalPath)).isTrue();
+        assertThat(teamLocalPath).exists();
         // Start participation
         var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
         // the directory of the repo should be deleted
-        assertThat(Files.exists(teamLocalPath)).isFalse();
+        assertThat(teamLocalPath).doesNotExist();
         // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
         assertThat(exception.getMessage()).isNotEmpty();
     }

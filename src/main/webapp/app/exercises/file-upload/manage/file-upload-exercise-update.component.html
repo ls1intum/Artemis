@@ -19,6 +19,8 @@
             [(channelName)]="fileUploadExercise.channelName"
             channelNamePrefix="exercise-"
             [minTitleLength]="3"
+            [emphasizeLabels]="true"
+            [hideChannelName]="this.isExamMode || (!this.isImport && this.fileUploadExercise.channelName === undefined)"
         ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
-import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-information.component';
@@ -59,19 +58,5 @@ describe('ProgrammingExerciseWizardInformationComponent', () => {
     it('should initialize', () => {
         wizardComponentFixture.detectChanges();
         expect(wizardComponent).not.toBeNull();
-    });
-
-    it('should update channelName', () => {
-        const newChannelName = 'New Channel Name';
-        let emittedChannelName: string | undefined;
-        wizardComponent.channelNameChange.subscribe((channelName: string) => {
-            emittedChannelName = channelName;
-        });
-
-        const titleChannelNameElement = wizardComponentFixture.debugElement.query(By.css('jhi-programming-exercise-info'));
-        titleChannelNameElement.triggerEventHandler('channelNameChange', newChannelName);
-
-        expect(wizardComponent.channelName).toBe(newChannelName);
-        expect(emittedChannelName).toBe(newChannelName);
     });
 });
