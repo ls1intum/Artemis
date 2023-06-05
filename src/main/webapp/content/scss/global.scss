@@ -740,6 +740,15 @@ Course Info Bar
     }
 }
 
+/* Make PlantUML outputs responsive */
+[id^='plantUml-'] {
+    display: flex;
+}
+
+[id^='plantUml-'] > * {
+    height: 100% !important;
+}
+
 .ngb-tooltip-window {
     padding: 0;
     width: 200px !important;
