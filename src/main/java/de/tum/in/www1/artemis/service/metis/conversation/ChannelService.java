@@ -150,19 +150,6 @@ public class ChannelService {
     }
 
     /**
-     * Adds all course students to the given channel asynchronously
-     *
-     * @param addAllStudents if true, all students of the course will be added to the channel
-     * @param course         the course to add the students from
-     * @param channel        the channel to add the students to
-     */
-    @Async
-    public void registerCourseStudentsToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(addAllStudents, false, false, List.of(), course, channel);
-    }
-
-    /**
      * Adds users to the given channel asynchronously
      *
      * @param addAllStudents if true, all students of the course will be added to the channel
@@ -170,10 +157,9 @@ public class ChannelService {
      * @param channel        the channel to add the students to
      */
     @Async
-    public void registerUsersToChannelAsynchronously(boolean addAllStudents, boolean addAllTutors, boolean addAllInstructors, List<String> usersLoginsToRegister, Course course,
-            Channel channel) {
+    public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
         SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(addAllStudents, addAllTutors, addAllInstructors, usersLoginsToRegister, course, channel);
+        registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
     }
 
     /**
@@ -301,7 +287,7 @@ public class ChannelService {
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
-        registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
+        registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
         return createdChannel;
     }
 
@@ -326,7 +312,7 @@ public class ChannelService {
         channelToCreate.setExercise(exercise);
         Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exercise.setChannelName(createdChannel.getName());
-        registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
+        registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
         return createdChannel;
     }
 
@@ -350,7 +336,7 @@ public class ChannelService {
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
-        registerUsersToChannelAsynchronously(false, true, true, List.of(), createdChannel.getCourse(), createdChannel);
+        registerUsersToChannelAsynchronously(false, createdChannel.getCourse(), createdChannel);
         return createdChannel;
     }
 
