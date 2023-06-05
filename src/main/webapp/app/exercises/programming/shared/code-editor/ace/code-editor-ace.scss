@@ -77,29 +77,5 @@ Ace Editor
         background-color: var(--code-editor-gutter-newline-background);
     }
 
-    .ace_search {
-        background-color: var(--popover-bg);
-        border-color: var(--border-color);
-
-        .ace_button,
-        .ace_searchbtn,
-        .ace_search_field,
-        .ace_search_counter,
-        .ace_searchbtn_close {
-            color: var(--bs-body-color);
-            border-color: var(--border-color);
-        }
-
-        .ace_button:hover {
-            background-color: var(--slightly-darker-body-bg);
-        }
-
-        .ace_search_field {
-            background-color: var(--input-color);
-        }
-
-        .ace_searchbtn {
-            background-color: var(--body-bg);
-        }
-    }
+    @import '../../../../../shared/markdown-editor/ace-editor/ace-editor';
 }
