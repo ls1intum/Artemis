@@ -111,6 +111,7 @@ public class LocalCIConfiguration {
         return XMLInputFactory.newInstance();
     }
 
+    // TODO: the Artemis server should start even if docker is not running. Also, pulling the image should be done after the start has finished or only on demand
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *

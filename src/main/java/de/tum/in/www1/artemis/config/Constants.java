@@ -76,6 +76,8 @@ public final class Constants {
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
+    public static final String TUM_LDAP_EMAIL = "imHauptEMail";
+
     // NOTE: the following values for programming exercises are hard-coded at the moment
     public static final String TEST_REPO_NAME = "tests";
 

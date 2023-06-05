@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.ldap;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_EMAIL;
 import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 
 import javax.naming.Name;
@@ -28,7 +29,7 @@ public final class LdapUserDto {
     @Attribute(name = "sn")
     private String lastName;
 
-    @Attribute(name = "imHauptEMail")
+    @Attribute(name = TUM_LDAP_EMAIL)
     private String email;
 
     public String getUsername() {
@@ -78,5 +79,9 @@ public final class LdapUserDto {
     public LdapUserDto email(String email) {
         this.email = email;
         return this;
+    }
+
+    public Name getUid() {
+        return uid;
     }
 }

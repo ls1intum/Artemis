@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.ldap.repository.config.EnableLdapRepositories;
-import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
+import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
 @Configuration
 @Profile("ldap")
@@ -35,7 +35,7 @@ public class LdapConfig {
     }
 
     @Bean
-    public LdapTemplate ldapTemplate() {
-        return new LdapTemplate(contextSource());
+    public SpringSecurityLdapTemplate ldapTemplate() {
+        return new SpringSecurityLdapTemplate(contextSource());
     }
 }
