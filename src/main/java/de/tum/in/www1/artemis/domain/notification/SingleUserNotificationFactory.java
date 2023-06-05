@@ -93,11 +93,8 @@ public class SingleUserNotificationFactory {
             notification.setPriority(HIGH);
             notification.setTransientAndStringTarget(createDataExportFailedTarget("data-exports"));
         }
-        if (type == NotificationType.DATA_EXPORT_CREATED) {
-            notification.setTransientAndStringTarget(createDataExportCreatedTarget(dataExport, "data-exports"));
-        }
         else {
-            notification.setTransientAndStringTarget(new NotificationTarget());
+            notification.setTransientAndStringTarget(createDataExportCreatedTarget(dataExport, "data-exports"));
         }
         return notification;
     }

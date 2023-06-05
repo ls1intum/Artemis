@@ -164,9 +164,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCanDownloadSpecificExport_dataExportNotExistent_false() throws Exception {
-        var canDownload = request.get("/api/data-exports/999999/can-download", HttpStatus.OK, Boolean.class);
-        assertThat(canDownload).isFalse();
+    void testCanDownloadSpecificExport_dataExportNotExistent_notFound() throws Exception {
+        request.get("/api/data-exports/999999/can-download", HttpStatus.NOT_FOUND, Boolean.class);
 
     }
 
