@@ -205,7 +205,7 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
-        Channel updatedChannel = channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
+        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -216,9 +216,6 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
-        if (updatedChannel != null) {
-            updatedModelingExercise.setChannelName(updatedChannel.getName());
-        }
         return ResponseEntity.ok(updatedModelingExercise);
     }
 

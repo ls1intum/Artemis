@@ -283,9 +283,7 @@ public class ChannelService {
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
         channelToCreate.setExercise(exercise);
-        Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
-        exercise.setChannelName(createdChannel.getName());
-        return createdChannel;
+        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     /**

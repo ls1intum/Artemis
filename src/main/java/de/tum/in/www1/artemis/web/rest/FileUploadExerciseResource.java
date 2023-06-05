@@ -246,17 +246,13 @@ public class FileUploadExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
-        Channel updatedChannel = channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
+        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
 
         var updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
-
-        if (updatedChannel != null) {
-            updatedExercise.setChannelName(updatedChannel.getName());
-        }
         return ResponseEntity.ok(updatedExercise);
     }
 

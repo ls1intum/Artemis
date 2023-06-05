@@ -208,7 +208,7 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        Channel updatedChannel = channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
+        channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -217,10 +217,6 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
-
-        if (updatedChannel != null) {
-            updatedTextExercise.setChannelName(updatedChannel.getName());
-        }
         return ResponseEntity.ok(updatedTextExercise);
     }
 
