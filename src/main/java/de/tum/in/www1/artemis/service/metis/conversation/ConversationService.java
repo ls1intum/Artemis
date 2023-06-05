@@ -425,13 +425,12 @@ public class ConversationService {
      * @return A stream of channels for lectures/exercises that have been released
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
-        ZonedDateTime now = ZonedDateTime.now();
         return channels.filter(channel -> {
             if (channel.getExercise() != null) {
-                return channel.getExercise().getReleaseDate() == null || channel.getExercise().getReleaseDate().isBefore(now);
+                return channel.getExercise().isReleased();
             }
             else if (channel.getExam() != null) {
-                return channel.getExam().getStartDate() == null || channel.getExam().getStartDate().isBefore(now);
+                return channel.getExam().isVisibleToStudents();
             }
             else {
                 return true;
