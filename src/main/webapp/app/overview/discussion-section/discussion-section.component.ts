@@ -170,38 +170,37 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * @param courseId
      */
     setChannel(courseId: number): void {
+        const getChannel = () => {
+            return {
+                next: (channel: Channel) => {
+                    this.channel = channel ?? undefined;
+                    const contextFilter = this.channel?.id
+                        ? { conversationId: this.channel.id }
+                        : {
+                              exerciseId: this.exercise?.id,
+                              lectureId: this.lecture?.id,
+                          };
+                    this.metisService.getFilteredPosts(contextFilter);
+                    this.createEmptyPost();
+                    this.resetFormGroup();
+                },
+                error: () => {
+                    this.isNotAChannelMember = true;
+                    this.collapsed = true;
+                },
+            };
+        };
+
         if (this.lecture?.id) {
             this.channelService
                 .getChannelOfLecture(courseId, this.lecture.id)
                 .pipe(map((res: HttpResponse<Channel>) => res.body))
-                .subscribe({
-                    next: (channel: Channel) => {
-                        this.channel = channel ?? undefined;
-                        const contextFilter = this.channel?.id ? { conversationId: this.channel.id } : { exerciseId: this.exercise?.id, lectureId: this.lecture?.id };
-                        this.metisService.getFilteredPosts(contextFilter);
-                        this.createEmptyPost();
-                        this.resetFormGroup();
-                    },
-                    error: (error: any) => {
-                        this.isNotAChannelMember = true;
-                    },
-                });
+                .subscribe(getChannel());
         } else if (this.exercise?.id) {
             this.channelService
                 .getChannelOfExercise(courseId, this.exercise.id)
                 .pipe(map((res: HttpResponse<Channel>) => res.body))
-                .subscribe({
-                    next: (channel: Channel) => {
-                        this.channel = channel ?? undefined;
-                        const contextFilter = this.channel?.id ? { conversationId: this.channel.id } : { exerciseId: this.exercise?.id, lectureId: this.lecture?.id };
-                        this.metisService.getFilteredPosts(contextFilter);
-                        this.createEmptyPost();
-                        this.resetFormGroup();
-                    },
-                    error: (error: any) => {
-                        this.isNotAChannelMember = true;
-                    },
-                });
+                .subscribe(getChannel());
         }
     }
 
