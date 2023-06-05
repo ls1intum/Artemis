@@ -447,15 +447,6 @@ public class DataExportCreationService {
         var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
         stringBuilder.append("Your answer: ").append("\n");
         stringBuilder.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
-        var shortAnswerQuestion = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
-        var mappings = shortAnswerQuestion.getCorrectMappings();
-        for (var mapping : mappings) {
-            var spot = mapping.getSpot();
-            var solution = mapping.getSolution();
-            shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-            stringBuilder.append("\n").append("Spot: ").append(spot).append("\n").append("Solution: ").append(solution).append("\n");
-        }
-
         for (Map.Entry<String, ShortAnswerSubmittedText> entry : spotToSubmittedTextMap.entrySet()) {
             Pattern pattern = Pattern.compile(entry.getKey());
             Matcher matcher = pattern.matcher(stringBuilder);
