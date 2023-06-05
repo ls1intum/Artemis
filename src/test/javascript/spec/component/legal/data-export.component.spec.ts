@@ -115,6 +115,7 @@ describe('DataExportComponent', () => {
             expect(canRequestSpy).toHaveBeenCalledOnce();
             expect(canDownloadAnyDataExportSpy).toHaveBeenCalledOnce();
             expect(component.canRequestDataExport).toBeTrue();
+            expect(component.canDownload).toBeTrue();
         }
     });
 });

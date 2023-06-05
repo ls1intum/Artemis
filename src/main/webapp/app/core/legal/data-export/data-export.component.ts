@@ -55,7 +55,7 @@ export class DataExportComponent implements OnInit {
                 this.canRequestDataExport = canRequestDataExport;
             });
             this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
-                //this.canDownload = !!dataExport.id;
+                this.canDownload = !!dataExport.id;
                 if (this.canDownload) {
                     this.dataExportId = dataExport.id!;
                 }
