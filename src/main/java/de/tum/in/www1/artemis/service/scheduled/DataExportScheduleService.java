@@ -17,6 +17,9 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.ProfileService;
 
+/**
+ * Service responsible for scheduling data exports.
+ */
 @Service
 @Profile("scheduling")
 public class DataExportScheduleService {
@@ -40,6 +43,9 @@ public class DataExportScheduleService {
 
     }
 
+    /**
+     * Schedule data exports on startup. All data export that are either in the state REQUESTED or IN_CREATION will be scheduled.
+     */
     @PostConstruct
     public void scheduleDataExportOnStartup() {
         try {
@@ -76,12 +82,22 @@ public class DataExportScheduleService {
         }
     }
 
+    /**
+     * Schedule the creation of a single data export
+     *
+     * @param dataExport the data export to be created
+     */
     public void scheduleDataExportCreation(DataExport dataExport) {
         log.info("Scheduling data export for {}", dataExport.getUser().getLogin());
         scheduler.schedule(createDataExport(dataExport), retrieveScheduledDateTime());
 
     }
 
+    /**
+     * Schedule the deletion of a single data export
+     *
+     * @param dataExport the data export to be deleted
+     */
     public void scheduleDataExportDeletion(DataExport dataExport) {
         scheduler.schedule(deleteDataExport(dataExport), ZonedDateTime.now().plusDays(7).toInstant());
     }

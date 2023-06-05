@@ -43,6 +43,9 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportServi
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
+/**
+ * A service to create data exports for users
+ */
 @Service
 public class DataExportCreationService {
 
@@ -58,7 +61,7 @@ public class DataExportCreationService {
 
     private static final String EXAM_DIRECTORY_PREFIX = "exam_";
 
-    private final Logger log = LoggerFactory.getLogger(DataExportService.class);
+    private final Logger log = LoggerFactory.getLogger(DataExportCreationService.class);
 
     @Value("${artemis.data-export-path:./data-exports}")
     private Path dataExportsPath;
@@ -169,6 +172,11 @@ public class DataExportCreationService {
         finishDataExportCreation(dataExport, dataExportPath);
     }
 
+    /**
+     * Creates the data export for the given user.
+     *
+     * @param dataExport the data export to be created
+     */
     public void createDataExport(DataExport dataExport) {
         try {
             createDataExportWithContent(dataExport);
@@ -700,6 +708,11 @@ public class DataExportCreationService {
         return builder.build();
     }
 
+    /**
+     * Deletes the given data export and sets the state to DELETED or DOWNLOADED_DELETED depending on whether the export has been downloaded or not.
+     *
+     * @param dataExport the data export to delete
+     */
     public void deleteDataExportAndSetDataExportState(DataExport dataExport) {
         fileService.scheduleForDirectoryDeletion(Path.of(dataExport.getFilePath()), 2);
         if (dataExport.getDataExportState().hasBeenDownloaded()) {

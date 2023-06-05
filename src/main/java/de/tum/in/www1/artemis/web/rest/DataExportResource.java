@@ -18,6 +18,9 @@ import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+/**
+ * REST controller for data exports
+ */
 @RestController
 @RequestMapping("api/")
 public class DataExportResource {
@@ -69,18 +72,34 @@ public class DataExportResource {
         return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
     }
 
+    /**
+     * Check if the user can request a data export
+     *
+     * @return true if the user can request a data export, false otherwise
+     */
     @GetMapping("data-exports/can-request")
     @PreAuthorize("hasRole('USER')")
     public boolean canRequestExport() {
         return dataExportService.canRequestDataExport();
     }
 
+    /**
+     * Check if the user can download any data export
+     *
+     * @return a data export DTO with the id of the export that can be downloaded or a DTO with a id of null if no export can be downloaded
+     */
     @GetMapping("data-exports/can-download")
     @PreAuthorize("hasRole('USER')")
     public DataExportDTO canDownloadAnyExport() {
         return dataExportService.canDownloadAnyDataExport();
     }
 
+    /**
+     * Check if the user can download a specific data export
+     *
+     * @param dataExportId the id of the data export that should be checked
+     * @return true if the user can download the data export, false otherwise
+     */
     @GetMapping("data-exports/{dataExportId}/can-download")
     @PreAuthorize("hasRole('USER')")
     public boolean canDownloadSpecificExport(@PathVariable long dataExportId) {

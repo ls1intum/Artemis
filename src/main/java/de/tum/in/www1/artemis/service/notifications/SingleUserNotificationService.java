@@ -205,10 +205,20 @@ public class SingleUserNotificationService {
         notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient, null);
     }
 
+    /**
+     * Notify user about the successful creation of a data export.
+     *
+     * @param dataExport the data export that was created
+     */
     public void notifyUserAboutDataExportCreation(DataExport dataExport) {
         notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_CREATED, dataExport.getUser(), null);
     }
 
+    /**
+     * Notify user about the failure of the creation of a data export.
+     *
+     * @param dataExport the data export that could not be created
+     */
     public void notifyUserAboutDataExportFailure(DataExport dataExport) {
         notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_FAILED, dataExport.getUser(), null);
     }
