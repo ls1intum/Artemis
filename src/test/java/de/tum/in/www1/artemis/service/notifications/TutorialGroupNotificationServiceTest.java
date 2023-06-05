@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.mail.internet.MimeMessage;
 
@@ -37,6 +39,10 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
 
     private static final String TEST_PREFIX = "tutorialgroupnotifservice";
 
+    private static final int StudentCount = 5;
+
+    private static final int TutorCount = 1;
+
     @Autowired
     private TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
 
@@ -63,18 +69,17 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     void setUp() {
-        this.database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
+        this.database.addUsers(TEST_PREFIX, StudentCount, TutorCount, 0, 1);
         Course course = this.database.createCourse();
         student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         tutorialGroup = createAndSaveTutorialGroup(course.getId(), "title" + course.getId(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
                 userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get(),
-                Set.of(userRepository.findOneByLogin(TEST_PREFIX + "student1").get(), userRepository.findOneByLogin(TEST_PREFIX + "student2").get(),
-                        userRepository.findOneByLogin(TEST_PREFIX + "student3").get(), userRepository.findOneByLogin(TEST_PREFIX + "student4").get(),
-                        userRepository.findOneByLogin(TEST_PREFIX + "student5").get()));
+                IntStream.range(1, StudentCount + 1).mapToObj((studentId) -> userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).get()).collect(Collectors.toSet()));
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         tutorialGroupNotificationRepository.deleteAll();
+        notificationSettingRepository.deleteAll();
     }
 
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
@@ -88,41 +93,52 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupUpdate_shouldSaveAndSend(boolean contactTutor) {
-        var setting1 = prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
+        List<Long> studentSettings = IntStream.range(1, StudentCount + 1).mapToLong((studentId) -> {
+            var student = userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).get();
+            return prepareNotificationSettingForTest(student, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE).getId();
+        }).boxed().toList();
+
         var setting2 = prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
 
         tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroup, contactTutor, "LoremIpsum");
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_UPDATED_TITLE);
         if (contactTutor) {
-            verifyEmail(2);
+            verifyEmail(StudentCount + 1);
         }
         else {
-            verifyEmail(1);
+            verifyEmail(StudentCount);
         }
 
-        notificationSettingRepository.deleteById(setting1.getId());
+        studentSettings.forEach((settingId) -> notificationSettingRepository.deleteById(settingId));
+
         notificationSettingRepository.deleteById(setting2.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupDeletion_shouldSaveAndSend() {
-        var setting = prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
+        List<Long> studentSettings = IntStream.range(1, StudentCount + 1).mapToLong((studentId) -> {
+            var student = userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).get();
+            return prepareNotificationSettingForTest(student, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE).getId();
+        }).boxed().toList();
+
+        var settingTutor = prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroup);
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_DELETED_TITLE);
-        verifyEmail(1);
+        verifyEmail(StudentCount + 1);
 
-        notificationSettingRepository.deleteById(setting.getId());
+        studentSettings.forEach((settingId) -> notificationSettingRepository.deleteById(settingId));
+        notificationSettingRepository.deleteById(settingTutor.getId());
     }
 
     private NotificationSetting prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, notificationSettingIdentifier);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, true, notificationSettingIdentifier);
         notificationSettingRepository.save(notificationSetting);
         return notificationSetting;
     }
 
     private void verifyEmail(int times) {
-        verify(javaMailSender, timeout(1500).times(times)).createMimeMessage();
+        verify(javaMailSender, timeout(2500).times(times)).createMimeMessage();
     }
 
     private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus,
