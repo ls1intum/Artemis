@@ -67,7 +67,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var solutionEntry = new ProgrammingExerciseSolutionEntry();
         solutionEntry.setTestCase(testCase);
         solutionEntry.setLine(1);
-        solutionEntry.setCode(UUID.randomUUID().toString());
+        solutionEntry.setCode("code");
         return solutionEntryRepository.save(solutionEntry);
     }
 

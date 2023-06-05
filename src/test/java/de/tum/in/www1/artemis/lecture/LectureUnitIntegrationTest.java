@@ -65,8 +65,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // textUnit3 is not one of the lecture units connected to the lecture
         this.textUnit3 = database.createTextUnit();
 
-        database.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().get(), Set.of(textUnit2));
-        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.textUnit, onlineUnit, attachmentUnit));
+        database.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().get(), List.of(textUnit2));
+        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentUnit));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).get();

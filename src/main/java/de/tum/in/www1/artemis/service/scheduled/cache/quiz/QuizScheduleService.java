@@ -372,6 +372,8 @@ public class QuizScheduleService {
         quizBatch.setQuizExercise(quizExercise);
         quizBatch.setStartTime(ZonedDateTime.now());
         quizExercise.setQuizBatches(Set.of(quizBatch));
+
+        SecurityUtils.setAuthorizationObject();
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
     }
 

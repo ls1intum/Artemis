@@ -230,7 +230,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
-        notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
+        notificationSettingRepository.save(new NotificationSetting(user, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
         assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
         singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
@@ -272,7 +272,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testNotifyUserAboutSuccessfulFileUploadSubmission() {
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
         verifyEmail();
@@ -285,7 +285,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testNotifyUserAboutAssessedExerciseSubmission() {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED);
         notificationSettingRepository.save(notificationSetting);
 
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
@@ -454,7 +454,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void testTutorialGroupNotifications_studentRegistration() {
         notificationSettingRepository.deleteAll();
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, user, userTwo);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE);
         verifyEmail();
@@ -463,7 +463,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void testTutorialGroupNotifications_studentDeregistration() {
         notificationSettingRepository.deleteAll();
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userTwo);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE);
         verifyEmail();
@@ -473,7 +473,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testTutorialGroupNotifications_tutorRegistration() {
         notificationSettingRepository.deleteAll();
         notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, user, userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE);
         verifyEmail();
@@ -484,7 +484,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testTutorialGroupNotifications_tutorRegistrationMultiple() {
         notificationSettingRepository.deleteAll();
         notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, Set.of(user), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE);
         verifyEmail();
@@ -494,7 +494,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testTutorialGroupNotifications_tutorDeregistration() {
         notificationSettingRepository.deleteAll();
         notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE);
         verifyEmail();
@@ -504,20 +504,23 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testTutorialGroupNotifications_groupAssigned() {
         notificationSettingRepository.deleteAll();
         notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_ASSIGNED_TITLE);
         verifyEmail();
+        verifyPush(1);
+
     }
 
     @Test
     void testTutorialGroupNotifications_groupUnassigned() {
         notificationSettingRepository.deleteAll();
         notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
         verifyEmail();
+        verifyPush(1);
     }
 
     @Test
@@ -541,6 +544,16 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     private void verifyEmail() {
         verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
+    }
+
+    /**
+     * Checks if a push to android and iOS was created and send
+     *
+     * @param times how often the email should have been sent
+     */
+    private void verifyPush(int times) {
+        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), any(List.class), any(Object.class));
+        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), any(List.class), any(Object.class));
     }
 
     private static Stream<Arguments> getNotificationTypesAndTitlesParametersForGroupChat() {

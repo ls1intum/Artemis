@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.1.8"
+version = "6.2.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -305,6 +305,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.92.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.6"
     implementation "org.springframework:spring-messaging:5.3.25"
+    implementation "org.springframework.retry:spring-retry:2.0.0"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"

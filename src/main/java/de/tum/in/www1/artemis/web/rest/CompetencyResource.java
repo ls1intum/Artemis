@@ -436,8 +436,8 @@ public class CompetencyResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // Authorization check is skipped when course is open to self-registration
-        if (!course.isRegistrationEnabled()) {
+        // Authorization check is skipped when course is open to self-enrollment
+        if (!course.isEnrollmentEnabled()) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         }
 

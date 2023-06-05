@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Entity
 @Table(name = "exam")
@@ -471,6 +472,11 @@ public class Exam extends DomainObject {
 
     public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
+    }
+
+    public String getSanitizedExamTitle() {
+        // exam titles are non-nullable
+        return StringUtil.sanitizeStringForFileName(this.title);
     }
 
     /**

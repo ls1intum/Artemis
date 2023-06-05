@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
@@ -256,6 +257,6 @@ public abstract class BaseExercise extends DomainObject {
         if (title == null) {
             return "exercise";
         }
-        return title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
+        return StringUtil.sanitizeStringForFileName(title);
     }
 }
