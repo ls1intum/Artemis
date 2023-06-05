@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.notification;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,14 +55,14 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        NotificationSetting unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
-        NotificationSetting unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        NotificationSetting unsavedNotificationSettingC = new NotificationSetting(false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
+        NotificationSetting unsavedNotificationSettingA = new NotificationSetting(false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        NotificationSetting unsavedNotificationSettingB = new NotificationSetting(true, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        NotificationSetting unsavedNotificationSettingC = new NotificationSetting(false, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
-        completeNotificationSettingA = new NotificationSetting(student1, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
-        NotificationSetting completeNotificationSettingB = new NotificationSetting(student1, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-        NotificationSetting completeNotificationSettingC = new NotificationSetting(student1, false, false,
+        completeNotificationSettingA = new NotificationSetting(student1, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        NotificationSetting completeNotificationSettingB = new NotificationSetting(student1, true, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
+        NotificationSetting completeNotificationSettingC = new NotificationSetting(student1, false, false, false,
                 NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         savedNotificationSettings = new NotificationSetting[] { completeNotificationSettingA, completeNotificationSettingB, completeNotificationSettingC };
 
@@ -115,18 +116,27 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
      * Checks if the given user should receive an email based on the specific notification (type) or not based on the user's notification settings
      */
     @Test
-    void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
+    void testCheckIfNotificationEmailAndPushIsAllowedBySettingsForGivenUser() {
         notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
 
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
+
         notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
 
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
+
         notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
+
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
+                .as("Pushs with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
     }
 
     /**
@@ -167,7 +177,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_outdated() {
-        NotificationSetting outdatedSetting = new NotificationSetting(student1, false, true, "Outdated Settings ID");
+        NotificationSetting outdatedSetting = new NotificationSetting(student1, false, true, true, "Outdated Settings ID");
         notificationSettingRepository.save(outdatedSetting);
 
         Set<NotificationSetting> outdatedSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(student1.getId());
