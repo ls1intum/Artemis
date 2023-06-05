@@ -222,7 +222,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
         }
     }
 
@@ -234,7 +234,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
         }
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
@@ -262,7 +262,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
             assertThat(files.get(key)).isFalse();
         }
     }
@@ -277,7 +277,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
             assertThat(files.get(key)).isTrue();
         }
     }
@@ -297,7 +297,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
             assertThat(files.get(key)).isTrue();
         }
     }
@@ -330,7 +330,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(solutionRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(solutionRepository.localRepoFile + "/" + key)).exists();
         }
     }
 
@@ -496,9 +496,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testCreateFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/newFile"))).isFalse();
+        assertThat(Path.of(studentRepository.localRepoFile + "/newFile")).doesNotExist();
         request.postWithoutResponseBody(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.isRegularFile(Path.of(studentRepository.localRepoFile + "/newFile"))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/newFile")).isRegularFile();
     }
 
     @Test
@@ -506,33 +506,33 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testCreateFolder() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("folder", "newFolder");
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/newFolder"))).isFalse();
+        assertThat(Path.of(studentRepository.localRepoFile + "/newFolder")).doesNotExist();
         request.postWithoutResponseBody(studentRepoBaseUrl + participation.getId() + "/folder", HttpStatus.OK, params);
-        assertThat(Files.isDirectory(Path.of(studentRepository.localRepoFile + "/newFolder"))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/newFolder")).isDirectory();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenameFile() throws Exception {
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).exists();
         String newLocalFileName = "newFileName";
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isFalse();
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName)).exists();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenameFolder() throws Exception {
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName)).exists();
         String newLocalFolderName = "newFolderName";
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isFalse();
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName)).doesNotExist();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName)).exists();
     }
 
     @Test
@@ -540,9 +540,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testDeleteFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).exists();
         request.delete(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isFalse();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
     }
 
     @Test
@@ -561,15 +561,15 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFiles() throws Exception {
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).exists();
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).exists();
 
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
@@ -579,7 +579,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(studentFilePath).hasContent("updatedFileContent");
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
@@ -637,8 +637,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Files.createFile(filePath);
 
         // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
-        assertThat(Files.exists(Path.of(studentRepository.originRepoFile.toString()).resolve(fileName))).isTrue();
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile.toString()).resolve(fileName))).isFalse();
+        assertThat(Path.of(studentRepository.originRepoFile.toString()).resolve(fileName)).exists();
+        assertThat(Path.of(studentRepository.localRepoFile.toString()).resolve(fileName)).doesNotExist();
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
@@ -652,7 +652,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
         assertThat(studentRepository.getAllLocalCommits().get(0)).isEqualTo(studentRepository.getAllOriginCommits().get(0));
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile.toString()).resolve(fileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile.toString()).resolve(fileName)).exists();
 
     }
 
@@ -984,7 +984,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Stash changes
         gitService.stashChanges(localRepo);
         // Local repo has no unsubmitted changes
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(studentFilePath).hasContent("initial commit");
     }
 
     @Test
@@ -1009,7 +1009,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Stash changes using service
         programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(studentFilePath).hasContent("initial commit");
     }
 
     @Test
@@ -1098,15 +1098,15 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     private void initialCommitAndSaveFiles(HttpStatus expectedStatus) throws Exception {
-        assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).exists();
         // Do initial commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), expectedStatus);
         // Check repo
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(studentFilePath).hasContent("initial commit");
 
         // Save file, without commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
         // Check repo
-        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 }
