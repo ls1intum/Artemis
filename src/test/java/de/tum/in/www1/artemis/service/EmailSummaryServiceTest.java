@@ -60,14 +60,14 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         // preparation of the test data where a user deactivated weekly summaries
         this.userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
-        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
+        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
         this.userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
-        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true,
+        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(activatedWeeklySummarySetting);
 
