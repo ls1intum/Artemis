@@ -386,12 +386,20 @@ public class ChannelService {
     }
 
     /**
-     * Update the channel name
+     * Removes users from an exam channel
      *
-     * @param channel        the channel to update
-     * @param newChannelName the new channel name
-     * @return the updated channel
+     * @param users  users to remove from the channel
+     * @param examId id of the exam the channel belongs to
      */
+    public void deregisterUsersFromExamChannel(Set<User> users, Long examId) {
+        Channel channel = channelRepository.findChannelByExamId(examId);
+        if (channel == null) {
+            return;
+        }
+
+        conversationService.deregisterUsersFromAConversation(channel.getCourse(), users, channel);
+    }
+
     private Channel updateChannelName(Channel channel, String newChannelName) {
 
         // Update channel name if necessary

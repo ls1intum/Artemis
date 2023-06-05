@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -745,6 +746,17 @@ public class ModelFactory {
         exam.setCourse(course);
         exam.setChannelName(channelName);
         return exam;
+    }
+
+    public static Channel generateChannel(Course course, String channelName) {
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName(channelName);
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setDescription("Test channel");
+        return channel;
     }
 
     /**

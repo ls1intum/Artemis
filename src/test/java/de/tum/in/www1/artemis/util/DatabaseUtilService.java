@@ -57,6 +57,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -1726,6 +1727,14 @@ public class DatabaseUtilService {
         exam.setGracePeriod(180);
         exam = examRepository.save(exam);
         return exam;
+    }
+
+    public Channel addExamChannel(Exam exam, String channelName) {
+        Channel channel = ModelFactory.generateChannel(exam.getCourse(), channelName);
+        channel.setExam(exam);
+        channel = conversationRepository.save(channel);
+        exam.setChannelName(channelName);
+        return channel;
     }
 
     public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultDate) {

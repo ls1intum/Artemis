@@ -211,7 +211,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         userRepo.save(student1);
 
         exam1 = database.addExam(course1);
+        database.addExamChannel(exam1, "exam1 channel");
         exam2 = database.addExamWithExerciseGroup(course1, true);
+        database.addExamChannel(exam2, "exam2 channel");
         testExam1 = database.addTestExam(course1);
         database.addStudentExamForTestExam(testExam1, student1);
 
@@ -276,6 +278,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         var exam = ModelFactory.generateExam(course1);
         var savedExam = examRepository.save(exam);
+        database.addExamChannel(savedExam, "test exam");
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         var student3 = database.getUserByLogin(TEST_PREFIX + "student3");
@@ -906,7 +909,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Test examAccessService.
         Exam examE = ModelFactory.generateExam(course1, "examE");
         examE.setTitle("          Exam 123              ");
+        // Side effect: Resets the user due to calling async code
         URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
+        // Switch back to instructor1
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
         verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
@@ -1003,7 +1009,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
         // Case 1: test exam should be updated to real exam
         Exam examA = ModelFactory.generateTestExam(course1);
+        // Side effect: Resets the user due to calling async code
         Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
+        // Switch back to instructor1
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
         createdExamA.setNumberOfCorrectionRoundsInExam(1);
         createdExamA.setTestExam(false);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
@@ -1013,7 +1022,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
         examB.setChannelName("examB");
+        // Side effect: Resets the user due to calling async code
         Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
+        // Switch back to instructor1
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
         createdExamB.setTestExam(true);
         createdExamB.setNumberOfCorrectionRoundsInExam(0);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
@@ -1027,7 +1039,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam exam = ModelFactory.generateExam(course1, "exam1");
         exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
+        // Side effect: Resets the user due to calling async code
         Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        // Switch back to instructor1
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
+
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
         assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());

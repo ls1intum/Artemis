@@ -746,9 +746,7 @@ public class ExamResource {
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
-        // add the student to the channel as well
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerUsersToChannel(false, false, false, List.of(student.getLogin()), exam.getCourse(), channel);
+
         var studentDto = new StudentDTO();
         studentDto.setRegistrationNumber(student.getRegistrationNumber());
         studentDto.setFirstName(student.getFirstName());

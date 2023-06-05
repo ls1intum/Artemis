@@ -141,9 +141,7 @@ public class ExamRegistrationService {
                     exam.addExamUser(examUser);
                 }
 
-                // add the student to the exam channel as participant
-                Channel channel = channelRepository.findChannelByExamId(exam.getId());
-                channelService.registerUsersToChannel(false, false, false, List.of(student.getLogin()), exam.getCourse(), channel);
+                addStudentToExamChannel(exam, student);
             }
         }
         examRepository.save(exam);
@@ -215,6 +213,8 @@ public class ExamRegistrationService {
             registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
+
+            addStudentToExamChannel(exam, student);
         }
         else {
             log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
@@ -276,8 +276,7 @@ public class ExamRegistrationService {
         examUserRepository.delete(registeredExamUser);
 
         // Remove the student from exam channel
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        conversationService.deregisterUsersFromAConversation(exam.getCourse(), Set.of(student), channel);
+        channelService.deregisterUsersFromExamChannel(Set.of(student), exam.getId());
 
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
@@ -321,8 +320,7 @@ public class ExamRegistrationService {
         var students = userRepository.getStudents(exam.getCourse());
         Set<User> studentSet = new HashSet<>(students);
 
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        conversationService.deregisterUsersFromAConversation(exam.getCourse(), studentSet, channel);
+        channelService.deregisterUsersFromExamChannel(studentSet, exam.getId());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
@@ -370,5 +368,18 @@ public class ExamRegistrationService {
         examUser.setExam(exam);
         examUser.setUser(user);
         return examUserRepository.save(examUser);
+    }
+
+    /**
+     * Adds a student to the exam channel if it exists
+     *
+     * @param exam    exam the channel belongs to
+     * @param student the user that should be added
+     */
+    private void addStudentToExamChannel(Exam exam, User student) {
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
+        if (channel != null) {
+            channelService.registerUsersToChannel(false, false, false, List.of(student.getLogin()), exam.getCourse(), channel);
+        }
     }
 }
