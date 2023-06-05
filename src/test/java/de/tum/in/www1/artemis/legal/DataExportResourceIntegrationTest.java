@@ -149,7 +149,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addSubmission(participation, submission);
         database.addSubmission(participation, submission2);
         var exercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
-        createPlagiarismData(userLogin, programmingExercise, submission2, exercises);
+        createPlagiarismData(userLogin, programmingExercise, exercises);
         createCommunicationData(userLogin, course1);
 
         // Mock student repo
@@ -163,7 +163,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
     }
 
-    private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, ProgrammingSubmission submission2, List<Exercise> exercises) {
+    private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
         database.createPlagiarismCaseForUserForExercise(programmingExercise, database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
         database.createPlagiarismCaseForUserForExercise(exercises.get(0), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
         database.createPlagiarismCaseForUserForExercise(exercises.get(1), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
