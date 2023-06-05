@@ -35,7 +35,8 @@
             LEFT JOIN conversation c ON e.id = c.exercise_id
             LEFT JOIN course c2 on e.course_id = c2.id
             WHERE c.exercise_id IS NULL
-              AND c2.info_sharing_config != 0
+              AND (c2.info_sharing_config = 1 OR c2.info_sharing_config = 2)
+              AND (c2.end_date IS NULL OR c2.end_date > now())
               AND NOT EXISTS (
                         SELECT 1
                         FROM conversation
