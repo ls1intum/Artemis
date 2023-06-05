@@ -163,6 +163,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var submission = database.createProgrammingSubmission(participation, false, "abc");
         var submission2 = database.createProgrammingSubmission(participation, false, "def");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
+        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
@@ -171,7 +172,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         database.addSubmission(participation, submission);
         database.addSubmission(participation, submission2);
         var exercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
-        createPlagiarismData(userLogin, programmingExercise, submission2, exercises);
+        createPlagiarismData(userLogin, programmingExercise, exercises);
         createCommunicationData(userLogin, course1);
 
         // Mock student repo
@@ -185,11 +186,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
     }
 
-    private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, ProgrammingSubmission submission2, List<Exercise> exercises) {
+    private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
         database.createPlagiarismCaseForUserForExercise(programmingExercise, database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
         database.createPlagiarismCaseForUserForExercise(exercises.get(0), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
         database.createPlagiarismCaseForUserForExercise(exercises.get(1), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
-        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
@@ -208,6 +208,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                 exam.getId());
         var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
