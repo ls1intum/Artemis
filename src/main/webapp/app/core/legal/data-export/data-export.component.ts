@@ -69,6 +69,7 @@ export class DataExportComponent implements OnInit {
                 this.dialogErrorSource.next('');
                 this.alertService.success('artemisApp.dataExport.requestSuccess');
                 this.dataExportId = response.id!;
+                this.canRequestDataExport = false;
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
