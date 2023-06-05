@@ -30,7 +30,9 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @RestController
@@ -121,6 +123,9 @@ public class ChannelResource extends ConversationManagementResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByExerciseId(exerciseId);
+
+        checkChannelMembership(channel.getId(), requestingUser.getId());
+
         return ResponseEntity.ok(channel);
     }
 
@@ -140,6 +145,9 @@ public class ChannelResource extends ConversationManagementResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByLectureId(lectureId);
+
+        checkChannelMembership(channel.getId(), requestingUser.getId());
+
         return ResponseEntity.ok(channel);
     }
 
@@ -416,5 +424,13 @@ public class ChannelResource extends ConversationManagementResource {
 
     private Stream<ChannelDTO> filterVisibleChannelsForNonInstructors(Stream<ChannelDTO> channelDTOs) {
         return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+    }
+
+    private void checkChannelMembership(Long channelId, Long userId) {
+        if (!conversationService.isMember(channelId, userId)) {
+            // suppress error alert with skipAlert: true so that the client can display a custom error message
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
+                    true);
+        }
     }
 }

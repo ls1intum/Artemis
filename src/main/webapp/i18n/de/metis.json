@@ -47,7 +47,8 @@
                 "label": "Kanäle",
                 "show": "Kanäle anzeigen",
                 "hide": "Kanäle einklappen",
-                "redirectToChannel": "Zum Kanäle gehen"
+                "redirectToChannel": "Zum Kanäle gehen",
+                "notAMember": "Du bist kein Mitglied des Kanals."
             },
             "communication": {
                 "label": "Kommunikation",

@@ -30,6 +30,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     @Input() isCommunicationPage?: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     channel: Channel;
+
+    isNotAChannelMember: boolean;
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
@@ -180,6 +182,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         this.createEmptyPost();
                         this.resetFormGroup();
                     },
+                    error: (error: any) => {
+                        this.isNotAChannelMember = true;
+                    },
                 });
         } else if (this.exercise?.id) {
             this.channelService
@@ -192,6 +197,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         this.metisService.getFilteredPosts(contextFilter);
                         this.createEmptyPost();
                         this.resetFormGroup();
+                    },
+                    error: (error: any) => {
+                        this.isNotAChannelMember = true;
                     },
                 });
         }

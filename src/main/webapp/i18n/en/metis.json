@@ -47,7 +47,8 @@
                 "label": "Channel",
                 "show": "Show channel",
                 "hide": "Hide channel",
-                "redirectToChannel": "Go to channel"
+                "redirectToChannel": "Go to channel",
+                "notAMember": "You are not a member of the channel."
             },
             "communication": {
                 "label": "Communication",
