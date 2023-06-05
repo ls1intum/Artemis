@@ -261,7 +261,6 @@ public class ChannelService {
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for lecture: " + lecture.getTitle());
         channelToCreate.setLecture(lecture);
         return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
@@ -283,7 +282,6 @@ public class ChannelService {
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription(String.format("Channel for %s exercise: %s", exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle()));
         channelToCreate.setExercise(exercise);
         Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exercise.setChannelName(createdChannel.getName());
@@ -306,7 +304,6 @@ public class ChannelService {
         channelToCreate.setIsPublic(false);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for exam: " + exam.getTitle());
         channelToCreate.setExam(exam);
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
