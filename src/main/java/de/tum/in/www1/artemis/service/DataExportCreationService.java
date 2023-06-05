@@ -512,7 +512,6 @@ public class DataExportCreationService {
             }
             createCommunicationDataCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
         }
-        createCommunicationDataCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
 
     }
 
