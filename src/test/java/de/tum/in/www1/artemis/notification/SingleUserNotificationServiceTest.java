@@ -525,7 +525,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testDataExportNotification_dataExportCreated() {
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
         singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
         verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_CREATED_TITLE);
         verifyEmail();
@@ -533,7 +533,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testDataExportNotification_dataExportFailed() {
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED));
         singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
         verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_FAILED_TITLE);
         verifyEmail();

@@ -137,11 +137,12 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
 
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
                 .as("Pushs with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
+
         notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(DATA_EXPORT_CREATED));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type DATA_EXPORT_CREATED should be allowed for the given user").isTrue();
         notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(DATA_EXPORT_FAILED));
-        assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type DATA_EXPORT_FAILED should be allowed for the given user").isTrue();
     }
 

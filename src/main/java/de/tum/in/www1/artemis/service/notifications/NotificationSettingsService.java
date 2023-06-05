@@ -75,6 +75,10 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = "notification.user-notification.new-reply-in-conversation";
 
+    public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED = "notification.user-notification.data-export-created";
+
+    public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED = "notification.user-notification.data-export-failed";
+
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public static final Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -108,7 +112,10 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
             // user new message notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
-            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE)));
+            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
+            // data export notification setting (cannot be overridden by user)
+            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
+            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -148,7 +155,8 @@ public class NotificationSettingsService {
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
             TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
             TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST,
-            NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED);
+            NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED,
+            DATA_EXPORT_FAILED);
 
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
