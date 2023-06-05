@@ -70,6 +70,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
+    plagiarismChecksSimilarityThresholdPercentage = 50;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -569,6 +570,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.programmingExercise);
 
         this.isSaving = true;
+        this.programmingExercise.plagiarismChecksConfig.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
             this.alertService.addAlert({
