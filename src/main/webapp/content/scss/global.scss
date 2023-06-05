@@ -956,6 +956,7 @@ Course Info Bar
    while preventing it from overflowing outside the window */
 .cdk-overlay-container .cdk-overlay-pane .mat-select-panel {
     max-height: fit-content;
+    height: -moz-max-content;
     position: absolute;
     top: 0;
     bottom: 0;
