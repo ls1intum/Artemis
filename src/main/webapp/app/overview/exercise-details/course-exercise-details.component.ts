@@ -165,7 +165,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.irisProfileEnabled = profileInfo.irisEnabled;
             }
         });
-        console.log(this.irisProfileEnabled);
     }
 
     ngOnDestroy() {
