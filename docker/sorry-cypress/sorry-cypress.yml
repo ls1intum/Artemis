@@ -9,7 +9,7 @@ services:
     hostname: mongo
     restart: always
     volumes:
-      - files/mongo:/data/db
+      - ./files/mongo:/data/db
     env_file:
       - ./sorry-cypress.env
 
@@ -22,8 +22,6 @@ services:
       - ./sorry-cypress.env
     environment:
       EXECUTION_DRIVER: '../execution/mongo/driver'
-      MONGODB_URI: 'mongodb://sorry-cypress:sorry-cypress@mongo:27017'
-      MONGODB_DATABASE: 'sorry-cypress'
       SCREENSHOTS_DRIVER: '../screenshots/minio.driver'
       MINIO_PORT: '443'
       MINIO_USESSL: 'true'
@@ -36,9 +34,10 @@ services:
     image: agoldis/sorry-cypress-api:${SORRY_CYPRESS_TAG:-latest}
     container_name: API
     hostname: api
+    restart: always
+    env_file:
+      - ./sorry-cypress.env
     environment:
-      MONGODB_URI: 'mongodb://sorry-cypress:sorry-cypress@mongo:27017'
-      MONGODB_DATABASE: 'sorry-cypress'
       APOLLO_PLAYGROUND: 'false'
     depends_on:
       - mongo
@@ -68,7 +67,7 @@ services:
     env_file:
       - ./sorry-cypress.env
     volumes:
-      - files/minio:/data
+      - ./files/minio:/data
     command: minio server --console-address ":9090" /data
 
   createbuckets:
@@ -100,14 +99,14 @@ services:
       NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
     volumes:
       - type: bind
-        source: ${NGINX_PROXY_CONFIG_PATH:-files/nginx/nginx.conf}
+        source: ${NGINX_PROXY_CONFIG_PATH:-./files/nginx/nginx.conf}
         target: '/etc/nginx/templates/nginx.conf.template'
       - type: bind
-        source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-files/nginx/fullchain.pem}
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-./files/nginx/fullchain.pem}
         target: '/etc/certificates/fullchain.pem'
       - type: bind
-        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-files/nginx/privkey.pem}
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-./files/nginx/privkey.pem}
         target: '/etc/certificates/privkey.pem'
       - type: bind
-        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-files/nginx/.htpasswd}
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-./files/nginx/.htpasswd}
         target: '/etc/nginx/.htpasswd'
