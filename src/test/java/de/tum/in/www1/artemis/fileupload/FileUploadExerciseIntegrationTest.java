@@ -666,7 +666,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedFileUploadExercise).usingRecursiveComparison()
-                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(expectedFileUploadExercise);
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient")
+                .isEqualTo(expectedFileUploadExercise);
     }
 
     @Test
