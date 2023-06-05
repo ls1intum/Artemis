@@ -1,4 +1,4 @@
-requests==2.27.1
+requests==2.31.0
 gitpython==3.1.31
 beautifulsoup4==4.12.2
 pyperclip==1.8.2
