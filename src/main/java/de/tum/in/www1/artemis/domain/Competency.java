@@ -38,6 +38,9 @@ public class Competency extends DomainObject {
     @JsonInclude
     private CompetencyTaxonomy taxonomy;
 
+    @Column(name = "optional")
+    private boolean optional;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
@@ -94,6 +97,14 @@ public class Competency extends DomainObject {
 
     public void setTaxonomy(CompetencyTaxonomy taxonomy) {
         this.taxonomy = taxonomy;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    public void setOptional(boolean optional) {
+        this.optional = optional;
     }
 
     public Course getCourse() {

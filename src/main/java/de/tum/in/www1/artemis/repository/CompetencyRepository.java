@@ -31,6 +31,13 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     @Query("""
             SELECT c
             FROM Competency c
+            WHERE c.course.id = :courseId AND NOT c.optional
+            """)
+    Set<Competency> findAllNonOptionalForCourse(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT c
+            FROM Competency c
                 LEFT JOIN FETCH c.userProgress progress
             WHERE c.course.id = :courseId
                 AND (progress IS NULL OR progress.user.id = :userId)

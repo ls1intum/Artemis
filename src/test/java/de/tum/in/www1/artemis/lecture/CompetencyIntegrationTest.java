@@ -440,6 +440,22 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getNonOptionalCompetenciesOfCourse_asStudent1_shouldReturnNonOptionalCompetencies() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Competency optionalCompetency = new Competency();
+        optionalCompetency.setOptional(true);
+        optionalCompetency.setCourse(course);
+        optionalCompetency = competencyRepository.save(optionalCompetency);
+        long idOfOptionalCompetency = optionalCompetency.getId();
+
+        List<Competency> competenciesOfCourse = request.getList("/api/courses/" + idOfCourse + "/nonOptionalCompetencies", HttpStatus.OK, Competency.class);
+
+        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfCompetency)).findFirst()).isPresent();
+        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfOptionalCompetency)).findFirst()).isNotPresent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void getCompetenciesOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.getList("/api/courses/" + idOfCourse + "/competencies", HttpStatus.FORBIDDEN, Competency.class);

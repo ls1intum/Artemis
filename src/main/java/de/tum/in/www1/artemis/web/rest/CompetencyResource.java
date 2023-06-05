@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -114,11 +115,35 @@ public class CompetencyResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Competency>> getCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
+        return getCompetencies(courseId, competencyRepository::findAllForCourse);
+    }
+
+    /**
+     * GET /courses/:courseId/competencies : gets all the non-optional competencies of a course
+     *
+     * @param courseId the id of the course for which the competencies should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
+     */
+    @GetMapping("/courses/{courseId}/nonOptionalCompetencies")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<Competency>> getNonOptionalCompetencies(@PathVariable Long courseId) {
+        log.debug("REST request to get non-optional competencies for course with id: {}", courseId);
+        return getCompetencies(courseId, competencyRepository::findAllNonOptionalForCourse);
+    }
+
+    /**
+     * Gets all competencies of a course retrieved by the CRUDmethod
+     *
+     * @param courseId   the id of the course for which the competencies should be fetched
+     * @param CRUDmethod
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
+     */
+    private ResponseEntity<List<Competency>> getCompetencies(Long courseId, Function<Long, Set<Competency>> CRUDmethod) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        Set<Competency> competencies = competencyRepository.findAllForCourse(course.getId());
+        Set<Competency> competencies = CRUDmethod.apply(course.getId());
         return ResponseEntity.ok(new ArrayList<>(competencies));
     }
 
@@ -172,6 +197,7 @@ public class CompetencyResource {
         existingCompetency.setDescription(competency.getDescription());
         existingCompetency.setTaxonomy(competency.getTaxonomy());
         existingCompetency.setMasteryThreshold(competency.getMasteryThreshold());
+        existingCompetency.setOptional(competency.isOptional());
         var persistedCompetency = competencyRepository.save(existingCompetency);
 
         linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
@@ -207,6 +233,7 @@ public class CompetencyResource {
         competencyToCreate.setDescription(competency.getDescription());
         competencyToCreate.setTaxonomy(competency.getTaxonomy());
         competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
+        competencyToCreate.setOptional(competency.isOptional());
         competencyToCreate.setCourse(course);
 
         var persistedCompetency = competencyRepository.save(competencyToCreate);

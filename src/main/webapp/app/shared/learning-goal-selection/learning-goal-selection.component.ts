@@ -42,10 +42,10 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
         if (this.learningGoals == undefined && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             if (course?.competencies) {
-                this.setLearningGoals(course.competencies!);
+                this.setLearningGoals(course.competencies!.filter((learningGoal) => !learningGoal.optional));
             } else {
                 this.isLoading = true;
-                this.learningGoalService.getAllForCourse(courseId).subscribe({
+                this.learningGoalService.getAllNonOptionalForCourse(courseId).subscribe({
                     next: (response) => {
                         this.setLearningGoals(response.body!);
                         this.writeValue(this.value);
