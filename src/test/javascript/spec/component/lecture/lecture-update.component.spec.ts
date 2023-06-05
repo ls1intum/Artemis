@@ -303,7 +303,6 @@ describe('LectureUpdateComponent', () => {
 
         lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
-        lectureUpdateComponent.channelName = 'test1Updated';
 
         const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
