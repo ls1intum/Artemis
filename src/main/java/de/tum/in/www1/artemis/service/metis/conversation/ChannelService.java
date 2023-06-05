@@ -323,6 +323,7 @@ public class ChannelService {
         channelToCreate.setExercise(exercise);
         Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exercise.setChannelName(createdChannel.getName());
+        registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         return createdChannel;
     }
 
