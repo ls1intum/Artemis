@@ -534,10 +534,9 @@ public class DataExportService {
             }
             createCommunicationCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
         }
-
     }
 
-    private static void createCommunicationCsvFile(Path courseDir, List<Post> postsInCourse, List<AnswerPost> answerPostsInCourse, List<Reaction> postReactionsInCourse,
+    private void createCommunicationCsvFile(Path courseDir, List<Post> postsInCourse, List<AnswerPost> answerPostsInCourse, List<Reaction> postReactionsInCourse,
             List<Reaction> answerPostReactionsInCourse) throws IOException {
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
