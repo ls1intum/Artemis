@@ -68,8 +68,10 @@ describe('ModelingExercise Management Update Component', () => {
             it('should call create service on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
+                comp.plagiarismChecksSimilarityThresholdPercentage = 55;
 
                 const entity = { ...modelingExercise };
+                entity.plagiarismChecksConfig.similarityThreshold = 0.55;
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN

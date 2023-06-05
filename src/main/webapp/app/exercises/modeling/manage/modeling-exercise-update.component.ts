@@ -22,7 +22,7 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
@@ -47,6 +47,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
+    plagiarismChecksSimilarityThresholdPercentage = 50;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -60,6 +61,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     // Icons
     faSave = faSave;
+    faQuestionCircle = faQuestionCircle;
     faBan = faBan;
 
     constructor(
@@ -191,6 +193,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
+        this.modelingExercise.plagiarismChecksConfig.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)
