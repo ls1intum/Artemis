@@ -132,7 +132,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "shortPast");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "future");
         getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
     }
 
@@ -144,7 +144,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         }
         Course course1;
         if (assessmentDueDateInTheFuture) {
-            course1 = database.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("shortPast", TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+            course1 = database.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("future", TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
         }
         else {
             course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
@@ -219,7 +219,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private void prepareExamDataWithResultPublicationDateInTheFuture() throws Exception {
-        var exam = prepareExamDataForDataExportCreation("examNoResults");
+        var exam = prepareExamDataForDataExportCreation("noResultsExam");
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
         examRepository.save(exam);
     }
@@ -304,7 +304,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoResults");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "noResultsExam");
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
