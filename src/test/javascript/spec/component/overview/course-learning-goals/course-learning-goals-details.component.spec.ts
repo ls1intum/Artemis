@@ -159,12 +159,12 @@ describe('CourseLearningGoalsDetails', () => {
     });
 
     it.each([
-        { learningGoal: { dueDate: dayjs().add(1, 'days') } as LearningGoal, expectedBadge: 'bg-success' },
-        { learningGoal: { dueDate: dayjs().subtract(1, 'days') } as LearningGoal, expectedBadge: 'bg-danger' },
+        { learningGoal: { dueDate: dayjs().add(1, 'days') } as LearningGoal, expectedBadge: 'success' },
+        { learningGoal: { dueDate: dayjs().subtract(1, 'days') } as LearningGoal, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ learningGoal, expectedBadge }) => {
         component.learningGoal = learningGoal;
         fixture.detectChanges();
-        const badge = fixture.debugElement.query(By.css('#date-badge'));
-        expect(badge.attributes['ng-reflect-ng-class']).toBe(expectedBadge);
+        const badge = fixture.debugElement.query(By.css('#date-badge-' + expectedBadge));
+        expect(badge).not.toBeNull();
     });
 });

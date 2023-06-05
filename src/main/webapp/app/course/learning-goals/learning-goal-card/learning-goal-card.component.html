@@ -32,7 +32,8 @@
             </div>
             <div *ngIf="!isPrerequisite && learningGoal.dueDate" class="col-sm col py-2" style="max-width: fit-content">
                 <span> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
-                <span class="badge" [ngClass]="getBadgeClass()" id="date-badge"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
+                <span *ngIf="dueDatePassed && !isMastered" class="badge bg-danger" id="date-badge-danger"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
+                <span *ngIf="!(dueDatePassed && !isMastered)" class="badge bg-success" id="date-badge-success"> {{ learningGoal.dueDate | artemisTimeAgo }} </span>
             </div>
             <div *ngIf="!isPrerequisite" class="col-sm col text-end py-1 px-2" style="max-width: 95px">
                 <jhi-learning-goal-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-learning-goal-rings>

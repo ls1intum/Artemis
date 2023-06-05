@@ -28,13 +28,6 @@ export class LearningGoalCardComponent {
         return { progress: 0, confidence: 0 } as LearningGoalProgress;
     }
 
-    getBadgeClass() {
-        if (this.dueDatePassed && !this.isMastered) {
-            return 'bg-danger';
-        }
-        return 'bg-success';
-    }
-
     get progress(): number {
         // The percentage of completed lecture units and participated exercises
         return this.getUserProgress().progress ?? 0;

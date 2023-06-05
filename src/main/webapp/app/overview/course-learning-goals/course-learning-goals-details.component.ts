@@ -91,13 +91,6 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
         return 'col-10';
     }
 
-    getBadgeClass() {
-        if (this.dueDatePassed) {
-            return 'bg-danger';
-        }
-        return 'bg-success';
-    }
-
     get progress(): number {
         // The percentage of completed lecture units and participated exercises
         return Math.round(this.getUserProgress().progress ?? 0);
