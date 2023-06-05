@@ -125,25 +125,23 @@ public class AnswerMessageService extends PostingService {
 
         AnswerPost updatedAnswerMessage;
 
-        // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
-        Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+        Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 
-        // TODO: should we implement resolve feature for messages??? if not remove this logic
-        // determine if the update operation is to mark the answer post as resolving the original post
+        // determine if the update operation is to mark the answer message as resolving the original post
         if (existingAnswerMessage.doesResolvePost() != answerMessage.doesResolvePost()) {
-            // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
-            mayMarkAnswerPostAsResolvingElseThrow(existingAnswerMessage, user, course);
+            // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
+            mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
             existingAnswerMessage.setResolvesPost(answerMessage.doesResolvePost());
-            // sets the post as resolved if there exists any resolving answer
+            // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());
         }
         else {
-            // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
-            mayUpdateOrDeletePostingElseThrow(existingAnswerMessage, user, course);
+            // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
+            mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
             existingAnswerMessage.setContent(answerMessage.getContent());
         }
 
@@ -209,13 +207,13 @@ public class AnswerMessageService extends PostingService {
 
     /**
      * Checks if the requesting user is authorized in the course context,
-     * i.e. user has to be author of original post associated with the answer post or at least teaching assistant
+     * i.e. user has to be the author of original message associated with the answer message or at least teaching assistant
      *
-     * @param answerPost answer post that should be marked as resolving
-     * @param user       requesting user
+     * @param answerMessage answer message that should be marked as resolving
+     * @param user          requesting user
      */
-    void mayMarkAnswerPostAsResolvingElseThrow(AnswerPost answerPost, User user, Course course) {
-        if (!answerPost.getPost().getAuthor().equals(user)) {
+    void mayMarkAnswerMessageAsResolvingElseThrow(AnswerPost answerMessage, User user, Course course) {
+        if (!answerMessage.getPost().getAuthor().equals(user)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
     }
