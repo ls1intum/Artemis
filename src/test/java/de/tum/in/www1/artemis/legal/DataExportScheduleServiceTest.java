@@ -4,10 +4,14 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 import java.time.*;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,13 +109,12 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThatCode(() -> dataExportScheduleService.scheduleDataExportOnStartup()).doesNotThrowAnyException();
     }
 
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void schedulesDataExportForNextDayAt4AmIfScheduledAfter4AM() {
+    @ParameterizedTest
+    @MethodSource("timeExpectedDateProvider")
+    void schedulesDataExportForCorrectDay(LocalTime mockedTime, LocalDate expectedDate) {
         var dataExport = createDataExport();
         var mockedDate = LocalDate.of(2023, 1, 1);
-        var mockedTime = LocalTime.of(10, 0);
-        var expectedDate = LocalDate.of(2023, 1, 2);
         var expectedTime = LocalTime.of(4, 0);
         try (var localDate = Mockito.mockStatic(LocalDate.class); var localTime = Mockito.mockStatic(LocalTime.class)) {
             localDate.when(LocalDate::now).thenReturn(mockedDate);
@@ -123,22 +126,8 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void schedulesDataExportForThisDayAt4AmIfScheduledBefore4AM() {
-        var dataExport = createDataExport();
-        var mockedDate = LocalDate.of(2023, 1, 1);
-        var mockedTime = LocalTime.of(3, 0);
-        var expectedDate = LocalDate.of(2023, 1, 1);
-        var expectedTime = LocalTime.of(4, 0);
-        try (var localDate = Mockito.mockStatic(LocalDate.class); var localTime = Mockito.mockStatic(LocalTime.class)) {
-            localDate.when(LocalDate::now).thenReturn(mockedDate);
-            localTime.when(LocalTime::now).thenReturn(mockedTime);
-            localTime.when(() -> LocalTime.of(4, 0)).thenReturn(expectedTime);
-            Instant expectedTimeInstant = expectedDate.atTime(expectedTime).atZone(ZoneId.systemDefault()).toInstant();
-            dataExportScheduleService.scheduleDataExportCreation(dataExport);
-            verify(scheduler).schedule(any(Runnable.class), eq(expectedTimeInstant));
-        }
+    private static Stream<Arguments> timeExpectedDateProvider() {
+        return Stream.of(Arguments.of(LocalTime.of(1, 0), LocalDate.of(2023, 1, 1)), Arguments.of(LocalTime.of(10, 0), LocalDate.of(2023, 1, 2)));
     }
 
     private DataExport createDataExport() {
