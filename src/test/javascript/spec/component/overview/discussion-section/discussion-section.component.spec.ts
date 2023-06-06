@@ -49,6 +49,7 @@ import {
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
