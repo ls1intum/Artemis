@@ -8,8 +8,8 @@ import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExpo
 import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -1708,7 +1708,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
-        assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
+        assertThatExceptionOfType(GitLabException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
     }
 
     // TEST
@@ -1723,12 +1723,13 @@ public class ProgrammingExerciseTestService {
 
         // the local repo should exist before startExercise()
         assertThat(teamLocalPath).exists();
+
         // Start participation
-        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
+        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
+                .matches(exception -> !exception.getMessage().isEmpty());
+
         // the directory of the repo should be deleted
         assertThat(teamLocalPath).doesNotExist();
-        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
-        assertThat(exception.getMessage()).isNotEmpty();
     }
 
     @NotNull
@@ -1780,9 +1781,9 @@ public class ProgrammingExerciseTestService {
         Team team = setupTeamForBadRequestForStartExercise();
 
         // Start participation
-        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
-        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
-        assertThat(exception.getMessage()).isNotEmpty();
+        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
+                .matches(exception -> !exception.getMessage().isEmpty());
+
     }
 
     // TEST

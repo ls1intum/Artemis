@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -224,7 +224,7 @@ class Lti10ServiceTest {
         course.setOnlineCourseConfiguration(null);
         when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(course);
 
-        assertThrows(IllegalStateException.class, () -> lti10Service.onNewResult(participation));
+        assertThatIllegalStateException().isThrownBy(() -> lti10Service.onNewResult(participation));
 
         verifyNoInteractions(resultRepository);
     }
