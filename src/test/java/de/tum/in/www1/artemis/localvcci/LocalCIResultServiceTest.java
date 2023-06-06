@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -23,7 +22,7 @@ class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
     void testThrowsExceptionWhenResultIsNotLocalCIBuildResult() {
         BambooBuildResultNotificationDTO wrongBuildResult = ModelFactory.generateBambooBuildResult("some-repository", "SOME-PLAN", "", ZonedDateTime.now().minusSeconds(10),
                 List.of(), List.of(), List.of());
-        LocalCIException exception = assertThrows(LocalCIException.class, () -> localCIResultService.convertBuildResult(wrongBuildResult));
-        assertThat(exception.getMessage()).isEqualTo("The request body is not of type LocalCIBuildResult");
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIResultService.convertBuildResult(wrongBuildResult))
+                .withMessage("The request body is not of type LocalCIBuildResult");
     }
 }
