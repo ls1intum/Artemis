@@ -10,7 +10,7 @@ hasSecretTestFiles = secretTestFilesFolderExists()
 
 dockerImage = "ghcr.io/uni-passau-artemis/artemis-dejagnu:20"
 dockerFlags = ""
-secretTestVolume = "prog2_${tool}-secret"
+secretTestVolume = "artemis_blackbox_${tool}-secret"
 secret_volume_mount_path = "/secrets"
 rebuildImage = true
 
@@ -45,13 +45,13 @@ void testRunner() {
 private void setup() {
     // special jobs to run only for the solution repository
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
-        dockerFlags += " -v prog2_maven-cache:/maven_cache"
+        dockerFlags += " -v artemis_blackbox_maven-cache:/maven_cache"
 
         if (runDejagnuTests) {
             createSecretTestVolume()
         }
     } else {
-        dockerFlags += " -v prog2_maven-cache:/maven_cache:ro"
+        dockerFlags += " -v artemis_blackbox_maven-cache:/maven_cache:ro"
 
         // if not solution repo, disallow network access from containers
         dockerFlags += " --network none"
