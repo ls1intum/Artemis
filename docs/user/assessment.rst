@@ -25,8 +25,8 @@ Manual assessment refers to evaluating or grading student assignments, typically
 Manual assessment in Artemis involves the following steps:
 
 1. Submission: Students submit their assignments through Artemis.
-2. Review: Reviewers access the submitted work and review it carefully, considering the objectives, requirements, and criteria established for the assessment.
-3. Evaluation: Based on their assessment, reviewers assign scores, provide feedback, or grade the student's work keeping the grading criteria in mind to ensure consistency and fairness.
+2. Review: Reviewers access the submitted work and put a **lock** on the submission, preventing inconsistency and ambiguity the other reviewer evaluations can cause. Then they review it carefully, considering the objectives, requirements, and criteria established for the assessment.
+3. Evaluation: Based on their assessment, reviewers assign scores, provide feedback, or grade the student's work keeping the grading criteria in mind to ensure consistency and fairness. In the end, reviewers submit or cancel their evaluation, which revokes the lock for use by the other reviewers.
 4. Student feedback: Students rate the quality of the feedback to motivate the reviewers to provide high-quality feedback to improve understanding and prevent misconceptions.
             
 
@@ -61,7 +61,7 @@ Instructors can use the assessment training process to make the grading more con
 Double-blind Grading
 ^^^^^^^^^^^^^^^^^^^^
 
-The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are "blind" to the identity of each other, ensuring that their expectations or biases do not influence the results. 
+The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are **blind** to the identity of each other, ensuring that their expectations or biases do not influence the results. 
     
     .. figure:: assessment/double-blind.png
             :alt: Double-blind grading
@@ -93,7 +93,7 @@ The complaint process is as follows:
 
 
 3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assess students' submissions. 
-   Upon evaluation, the reviewer puts a "lock" on the submission disabling inconsistency and ambiguity, which expires in 24 hours.
+   Upon evaluation, the reviewer puts a lock expiring automatically in 24 hours in addition to an option of unlocking manually.
 
     .. figure:: assessment/exercise-dashboard.png
             :alt: Exercise Dashboard
