@@ -353,22 +353,20 @@ public class ModelingExerciseResource {
      * <p>
      * Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId          for which all submission should be checked
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this value
-     * @param minimumSize         consider only submissions whose size is greater or equal to this value
+     * @param exerciseId for which all submission should be checked
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) {
+    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
         log.info("Start modelingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
-        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
+        var plagiarismChecksConfig = modelingExerciseRepository.findByIdElseThrow(exerciseId).getPlagiarismChecksConfig();
+        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, plagiarismChecksConfig.getSimilarityThreshold(),
+                plagiarismChecksConfig.getMinimumSize(), plagiarismChecksConfig.getMinimumScore());
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", plagiarismResult.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
         // TODO: limit the amount temporarily because of database issues

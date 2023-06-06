@@ -2,20 +2,23 @@
     <div class="plagiarism-header">
         <div class="plagiarism-header-top">
             <div class="plagiarism-header-top-left">
-                <h4 class="plagiarism-page-title fw-medium" (click)="showOptions = !showOptions" [class.active]="showOptions">
-                    <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight"></fa-icon>
+                <h4 class="plagiarism-page-title fw-medium">
                     <span>{{ 'artemisApp.plagiarism.plagiarismDetection' | artemisTranslate }}</span>
                 </h4>
 
                 <div class="plagiarism-warning">
                     <fa-icon [icon]="faExclamationTriangle" id="plagiarismCaution"></fa-icon>
-                    <span>{{ 'artemisApp.plagiarism.caution' | artemisTranslate }}</span>
+                    <div class="plagiarism-warning-message">
+                        <span>{{ 'artemisApp.plagiarism.caution' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.plagiarism.configurationMoved' | artemisTranslate }}</span>
+                    </div>
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
-                <button *ngIf="chartFilterApplied" class="check-plagiarism btn btn-info" (click)="resetFilter()">
-                    <span>{{ 'artemisApp.plagiarism.resetFilter' | artemisTranslate }}</span>
-                </button>
+                <div *ngIf="isProgrammingExercise() || true" class="plagiarism-checkbox form-check" for="generateJPlagReport">
+                    <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
+                    <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
+                </div>
                 <button
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                     class="check-plagiarism btn btn-primary"
@@ -23,6 +26,9 @@
                     [overwriteDisabled]="detectionInProgress"
                 >
                     <span>{{ plagiarismResult ? ('artemisApp.plagiarism.rerun' | artemisTranslate) : ('artemisApp.plagiarism.detect' | artemisTranslate) }}</span>
+                </button>
+                <button *ngIf="chartFilterApplied" class="check-plagiarism btn btn-info" (click)="resetFilter()">
+                    <span>{{ 'artemisApp.plagiarism.resetFilter' | artemisTranslate }}</span>
                 </button>
                 <ng-template #toggleDeleteModal let-modal>
                     <div class="modal-header">
@@ -72,37 +78,6 @@
                         <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="plagiarism-header-options" [hidden]="!showOptions">
-            <div class="plagiarism-option">
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold">Similarity Threshold</div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate"></fa-icon>
-                <input type="number" required class="form-control" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
-            </div>
-
-            <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
-                <div class="plagiarism-checkbox form-check" for="enableMinimumScore">
-                    <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumScore" checked />
-                    <div class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumScore">Minimum Score</div>
-                </div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"></fa-icon>
-                <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
-            </div>
-
-            <div class="plagiarism-option" [class.disabled]="!enableMinimumSize" *ngIf="exercise.type !== PROGRAMMING">
-                <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
-                    <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
-                    <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>
-                </div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate"></fa-icon>
-                <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
-            </div>
-
-            <div *ngIf="isProgrammingExercise()" class="plagiarism-checkbox form-check" for="generateJPlagReport">
-                <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
-                <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
             </div>
         </div>
     </div>
