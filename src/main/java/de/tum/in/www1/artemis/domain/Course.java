@@ -337,17 +337,6 @@ public class Course extends DomainObject {
         this.endDate = endDate;
     }
 
-    /**
-     * Determine whether the current date is within the course period (after start, before end).
-     *
-     * @return true if the current date is within the course period, false otherwise
-     */
-    @JsonIgnore
-    public boolean isActive() {
-        ZonedDateTime now = ZonedDateTime.now();
-        return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
-    }
-
     public ZonedDateTime getEnrollmentStartDate() {
         return enrollmentStartDate;
     }
