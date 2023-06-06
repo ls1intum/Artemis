@@ -108,7 +108,7 @@ public abstract class Conversation extends DomainObject {
         }
         else if (this instanceof GroupChat groupChat) {
             if (groupChat.getName() == null || groupChat.getName().isBlank()) {
-                return groupChat.getConversationParticipants().stream().map((x) -> x.getUser().getName()).collect(Collectors.joining());
+                return groupChat.getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
             }
             else {
                 return groupChat.getName();

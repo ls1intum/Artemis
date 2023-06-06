@@ -46,20 +46,21 @@ public class ConversationNotificationService {
         String[] placeholders;
         String conversationName = createdMessage.getConversation().getHumanReadableName(createdMessage.getAuthor());
 
+        // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
         if (createdMessage.getConversation() instanceof Channel channel) {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { channel.getCourse().getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
-                    createdMessage.getAuthor().getName() };
+                    createdMessage.getAuthor().getName(), "channel" };
         }
         else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
             placeholders = new String[] { groupChat.getCourse().getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName(), conversationName };
+                    createdMessage.getAuthor().getName(), conversationName, "groupChat" };
         }
         else {
             notificationText = NEW_MESSAGE_DIRECT_TEXT;
             placeholders = new String[] { createdMessage.getConversation().getCourse().getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName(), conversationName };
+                    createdMessage.getAuthor().getName(), conversationName, "oneToOneChat" };
         }
         saveAndSend(createConversationMessageNotification(createdMessage, NotificationType.CONVERSATION_NEW_MESSAGE, notificationText, true, placeholders));
     }
