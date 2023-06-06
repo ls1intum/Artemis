@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.HashSet;
 import java.util.List;
@@ -69,12 +69,10 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
         var savedGradingScale = gradingScaleRepository.save(gradingScale);
 
-        BadRequestAlertException exception = assertThrows(BadRequestAlertException.class,
-                () -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, savedGradingScale.getId()));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, savedGradingScale.getId()))
+                .withMessage("Grade percentages must be greater than 0")
+                .matches(exception -> "gradeStep".equals(exception.getEntityName()) && "invalidGradePercentage".equals(exception.getErrorKey()));
 
-        assertThat(exception.getMessage()).isEqualTo("Grade percentages must be greater than 0");
-        assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidGradePercentage");
     }
 
     /**
@@ -89,9 +87,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         double percentage = 85;
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> gradingScaleRepository.matchPercentageToGradeStep(percentage, id));
-
-        assertThat(exception.getMessage()).isEqualTo("No grade step in selected grading scale matches given percentage");
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> gradingScaleRepository.matchPercentageToGradeStep(percentage, id))
+                .withMessage("No grade step in selected grading scale matches given percentage");
     }
 
     /**
@@ -130,11 +127,9 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
         createCustomGradeStep("", 70, 95);
 
-        BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> gradingScaleService.saveGradingScale(gradingScale));
-
-        assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepFormat");
-        assertThat(exception.getMessage()).isEqualTo("Not all grade steps are following the correct format.");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleService.saveGradingScale(gradingScale))
+                .withMessage("Not all grade steps are following the correct format.")
+                .matches(exception -> "gradeStep".equals(exception.getEntityName()) && "invalidGradeStepFormat".equals(exception.getErrorKey()));
     }
 
     /**
@@ -145,11 +140,9 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
         createCustomGradeStep("Name", 90, 80);
 
-        BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> gradingScaleService.saveGradingScale(gradingScale));
-
-        assertThat(exception.getMessage()).isEqualTo("Not all grade steps are following the correct format.");
-        assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepFormat");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleService.saveGradingScale(gradingScale))
+                .withMessage("Not all grade steps are following the correct format.")
+                .matches(exception -> exception.getEntityName().equals("gradeStep") && exception.getErrorKey().equals("invalidGradeStepFormat"));
     }
 
     private GradeStep createCustomGradeStep(String gradeName, double lowerBound, double upperBound) {
@@ -174,11 +167,9 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         gradingScale.setGradeSteps(gradeSteps);
         gradingScale.setExam(exam);
 
-        BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> gradingScaleService.saveGradingScale(gradingScale));
-
-        assertThat(exception.getMessage()).isEqualTo("Grade step set can't match to a valid grading scale.");
-        assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepAdjacency");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> gradingScaleService.saveGradingScale(gradingScale))
+                .withMessage("Grade step set can't match to a valid grading scale.")
+                .matches(exception -> "gradeStep".equals(exception.getEntityName()) && "invalidGradeStepAdjacency".equals(exception.getErrorKey()));
     }
 
     /**

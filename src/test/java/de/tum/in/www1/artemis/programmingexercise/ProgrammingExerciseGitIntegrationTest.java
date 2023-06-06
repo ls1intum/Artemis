@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -97,17 +97,29 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3")
     void testRepositoryMethods() {
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class,
-                () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class,
-                () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> programmingExerciseRepository.findByIdElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(Long.MAX_VALUE));
     }
 
     @Test
