@@ -420,7 +420,7 @@ describe('NavbarComponent', () => {
             const submissionsCrumb = {
                 label: 'artemisApp.exercise.submissions',
                 translate: true,
-                uri: '/course-management/1/text-exercises/2/submissions/',
+                uri: '/course-management/1/text-exercises/2/scores/',
             } as MockBreadcrumb;
 
             const conflictCrumb = {
