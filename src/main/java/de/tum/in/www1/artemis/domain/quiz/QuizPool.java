@@ -39,7 +39,7 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
-    private Boolean randomizeQuestionOrder;
+    private Boolean randomizeQuestionOrder = false;
 
     @Transient
     private List<QuizGroup> quizGroups;
