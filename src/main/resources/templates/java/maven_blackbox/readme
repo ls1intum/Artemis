@@ -107,7 +107,7 @@ hide empty methods
 
 ### Part 4: Tests
 
-This section shows you, which tests are passed by your implementation.
+This section shows you which tests are passed by your implementation.
 
 1. [task][Main Methode existiert](MainMethodChecker)
 
