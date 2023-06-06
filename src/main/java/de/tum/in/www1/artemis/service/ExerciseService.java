@@ -443,29 +443,23 @@ public class ExerciseService {
 
             Set<Result> results = Set.of();
 
-            if (submission != null && ExerciseDateService.isBeforeAssessmentDueDate(exercise)) {
-                // Hie all results before the assessment due date
-                submission.setResults(Collections.emptyList());
+            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
+                results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
+                // remove inner participation from result
+                latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
+                }
             }
-            else {
-                if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
-                    results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
-                    // remove inner participation from result
-                    latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
-                    // filter sensitive information about the assessor if the current user is a student
-                    if (isStudent) {
-                        latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
-                    }
-                }
 
-                // filter sensitive information in submission's result
-                if (isStudent && submission != null && submission.getLatestResult() != null) {
-                    submission.getLatestResult().filterSensitiveInformation();
-                }
+            // filter sensitive information in submission's result
+            if (isStudent && submission != null && submission.getLatestResult() != null) {
+                submission.getLatestResult().filterSensitiveInformation();
             }
 
             // add submission to participation or set it to null
-            participation.setSubmissions(submission != null ? Set.of(submission) : null);
+            participation.setSubmissions(latestSubmissionWithRatedResult != null ? Set.of(latestSubmissionWithRatedResult) : null);
 
             participation.setResults(results);
 
