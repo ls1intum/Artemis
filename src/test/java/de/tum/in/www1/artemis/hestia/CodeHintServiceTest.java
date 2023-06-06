@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.*;
 
@@ -67,7 +67,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var solutionEntry = new ProgrammingExerciseSolutionEntry();
         solutionEntry.setTestCase(testCase);
         solutionEntry.setLine(1);
-        solutionEntry.setCode(UUID.randomUUID().toString());
+        solutionEntry.setCode("code");
         return solutionEntryRepository.save(solutionEntry);
     }
 
@@ -251,7 +251,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var codeHint = addCodeHintToTask("codeHint", relatedTask, new HashSet<>(Collections.emptySet()));
 
         codeHint.setSolutionEntries(new HashSet<>(Set.of(invalidSolutionEntry)));
-        assertThrows(BadRequestAlertException.class, () -> codeHintService.updateSolutionEntriesForCodeHint(codeHint));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> codeHintService.updateSolutionEntriesForCodeHint(codeHint));
 
         var entriesForHint = solutionEntryRepository.findByCodeHintId(codeHint.getId());
         assertThat(entriesForHint).isEmpty();

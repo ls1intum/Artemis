@@ -4,11 +4,10 @@ import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.MailService;
 
 @Service
 public class GroupNotificationService {
@@ -38,16 +36,16 @@ public class GroupNotificationService {
 
     private final UserRepository userRepository;
 
-    private final MailService mailService;
+    private final GeneralInstantNotificationService notificationService;
 
     private final NotificationSettingsService notificationSettingsService;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService) {
+            GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
-        this.mailService = mailService;
+        this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
     }
 
@@ -107,7 +105,7 @@ public class GroupNotificationService {
                         (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
-            saveAndSend(resultingGroupNotification, notificationSubject);
+            saveAndSend(resultingGroupNotification, notificationSubject, author);
         }
     }
 
@@ -318,8 +316,9 @@ public class GroupNotificationService {
      *
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
+     * @param author              the author, if set, will not be notified via instant notification.
      */
-    private void saveAndSend(GroupNotification notification, Object notificationSubject) {
+    private void saveAndSend(GroupNotification notification, Object notificationSubject, User author) {
         if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
@@ -332,8 +331,12 @@ public class GroupNotificationService {
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
         // checks if this notification type has email support
-        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
-            prepareSendingGroupEmail(notification, notificationSubject);
+        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
+            List<User> groupNotificationReceivers = findGroupNotificationReceivers(notification, author);
+
+            if (!groupNotificationReceivers.isEmpty()) {
+                notificationService.sendNotification(notification, groupNotificationReceivers, notificationSubject);
+            }
         }
     }
 
@@ -352,41 +355,28 @@ public class GroupNotificationService {
     }
 
     /**
-     * Prepares sending an email based on a GroupNotification by finding the relevant users
+     * Prepares sending an instant notification based on a GroupNotification by finding the relevant users
      *
      * @param notification which information should also be propagated via email
+     * @param author       the author will be excluded if not null
      */
-    private void prepareSendingGroupEmail(GroupNotification notification, Object notificationSubject) {
+    private List<User> findGroupNotificationReceivers(GroupNotification notification, User author) {
         Course course = notification.getCourse();
         GroupNotificationType groupType = notification.getType();
-        List<User> foundUsers = new ArrayList<>();
+        List<User> foundUsers;
         switch (groupType) {
             case STUDENT -> foundUsers = userRepository.getStudents(course);
             case INSTRUCTOR -> foundUsers = userRepository.getInstructors(course);
             case EDITOR -> foundUsers = userRepository.getEditors(course);
             case TA -> foundUsers = userRepository.getTutors(course);
+            default -> foundUsers = Collections.emptyList();
         }
-        if (!foundUsers.isEmpty()) {
-            prepareGroupNotificationEmail(notification, foundUsers, notificationSubject);
+
+        if (author == null) {
+            return foundUsers;
         }
-    }
-
-    /**
-     * Checks if an email should be created based on the provided notification, users, notification settings and type for GroupNotifications
-     * If the checks are successful creates and sends a corresponding email
-     * If the notification type indicates an urgent (critical) email it will be sent to all users (regardless of settings)
-     *
-     * @param notification        that should be checked
-     * @param users               which will be filtered based on their notification (email) settings
-     * @param notificationSubject is used to add additional information to the email (e.g. for exercise : due date, points, etc.)
-     */
-    public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
-        // find the users that have this notification type & email communication channel activated
-        List<User> usersThatShouldReceiveAnEmail = users.stream()
-                .filter(user -> notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, user, EMAIL)).toList();
-
-        if (!usersThatShouldReceiveAnEmail.isEmpty()) {
-            mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);
+        else {
+            return foundUsers.stream().filter((user) -> user.getId() != author.getId()).toList();
         }
     }
 }

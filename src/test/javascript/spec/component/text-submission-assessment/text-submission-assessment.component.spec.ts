@@ -277,7 +277,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBeTrue();
     });
 
-    it.each([false, true])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
+    it.each([true, false])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.credits = 5;
         unreferencedFeedback.detailText = 'gj';

@@ -92,6 +92,7 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     descriptionKey: 'newReplyForExercisePostDescription',
                     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST,
                 },
+                // quizStartReminder is not necessary here. Only relevant on push devices (android, iOS)
             ],
         },
         {

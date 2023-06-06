@@ -151,6 +151,7 @@ Desktop.ini
 .dbus/
 repos/
 repos-download/
+local-vcs-repos
 /templates/
 .bash_history
 .v8flags.*.json
@@ -201,5 +202,7 @@ repos-download/
 # Artemis configs
 ######################
 /src/main/resources/config/application-local*.yml
+!/src/main/resources/config/application-localvc.yml
+!/src/main/resources/config/application-localci.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
