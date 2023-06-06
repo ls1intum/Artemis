@@ -105,7 +105,7 @@ describe('PageDiscussionSectionComponent', () => {
                 getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: [],
+                            body: {} as Channel,
                             status: 200,
                         }),
                     ),
@@ -113,7 +113,7 @@ describe('PageDiscussionSectionComponent', () => {
                 getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: [],
+                            body: {} as Channel,
                             status: 200,
                         }),
                     ),
