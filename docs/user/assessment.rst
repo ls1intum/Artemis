@@ -34,7 +34,7 @@ Assessment Dashboard
 ^^^^^^^^^^^^^^^^^^^^
 
 To keep track of the manual assessments, Artemis offers the assessment dashboard.
-It shows the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
+It represents the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
 It also shows the average rating the students have given to each exercise.
 
     .. figure:: assessment/assessment-dashboard.png
@@ -46,7 +46,7 @@ Each exercise also has its own assessment dashboard that shows all of this infor
 Structured Grading Criteria
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To ensure consistency, fairness, and transparency and simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
+To ensure consistency, fairness, transparency, and to simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
 
     .. figure:: assessment/grading-criteria.png
             :alt: A picture of the assessment user interface with grading criteria, student submission and example solution
@@ -93,7 +93,7 @@ The complaint process is as follows:
 
 
 3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assess students' submissions. 
-   Upon evaluation, the reviewer puts a "lock" on the complaint disabling inconsistency and ambiguity, which expires in 24 hours.
+   Upon evaluation, the reviewer puts a "lock" on the submission disabling inconsistency and ambiguity, which expires in 24 hours.
 
     .. figure:: assessment/exercise-dashboard.png
             :alt: Exercise Dashboard
@@ -132,7 +132,7 @@ More Feedback Requests
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Another possibility after receiving an assessment is the *More Feedback Request*.
-Compared to the complaints, they do not cost a token, but the tutor cannot change the score after a feedback request.
+Unlike complaints, they do not cost a token, but the tutor cannot change the score after a feedback request.
 
     .. figure:: assessment/more-feedback.png
             :alt: Exercise Dashboard
