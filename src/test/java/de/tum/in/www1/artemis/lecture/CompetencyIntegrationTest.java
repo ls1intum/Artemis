@@ -435,7 +435,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         List<Competency> competenciesOfCourse = request.getList("/api/courses/" + idOfCourse + "/competencies", HttpStatus.OK, Competency.class);
 
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfCompetency)).findFirst()).isPresent();
+        assertThat(competenciesOfCourse.stream().anyMatch(competency -> competency.getId().equals(idOfCompetency))).isTrue();
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().get().getLectureUnits()).isEmpty();
     }
 
@@ -444,6 +444,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void getNonOptionalCompetenciesOfCourse_asStudent1_shouldReturnNonOptionalCompetencies() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Competency optionalCompetency = new Competency();
+        optionalCompetency.setTitle("Optional Competency");
         optionalCompetency.setOptional(true);
         optionalCompetency.setCourse(course);
         optionalCompetency = competencyRepository.save(optionalCompetency);
@@ -451,8 +452,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         List<Competency> competenciesOfCourse = request.getList("/api/courses/" + idOfCourse + "/non-optional-competencies", HttpStatus.OK, Competency.class);
 
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfCompetency)).findFirst()).isPresent();
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfOptionalCompetency)).findFirst()).isNotPresent();
+        assertThat(competenciesOfCourse.stream().anyMatch(competency -> competency.getId().equals(idOfCompetency))).isTrue();
+        assertThat(competenciesOfCourse.stream().anyMatch(competency -> competency.getId().equals(idOfOptionalCompetency))).isFalse();
     }
 
     @Test
