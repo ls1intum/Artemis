@@ -31,7 +31,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     @Query("""
             SELECT c
             FROM Competency c
-            WHERE c.course.id = :courseId AND NOT c.optional
+            WHERE c.course.id = :courseId AND c.optional <> True
             """)
     Set<Competency> findAllNonOptionalForCourse(@Param("courseId") Long courseId);
 
