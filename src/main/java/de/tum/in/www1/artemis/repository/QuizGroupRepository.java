@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 /**
  * Spring Data JPA repository for the QuizGroup entity.
  */
+@SuppressWarnings("unused")
 @Repository
 public interface QuizGroupRepository extends JpaRepository<QuizGroup, Long> {
 }
