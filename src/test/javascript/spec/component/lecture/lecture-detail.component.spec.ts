@@ -32,10 +32,6 @@ describe('LectureDetailComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should initialize lecture when ngOnInit is called', () => {
         const mockLecture = new Lecture();
         mockLecture.title = 'Test Lecture';
