@@ -115,7 +115,7 @@ describe('QuizPoolMappingComponent', () => {
         expect(component.hasGroupsWithNoQuestion()).toBeTrue();
     });
 
-    it('should return false false all groups have at least 1 question', () => {
+    it('should return false if all groups have at least 1 question', () => {
         component.quizGroupNameQuestionsMap.set('Group 1', [new MultipleChoiceQuestion()]);
         component.quizGroupNameQuestionsMap.set('Group 2', [new MultipleChoiceQuestion()]);
         expect(component.hasGroupsWithNoQuestion()).toBeFalse();
