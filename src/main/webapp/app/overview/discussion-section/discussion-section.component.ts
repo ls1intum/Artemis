@@ -11,7 +11,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
@@ -74,6 +74,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
                     this.setChannel(courseId);
+                    this.createEmptyPost();
+                    this.resetFormGroup();
                 }
             });
         });
@@ -180,13 +182,17 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                               exerciseId: this.exercise?.id,
                               lectureId: this.lecture?.id,
                           };
-                    this.metisService.getFilteredPosts(contextFilter);
+                    if (channel) {
+                        this.metisService.getFilteredPosts(contextFilter);
+                    }
                     this.createEmptyPost();
                     this.resetFormGroup();
                 },
-                error: () => {
-                    this.isNotAChannelMember = true;
-                    this.collapsed = true;
+                error: (error: HttpErrorResponse) => {
+                    if (error.status === 403 && error.error.message === 'error.noAccessButCouldJoin') {
+                        this.isNotAChannelMember = true;
+                        this.collapsed = true;
+                    }
                 },
             };
         };

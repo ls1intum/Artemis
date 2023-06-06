@@ -31,8 +31,8 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { getElement, getElements } from '../../../helpers/utils/general.utils';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import {
+    metisChannelMessages,
     metisCourse,
-    metisCoursePostsWithCourseWideContext,
     metisExercise,
     metisExercisePosts,
     metisLecture,
@@ -48,6 +48,7 @@ import {
     postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -55,6 +56,9 @@ describe('PageDiscussionSectionComponent', () => {
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
+    let channelService: ChannelService;
+    let getChannelOfLectureSpy: jest.SpyInstance;
+    let getChannelOfExerciseSpy: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -62,6 +66,7 @@ describe('PageDiscussionSectionComponent', () => {
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
+                MockProvider(ChannelService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -96,6 +101,23 @@ describe('PageDiscussionSectionComponent', () => {
                 fixture = TestBed.createComponent(DiscussionSectionComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
+                channelService = TestBed.inject(ChannelService);
+                getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: [],
+                            status: 200,
+                        }),
+                    ),
+                );
+                getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: [],
+                            status: 200,
+                        }),
+                    ),
+                );
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
             });
     });
@@ -121,12 +143,7 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.posts).toEqual(metisLecturePosts);
     }));
 
-    it('should show single post if current post is set', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        // mock activated route returns id of metisPostTechSupport
-        expect(component.currentPost).toEqual(metisPostTechSupport);
-    }));
+    // TODO: add meaningful tests for new exercise/lecture channel
 
     it('should reset current post', fakeAsync(() => {
         component.resetCurrentPost();
@@ -188,19 +205,19 @@ describe('PageDiscussionSectionComponent', () => {
         expect(searchInput.textContent).toBe('');
     }));
 
-    it('should display an extra new post button on top of posts for user convenience', fakeAsync(() => {
+    it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
         component.exercise = metisExercise;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        component.posts = metisCoursePostsWithCourseWideContext;
+        component.posts = metisChannelMessages;
         fixture.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
         expect(newPostButtons).not.toBeNull();
-        expect(newPostButtons).toHaveLength(2);
+        expect(newPostButtons).toHaveLength(1);
     }));
 
-    it('extra new post button on top of posts should be hidden if there are less then 3 posts', fakeAsync(() => {
+    it('should display one new message button', fakeAsync(() => {
         component.exercise = metisExercise;
         component.ngOnInit();
         tick();

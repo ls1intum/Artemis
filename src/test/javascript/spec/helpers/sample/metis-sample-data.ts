@@ -12,6 +12,8 @@ import { ConversationParticipant } from 'app/entities/metis/conversation/convers
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
@@ -20,7 +22,7 @@ export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [meti
 export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
 export const metisLecture3 = { id: 3, title: 'Third Metis  Lecture 3', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
 
-export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
+export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT, channelName: 'metis-ex-channel' } as Exercise;
 export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
@@ -269,3 +271,40 @@ export const directMessageUser2 = {
 } as Post;
 
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
+
+export const metisExerciseChannel = {
+    id: 1,
+    name: 'exercise-channel',
+    description: 'Channel for exercise related questions',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+    course: metisCourse,
+    exercise: metisExercise,
+} as Channel;
+
+export const metisChannelMessage1 = {
+    id: 1,
+    author: metisUser1,
+    content: 'metisPostTechSupport',
+    creationDate: undefined,
+    channel: metisExerciseChannel,
+} as Post;
+
+export const metisChannelMessage2 = {
+    id: 1,
+    author: metisUser1,
+    content: 'metisPostTechSupport',
+    creationDate: undefined,
+    channel: metisExerciseChannel,
+} as Post;
+
+export const metisChannelMessage3 = {
+    id: 1,
+    author: metisUser1,
+    content: 'metisPostTechSupport',
+    creationDate: undefined,
+    channel: metisExerciseChannel,
+} as Post;
+
+export const metisChannelMessages = [metisChannelMessage1, metisChannelMessage2, metisChannelMessage3];

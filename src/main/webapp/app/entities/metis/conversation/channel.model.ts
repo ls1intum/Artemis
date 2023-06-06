@@ -1,4 +1,7 @@
 import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { Exam } from 'app/entities/exam.model';
 
 /**
  * Entity
@@ -10,6 +13,10 @@ export class Channel extends Conversation {
     public isPublic?: boolean;
     public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
+
+    public exercise?: Exercise;
+    public lecture?: Lecture;
+    public exam?: Exam;
 
     constructor() {
         super(ConversationType.CHANNEL);

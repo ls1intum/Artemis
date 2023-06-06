@@ -17,7 +17,7 @@
                 </div>
             </div>
             <!-- body -->
-            <div *ngIf="isNotAChannelMember; else channelMessages" class="card-body" jhiTranslate="artemisApp.metis.channel.notAMember">Not a member.</div>
+            <div *ngIf="!channel || isNotAChannelMember; else channelMessages" class="card-body" jhiTranslate="artemisApp.metis.channel.notAMember">Not a member.</div>
             <ng-template #channelMessages>
                 <div class="card-body pt-0">
                     <div class="my-2" *ngIf="currentPost !== undefined; else threadView">
@@ -26,7 +26,7 @@
                         <jhi-posting-thread
                             [post]="currentPost"
                             [showAnswers]="true"
-                            [id]="'item-' + currentPost.id"
+                            [id]="'item-' + currentPost?.id"
                             [isCommunicationPage]="isCommunicationPage"
                         ></jhi-posting-thread>
                     </div>
