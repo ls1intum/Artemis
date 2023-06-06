@@ -11,19 +11,21 @@
         <!-- client -->
         <div class="client">
             <div [class]="headerClass">
-                <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="openComponentInNewWindow()" class="header-icon">
-                    <fa-icon size="sm" [icon]="faExpand"></fa-icon>
-                </button>
-                <h3 style="text-align: center">
-                    <fa-icon size="xs" [icon]="faRobot"></fa-icon>
+                <h3 class="header-start">
+                    <fa-icon size="xs" [icon]="faRobot" style="padding-right: 5px"></fa-icon>
                     Iris
                     <a [routerLink]="'/about'" target="_blank">
-                        <fa-icon size="2xs" style="vertical-align: middle" [icon]="faCircleInfo" class="header-icon"></fa-icon>
+                        <fa-icon style="vertical-align: middle; padding-left: 3px; font-size: 13px" [icon]="faCircleInfo" class="header-icon"></fa-icon>
                     </a>
                 </h3>
-                <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="closeChat()" class="header-icon">
-                    <fa-icon size="sm" [icon]="faXmark"></fa-icon>
-                </button>
+                <div class="button-container">
+                    <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="openComponentInNewWindow()" class="header-icon">
+                        <fa-icon style="font-size: 16px" [icon]="faExpand"></fa-icon>
+                    </button>
+                    <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="closeChat()" class="header-icon">
+                        <fa-icon style="font-size: 19px" [icon]="faXmark"></fa-icon>
+                    </button>
+                </div>
             </div>
         </div>
 

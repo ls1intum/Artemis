@@ -2,6 +2,15 @@
     position: relative;
 }
 
+.header-start {
+    text-align: start;
+    padding-left: 5px;
+}
+.button-container {
+    display: flex;
+    align-items: center;
+}
+
 .chat-widget {
     position: fixed;
     bottom: 90px;
