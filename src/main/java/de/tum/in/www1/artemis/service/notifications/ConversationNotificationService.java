@@ -44,6 +44,8 @@ public class ConversationNotificationService {
 
         String notificationText;
         String[] placeholders;
+        String conversationName = createdMessage.getConversation().getHumanReadableName(createdMessage.getAuthor());
+
         if (createdMessage.getConversation() instanceof Channel channel) {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { channel.getCourse().getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
@@ -52,12 +54,12 @@ public class ConversationNotificationService {
         else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
             placeholders = new String[] { groupChat.getCourse().getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName() };
+                    createdMessage.getAuthor().getName(), conversationName };
         }
         else {
             notificationText = NEW_MESSAGE_DIRECT_TEXT;
             placeholders = new String[] { createdMessage.getConversation().getCourse().getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName() };
+                    createdMessage.getAuthor().getName(), conversationName };
         }
         saveAndSend(createConversationMessageNotification(createdMessage, NotificationType.CONVERSATION_NEW_MESSAGE, notificationText, true, placeholders));
     }
