@@ -36,7 +36,7 @@ describe('QuizPoolMappingQuestionListComponent', () => {
             previousIndex: 0,
             currentIndex: 1,
         } as DragDrop.CdkDragDrop<QuizQuestion[]>;
-        const moveItemInArray = jest.spyOn(DragDrop, 'moveItemInArray').mockImplementation((_, __, ___) => {});
+        const moveItemInArray = jest.spyOn(DragDrop, 'moveItemInArray').mockImplementation(() => {});
 
         component.handleOnDropQuestion(event);
 
@@ -56,7 +56,7 @@ describe('QuizPoolMappingQuestionListComponent', () => {
             previousIndex: 0,
             currentIndex: 0,
         } as DragDrop.CdkDragDrop<QuizQuestion[]>;
-        const transferArrayItem = jest.spyOn(DragDrop, 'transferArrayItem').mockImplementation((_, __, ___) => {});
+        const transferArrayItem = jest.spyOn(DragDrop, 'transferArrayItem').mockImplementation(() => {});
 
         component.handleOnDropQuestion(event);
 
