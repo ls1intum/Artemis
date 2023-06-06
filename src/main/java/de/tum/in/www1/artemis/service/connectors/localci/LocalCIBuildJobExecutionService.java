@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -68,13 +67,20 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
+    /**
+     * The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
+     * This path is provided as a Bean, because the retrieval is quite costly in the production environment (see {@link LocalCIConfiguration#buildScriptFilePath()}).
+     */
+    private final Path buildScriptFilePath;
+
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService, DockerClient dockerClient,
-            LocalCIContainerService localCIContainerService, XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, XMLInputFactory localCIXMLInputFactory, Path buildScriptFilePath) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.dockerClient = dockerClient;
         this.localCIContainerService = localCIContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
+        this.buildScriptFilePath = buildScriptFilePath;
     }
 
     public enum LocalCIBuildJobRepositoryType {
@@ -95,7 +101,7 @@ public class LocalCIBuildJobExecutionService {
 
     /**
      * Prepare the paths to the assignment and test repositories, the branch to checkout, the volume configuration for the Docker container, and the container configuration,
-     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String)} to execute the job.
+     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, Path, Path, String, String)} to execute the job.
      *
      * @param participation The participation of the repository for which the build job should be executed.
      * @param commitHash    The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
@@ -132,16 +138,12 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
-        // the build job.
-        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
-
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
         // container information about the branch and commit hash to be used.
         // This does not start the container yet.
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch, commitHash);
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash);
 
-        return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash);
+        return runScriptAndParseResults(participation, containerName, container.getId(), assignmentRepositoryPath, testsRepositoryPath, branch, commitHash);
     }
 
     /**
@@ -156,12 +158,16 @@ public class LocalCIBuildJobExecutionService {
      * @return The build result.
      * @throws LocalCIException if something went wrong while running the build job.
      */
-    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch,
-            String commitHash) {
+    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, Path assignmentRepositoryPath,
+            Path testsRepositoryPath, String branch, String commitHash) {
 
         long timeNanoStart = System.nanoTime();
 
         localCIContainerService.startContainer(containerId);
+
+        localCIContainerService.copyIntoContainer(containerId, assignmentRepositoryPath, "/" + LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository");
+        localCIContainerService.copyIntoContainer(containerId, testsRepositoryPath, "/" + LocalCIBuildJobRepositoryType.TEST + "-repository");
+        localCIContainerService.copyIntoContainer(containerId, buildScriptFilePath, "/script.sh");
 
         log.info("Started container for build job " + containerName);
 

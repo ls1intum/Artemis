@@ -32,15 +32,6 @@ services:
         extends:
             file: ./mysql.yml
             service: mysql
-    #TODO: integrate healthcheck inside jira so that artemis can be started automatically after jira was setup and is ready
-    jira:
-        extends:
-            file: ./jira.yml
-            service: jira
-        #TODO: not sure if this needs to be in another volume because of potential differences between the jira instances?
-        # ask Frederik if he also used the same Jira instance for normal atlassian stack testing
-        volumes:
-            - artemis-jira-localvc-localci-data:/var/atlassian/application-data/jira
 
 networks:
     artemis:
@@ -52,5 +43,3 @@ volumes:
         name: artemis-mysql-data
     artemis-data:
         name: artemis-data
-    artemis-jira-localvc-localci-data:
-        name: artemis-jira-localvc-localci-data

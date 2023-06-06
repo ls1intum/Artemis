@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -19,12 +20,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Volume;
 
-import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -39,46 +36,23 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
-    /**
-     * The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
-     * This path is provided as a Bean, because the retrieval is quite costly in the production environment (see {@link LocalCIConfiguration#buildScriptFilePath()}).
-     */
-    private final Path buildScriptFilePath;
-
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    public LocalCIContainerService(DockerClient dockerClient, Path buildScriptFilePath) {
+    public LocalCIContainerService(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
-        this.buildScriptFilePath = buildScriptFilePath;
-    }
-
-    /**
-     * Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
-     *
-     * @param assignmentRepositoryPath the path to the assignment repository in the file system
-     * @param testRepositoryPath       the path to the test repository in the file system
-     * @return the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
-     */
-    public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath) {
-        return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
-                .withBinds(
-                        new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository")),
-                        new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository")),
-                        new Bind(buildScriptFilePath.toString(), new Volume("/script.sh")));
     }
 
     /**
      * Configure a container with the Docker image, the container name, the binds, and the branch to checkout, and set the command that runs when the container starts.
      *
      * @param containerName the name of the container to be created
-     * @param volumeConfig  the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      * @param branch        the branch to checkout
      * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch, String commitHash) {
-        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
+    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash) {
+        return dockerClient.createContainerCmd(dockerImage).withName(containerName)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -97,6 +71,15 @@ public class LocalCIContainerService {
      */
     public void startContainer(String containerId) {
         dockerClient.startContainerCmd(containerId).exec();
+    }
+
+    public void copyIntoContainer(String containerId, Path sourcePath, String targetPath) {
+        try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()))) {
+            dockerClient.copyArchiveToContainerCmd(containerId).withTarInputStream(tarArchiveInputStream).withRemotePath(targetPath).exec();
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not copy file into container", e);
+        }
     }
 
     /**
