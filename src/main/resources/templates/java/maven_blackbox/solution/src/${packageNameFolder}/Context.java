@@ -3,7 +3,7 @@ package ${packageName};
 import java.util.*;
 
 public class Context {
-    private SortStrategy sortAlgorithm  = new MergeSort();
+    private SortStrategy sortAlgorithm = new MergeSort();
 
     private List<Date> dates = new ArrayList<>();
 

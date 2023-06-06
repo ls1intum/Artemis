@@ -109,17 +109,17 @@ hide empty methods
 
 This section shows you which tests are passed by your implementation.
 
-1. [task][Main Methode existiert](MainMethodChecker)
+1. [task][Main method exists](MainMethodChecker)
 
-2. [task][Alle Zeilen <= 80 Zeichen lang](LineLengthChecker)
+2. [task][All lines have <= 80 characters](LineLengthChecker)
 
-3. [task][Tests.txt existiert und nicht leer](FileExistsChecker)
+3. [task][Tests.txt exists and is not empty](FileExistsChecker)
 
-4. [task][Öffentliche Tests](dejagnu[public])
+4. [task][Public Tests](dejagnu[public])
 
-5. [task][Erweiterte Tests](dejagnu[advanced])
+5. [task][Advanced Tests](dejagnu[advanced])
 
-6. [task][Geheime Tests](dejagnu[secret])
+6. [task][Secret Tests](dejagnu[secret])
 
 
 ### Part 4: Optional Challenges

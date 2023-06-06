@@ -73,8 +73,8 @@ public final class CommandParser {
         return new Command.AddCommand(Collections.unmodifiableList(dates));
     }
 
-    private static Date parseDateInput(String input) throws ParseException {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    private static Date parseDateInput(final String input) throws ParseException {
+        final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         formatter.setLenient(false);
         return formatter.parse(input);

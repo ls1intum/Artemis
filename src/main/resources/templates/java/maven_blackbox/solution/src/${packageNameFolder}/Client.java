@@ -3,7 +3,6 @@ package ${packageName};
 import ${packageName}.input.Command;
 import ${packageName}.input.CommandParser;
 import ${packageName}.input.InvalidCommandException;
-import ${packageName}.Context;
 
 import java.io.BufferedReader;
 import java.io.IOException;
