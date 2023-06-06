@@ -108,7 +108,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * @param quizGroups the list of quiz group to be reset
      */
     private void reassignQuizQuestion(QuizPool quizPool, List<QuizGroup> quizGroups) {
-        Map<Long, QuizGroup> idQuizGroupMap = quizGroups.stream().collect(Collectors.toMap(QuizGroup::getId, quizGroup -> quizGroup));
+        Map<Long, QuizGroup> idQuizGroupMap = quizGroups.stream().collect(Collectors.toMap(QuizGroup::getId, Function.identity()));
         for (QuizQuestion quizQuestion : quizPool.getQuizQuestions()) {
             if (quizQuestion.getQuizGroupId() != null) {
                 quizQuestion.setQuizGroup(idQuizGroupMap.get(quizQuestion.getQuizGroupId()));
