@@ -15,10 +15,18 @@ public class Context {
         this.dates = dates;
     }
 
+    /**
+     * Adds the given dates to the internal list of dates.
+     *
+     * @param datesToAdd The dates that are added.
+     */
     public void addDates(List<Date> datesToAdd) {
         this.dates.addAll(datesToAdd);
     }
 
+    /**
+     * Removes all dates from the list of dates.
+     */
     public void clearDates() {
         this.dates = new ArrayList<>();
     }

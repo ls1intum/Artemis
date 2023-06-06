@@ -10,13 +10,18 @@ import java.io.InputStreamReader;
 
 public final class Client {
     private static final String PROMPT = "sort> ";
-    private static final Context context = new Context();
-    // private static final Policy policy = new Policy(context);
+    private final Context context = new Context();
+    // private final Policy policy = new Policy(context);
 
     private Client() {
         throw new IllegalCallerException("utility class");
     }
 
+    /**
+     * The entrypoint of the program.
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) throws IOException {
         BufferedReader in
                 = new BufferedReader(new InputStreamReader(System.in));

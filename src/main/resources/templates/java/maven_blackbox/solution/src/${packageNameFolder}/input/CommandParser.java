@@ -23,6 +23,15 @@ public final class CommandParser {
         throw new IllegalCallerException("utility class");
     }
 
+    /**
+     * Parses a line that was entered via the console. The first word of the
+     * input determines the command, and possible arguments (if applicable)
+     * can be appended, separated by whitespaces.
+     *
+     * @param inputLine
+     * @return
+     * @throws InvalidCommandException
+     */
     public static Command parseCommand(final String inputLine)
             throws InvalidCommandException {
         final String[] args = inputLine.strip().split("\\s+");
@@ -73,8 +82,10 @@ public final class CommandParser {
         return new Command.AddCommand(Collections.unmodifiableList(dates));
     }
 
-    private static Date parseDateInput(final String input) throws ParseException {
-        final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    private static Date parseDateInput(final String input)
+            throws ParseException {
+        final SimpleDateFormat formatter
+            = new SimpleDateFormat("yyyy-MM-dd");
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         formatter.setLenient(false);
         return formatter.parse(input);
