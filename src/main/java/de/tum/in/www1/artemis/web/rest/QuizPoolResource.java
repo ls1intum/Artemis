@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing QuizPool.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class QuizPoolResource {
 
     private static final String ENTITY_NAME = "quizPool";
@@ -58,7 +58,7 @@ public class QuizPoolResource {
      * @param quizPool the QuizPool to update
      * @return the ResponseEntity with status 200 (OK) and with the body of the QuizPool, or with status 400 (Bad Request) if the QuizPool is invalid
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/quiz-pools")
+    @PutMapping("courses/{courseId}/exams/{examId}/quiz-pools")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizPool> updateQuizPool(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody QuizPool quizPool) {
         log.info("REST request to update QuizPool : {}", quizPool);
@@ -76,7 +76,7 @@ public class QuizPoolResource {
      * @param examId   the id of the Exam of which the QuizPool belongs to
      * @return the ResponseEntity with status 200 (OK) and with the body of the QuizPool, or with status 404 (Not Found) if the QuizPool is not found
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/quiz-pools")
+    @GetMapping("courses/{courseId}/exams/{examId}/quiz-pools")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizPool> getQuizPool(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to get QuizPool given examId : {}", examId);
