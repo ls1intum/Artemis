@@ -65,7 +65,7 @@ describe('QuizPoolMappingComponent', () => {
         question.quizGroup = quizGroup;
         component.quizGroups = [quizGroup];
         component.quizQuestions = [question];
-        const addQuestion = jest.spyOn(component, 'addQuestion').mockImplementation((_) => {});
+        const addQuestion = jest.spyOn(component, 'addQuestion').mockImplementation();
 
         component.handleUpdate();
         component.deleteGroup(0);
