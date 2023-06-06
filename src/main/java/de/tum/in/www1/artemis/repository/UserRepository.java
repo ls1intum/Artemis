@@ -332,7 +332,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
 
     @Query("""
-            SELECT DISTINCT team.students AS student FROM Team team
+            SELECT DISTINCT team.students AS student
+            FROM Team team
             JOIN team.students st
             WHERE st.isDeleted = false
             AND team.exercise.course.id = :#{#courseId} AND team.shortName = :#{#teamShortName}
