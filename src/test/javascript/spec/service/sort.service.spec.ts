@@ -9,141 +9,124 @@ type TestObject = {
     d: number | null | undefined;
     e: Map<string, number>;
     f: number;
-
     g: number;
+    h: { i: number }[];
 };
 
 describe('Sort Service', () => {
     let service: SortService;
-    let e1: TestObject, e2: TestObject, e3: TestObject, e4: TestObject, e5: TestObject, e6: TestObject;
+    const e1: TestObject = {
+        a: 10,
+        b: 'dog',
+        c: dayjs().subtract(1, 'days'),
+        d: 2,
+        e: new Map().set('f', 4),
+        f: 1,
+        g: 3,
+        h: [{ i: 1 }, { i: 2 }],
+    };
+    const e2: TestObject = {
+        a: 18,
+        b: 'cat',
+        c: dayjs().subtract(20, 'hours'),
+        d: 5,
+        e: new Map().set('f', 8),
+        f: 1,
+        g: 2,
+        h: [],
+    };
+    const e3: TestObject = {
+        a: 4,
+        b: 'snake',
+        c: dayjs().add(3, 'minutes'),
+        d: null,
+        e: new Map().set('f', 29),
+        f: 1,
+        g: 1,
+        h: undefined,
+    };
+    const e4: TestObject = {
+        a: 28,
+        b: 'panda',
+        c: dayjs().subtract(4, 'years'),
+        d: 1,
+        e: new Map().set('f', 43),
+        f: 4,
+        g: 4,
+        h: [{ i: 3 }],
+    };
+    const e5: TestObject = {
+        a: 15,
+        b: 'giraffe',
+        c: dayjs().add(2, 'hours'),
+        d: 4,
+        e: new Map().set('f', 6),
+        f: 5,
+        g: 5,
+        h: [{ i: 4 }, { i: -1 }],
+    };
+    const e6: TestObject = {
+        a: 7,
+        b: 'tiger',
+        c: dayjs().subtract(5, 'minutes'),
+        d: undefined,
+        e: new Map().set('f', 16),
+        f: 6,
+        g: 6,
+        h: [{ i: 0 }],
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
         service = TestBed.inject(SortService);
-
-        e1 = {
-            a: 10,
-            b: 'dog',
-            c: dayjs().subtract(1, 'days'),
-            d: 2,
-            e: new Map().set('f', 4),
-            f: 1,
-            g: 3,
-        };
-        e2 = {
-            a: 18,
-            b: 'cat',
-            c: dayjs().subtract(20, 'hours'),
-            d: 5,
-            e: new Map().set('f', 8),
-            f: 1,
-            g: 2,
-        };
-        e3 = {
-            a: 4,
-            b: 'snake',
-            c: dayjs().add(3, 'minutes'),
-            d: null,
-            e: new Map().set('f', 29),
-            f: 1,
-            g: 1,
-        };
-        e4 = {
-            a: 28,
-            b: 'panda',
-            c: dayjs().subtract(4, 'years'),
-            d: 1,
-            e: new Map().set('f', 43),
-            f: 4,
-            g: 4,
-        };
-        e5 = {
-            a: 15,
-            b: 'giraffe',
-            c: dayjs().add(2, 'hours'),
-            d: 4,
-            e: new Map().set('f', 6),
-            f: 5,
-            g: 5,
-        };
-        e6 = {
-            a: 7,
-            b: 'tiger',
-            c: dayjs().subtract(5, 'minutes'),
-            d: undefined,
-            e: new Map().set('f', 16),
-            f: 6,
-            g: 6,
-        };
     });
 
     describe('Service methods', () => {
-        it(
-            'should sort basic array ascending',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByProperty(arr, 'a', true);
-                expect(arr).toEqual([e3, e6, e1, e5, e2, e4]);
-            }),
-        );
+        it.each([
+            ['a', true, [e3, e6, e1, e5, e2, e4]],
+            ['b', false, [e6, e3, e4, e5, e1, e2]],
+            ['c', true, [e4, e1, e2, e6, e3, e5]],
+            ['e.f', true, [e1, e5, e2, e6, e3, e4]],
+        ])('should sort basic array', (key: string, ascending: boolean, expectedOrder: TestObject[]) => {
+            let times = 10;
+            while (times-- > 0) {
+                const shuffled = shuffle([e1, e2, e3, e4, e5, e6]);
+                service.sortByProperty(shuffled, key, ascending);
+                expect(shuffled).toEqual(expectedOrder);
+            }
+        });
 
-        it(
-            'should sort basic array ascending by multiple properties',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByMultipleProperties(arr, ['f', 'g'], true);
-                expect(arr).toEqual([e3, e2, e1, e4, e5, e6]);
-            }),
-        );
+        it.each([
+            ['d', true, [e4, e1, e5, e2], [e3, e6]],
+            ['d', false, [e2, e5, e1, e4], [e3, e6]],
+            ['h[0]?.i', true, [e6, e1, e4, e5], [e2, e3]],
+            ['h[0]?.i', false, [e5, e4, e1, e6], [e2, e3]],
+        ])('should sort basic array with null values', (key: string, ascending: boolean, expectedDefinedOrder: TestObject[], undefinedObjects: TestObject[]) => {
+            let times = 10;
+            while (times-- > 0) {
+                const shuffled = shuffle([e1, e2, e3, e4, e5, e6]);
+                service.sortByProperty(shuffled, key, ascending);
+                if (ascending) {
+                    expect(shuffled.slice(0, expectedDefinedOrder.length)).toEqual(expectedDefinedOrder);
+                    expect(shuffled.slice(expectedDefinedOrder.length, shuffled.length)).toIncludeSameMembers(undefinedObjects);
+                } else {
+                    expect(shuffled.slice(0, undefinedObjects.length)).toIncludeSameMembers(undefinedObjects);
+                    expect(shuffled.slice(undefinedObjects.length, shuffled.length)).toEqual(expectedDefinedOrder);
+                }
+            }
+        });
 
-        it(
-            'should sort basic array descending by multiple properties',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByMultipleProperties(arr, ['f', 'g'], false);
-                expect(arr).toEqual([e6, e5, e4, e1, e2, e3]);
-            }),
-        );
-
-        it(
-            'should sort basic array descending',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByProperty(arr, 'b', false);
-                expect(arr).toEqual([e6, e3, e4, e5, e1, e2]);
-            }),
-        );
-
-        it(
-            'should sort array with dayjs properties',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByProperty(arr, 'c', true);
-                expect(arr).toEqual([e4, e1, e2, e6, e3, e5]);
-            }),
-        );
-
-        it(
-            'should sort array with null properties ascending',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByProperty(arr, 'd', true);
-                expect(arr.slice(0, 4)).toEqual([e4, e1, e5, e2]);
-                expect(arr.slice(4, 6)).toIncludeSameMembers([e3, e6]);
-            }),
-        );
-
-        it(
-            'should sort array with null properties descending',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByProperty(arr, 'd', false);
-                expect(arr).toHaveLength(6);
-                expect(arr.slice(0, 2)).toIncludeSameMembers([e3, e6]);
-                expect(arr.slice(2, 6)).toEqual([e2, e5, e1, e4]);
-            }),
-        );
-
-        it(
-            'should sort array of nested maps',
-            repeatWithRandomArray(10, (arr) => {
-                service.sortByProperty(arr, 'e.f', true);
-                expect(arr).toEqual([e1, e5, e2, e6, e3, e4]);
-            }),
-        );
+        it.each([
+            [['f', 'g'], true, [e3, e2, e1, e4, e5, e6]],
+            [['f', 'g'], false, [e6, e5, e4, e1, e2, e3]],
+        ])('should sort array by multiple values', (keys: string[], ascending: boolean, expectedOrder: TestObject[]) => {
+            let times = 10;
+            while (times-- > 0) {
+                const shuffled = shuffle([e1, e2, e3, e4, e5, e6]);
+                service.sortByMultipleProperties(shuffled, keys, ascending);
+                expect(shuffled).toEqual(expectedOrder);
+            }
+        });
 
         it(
             'should sort array using a function for the compare value',

@@ -95,7 +95,9 @@ export class SortService {
     }
 
     private static customGet(object: any, path: string, defaultValue: any) {
-        const pathArray = path.split('.').filter((key) => key);
+        // Get rid of all optional chainings as they are handled down below. After that split the path into all array and attribute accesses
+        path = path.replaceAll('?', '').replaceAll(']', '');
+        const pathArray = path.split(/\.|\[/).filter((key) => key);
         const value = pathArray.reduce((obj, key) => {
             if (!obj) {
                 return obj;
