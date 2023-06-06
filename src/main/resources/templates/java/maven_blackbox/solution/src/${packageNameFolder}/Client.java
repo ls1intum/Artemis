@@ -10,8 +10,8 @@ import java.io.InputStreamReader;
 
 public final class Client {
     private static final String PROMPT = "sort> ";
-    private final Context context = new Context();
-    // private final Policy policy = new Policy(context);
+    private static final Context CONTEXT = new Context();
+    // private static final Policy POLICY = new Policy(context);
 
     private Client() {
         throw new IllegalCallerException("utility class");
@@ -20,7 +20,7 @@ public final class Client {
     /**
      * The entrypoint of the program.
      *
-     * @param args command line arguments
+     * @param args The command line arguments.
      */
     public static void main(String[] args) throws IOException {
         BufferedReader in
@@ -39,16 +39,16 @@ public final class Client {
 
     private static CommandRunResult runCommand(final Command command) {
         if (command instanceof Command.AddCommand addCommand) {
-            context.addDates(addCommand.values());
+            CONTEXT.addDates(addCommand.dates());
         } else if (command instanceof Command.SortCommand) {
-            // policy.configure();
-            context.sort();
+            // POLICY.configure();
+            CONTEXT.sort();
         } else if (command instanceof Command.ClearCommand) {
-            context.clearDates();
+            CONTEXT.clearDates();
         } else if (command instanceof Command.HelpCommand helpCommand) {
             System.out.println(helpCommand.helpMessage());
         } else if (command instanceof Command.PrintCommand) {
-            System.out.println(context.getDates());
+            System.out.println(CONTEXT.getDates());
         } else if (command instanceof Command.QuitCommand) {
             return CommandRunResult.QUIT;
         } else {

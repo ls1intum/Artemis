@@ -28,9 +28,9 @@ public final class CommandParser {
      * input determines the command, and possible arguments (if applicable)
      * can be appended, separated by whitespaces.
      *
-     * @param inputLine
-     * @return
-     * @throws InvalidCommandException
+     * @param inputLine The console input.
+     * @return The corresponding command.
+     * @throws InvalidCommandException If the command could not be parsed.
      */
     public static Command parseCommand(final String inputLine)
             throws InvalidCommandException {
