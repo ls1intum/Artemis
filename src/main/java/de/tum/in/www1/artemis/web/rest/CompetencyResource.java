@@ -119,12 +119,12 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies : gets all the non-optional competencies of a course
+     * GET /courses/:courseId/non-optional-competencies : gets all the non-optional competencies of a course
      *
      * @param courseId the id of the course for which the competencies should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
-    @GetMapping("/courses/{courseId}/nonOptionalCompetencies")
+    @GetMapping("/courses/{courseId}/non-optional-competencies")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Competency>> getNonOptionalCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get non-optional competencies for course with id: {}", courseId);
@@ -192,6 +192,9 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var existingCompetency = this.competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, existingCompetency);
+        if (competency.isOptional() && !competencyService.competencyCanBeOptional(existingCompetency)) {
+            throw new BadRequestException();
+        }
 
         existingCompetency.setTitle(competency.getTitle());
         existingCompetency.setDescription(competency.getDescription());
@@ -262,6 +265,11 @@ public class CompetencyResource {
 
         if (competencyToImport.getCourse().getId().equals(courseId)) {
             throw new ConflictException("The competency is already added to this course", "Competency", "competencyCycle");
+        }
+
+        // This can only happen if someone manually altered the transferred data
+        if (competencyToImport.isOptional() && !competencyService.competencyCanBeOptional(competencyToImport)) {
+            throw new BadRequestException();
         }
 
         competencyToImport.setCourse(course);

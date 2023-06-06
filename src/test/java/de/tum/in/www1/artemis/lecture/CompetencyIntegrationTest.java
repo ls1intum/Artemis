@@ -449,7 +449,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         optionalCompetency = competencyRepository.save(optionalCompetency);
         long idOfOptionalCompetency = optionalCompetency.getId();
 
-        List<Competency> competenciesOfCourse = request.getList("/api/courses/" + idOfCourse + "/nonOptionalCompetencies", HttpStatus.OK, Competency.class);
+        List<Competency> competenciesOfCourse = request.getList("/api/courses/" + idOfCourse + "/non-optional-competencies", HttpStatus.OK, Competency.class);
 
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfCompetency)).findFirst()).isPresent();
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(idOfOptionalCompetency)).findFirst()).isNotPresent();

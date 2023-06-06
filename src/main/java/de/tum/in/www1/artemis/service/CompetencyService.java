@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -214,5 +215,15 @@ public class CompetencyService {
             }
         }
         return graph.hasCycle();
+    }
+
+    /**
+     * Checks if the competency can be set as optional.
+     *
+     * @param competency the competency that should be checked
+     * @return true if the competency has no assigned exercise that is included completely in the overall score, false otherwise
+     */
+    public boolean competencyCanBeOptional(Competency competency) {
+        return !competency.getExercises().stream().anyMatch(exercise -> exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY));
     }
 }

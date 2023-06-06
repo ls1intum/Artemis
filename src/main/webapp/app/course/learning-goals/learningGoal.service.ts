@@ -26,7 +26,7 @@ export class LearningGoalService {
 
     getAllNonOptionalForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/nonOptionalCompetencies`, { observe: 'response' })
+            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/non-optional-competencies`, { observe: 'response' })
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
