@@ -15,3 +15,12 @@ database:
 
 documentation:
 - docs/**/*
+
+docker:
+- docker/**/*
+
+config-change:
+- src/main/resources/config/*.yml
+
+template:
+- src/main/resouces/templates/**/*
