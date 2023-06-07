@@ -124,7 +124,7 @@ public class ChannelResource extends ConversationManagementResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByExerciseId(exerciseId);
 
-        checkChannelMembership(channel.getId(), requestingUser.getId());
+        checkChannelMembership(channel, requestingUser.getId());
 
         return ResponseEntity.ok(channel);
     }
@@ -146,7 +146,7 @@ public class ChannelResource extends ConversationManagementResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByLectureId(lectureId);
 
-        checkChannelMembership(channel.getId(), requestingUser.getId());
+        checkChannelMembership(channel, requestingUser.getId());
 
         return ResponseEntity.ok(channel);
     }
@@ -426,8 +426,8 @@ public class ChannelResource extends ConversationManagementResource {
         return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
     }
 
-    private void checkChannelMembership(Long channelId, Long userId) {
-        if (!conversationService.isMember(channelId, userId)) {
+    private void checkChannelMembership(Channel channel, Long userId) {
+        if (channel != null && !conversationService.isMember(channel.getId(), userId)) {
             // suppress error alert with skipAlert: true so that the client can display a custom error message
             throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
                     true);
