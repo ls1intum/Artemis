@@ -22,9 +22,9 @@ class DummyStatisticsComponent {}
 })
 class DummyManagementComponent {}
 
-describe('LearningGoalPopoverComponent', () => {
-    let learningGoalPopoverComponentFixture: ComponentFixture<CompetenciesPopoverComponent>;
-    let learningGoalPopoverComponent: CompetenciesPopoverComponent;
+describe('CompetencyPopoverComponent', () => {
+    let competencyPopoverComponentFixture: ComponentFixture<CompetenciesPopoverComponent>;
+    let competencyPopoverComponent: CompetenciesPopoverComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -41,8 +41,8 @@ describe('LearningGoalPopoverComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                learningGoalPopoverComponentFixture = TestBed.createComponent(CompetenciesPopoverComponent);
-                learningGoalPopoverComponent = learningGoalPopoverComponentFixture.componentInstance;
+                competencyPopoverComponentFixture = TestBed.createComponent(CompetenciesPopoverComponent);
+                competencyPopoverComponent = competencyPopoverComponentFixture.componentInstance;
             });
     });
 
@@ -51,35 +51,35 @@ describe('LearningGoalPopoverComponent', () => {
     });
 
     it('should initialize', () => {
-        learningGoalPopoverComponentFixture.detectChanges();
-        expect(learningGoalPopoverComponent).toBeDefined();
+        competencyPopoverComponentFixture.detectChanges();
+        expect(competencyPopoverComponent).toBeDefined();
     });
 
-    it('should navigate to course learning goals', fakeAsync(() => {
+    it('should navigate to course competencies', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
-        learningGoalPopoverComponent.navigateTo = 'courseCompetencies';
-        learningGoalPopoverComponent.competencies = [new Competency()];
-        learningGoalPopoverComponent.courseId = 1;
-        learningGoalPopoverComponentFixture.detectChanges();
-        const popoverButton = learningGoalPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
+        competencyPopoverComponent.navigateTo = 'courseCompetencies';
+        competencyPopoverComponent.competencies = [new Competency()];
+        competencyPopoverComponent.courseId = 1;
+        competencyPopoverComponentFixture.detectChanges();
+        const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
         popoverButton.click();
         tick();
-        const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
+        const anchor = competencyPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
         expect(location.path()).toBe('/courses/1/competencies');
     }));
 
-    it('should navigate to learning goal management', fakeAsync(() => {
+    it('should navigate to competency management', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
-        learningGoalPopoverComponent.navigateTo = 'competencyManagement';
-        learningGoalPopoverComponent.competencies = [new Competency()];
-        learningGoalPopoverComponent.courseId = 1;
-        learningGoalPopoverComponentFixture.detectChanges();
-        const popoverButton = learningGoalPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
+        competencyPopoverComponent.navigateTo = 'competencyManagement';
+        competencyPopoverComponent.competencies = [new Competency()];
+        competencyPopoverComponent.courseId = 1;
+        competencyPopoverComponentFixture.detectChanges();
+        const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
         popoverButton.click();
         tick();
-        const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
+        const anchor = competencyPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
         expect(location.path()).toBe('/course-management/1/competency-management');
