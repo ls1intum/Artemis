@@ -16,9 +16,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
-describe('LearningGoalFormComponent', () => {
-    let learningGoalFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
-    let learningGoalFormComponent: CompetencyFormComponent;
+describe('CompetencyFormComponent', () => {
+    let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
+    let competencyFormComponent: CompetencyFormComponent;
 
     let translateService: TranslateService;
 
@@ -30,8 +30,8 @@ describe('LearningGoalFormComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                learningGoalFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
-                learningGoalFormComponent = learningGoalFormComponentFixture.componentInstance;
+                competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
+                competencyFormComponent = competencyFormComponentFixture.componentInstance;
             });
         translateService = TestBed.inject(TranslateService);
     });
@@ -41,31 +41,31 @@ describe('LearningGoalFormComponent', () => {
     });
 
     it('should initialize', () => {
-        learningGoalFormComponentFixture.detectChanges();
-        expect(learningGoalFormComponent).toBeDefined();
+        competencyFormComponentFixture.detectChanges();
+        expect(competencyFormComponent).toBeDefined();
     });
 
     it('should submit valid form', fakeAsync(() => {
-        // stubbing learning goal service for asynchronous validator
-        const learningGoalService = TestBed.inject(CompetencyService);
+        // stubbing competency service for asynchronous validator
+        const competencyService = TestBed.inject(CompetencyService);
 
-        const learningGoalOfResponse = new Competency();
-        learningGoalOfResponse.id = 1;
-        learningGoalOfResponse.title = 'test';
+        const competencyOfResponse = new Competency();
+        competencyOfResponse.id = 1;
+        competencyOfResponse.title = 'test';
 
         const response: HttpResponse<Competency[]> = new HttpResponse({
-            body: [learningGoalOfResponse],
+            body: [competencyOfResponse],
             status: 200,
         });
 
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(response));
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
 
-        learningGoalFormComponentFixture.detectChanges();
+        competencyFormComponentFixture.detectChanges();
 
         const exampleTitle = 'uniqueName';
-        learningGoalFormComponent.titleControl!.setValue(exampleTitle);
+        competencyFormComponent.titleControl!.setValue(exampleTitle);
         const exampleDescription = 'lorem ipsum';
-        learningGoalFormComponent.descriptionControl!.setValue(exampleDescription);
+        competencyFormComponent.descriptionControl!.setValue(exampleDescription);
         const exampleLectureUnit = new TextUnit();
         exampleLectureUnit.id = 1;
 
@@ -73,29 +73,29 @@ describe('LearningGoalFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        learningGoalFormComponent.selectLectureInDropdown(exampleLecture);
-        learningGoalFormComponentFixture.detectChanges();
+        competencyFormComponent.selectLectureInDropdown(exampleLecture);
+        competencyFormComponentFixture.detectChanges();
         // selecting the lecture unit in the table
-        const lectureUnitRow = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
+        const lectureUnitRow = competencyFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
         lectureUnitRow.click();
-        learningGoalFormComponentFixture.detectChanges();
+        competencyFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(learningGoalFormComponent.form.valid).toBeTrue();
+        expect(competencyFormComponent.form.valid).toBeTrue();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(learningGoalFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(learningGoalFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
 
-        const submitButton = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        learningGoalFormComponentFixture.whenStable().then(() => {
+        competencyFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledOnce();
         });
     }));
 
     it('should correctly set form values in edit mode', () => {
-        learningGoalFormComponent.isEditMode = true;
+        competencyFormComponent.isEditMode = true;
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CompetencyFormData = {
@@ -105,35 +105,35 @@ describe('LearningGoalFormComponent', () => {
             connectedLectureUnits: [textUnit],
             taxonomy: CompetencyTaxonomy.ANALYZE,
         };
-        learningGoalFormComponentFixture.detectChanges();
-        learningGoalFormComponent.formData = formData;
-        learningGoalFormComponent.ngOnChanges();
+        competencyFormComponentFixture.detectChanges();
+        competencyFormComponent.formData = formData;
+        competencyFormComponent.ngOnChanges();
 
-        expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
-        expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
-        expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
+        expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
+        expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(competencyFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
     it.each(['title', 'description'])('should suggest taxonomy when input is changed', (inputField: string) => {
-        const suggestTaxonomySpy = jest.spyOn(learningGoalFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = jest.spyOn(competencyFormComponent, 'suggestTaxonomies');
         const translateSpy = jest.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
-                case 'artemisApp.learningGoal.keywords.remember':
+                case 'artemisApp.competency.keywords.remember':
                     return 'Something';
-                case 'artemisApp.learningGoal.keywords.understand':
+                case 'artemisApp.competency.keywords.understand':
                     return 'invent, build';
                 default:
                     return key;
             }
         });
-        learningGoalFormComponentFixture.detectChanges();
+        competencyFormComponentFixture.detectChanges();
 
-        const input = learningGoalFormComponentFixture.nativeElement.querySelector(`#${inputField}`);
+        const input = competencyFormComponentFixture.nativeElement.querySelector(`#${inputField}`);
         input.value = 'Building a tool: create a plan and implement something!';
         input.dispatchEvent(new Event('input'));
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(learningGoalFormComponent.suggestedTaxonomies).toEqual(['artemisApp.learningGoal.taxonomies.remember', 'artemisApp.learningGoal.taxonomies.understand']);
+        expect(competencyFormComponent.suggestedTaxonomies).toEqual(['artemisApp.competency.taxonomies.remember', 'artemisApp.competency.taxonomies.understand']);
     });
 });
