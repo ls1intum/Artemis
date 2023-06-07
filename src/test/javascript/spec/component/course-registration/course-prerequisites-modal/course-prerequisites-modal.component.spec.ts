@@ -9,7 +9,7 @@ import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalCardStubComponent } from '../../competencies/learning-goal-card-stub.component';
+import { CompetencyCardStubComponent } from '../../competencies/competency-card-stub.component';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
@@ -24,7 +24,7 @@ describe('CoursePrerequisitesModal', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [CoursePrerequisitesModalComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CoursePrerequisitesModalComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(CompetencyService),
@@ -58,7 +58,7 @@ describe('CoursePrerequisitesModal', () => {
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 
-        const learningGoalCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
+        const learningGoalCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
         expect(learningGoalCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);

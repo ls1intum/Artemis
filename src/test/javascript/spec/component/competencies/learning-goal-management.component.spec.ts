@@ -12,7 +12,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
-import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
+import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
@@ -45,7 +45,7 @@ describe('LearningGoalManagementComponent', () => {
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
-                LearningGoalCardStubComponent,
+                CompetencyCardStubComponent,
                 NgxGraphStubComponent,
                 MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),

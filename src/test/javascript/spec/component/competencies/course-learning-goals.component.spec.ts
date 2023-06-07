@@ -16,7 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
+import { CompetencyCardStubComponent } from './competency-card-stub.component';
 
 class MockActivatedRoute {
     parent: any;
@@ -48,7 +48,7 @@ describe('CourseLearningGoals', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            declarations: [CourseCompetenciesComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseCompetenciesComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
@@ -134,7 +134,7 @@ describe('CourseLearningGoals', () => {
         courseLearningGoalsComponent.isCollapsed = false;
         courseLearningGoalsComponentFixture.detectChanges();
 
-        const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
+        const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
         expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
