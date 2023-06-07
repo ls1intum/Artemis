@@ -191,8 +191,8 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         const title = this.titleControl?.value?.toLowerCase() ?? '';
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
         for (const taxonomy in this.competencyTaxonomy) {
-            const keywords = this.translateService.instant('artemisApp.learningGoal.keywords.' + taxonomy.toLowerCase()).split(', ');
-            const taxonomyName = this.translateService.instant('artemisApp.learningGoal.taxonomies.' + taxonomy.toLowerCase());
+            const keywords = this.translateService.instant('artemisApp.competency.keywords.' + taxonomy.toLowerCase()).split(', ');
+            const taxonomyName = this.translateService.instant('artemisApp.competency.taxonomies.' + taxonomy.toLowerCase());
             keywords.push(taxonomyName);
             if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
                 this.suggestedTaxonomies.push(taxonomyName);
@@ -221,7 +221,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
             this.selectedLectureUnitsInTable.map((unit) => unit.id),
             lecture.lectureUnits?.map((unit) => unit.id),
         ).length;
-        return this.translateService.instant('artemisApp.learningGoal.createLearningGoal.dropdown', {
+        return this.translateService.instant('artemisApp.competency.createCompetency.dropdown', {
             lectureTitle: lecture.title,
             noOfConnectedUnits: noOfSelectedUnitsInLecture,
         });
