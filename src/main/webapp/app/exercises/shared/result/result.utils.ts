@@ -364,3 +364,23 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
     const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
     return i !== -1 ? feedbacks[i] : null;
 }
+
+/**
+ * Removes references from the {@link Participation}, {@link Submission}, and {@link Feedback} back to the result itself.
+ *
+ * @param result
+ */
+export function breakCircularResultBackReferences(result: Result) {
+    if (result.participation?.results) {
+        result.participation.results = [];
+    }
+    if (result.submission?.participation?.results) {
+        result.submission.participation.results = [];
+    }
+    if (result.submission?.results) {
+        result.submission.results = [];
+    }
+    if (result.feedbacks) {
+        result.feedbacks.forEach((feedback) => (feedback.result = undefined));
+    }
+}
