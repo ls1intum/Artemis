@@ -35,10 +35,10 @@ const mockActivatedRoute = new MockActivatedRoute({
         }),
     }),
 });
-describe('CourseLearningGoals', () => {
-    let courseLearningGoalsComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
-    let courseLearningGoalsComponent: CourseCompetenciesComponent;
-    let learningGoalService: CompetencyService;
+describe('CourseCompetencies', () => {
+    let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
+    let courseCompetenciesComponent: CourseCompetenciesComponent;
+    let competencyService: CompetencyService;
     const mockCourseStorageService = {
         getCourse: () => {},
         setCourses: () => {},
@@ -63,9 +63,9 @@ describe('CourseLearningGoals', () => {
         })
             .compileComponents()
             .then(() => {
-                courseLearningGoalsComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
-                courseLearningGoalsComponent = courseLearningGoalsComponentFixture.componentInstance;
-                learningGoalService = TestBed.inject(CompetencyService);
+                courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
+                courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
+                competencyService = TestBed.inject(CompetencyService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
@@ -78,66 +78,66 @@ describe('CourseLearningGoals', () => {
     });
 
     it('should initialize', () => {
-        courseLearningGoalsComponentFixture.detectChanges();
-        expect(courseLearningGoalsComponent).toBeDefined();
-        expect(courseLearningGoalsComponent.courseId).toBe(1);
+        courseCompetenciesComponentFixture.detectChanges();
+        expect(courseCompetenciesComponent).toBeDefined();
+        expect(courseCompetenciesComponent.courseId).toBe(1);
     });
 
-    it('should load progress for each learning goal in a given course', () => {
+    it('should load progress for each competency in a given course', () => {
         const courseStorageService = TestBed.inject(CourseStorageService);
-        const learningGoal = new Competency();
-        learningGoal.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
+        const competency = new Competency();
+        competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
         const textUnit = new TextUnit();
-        learningGoal.id = 1;
-        learningGoal.description = 'Petierunt uti sibi concilium totius';
-        learningGoal.lectureUnits = [textUnit];
+        competency.id = 1;
+        competency.description = 'Petierunt uti sibi concilium totius';
+        competency.lectureUnits = [textUnit];
 
         // Mock a course that was already fetched in another component
         const course = new Course();
         course.id = 1;
-        course.competencies = [learningGoal];
-        course.prerequisites = [learningGoal];
+        course.competencies = [competency];
+        course.prerequisites = [competency];
         courseStorageService.setCourses([course]);
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
 
-        courseLearningGoalsComponentFixture.detectChanges();
+        courseCompetenciesComponentFixture.detectChanges();
 
         expect(getCourseStub).toHaveBeenCalledOnce();
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(courseLearningGoalsComponent.course).toEqual(course);
-        expect(courseLearningGoalsComponent.competencies).toEqual([learningGoal]);
+        expect(courseCompetenciesComponent.course).toEqual(course);
+        expect(courseCompetenciesComponent.competencies).toEqual([competency]);
         expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
     });
 
-    it('should load prerequisites and learning goals (with associated progress) and display a card for each of them', () => {
-        const learningGoal = new Competency();
+    it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
+        const competency = new Competency();
         const textUnit = new TextUnit();
-        learningGoal.id = 1;
-        learningGoal.description = 'test';
-        learningGoal.lectureUnits = [textUnit];
-        learningGoal.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
+        competency.id = 1;
+        competency.description = 'test';
+        competency.lectureUnits = [textUnit];
+        competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
         const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: [new Competency()],
             status: 200,
         });
-        const learningGoalsOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
-            body: [learningGoal, new Competency()],
+        const competenciesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
+            body: [competency, new Competency()],
             status: 200,
         });
 
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesOfCourseResponse));
 
-        courseLearningGoalsComponent.isCollapsed = false;
-        courseLearningGoalsComponentFixture.detectChanges();
+        courseCompetenciesComponent.isCollapsed = false;
+        courseCompetenciesComponentFixture.detectChanges();
 
-        const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
-        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 competencies
+        const competencyCards = courseCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
+        expect(competencyCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(courseLearningGoalsComponent.competencies).toHaveLength(2);
+        expect(courseCompetenciesComponent.competencies).toHaveLength(2);
     });
 });
