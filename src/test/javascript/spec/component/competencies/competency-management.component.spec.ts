@@ -29,16 +29,16 @@ import '@angular/localize/init';
 @Component({ selector: 'ngx-graph', template: '' })
 class NgxGraphStubComponent {}
 
-describe('LearningGoalManagementComponent', () => {
+describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
-    let learningGoalService: CompetencyService;
+    let competencyService: CompetencyService;
     let modalService: NgbModal;
 
     let getAllForCourseSpy: any;
     let getCourseProgressSpy: any;
     let getAllPrerequisitesForCourseSpy: any;
-    let getLearningGoalRelationsSpy: any;
+    let getCompetencyRelationsSpy: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -74,37 +74,37 @@ describe('LearningGoalManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CompetencyManagementComponent);
                 component = fixture.componentInstance;
-                learningGoalService = TestBed.inject(CompetencyService);
+                competencyService = TestBed.inject(CompetencyService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
 
-                const learningGoal = new Competency();
+                const competency = new Competency();
                 const textUnit = new TextUnit();
-                learningGoal.id = 1;
-                learningGoal.description = 'test';
-                learningGoal.lectureUnits = [textUnit];
-                const courseLearningGoalProgress = new CourseCompetencyProgress();
-                courseLearningGoalProgress.competencyId = 1;
-                courseLearningGoalProgress.numberOfStudents = 8;
-                courseLearningGoalProgress.numberOfMasteredStudents = 5;
-                courseLearningGoalProgress.averageStudentScore = 90;
+                competency.id = 1;
+                competency.description = 'test';
+                competency.lectureUnits = [textUnit];
+                const courseCompetencyProgress = new CourseCompetencyProgress();
+                courseCompetencyProgress.competencyId = 1;
+                courseCompetencyProgress.numberOfStudents = 8;
+                courseCompetencyProgress.numberOfMasteredStudents = 5;
+                courseCompetencyProgress.averageStudentScore = 90;
 
-                getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(
+                getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: [learningGoal, { id: 5 } as Competency],
+                            body: [competency, { id: 5 } as Competency],
                             status: 200,
                         }),
                     ),
                 );
-                getCourseProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(
+                getCourseProgressSpy = jest.spyOn(competencyService, 'getCourseProgress').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: courseLearningGoalProgress,
+                            body: courseCompetencyProgress,
                             status: 200,
                         }),
                     ),
                 );
-                getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(
+                getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: [{ id: 3 } as Competency],
@@ -112,7 +112,7 @@ describe('LearningGoalManagementComponent', () => {
                         }),
                     ),
                 );
-                getLearningGoalRelationsSpy = jest.spyOn(learningGoalService, 'getLearningGoalRelations').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+                getCompetencyRelationsSpy = jest.spyOn(competencyService, 'getCompetencyRelations').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
             });
     });
 
@@ -120,12 +120,12 @@ describe('LearningGoalManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should load learning goal and associated progress', () => {
+    it('should load competency and associated progress', () => {
         fixture.detectChanges();
 
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getCourseProgressSpy).toHaveBeenCalledTimes(2);
-        expect(getLearningGoalRelationsSpy).toHaveBeenCalledTimes(2);
+        expect(getCompetencyRelationsSpy).toHaveBeenCalledTimes(2);
         expect(component.competencies).toHaveLength(2);
     });
 
@@ -136,8 +136,8 @@ describe('LearningGoalManagementComponent', () => {
         expect(component.prerequisites).toHaveLength(1);
     });
 
-    it('should delete learning goal', () => {
-        const deleteSpy = jest.spyOn(learningGoalService, 'delete').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
+    it('should delete competency', () => {
+        const deleteSpy = jest.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
 
         fixture.detectChanges();
 
@@ -148,7 +148,7 @@ describe('LearningGoalManagementComponent', () => {
     });
 
     it('should remove prerequisite', () => {
-        const removePrerequisiteSpy = jest.spyOn(learningGoalService, 'removePrerequisite').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
+        const removePrerequisiteSpy = jest.spyOn(competencyService, 'removePrerequisite').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
 
         fixture.detectChanges();
 
@@ -175,7 +175,7 @@ describe('LearningGoalManagementComponent', () => {
         expect(modalRef.componentInstance.disabledIds).toContainAllValues([1, 5, 3]);
     });
 
-    it('should open import modal for learning goals', () => {
+    it('should open import modal for competencies', () => {
         const modalRef = {
             result: Promise.resolve({ id: 456 } as Competency),
             componentInstance: {},
@@ -184,7 +184,7 @@ describe('LearningGoalManagementComponent', () => {
 
         fixture.detectChanges();
 
-        const importButton = fixture.debugElement.query(By.css('#learningGoalImportButton'));
+        const importButton = fixture.debugElement.query(By.css('#competencyImportButton'));
         importButton.nativeElement.click();
 
         expect(modalService.open).toHaveBeenCalledOnce();
@@ -193,9 +193,9 @@ describe('LearningGoalManagementComponent', () => {
         expect(modalRef.componentInstance.disabledIds).toContainAllValues([1, 5, 3]);
     });
 
-    it('should create learning goal relation', () => {
-        const createLearningGoalRelationSpy = jest
-            .spyOn(learningGoalService, 'createLearningGoalRelation')
+    it('should create competency relation', () => {
+        const createComeptencyRelationSpy = jest
+            .spyOn(competencyService, 'createCompetencyRelation')
             .mockReturnValue(of(new HttpResponse({ body: new Competency(), status: 200 })));
         component.tailCompetency = 123;
         component.headCompetency = 456;
@@ -204,14 +204,14 @@ describe('LearningGoalManagementComponent', () => {
         fixture.detectChanges();
 
         component.createRelation();
-        expect(createLearningGoalRelationSpy).toHaveBeenCalledOnce();
-        expect(createLearningGoalRelationSpy).toHaveBeenCalledWith(123, 456, 'assumes', 1);
+        expect(createComeptencyRelationSpy).toHaveBeenCalledOnce();
+        expect(createComeptencyRelationSpy).toHaveBeenCalledWith(123, 456, 'assumes', 1);
     });
 
     it('should detect circles on relations', () => {
-        const node1 = { id: '16', label: 'learningGoal1' } as Node;
-        const node2 = { id: '17', label: 'learningGoal2' } as Node;
-        const node3 = { id: '18', label: 'learningGoal3' } as Node;
+        const node1 = { id: '16', label: 'competency1' } as Node;
+        const node2 = { id: '17', label: 'competency2' } as Node;
+        const node3 = { id: '18', label: 'competency3' } as Node;
         component.nodes = [node1, node2, node3];
 
         const edge1 = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
@@ -228,8 +228,8 @@ describe('LearningGoalManagementComponent', () => {
     });
 
     it('should prevent creating already existing relations', () => {
-        const node1 = { id: '16', label: 'learningGoal1' } as Node;
-        const node2 = { id: '17', label: 'learningGoal2' } as Node;
+        const node1 = { id: '16', label: 'competency1' } as Node;
+        const node2 = { id: '17', label: 'competency2' } as Node;
         component.nodes = [node1, node2];
 
         const edge1 = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
@@ -245,8 +245,8 @@ describe('LearningGoalManagementComponent', () => {
     });
 
     it('should prevent creating self relations', () => {
-        const node1 = { id: '16', label: 'learningGoal1' } as Node;
-        const node2 = { id: '17', label: 'learningGoal2' } as Node;
+        const node1 = { id: '16', label: 'competency1' } as Node;
+        const node2 = { id: '17', label: 'competency2' } as Node;
         component.nodes = [node1, node2];
 
         component.tailCompetency = 16;
@@ -258,13 +258,13 @@ describe('LearningGoalManagementComponent', () => {
         expect(component.relationError).toBe(CompetencyRelationError.SELF);
     });
 
-    it('should remove learning goal relation', () => {
-        const removeLearningGoalRelationSpy = jest.spyOn(learningGoalService, 'removeLearningGoalRelation').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
+    it('should remove competency relation', () => {
+        const removeCompetencyRelationSpy = jest.spyOn(competencyService, 'removeCompetencyRelation').mockReturnValue(of(new HttpResponse({ body: {}, status: 200 })));
 
         fixture.detectChanges();
 
         component.removeRelation({ source: '123', data: { id: 456 } } as Edge);
-        expect(removeLearningGoalRelationSpy).toHaveBeenCalledOnce();
-        expect(removeLearningGoalRelationSpy).toHaveBeenCalledWith(123, 456, 1);
+        expect(removeCompetencyRelationSpy).toHaveBeenCalledOnce();
+        expect(removeCompetencyRelationSpy).toHaveBeenCalledWith(123, 456, 1);
     });
 });
