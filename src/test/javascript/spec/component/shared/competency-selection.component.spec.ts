@@ -14,11 +14,11 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
-describe('LearningGoalSelection', () => {
+describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
-    let learningGoalService: CompetencyService;
+    let competencyService: CompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,7 +44,7 @@ describe('LearningGoalSelection', () => {
                 fixture = TestBed.createComponent(CompetencySelectionComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
-                learningGoalService = TestBed.inject(CompetencyService);
+                competencyService = TestBed.inject(CompetencyService);
             });
     });
 
@@ -52,9 +52,9 @@ describe('LearningGoalSelection', () => {
         jest.restoreAllMocks();
     });
 
-    it('should get learning goals from cache', () => {
+    it('should get competencies from cache', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [new Competency()] });
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
 
         fixture.detectChanges();
 
@@ -67,9 +67,9 @@ describe('LearningGoalSelection', () => {
         expect(select).not.toBeNull();
     });
 
-    it('should get learning goals from service', () => {
+    it('should get competencies from service', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new Competency()] })));
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new Competency()] })));
 
         fixture.detectChanges();
 
@@ -83,7 +83,7 @@ describe('LearningGoalSelection', () => {
 
     it('should set disabled when error during loading', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
 
         fixture.detectChanges();
 
@@ -93,7 +93,7 @@ describe('LearningGoalSelection', () => {
         expect(component.disabled).toBeTrue();
     });
 
-    it('should be hidden when no learning goals', () => {
+    it('should be hidden when no competencies', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
 
         fixture.detectChanges();
@@ -105,7 +105,7 @@ describe('LearningGoalSelection', () => {
         expect(select).toBeNull();
     });
 
-    it('should select learning goals when value is written', () => {
+    it('should select competencies when value is written', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as Competency] });
 
         fixture.detectChanges();
