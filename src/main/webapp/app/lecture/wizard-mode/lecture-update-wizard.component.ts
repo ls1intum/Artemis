@@ -23,7 +23,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() endDate: string;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
-    @ViewChild(LectureUpdateWizardCompetenciesComponent, { static: false }) learningGoalsComponent: LectureUpdateWizardCompetenciesComponent;
+    @ViewChild(LectureUpdateWizardCompetenciesComponent, { static: false }) competenciesComponent: LectureUpdateWizardCompetenciesComponent;
 
     currentStep: number;
 
