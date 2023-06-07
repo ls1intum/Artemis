@@ -6,7 +6,7 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-describe('LearningGoalRings', () => {
+describe('CompetencyRings', () => {
     let fixture: ComponentFixture<CompetencyRingsComponent>;
     let component: CompetencyRingsComponent;
 
