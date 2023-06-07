@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CourseLearningGoalsDetailsComponent } from 'app/overview/course-competencies/course-learning-goals-details.component';
+import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -30,8 +30,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('CourseLearningGoalsDetails', () => {
-    let fixture: ComponentFixture<CourseLearningGoalsDetailsComponent>;
-    let component: CourseLearningGoalsDetailsComponent;
+    let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
+    let component: CourseCompetenciesDetailsComponent;
 
     let learningGoalService: CompetencyService;
 
@@ -39,7 +39,7 @@ describe('CourseLearningGoalsDetails', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(NgbTooltipModule)],
             declarations: [
-                CourseLearningGoalsDetailsComponent,
+                CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockComponent(AttachmentUnitComponent),
@@ -68,7 +68,7 @@ describe('CourseLearningGoalsDetails', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseLearningGoalsDetailsComponent);
+                fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
                 learningGoalService = TestBed.inject(CompetencyService);
             });
@@ -97,7 +97,7 @@ describe('CourseLearningGoalsDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.learningGoal.lectureUnits).toHaveLength(2);
+        expect(component.competency.lectureUnits).toHaveLength(2);
         expect(textUnit).not.toBeNull();
         expect(exerciseUnit).not.toBeNull();
     });
@@ -114,7 +114,7 @@ describe('CourseLearningGoalsDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.learningGoal.lectureUnits).toHaveLength(1);
+        expect(component.competency.lectureUnits).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 

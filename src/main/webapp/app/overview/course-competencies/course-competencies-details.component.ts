@@ -12,15 +12,15 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-course-learning-goals-details',
-    templateUrl: './course-learning-goals-details.component.html',
+    selector: 'jhi-course-competencies-details',
+    templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseLearningGoalsDetailsComponent implements OnInit {
-    learningGoalId?: number;
+export class CourseCompetenciesDetailsComponent implements OnInit {
+    competencyId?: number;
     courseId?: number;
     isLoading = false;
-    learningGoal: Competency;
+    competency: Competency;
     showFireworks = false;
 
     readonly LectureUnitType = LectureUnitType;
@@ -32,15 +32,15 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     constructor(
         private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
-        private learningGoalService: CompetencyService,
+        private competencyService: CompetencyService,
         private lectureUnitService: LectureUnitService,
     ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
-            this.learningGoalId = +params['competencyId'];
+            this.competencyId = +params['competencyId'];
             this.courseId = +params['courseId'];
-            if (this.learningGoalId && this.courseId) {
+            if (this.competencyId && this.courseId) {
                 this.loadData();
             }
         });
@@ -48,14 +48,14 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
 
     private loadData() {
         this.isLoading = true;
-        this.learningGoalService.findById(this.learningGoalId!, this.courseId!).subscribe({
+        this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
             next: (resp) => {
-                this.learningGoal = resp.body!;
-                if (this.learningGoal && this.learningGoal.exercises) {
+                this.competency = resp.body!;
+                if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display
-                    this.learningGoal.lectureUnits = this.learningGoal.lectureUnits ?? [];
-                    this.learningGoal.lectureUnits.push(
-                        ...this.learningGoal.exercises.map((exercise) => {
+                    this.competency.lectureUnits = this.competency.lectureUnits ?? [];
+                    this.competency.lectureUnits.push(
+                        ...this.competency.exercises.map((exercise) => {
                             const exerciseUnit = new ExerciseUnit();
                             exerciseUnit.id = exercise.id;
                             exerciseUnit.exercise = exercise;
@@ -77,8 +77,8 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     }
 
     getUserProgress(): CompetencyProgress {
-        if (this.learningGoal.userProgress?.length) {
-            return this.learningGoal.userProgress.first()!;
+        if (this.competency.userProgress?.length) {
+            return this.competency.userProgress.first()!;
         }
         return { progress: 0, confidence: 0 } as CompetencyProgress;
     }
@@ -91,7 +91,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     get confidence(): number {
         // Confidence level (average score in exercises) in proportion to the threshold value (max. 100 %)
         // Example: If the student’s latest confidence level equals 60 % and the mastery threshold is set to 80 %, the ring would be 75 % full.
-        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.learningGoal.masteryThreshold ?? 100)) * 100), 100);
+        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.competency.masteryThreshold ?? 100)) * 100), 100);
     }
 
     get mastery(): number {
@@ -113,9 +113,9 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
             next: () => {
                 event.lectureUnit.completed = event.completed;
 
-                this.learningGoalService.getProgress(this.learningGoalId!, this.courseId!, true).subscribe({
+                this.competencyService.getProgress(this.competencyId!, this.courseId!, true).subscribe({
                     next: (resp) => {
-                        this.learningGoal.userProgress = [resp.body!];
+                        this.competency.userProgress = [resp.body!];
                         this.showFireworksIfMastered();
                     },
                 });

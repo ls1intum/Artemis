@@ -6,29 +6,29 @@
     </div>
 </div>
 
-<div *ngIf="learningGoal">
+<div *ngIf="competency">
     <!-- HEADER INFORMATION START -->
     <div class="course-info-bar">
         <div class="row align-items-center">
             <div class="col-11 general-info">
                 <h3 class="mb-0">
                     <fa-icon
-                        *ngIf="learningGoal.taxonomy"
-                        [icon]="getIcon(learningGoal.taxonomy)"
+                        *ngIf="competency.taxonomy"
+                        [icon]="getIcon(competency.taxonomy)"
                         [fixedWidth]="true"
-                        [ngbTooltip]="getIconTooltip(learningGoal.taxonomy) | artemisTranslate"
+                        [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
                         container="body"
                     ></fa-icon>
-                    <span>{{ learningGoal!.title }}</span>
+                    <span>{{ competency!.title }}</span>
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
                 </h3>
-                <div *ngIf="learningGoal.description">{{ learningGoal.description }}</div>
+                <div *ngIf="competency.description">{{ competency.description }}</div>
             </div>
             <div class="col-1">
                 <a
                     *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                     class="btn btn-sm btn-warning float-end"
-                    [routerLink]="['/course-management', courseId, 'competency-management', learningGoal.id, 'edit']"
+                    [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']"
                 >
                     <fa-icon [icon]="faPencilAlt"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
@@ -40,8 +40,8 @@
     <div class="row mt-2">
         <div class="col-lg-9 col-md-8">
             <div class="row">
-                <div class="col-12 col-lg-11" *ngFor="let lectureUnit of learningGoal.lectureUnits" [ngSwitch]="lectureUnit.type">
-                    <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="learningGoal!.course!"></jhi-exercise-unit>
+                <div class="col-12 col-lg-11" *ngFor="let lectureUnit of competency.lectureUnits" [ngSwitch]="lectureUnit.type">
+                    <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="competency!.course!"></jhi-exercise-unit>
                     <jhi-attachment-unit
                         *ngSwitchCase="LectureUnitType.ATTACHMENT"
                         [attachmentUnit]="lectureUnit"

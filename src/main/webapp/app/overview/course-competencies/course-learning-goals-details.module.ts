@@ -8,14 +8,14 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { CourseLearningGoalsDetailsComponent } from 'app/overview/course-competencies/course-learning-goals-details.component';
+import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
 
 const routes: Routes = [
     {
         path: '',
-        component: CourseLearningGoalsDetailsComponent,
+        component: CourseCompetenciesDetailsComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.learningGoals',
@@ -35,7 +35,7 @@ const routes: Routes = [
         ArtemisSidePanelModule,
         FireworksModule,
     ],
-    declarations: [CourseLearningGoalsDetailsComponent],
-    exports: [CourseLearningGoalsDetailsComponent],
+    declarations: [CourseCompetenciesDetailsComponent],
+    exports: [CourseCompetenciesDetailsComponent],
 })
 export class ArtemisCourseLearningGoalsDetailsModule {}
