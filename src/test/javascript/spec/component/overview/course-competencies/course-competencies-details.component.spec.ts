@@ -29,11 +29,11 @@ import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
-describe('CourseLearningGoalsDetails', () => {
+describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
-    let learningGoalService: CompetencyService;
+    let competencyService: CompetencyService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -70,7 +70,7 @@ describe('CourseLearningGoalsDetails', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
-                learningGoalService = TestBed.inject(CompetencyService);
+                competencyService = TestBed.inject(CompetencyService);
             });
     });
 
@@ -83,13 +83,13 @@ describe('CourseLearningGoalsDetails', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should load learning goal to display progress and all lecture units', () => {
-        const learningGoal = {
+    it('should load competency to display progress and all lecture units', () => {
+        const competency = {
             id: 1,
             lectureUnits: [new TextUnit()],
             exercises: [{ id: 5 } as TextExercise],
         } as Competency;
-        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
+        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -102,12 +102,12 @@ describe('CourseLearningGoalsDetails', () => {
         expect(exerciseUnit).not.toBeNull();
     });
 
-    it('should load learning goal to display progress and the exercise unit', () => {
-        const learningGoal = {
+    it('should load competency to display progress and the exercise unit', () => {
+        const competency = {
             id: 1,
             exercises: [{ id: 5 } as ModelingExercise],
         } as Competency;
-        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
+        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -118,8 +118,8 @@ describe('CourseLearningGoalsDetails', () => {
         expect(exerciseUnit).not.toBeNull();
     });
 
-    it('should show fireworks when learning goal was mastered', fakeAsync(() => {
-        const learningGoal = {
+    it('should show fireworks when competency was mastered', fakeAsync(() => {
+        const competency = {
             id: 1,
             userProgress: [
                 {
@@ -128,7 +128,7 @@ describe('CourseLearningGoalsDetails', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
-        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
+        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
