@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -211,7 +212,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam = examRepository.save(exam);
 
         boolean result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, OK);
-        assertEquals(monitoring, result);
-        assertThat(examRepository.findById(exam.getId())).map(Exam::isMonitoring).contains(monitoring);
+        assertThat(monitoring).isEqualTo(result);
+        assertThat(examRepository.findById(exam.getId()).map(Exam::isMonitoring)).isEqualTo(Optional.of(monitoring));
     }
 }
