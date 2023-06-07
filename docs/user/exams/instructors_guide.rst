@@ -207,14 +207,22 @@ During the exam creation and configuration, you can create your exam and configu
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
     1. Add students manually by searching via the search bar.
-    2. Bulk import students using a ``CSV`` file. You can do this by pressing the |import_students| button.
+    2. Bulk import students using a ``CSV`` file. You can do this by pressing the |import_students| button. An exemplatory file can be found here: :download:`csv <instructor/example_import_students.csv>`.
     3. Register every student in the course. You can do this by pressing the |register_course_students| button.
 
 .. note::
     Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
 
 .. note::
-    To use the Exam Participation Checker iPad application have a look here: :ref:`Exam Participation Checker <exam_participation_checker>`
+    Seats and rooms can currenlty only be assigned via the bulk import of students, by defining the seat in the ``CSV`` file.
+
+.. note::
+    For more information on the Exam Participation Checker iPad application have a look here: :ref:`Exam Participation Checker <exam_participation_checker>`.
+
+- For using the Exam Participation Checker iPad app it is necessary to upload images for the students. This can be done via the |upload_images| button. An exemplatory file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
+
+.. note::
+    To upload the images each student needs to have a matriculation number assigned. This is used to match the image with the according student.
 
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
 
@@ -584,6 +592,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |view| image:: instructor/buttons/view.png
 .. |submissions| image:: instructor/buttons/submissions.png
 .. |import_students| image:: instructor/buttons/import_students.png
+.. |upload_images| image:: instructor/buttons/upload_images.png
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
