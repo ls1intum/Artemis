@@ -213,6 +213,9 @@ During the exam creation and configuration, you can create your exam and configu
 .. note::
     Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
 
+.. note::
+    To use the Exam Participation Checker iPad application have a look here: :ref:`Exam Participation Checker <exam_participation_checker>`
+
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
 
 
