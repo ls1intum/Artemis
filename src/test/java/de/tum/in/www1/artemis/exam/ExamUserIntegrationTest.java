@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -195,24 +194,17 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         headers.set("X-Artemis-Client-Fingerprint", "bar");
         headers.set("X-Forwarded-For", "10.0.28.1");
 
-        studentExams.parallelStream().forEach(studentExam -> {
+        for (var studentExam : studentExams) {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            StudentExam response;
-            try {
-                response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
-                        StudentExam.class, headers);
-            }
-            catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
+            var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", OK,
+                    StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
 
             assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
-        });
+        }
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
@@ -226,8 +218,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(examUser.getDidCheckLogin()).isTrue();
 
         // as instructor, verify the attendance of the students
-        List<ExamUserAttendanceCheckDTO> examUsersWhoDidNotSign = request.getList("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/verify-exam-users",
-                HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
+        List<ExamUserAttendanceCheckDTO> examUsersWhoDidNotSign = request.getList("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/verify-exam-users", OK,
+                ExamUserAttendanceCheckDTO.class);
         // one student (student1) signed, the other 3 did not
         assertThat(examUsersWhoDidNotSign).hasSize(3);
         for (var examUserAttendanceCheckDTO : examUsersWhoDidNotSign) {
