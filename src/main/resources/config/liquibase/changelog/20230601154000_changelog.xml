@@ -60,16 +60,23 @@
             WHERE p.exercise_id IS NOT NULL
               AND p.conversation_id IS NULL;
         </sql>
+        <comment>
+            For the next step, we need the user_groups table, which contains a column called "groups".
+            However, the word "groups" is being added as a restricted word starting in MySQL 8.0.2.
+            As a workaround, you can use `groups` to escape this word using backticks.
+            However, this isn't compatible with Postgres. Therefore, we need to temporarily rename the column as an alternative workaround.
+        </comment>
+        <renameColumn tableName="user_groups" oldColumnName="groups" newColumnName="user_groups" columnDataType="varchar(255)"/>
         <comment>Step 3: Create conversation participants for channels of lectures or exercises that do not have participants at all</comment>
         <sql>
             INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
             SELECT uid, convid, CASE WHEN MAX(CASE WHEN is_moderator THEN 1 ELSE 0 END) = 1 THEN true ELSE false END, false, false, NOW(), 0
             FROM (
-                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.user_groups THEN true ELSE false END as is_moderator
                      FROM conversation conv
                               LEFT JOIN lecture l ON conv.lecture_id = l.id
                               JOIN course c ON l.course_id = c.id
-                              JOIN user_groups ug ON c.student_group_name = ug.groups OR c.instructor_group_name = ug.groups OR c.teaching_assistant_group_name = ug.groups
+                              JOIN user_groups ug ON c.student_group_name = ug.user_groups OR c.instructor_group_name = ug.user_groups OR c.teaching_assistant_group_name = ug.user_groups
                               JOIN jhi_user u ON ug.user_id = u.id
                               JOIN jhi_user_authority jua ON u.id = jua.user_id
                               JOIN jhi_authority r ON jua.authority_name = r.name
@@ -87,11 +94,11 @@
             INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
             SELECT uid, convid, CASE WHEN MAX(CASE WHEN is_moderator THEN 1 ELSE 0 END) = 1 THEN true ELSE false END, false, false, NOW(), 0
             FROM (
-                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.user_groups THEN true ELSE false END as is_moderator
                      FROM conversation conv
                               LEFT JOIN exercise e ON conv.exercise_id = e.id
                               JOIN course c ON e.course_id = c.id
-                              JOIN user_groups ug ON c.student_group_name = ug.groups OR c.instructor_group_name = ug.groups OR c.teaching_assistant_group_name = ug.groups
+                              JOIN user_groups ug ON c.student_group_name = ug.user_groups OR c.instructor_group_name = ug.user_groups OR c.teaching_assistant_group_name = ug.user_groups
                               JOIN jhi_user u ON ug.user_id = u.id
                               JOIN jhi_user_authority jua ON u.id = jua.user_id
                               JOIN jhi_authority r ON jua.authority_name = r.name
@@ -105,5 +112,7 @@
                  ) AS subquery
             GROUP BY uid, convid;
         </sql>
+        <comment>Undo renaming the "groups" column in the user_groups table</comment>
+        <renameColumn tableName="user_groups" oldColumnName="user_groups" newColumnName="groups" columnDataType="varchar(255)" />
     </changeSet>
 </databaseChangeLog>
