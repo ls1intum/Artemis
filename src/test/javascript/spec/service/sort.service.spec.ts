@@ -10,7 +10,7 @@ type TestObject = {
     e: Map<string, number>;
     f: number;
     g: number;
-    h: { i: number }[];
+    h: { i: number }[] | undefined;
 };
 
 describe('Sort Service', () => {
