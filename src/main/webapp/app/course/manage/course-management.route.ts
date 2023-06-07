@@ -188,7 +188,7 @@ export const courseManagementState: Routes = [
                         component: CompetencyManagementComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -196,7 +196,7 @@ export const courseManagementState: Routes = [
                         // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
-                            pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
                         },
                         children: [
                             {
@@ -204,7 +204,7 @@ export const courseManagementState: Routes = [
                                 component: CreateCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
+                                    pageTitle: 'artemisApp.competency.createLearningGoal.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -213,7 +213,7 @@ export const courseManagementState: Routes = [
                                 component: EditCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
+                                    pageTitle: 'artemisApp.competency.editLearningGoal.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
