@@ -194,7 +194,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should create competency relation', () => {
-        const createComeptencyRelationSpy = jest
+        const createCompetencyRelationSpy = jest
             .spyOn(competencyService, 'createCompetencyRelation')
             .mockReturnValue(of(new HttpResponse({ body: new Competency(), status: 200 })));
         component.tailCompetency = 123;
@@ -204,8 +204,8 @@ describe('CompetencyManagementComponent', () => {
         fixture.detectChanges();
 
         component.createRelation();
-        expect(createComeptencyRelationSpy).toHaveBeenCalledOnce();
-        expect(createComeptencyRelationSpy).toHaveBeenCalledWith(123, 456, 'assumes', 1);
+        expect(createCompetencyRelationSpy).toHaveBeenCalledOnce();
+        expect(createCompetencyRelationSpy).toHaveBeenCalledWith(123, 456, 'assumes', 1);
     });
 
     it('should detect circles on relations', () => {
