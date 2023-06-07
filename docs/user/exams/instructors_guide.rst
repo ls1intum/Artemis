@@ -214,7 +214,7 @@ During the exam creation and configuration, you can create your exam and configu
     Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
 
 .. note::
-    Seats and rooms can currenlty only be assigned via the bulk import of students, by defining the seat in the ``CSV`` file.
+    Seats and rooms can currenlty only be assigned via the bulk import of students, by defining the seat and room in the ``CSV`` file.
 
 .. note::
     For more information on the Exam Participation Checker iPad application have a look here: :ref:`Exam Participation Checker <exam_participation_checker>`.
