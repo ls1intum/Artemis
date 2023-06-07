@@ -14,7 +14,7 @@ import { CompetencyCardStubComponent } from '../../competencies/competency-card-
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
-    let learningGoalService: CompetencyService;
+    let competencyService: CompetencyService;
 
     const activeModalStub = {
         close: () => {},
@@ -40,7 +40,7 @@ describe('CoursePrerequisitesModal', () => {
                 coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
                 coursePrerequisitesModalComponent = coursePrerequisitesModalComponentFixture.componentInstance;
                 coursePrerequisitesModalComponentFixture.componentInstance.courseId = 1;
-                learningGoalService = TestBed.inject(CompetencyService);
+                competencyService = TestBed.inject(CompetencyService);
             });
     });
 
@@ -54,12 +54,12 @@ describe('CoursePrerequisitesModal', () => {
             status: 200,
         });
 
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 
-        const learningGoalCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
-        expect(learningGoalCards).toHaveLength(2);
+        const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
+        expect(competencyCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
     });
