@@ -278,11 +278,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createLectureChannel(Lecture lecture, @NotNull String channelName) {
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName);
-        channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAnnouncementChannel(false);
-        channelToCreate.setIsArchived(false);
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
@@ -302,11 +298,7 @@ public class ChannelService {
             return null;
         }
 
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName);
-        channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAnnouncementChannel(false);
-        channelToCreate.setIsArchived(false);
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setExercise(exercise);
         Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
@@ -324,11 +316,8 @@ public class ChannelService {
         if (exam.isTestExam()) {
             return null;
         }
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName);
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setIsPublic(false);
-        channelToCreate.setIsAnnouncementChannel(false);
-        channelToCreate.setIsArchived(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
@@ -407,5 +396,14 @@ public class ChannelService {
         else {
             return channel;
         }
+    }
+
+    private static Channel createDefaultChannel(@NotNull String channelName) {
+        Channel defaultChannel = new Channel();
+        defaultChannel.setName(channelName);
+        defaultChannel.setIsPublic(true);
+        defaultChannel.setIsAnnouncementChannel(false);
+        defaultChannel.setIsArchived(false);
+        return defaultChannel;
     }
 }

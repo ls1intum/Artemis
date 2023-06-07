@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -60,14 +59,12 @@ public class ExamRegistrationService {
 
     private final ChannelService channelService;
 
-    private final ConversationService conversationService;
-
     private final ChannelRepository channelRepository;
 
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService,
-            ConversationService conversationService, ChannelRepository channelRepository) {
+            ChannelRepository channelRepository) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -79,7 +76,6 @@ public class ExamRegistrationService {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
         this.channelService = channelService;
-        this.conversationService = conversationService;
         this.channelRepository = channelRepository;
     }
 
