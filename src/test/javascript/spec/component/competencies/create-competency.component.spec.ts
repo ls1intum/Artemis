@@ -16,9 +16,9 @@ import { By } from '@angular/platform-browser';
 import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
-describe('CreateLearningGoal', () => {
-    let createLearningGoalComponentFixture: ComponentFixture<CreateCompetencyComponent>;
-    let createLearningGoalComponent: CreateCompetencyComponent;
+describe('CreateCompetency', () => {
+    let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
+    let createCompetencyComponent: CreateCompetencyComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -51,8 +51,8 @@ describe('CreateLearningGoal', () => {
         })
             .compileComponents()
             .then(() => {
-                createLearningGoalComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
-                createLearningGoalComponent = createLearningGoalComponentFixture.componentInstance;
+                createCompetencyComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
+                createCompetencyComponent = createCompetencyComponentFixture.componentInstance;
             });
     });
 
@@ -61,13 +61,13 @@ describe('CreateLearningGoal', () => {
     });
 
     it('should initialize', () => {
-        createLearningGoalComponentFixture.detectChanges();
-        expect(createLearningGoalComponent).toBeDefined();
+        createCompetencyComponentFixture.detectChanges();
+        expect(createCompetencyComponent).toBeDefined();
     });
 
     it('should send POST request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
-        const learningGoalService = TestBed.inject(CompetencyService);
+        const competencyService = TestBed.inject(CompetencyService);
 
         const textUnit: TextUnit = new TextUnit();
         textUnit.id = 1;
@@ -82,21 +82,21 @@ describe('CreateLearningGoal', () => {
             status: 201,
         });
 
-        const createSpy = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(response));
+        const createSpy = jest.spyOn(competencyService, 'create').mockReturnValue(of(response));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        createLearningGoalComponentFixture.detectChanges();
+        createCompetencyComponentFixture.detectChanges();
 
-        const learningGoalForm: CompetencyFormStubComponent = createLearningGoalComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
-        learningGoalForm.formSubmitted.emit(formData);
+        const competencyForm: CompetencyFormStubComponent = createCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
+        competencyForm.formSubmitted.emit(formData);
 
-        return createLearningGoalComponentFixture.whenStable().then(() => {
-            const learningGoal = new Competency();
-            learningGoal.title = formData.title;
-            learningGoal.description = formData.description;
-            learningGoal.lectureUnits = formData.connectedLectureUnits;
+        return createCompetencyComponentFixture.whenStable().then(() => {
+            const competency = new Competency();
+            competency.title = formData.title;
+            competency.description = formData.description;
+            competency.lectureUnits = formData.connectedLectureUnits;
 
-            expect(createSpy).toHaveBeenCalledWith(learningGoal, 1);
+            expect(createSpy).toHaveBeenCalledWith(competency, 1);
             expect(createSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
         });
