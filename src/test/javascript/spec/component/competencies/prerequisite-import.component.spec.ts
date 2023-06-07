@@ -19,11 +19,11 @@ describe('PrerequisiteImportComponent', () => {
     let comp: PrerequisiteImportComponent;
     let pagingService: CompetencyPagingService;
     let sortService: SortService;
-    let searchForLearningGoalsStub: jest.SpyInstance;
+    let searchForCompetenciesStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Competency>;
     let state: PageableSearch;
-    let learningGoal: Competency;
+    let competency: Competency;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
@@ -35,7 +35,7 @@ describe('PrerequisiteImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(CompetencyPagingService);
                 sortService = TestBed.inject(SortService);
-                searchForLearningGoalsStub = jest.spyOn(pagingService, 'searchForLearningGoals');
+                searchForCompetenciesStub = jest.spyOn(pagingService, 'searchForCompetencies');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -46,9 +46,9 @@ describe('PrerequisiteImportComponent', () => {
 
     beforeEach(() => {
         fixture.detectChanges();
-        learningGoal = new Competency();
-        learningGoal.id = 1;
-        searchResult = { numberOfPages: 3, resultsOnPage: [learningGoal] };
+        competency = new Competency();
+        competency.id = 1;
+        searchResult = { numberOfPages: 3, resultsOnPage: [competency] };
         state = {
             page: 1,
             pageSize: 10,
@@ -57,7 +57,7 @@ describe('PrerequisiteImportComponent', () => {
             sortedColumn: TableColumn.ID,
             ...searchResult,
         };
-        searchForLearningGoalsStub.mockReturnValue(of(searchResult));
+        searchForCompetenciesStub.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -74,7 +74,7 @@ describe('PrerequisiteImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -84,7 +84,7 @@ describe('PrerequisiteImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, page: 5 });
             expect(comp.page).toBe(5);
         });
     }));
@@ -95,9 +95,9 @@ describe('PrerequisiteImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForLearningGoalsStub).not.toHaveBeenCalled();
+            expect(searchForCompetenciesStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -107,12 +107,12 @@ describe('PrerequisiteImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));
 
-    it('should return learning goal id', () => {
-        expect(comp.trackId(0, learningGoal)).toEqual(learningGoal.id);
+    it('should return competency id', () => {
+        expect(comp.trackId(0, competency)).toEqual(competency.id);
     });
 });
