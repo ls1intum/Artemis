@@ -35,7 +35,6 @@ export class ProfileService {
                         ProfileService.mapSaml2Config(data, profileInfo);
 
                         if (profileInfo.activeProfiles) {
-                            console.log(profileInfo.activeProfiles)
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
                             if (ribbonProfiles.length !== 0) {
                                 profileInfo.ribbonEnv = ribbonProfiles[0];

@@ -195,6 +195,13 @@ describe('Profile Service', () => {
         allowedCourseRegistrationUsernamePattern: undefined,
         accountName: undefined,
         versionControlUrl: 'https://artemistest2gitlab.ase.in.tum.de',
+        continuousIntegrationName: undefined,
+        irisEnabled: false,
+        saml2: undefined,
+        studentExamStoreSessionData: undefined,
+        textAssessmentAnalyticsEnabled: undefined,
+        versionControlAccessToken: undefined,
+        versionControlName: undefined,
         programmingLanguageFeatures: [
             {
                 checkoutSolutionRepositoryAllowed: false,
