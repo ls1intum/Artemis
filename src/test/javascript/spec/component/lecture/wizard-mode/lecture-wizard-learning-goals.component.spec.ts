@@ -6,7 +6,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
+import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,13 +21,13 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('LectureWizardLearningGoalsComponent', () => {
-    let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardLearningGoalsComponent>;
-    let wizardLearningGoalsComponent: LectureUpdateWizardLearningGoalsComponent;
+    let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardCompetenciesComponent>;
+    let wizardLearningGoalsComponent: LectureUpdateWizardCompetenciesComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LectureUpdateWizardLearningGoalsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            declarations: [LectureUpdateWizardCompetenciesComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(LectureService),
@@ -43,7 +43,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                wizardLearningGoalsComponentFixture = TestBed.createComponent(LectureUpdateWizardLearningGoalsComponent);
+                wizardLearningGoalsComponentFixture = TestBed.createComponent(LectureUpdateWizardCompetenciesComponent);
                 wizardLearningGoalsComponent = wizardLearningGoalsComponentFixture.componentInstance;
 
                 const course = new Course();
@@ -86,7 +86,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
             expect(goalsStub).toHaveBeenCalledOnce();
 
             expect(wizardLearningGoalsComponent.lecture).toBe(lecture);
-            expect(wizardLearningGoalsComponent.learningGoals).toBe(goals);
+            expect(wizardLearningGoalsComponent.competencies).toBe(goals);
         });
     }));
 
@@ -111,13 +111,13 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        wizardLearningGoalsComponent.showCreateLearningGoal();
+        wizardLearningGoalsComponent.showCreateCompetency();
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(lectureStub).toHaveBeenCalledTimes(2);
 
             expect(wizardLearningGoalsComponent.lecture).toBe(lecture);
-            expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeTrue();
+            expect(wizardLearningGoalsComponent.isAddingCompetency).toBeTrue();
         });
     }));
 
@@ -164,7 +164,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        wizardLearningGoalsComponent.createLearningGoal({
+        wizardLearningGoalsComponent.createCompetency({
             id: 1,
             title: 'Goal',
         });
@@ -194,7 +194,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        wizardLearningGoalsComponent.deleteLearningGoal(goals[0]);
+        wizardLearningGoalsComponent.deleteCompetency(goals[0]);
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(deleteStub).toHaveBeenCalledOnce();
@@ -222,8 +222,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
         wizardLearningGoalsComponentFixture.detectChanges();
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new Competency();
-            wizardLearningGoalsComponent.editLearningGoal({
+            wizardLearningGoalsComponent.currentlyProcessedCompetency = new Competency();
+            wizardLearningGoalsComponent.editCompetency({
                 id: 1,
                 title: 'Goal',
             });
@@ -249,12 +249,12 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        wizardLearningGoalsComponent.onLearningGoalFormCanceled();
+        wizardLearningGoalsComponent.onCompetencyFormCanceled();
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
-            expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
-            expect(wizardLearningGoalsComponent.isLoadingLearningGoalForm).toBeFalse();
+            expect(wizardLearningGoalsComponent.isAddingCompetency).toBeFalse();
+            expect(wizardLearningGoalsComponent.isEditingCompetency).toBeFalse();
+            expect(wizardLearningGoalsComponent.isLoadingCompetencyForm).toBeFalse();
         });
     }));
 
@@ -274,7 +274,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
-        wizardLearningGoalsComponent.deleteLearningGoal(goals[0]);
+        wizardLearningGoalsComponent.deleteCompetency(goals[0]);
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(deleteStub).toHaveBeenCalledOnce();
@@ -292,11 +292,11 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         const learningGoal = new Competency();
         learningGoal.id = 12;
-        wizardLearningGoalsComponent.startEditLearningGoal(learningGoal);
+        wizardLearningGoalsComponent.startEditCompetency(learningGoal);
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeTrue();
-            expect(wizardLearningGoalsComponent.currentlyProcessedLearningGoal.id).toBe(12);
+            expect(wizardLearningGoalsComponent.isEditingCompetency).toBeTrue();
+            expect(wizardLearningGoalsComponent.currentlyProcessedCompetency.id).toBe(12);
         });
     }));
 
@@ -318,7 +318,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         const learningGoal = new Competency();
         learningGoal.id = 12;
         learningGoal.lectureUnits = [lectureUnit];
-        const result = wizardLearningGoalsComponent.getConnectedUnitsForLearningGoal(learningGoal);
+        const result = wizardLearningGoalsComponent.getConnectedUnitsForCompetency(learningGoal);
 
         expect(result).toBe('Test');
     }));
@@ -334,7 +334,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         const learningGoal = new Competency();
         learningGoal.id = 12;
-        const result = wizardLearningGoalsComponent.getConnectedUnitsForLearningGoal(learningGoal);
+        const result = wizardLearningGoalsComponent.getConnectedUnitsForCompetency(learningGoal);
 
         expect(result).toBe('artemisApp.lecture.wizardMode.learningGoalNoConnectedUnits');
     }));
@@ -358,11 +358,11 @@ describe('LectureWizardLearningGoalsComponent', () => {
         };
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.isEditingLearningGoal = false;
-            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+            wizardLearningGoalsComponent.isEditingCompetency = false;
+            wizardLearningGoalsComponent.onCompetencyFormSubmitted(formData);
 
             wizardLearningGoalsComponentFixture.whenStable().then(() => {
-                expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
+                expect(wizardLearningGoalsComponent.isAddingCompetency).toBeFalse();
                 expect(createStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
             });
@@ -400,16 +400,16 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
-            wizardLearningGoalsComponent.isEditingLearningGoal = false;
-            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+            wizardLearningGoalsComponent.isEditingCompetency = false;
+            wizardLearningGoalsComponent.onCompetencyFormSubmitted(formData);
 
             wizardLearningGoalsComponentFixture.whenStable().then(() => {
-                expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
+                expect(wizardLearningGoalsComponent.isAddingCompetency).toBeFalse();
                 expect(createStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
 
-                expect(wizardLearningGoalsComponent.learningGoals).toHaveLength(1);
-                expect(wizardLearningGoalsComponent.learningGoals[0]!.lectureUnits![0]!.id).toBe(2);
+                expect(wizardLearningGoalsComponent.competencies).toHaveLength(1);
+                expect(wizardLearningGoalsComponent.competencies[0]!.lectureUnits![0]!.id).toBe(2);
             });
         });
     }));
@@ -430,7 +430,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         const formData: CompetencyFormData = {};
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.createLearningGoal(formData);
+            wizardLearningGoalsComponent.createCompetency(formData);
 
             wizardLearningGoalsComponentFixture.whenStable().then(() => {
                 expect(createStub).toHaveBeenCalledTimes(0);
@@ -458,12 +458,12 @@ describe('LectureWizardLearningGoalsComponent', () => {
         };
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new Competency();
-            wizardLearningGoalsComponent.isEditingLearningGoal = true;
-            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+            wizardLearningGoalsComponent.currentlyProcessedCompetency = new Competency();
+            wizardLearningGoalsComponent.isEditingCompetency = true;
+            wizardLearningGoalsComponent.onCompetencyFormSubmitted(formData);
 
             wizardLearningGoalsComponentFixture.whenStable().then(() => {
-                expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
+                expect(wizardLearningGoalsComponent.isEditingCompetency).toBeFalse();
                 expect(editStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
             });
@@ -500,18 +500,18 @@ describe('LectureWizardLearningGoalsComponent', () => {
         };
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new Competency();
+            wizardLearningGoalsComponent.currentlyProcessedCompetency = new Competency();
             wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
-            wizardLearningGoalsComponent.isEditingLearningGoal = true;
-            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+            wizardLearningGoalsComponent.isEditingCompetency = true;
+            wizardLearningGoalsComponent.onCompetencyFormSubmitted(formData);
 
             wizardLearningGoalsComponentFixture.whenStable().then(() => {
-                expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
+                expect(wizardLearningGoalsComponent.isEditingCompetency).toBeFalse();
                 expect(editStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
 
-                expect(wizardLearningGoalsComponent.learningGoals).toHaveLength(1);
-                expect(wizardLearningGoalsComponent.learningGoals[0]!.lectureUnits![0]!.id).toBe(2);
+                expect(wizardLearningGoalsComponent.competencies).toHaveLength(1);
+                expect(wizardLearningGoalsComponent.competencies[0]!.lectureUnits![0]!.id).toBe(2);
             });
         });
     }));
