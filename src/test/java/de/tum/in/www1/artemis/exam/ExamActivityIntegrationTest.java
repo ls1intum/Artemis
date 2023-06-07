@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -201,7 +200,6 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(examActions).hasSize(1);
         assertThat(examActions.get(0)).extracting(ExamAction::getExamActivityId, ExamAction::getStudentExamId, ExamAction::getId, ExamAction::getType)
                 .containsExactly(examAction.getExamActivityId(), examAction.getStudentExamId(), examAction.getId(), examAction.getType());
-
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

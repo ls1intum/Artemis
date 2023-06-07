@@ -6,11 +6,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -30,7 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -41,7 +42,6 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * REST controller for managing Files.
@@ -52,6 +52,8 @@ public class FileResource {
 
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
+    private static final int DAYS_TO_CACHE = 1;
+
     private final FileService fileService;
 
     private final ResourceLoaderService resourceLoaderService;
@@ -59,6 +61,8 @@ public class FileResource {
     private final LectureRepository lectureRepository;
 
     private final AttachmentUnitRepository attachmentUnitRepository;
+
+    private final SlideRepository slideRepository;
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
@@ -74,12 +78,10 @@ public class FileResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final JHipsterProperties jHipsterProperties;
-
-    public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, JHipsterProperties jHipsterProperties) {
+            ExamUserRepository examUserRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -91,7 +93,7 @@ public class FileResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
-        this.jHipsterProperties = jHipsterProperties;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -355,11 +357,10 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
+        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
 
         List<String> attachmentLinks = lectureAttachments.stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .sorted(Comparator.comparing(LectureUnit::getOrder))
                 .map(unit -> Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
                         .toString())
                 .toList();
@@ -396,6 +397,43 @@ public class FileResource {
         }
 
         return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
+    }
+
+    /**
+     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/slide/:slideNumber : Get the lecture unit attachment slide by slide number
+     *
+     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param slideNumber      the slideNumber of the file
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
+        log.debug("REST request to get the slide : {}", slideNumber);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        String directoryPath = slide.getSlideImagePath();
+
+        // Use regular expression to match and extract the file name with ".png" format
+        Pattern pattern = Pattern.compile(".*\\/([^/]+\\.png)$");
+        Matcher matcher = pattern.matcher(directoryPath);
+
+        if (matcher.matches()) {
+            String fileName = matcher.group(1);
+            return buildFileResponse(
+                    Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId()), "slide", String.valueOf(slide.getSlideNumber())).toString(),
+                    fileName, true);
+        }
+        else {
+            throw new EntityNotFoundException("Slide", slideNumber);
+        }
     }
 
     /**
@@ -445,7 +483,7 @@ public class FileResource {
             }
             var response = ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename);
             if (cache) {
-                var cacheControl = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePublic();
+                var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
                 response = response.cacheControl(cacheControl);
             }
             return response.body(file);

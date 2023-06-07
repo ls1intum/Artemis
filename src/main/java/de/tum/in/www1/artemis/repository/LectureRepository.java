@@ -26,51 +26,72 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.attachments
-            WHERE lecture.course.id = :#{#courseId}
+                LEFT JOIN FETCH lecture.attachments
+            WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.attachments
-            LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.course.id = :#{#courseId}
+                LEFT JOIN FETCH lecture.attachments
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.posts
-            LEFT JOIN FETCH lecture.lectureUnits lu
-            LEFT JOIN FETCH lu.completedUsers cu
-            LEFT JOIN FETCH lu.learningGoals
-            LEFT JOIN FETCH lu.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
-            WHERE lecture.id = :#{#lectureId}
+                LEFT JOIN FETCH lecture.attachments attachment
+                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH lectureUnit.attachment luAttachment
+                LEFT JOIN FETCH lectureUnit.slides slides
+            WHERE lecture.course.id = :courseId
             """)
-    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(@Param("lectureId") Long lectureId);
+    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits lu
-            LEFT JOIN FETCH lu.learningGoals
-            LEFT JOIN FETCH lu.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
-            WHERE lecture.id = :#{#lectureId}
+                LEFT JOIN FETCH lecture.posts
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lu.completedUsers cu
+                LEFT JOIN FETCH lu.competencies
+                LEFT JOIN FETCH lu.exercise exercise
+                LEFT JOIN FETCH exercise.competencies
+            WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.id = :#{#lectureId}
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lu.competencies
+                LEFT JOIN FETCH lu.exercise exercise
+                LEFT JOIN FETCH exercise.competencies
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnitsAndCompetencies(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH lectureUnit.attachment luAttachment
+                LEFT JOIN FETCH lectureUnit.slides slides
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnitsAndWithSlides(@Param("lectureId") Long lectureId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -86,9 +107,10 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT lecture FROM Lecture lecture
+            SELECT lecture
+            FROM Lecture lecture
             WHERE (lecture.course.instructorGroupName IN :groups OR lecture.course.editorGroupName IN :groups)
-            AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
+                AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
             """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
@@ -113,17 +135,22 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
+        return findByIdWithLectureUnitsAndCompetencies(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull
-    default Lecture findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(Long lectureId) {
-        return findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
+        return findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
         return findByIdWithLectureUnits(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    }
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsAndWithSlidesElseThrow(Long lectureId) {
+        return findByIdWithLectureUnitsAndWithSlides(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 }

@@ -157,6 +157,27 @@ public class LectureResource {
     }
 
     /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course with their lecture units and slides
+     *
+     * @param courseId the courseId of the course for which all lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures-with-slides")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Set<Lecture>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
+        lectures.forEach(lectureService::filterActiveAttachmentUnits);
+        lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
+        return ResponseEntity.ok().body(lectures);
+    }
+
+    /**
      * GET /lectures/:lectureId : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
@@ -212,7 +233,7 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -221,6 +242,29 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         lecture = filterLectureContentForUser(lecture, user);
 
+        return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
+     *
+     * @param lectureId the lectureId of the lecture to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     */
+    @GetMapping("lectures/{lectureId}/details-with-slides")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {} with details with slides ", lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
+        Course course = lecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        lectureService.filterActiveAttachmentUnits(lecture);
+        lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
     }
 
@@ -271,7 +315,7 @@ public class LectureResource {
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
                 // re-add the competencies already loaded with the exercise unit
-                ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
+                ((ExerciseUnit) lectureUnit).getExercise().setCompetencies(exercise.getCompetencies());
             }
         }).collect(Collectors.toCollection(ArrayList::new));
 

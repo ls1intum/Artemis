@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
@@ -68,16 +67,13 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     private LectureRepository lectureRepository;
 
     @Autowired
-    private LearningGoalRepository learningGoalRepository;
+    private CompetencyRepository competencyRepository;
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -112,15 +108,15 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         courseId = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        database.addLectureUnitsToLecture(lecture, Set.of(exerciseUnit));
-        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
+        database.addLectureUnitsToLecture(lecture, List.of(exerciseUnit));
+        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
         idOfExerciseUnit = exerciseUnit.getId();
-        LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("ExampleLearningGoal");
-        learningGoal.setCourse(course);
-        learningGoal.addExercise(textExercise);
-        learningGoalRepository.saveAndFlush(learningGoal);
+        Competency competency = new Competency();
+        competency.setTitle("ExampleCompetency");
+        competency.setCourse(course);
+        competency.addExercise(textExercise);
+        competencyRepository.saveAndFlush(competency);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
@@ -244,7 +240,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise = exerciseRepository.save(textExercise);
         getIdOfIndividualTextExerciseOfExam = textExercise.getId();
         return textExercise;

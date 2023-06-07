@@ -69,7 +69,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(CloneRepoButtonComponent),
                 MockComponent(StartPracticeModeButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisTranslatePipe, (query: any, args?: any) => query + (args ? args : '')),
                 ExtensionPointDirective,
                 MockRouterLinkDirective,
                 MockDirective(FeatureToggleDirective),
@@ -306,8 +306,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should disable start exercise button before start date %s',
         fakeAsync((type: ExerciseType) => {
-            const exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
-            comp.exercise = exercise;
+            comp.exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
 
             fixture.detectChanges();
             tick();
@@ -353,4 +352,79 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.gradedParticipation).toEqual(gradedParticipation);
         expect(comp.practiceParticipation).toEqual(practiceParticipation);
     });
+
+    it.each([
+        [
+            { studentParticipations: [{ initializationState: InitializationState.INITIALIZED }], type: ExerciseType.TEXT, dueDate: dayjs().add(1, 'day') } as Exercise,
+            true,
+            'openTextEditor',
+            false,
+        ],
+        [
+            { studentParticipations: [{ initializationState: InitializationState.INITIALIZED }], type: ExerciseType.TEXT, dueDate: dayjs().subtract(1, 'day') } as Exercise,
+            false,
+            undefined,
+            undefined,
+        ],
+        [
+            { studentParticipations: [{ initializationState: InitializationState.INITIALIZED }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            true,
+            'openTextEditor',
+            false,
+        ],
+        [
+            { studentParticipations: [{ initializationState: InitializationState.FINISHED }], type: ExerciseType.TEXT, dueDate: dayjs().add(1, 'day') } as Exercise,
+            true,
+            'openTextEditor',
+            false,
+        ],
+        [
+            { studentParticipations: [{ initializationState: InitializationState.FINISHED }], type: ExerciseType.TEXT, dueDate: dayjs().subtract(1, 'day') } as Exercise,
+            true,
+            'viewSubmissions',
+            true,
+        ],
+        [
+            { studentParticipations: [{ initializationState: InitializationState.FINISHED }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            true,
+            'openTextEditor',
+            false,
+        ],
+        [
+            {
+                studentParticipations: [{ initializationState: InitializationState.FINISHED, results: [{ rated: true }] }],
+                type: ExerciseType.TEXT,
+                dueDate: dayjs().subtract(1, 'day'),
+            } as Exercise,
+            true,
+            'viewResults',
+            true,
+        ],
+        [
+            { studentParticipations: [{ initializationState: InitializationState.FINISHED, results: [{ rated: true }] }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            true,
+            'viewResults',
+            true,
+        ],
+    ])(
+        'should show correct open exercise button for text exercises',
+        fakeAsync((exercise: Exercise, shouldShowButton: boolean, expectedLabel: string | undefined, shouldBeOutlined: boolean | undefined) => {
+            comp.exercise = exercise;
+            comp.ngOnInit();
+            comp.ngOnChanges();
+
+            fixture.detectChanges();
+            tick();
+
+            const button = debugElement.query(By.css('button.open-exercise'));
+
+            if (shouldShowButton) {
+                expect(button).not.toBeNull();
+                expect(button.componentInstance.buttonLabel).toBe('artemisApp.exerciseActions.' + expectedLabel);
+                expect(button.componentInstance.outlined).toBe(shouldBeOutlined);
+            } else {
+                expect(button).toBeNull();
+            }
+        }),
+    );
 });

@@ -18,8 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
@@ -422,11 +422,11 @@ public class ExerciseService {
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
         if (relevantParticipations.isEmpty() && exercise instanceof QuizExercise) {
-            QuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
+            AbstractQuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
             if (submission.getSubmissionDate() != null) {
                 StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
                 quizParticipation.setInitializationState(InitializationState.INITIALIZED);
-                relevantParticipations.add(quizParticipation);
+                relevantParticipations = List.of(quizParticipation);
             }
         }
 
