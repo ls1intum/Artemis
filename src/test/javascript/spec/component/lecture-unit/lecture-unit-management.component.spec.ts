@@ -33,14 +33,14 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 
-@Component({ selector: 'jhi-learning-goals-popover', template: '' })
-class LearningGoalsPopoverStubComponent {
+@Component({ selector: 'jhi-competencies-popover', template: '' })
+class CompetenciesPopoverStubComponent {
     @Input()
     courseId: number;
     @Input()
-    learningGoals: Competency[] = [];
+    competencies: Competency[] = [];
     @Input()
-    navigateTo: 'learningGoalManagement' | 'courseStatistics' = 'courseStatistics';
+    navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -65,7 +65,7 @@ describe('LectureUnitManagementComponent', () => {
             declarations: [
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
-                LearningGoalsPopoverStubComponent,
+                CompetenciesPopoverStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
