@@ -14,7 +14,7 @@ const routes: Routes = [
         pathMatch: 'full',
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'overview.learningGoals',
+            pageTitle: 'overview.competencies',
         },
         component: CourseCompetenciesComponent,
         canActivate: [UserRouteAccessService],
@@ -26,4 +26,4 @@ const routes: Routes = [
     declarations: [CourseCompetenciesComponent],
     exports: [CourseCompetenciesComponent],
 })
-export class CourseLearningGoalsModule {}
+export class CourseCompetenciesModule {}
