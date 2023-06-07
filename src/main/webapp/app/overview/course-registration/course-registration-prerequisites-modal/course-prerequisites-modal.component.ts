@@ -17,7 +17,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     isLoading = false;
     prerequisites: Competency[] = [];
 
-    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private learningGoalService: CompetencyService) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private competencyService: CompetencyService) {}
 
     ngOnInit(): void {
         if (this.courseId) {
@@ -31,7 +31,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
      */
     loadData() {
         this.isLoading = true;
-        this.learningGoalService
+        this.competencyService
             .getAllPrerequisitesForCourse(this.courseId)
             .pipe(
                 finalize(() => {
@@ -51,10 +51,10 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     /**
      * Calculates a unique identity for each competency card shown in the component
      * @param index The index in the list
-     * @param learningGoal The competency of the current iteration
+     * @param competency The competency of the current iteration
      */
-    identify(index: number, learningGoal: Competency) {
-        return `${index}-${learningGoal.id}`;
+    identify(index: number, competency: Competency) {
+        return `${index}-${competency.id}`;
     }
 
     /**
