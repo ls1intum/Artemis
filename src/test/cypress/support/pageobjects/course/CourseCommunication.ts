@@ -9,20 +9,23 @@ export class CourseCommunicationPage {
         cy.get('#new-post').click();
     }
 
-    selectContext(context: CourseWideContext) {
+    selectContextInModal(context: CourseWideContext) {
         cy.get('.modal-content #context').select(titleCaseWord(context));
     }
 
-    getContextSelector() {
+    getContextSelectorInModal() {
         return cy.get('.modal-content #context');
     }
 
-    setTitle(title: string) {
+    setTitleInModal(title: string) {
         cy.get('.modal-content').find('#title').clear().type(title);
     }
 
-    setContent(content: string) {
+    setContentInModal(content: string) {
         cy.get('.modal-content').find('.markdown-editor').find('.ace_editor').click().type(content, { delay: 8 });
+    }
+    setContentInline(content: string) {
+        cy.get('.markdown-editor-wrapper').find('.markdown-editor').find('.ace_editor').click().type(content, { delay: 8 });
     }
 
     save() {
@@ -90,8 +93,8 @@ export class CourseCommunicationPage {
     editPost(postID: number, title: string, content: string) {
         const post = this.getSinglePost(postID);
         post.find('.editIcon').click();
-        this.setTitle(title);
-        this.setContent(content);
+        this.setTitleInModal(title);
+        this.setContentInModal(content);
         cy.intercept(PUT, BASE_API + 'courses/*/posts/*').as('updatePost');
         cy.get('#save').click();
         cy.wait('@updatePost');
