@@ -161,6 +161,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         // Checks if iris profile is enabled
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
+                console.log(profileInfo.activeProfiles);
                 this.inProductionEnvironment = profileInfo.inProduction;
                 this.irisProfileEnabled = profileInfo.irisEnabled;
             }
