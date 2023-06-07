@@ -8,9 +8,9 @@ import { CompetencyRingsComponent } from 'app/course/competencies/competency-rin
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 
-describe('LearningGoalCardComponent', () => {
-    let learningGoalCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
-    let learningGoalCardComponent: CompetencyCardComponent;
+describe('CompetencyCardComponent', () => {
+    let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
+    let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NgbTooltipMocksModule],
@@ -20,8 +20,8 @@ describe('LearningGoalCardComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                learningGoalCardComponentFixture = TestBed.createComponent(CompetencyCardComponent);
-                learningGoalCardComponent = learningGoalCardComponentFixture.componentInstance;
+                competencyCardComponentFixture = TestBed.createComponent(CompetencyCardComponent);
+                competencyCardComponent = competencyCardComponentFixture.componentInstance;
             });
     });
 
@@ -30,7 +30,7 @@ describe('LearningGoalCardComponent', () => {
     });
 
     it('should calculate correct progress, confidence and mastery', () => {
-        learningGoalCardComponent.competency = {
+        competencyCardComponent.competency = {
             id: 1,
             masteryThreshold: 80,
             userProgress: [
@@ -41,16 +41,16 @@ describe('LearningGoalCardComponent', () => {
             ],
         } as Competency;
 
-        learningGoalCardComponentFixture.detectChanges();
+        competencyCardComponentFixture.detectChanges();
 
-        expect(learningGoalCardComponent.progress).toBe(45);
-        expect(learningGoalCardComponent.confidence).toBe(75);
-        expect(learningGoalCardComponent.mastery).toBe(65);
-        expect(learningGoalCardComponent.isMastered).toBeFalse();
+        expect(competencyCardComponent.progress).toBe(45);
+        expect(competencyCardComponent.confidence).toBe(75);
+        expect(competencyCardComponent.mastery).toBe(65);
+        expect(competencyCardComponent.isMastered).toBeFalse();
     });
 
-    it('should display learning goal as mastered', () => {
-        learningGoalCardComponent.competency = {
+    it('should display competency as mastered', () => {
+        competencyCardComponent.competency = {
             id: 1,
             masteryThreshold: 40,
             userProgress: [
@@ -61,11 +61,11 @@ describe('LearningGoalCardComponent', () => {
             ],
         } as Competency;
 
-        learningGoalCardComponentFixture.detectChanges();
+        competencyCardComponentFixture.detectChanges();
 
-        expect(learningGoalCardComponent.progress).toBe(100);
-        expect(learningGoalCardComponent.confidence).toBe(100);
-        expect(learningGoalCardComponent.mastery).toBe(100);
-        expect(learningGoalCardComponent.isMastered).toBeTrue();
+        expect(competencyCardComponent.progress).toBe(100);
+        expect(competencyCardComponent.confidence).toBe(100);
+        expect(competencyCardComponent.mastery).toBe(100);
+        expect(competencyCardComponent.isMastered).toBeTrue();
     });
 });
