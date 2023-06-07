@@ -18,7 +18,7 @@ const routes: Routes = [
         component: CourseCompetenciesDetailsComponent,
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'overview.learningGoals',
+            pageTitle: 'overview.competencies',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -38,4 +38,4 @@ const routes: Routes = [
     declarations: [CourseCompetenciesDetailsComponent],
     exports: [CourseCompetenciesDetailsComponent],
 })
-export class ArtemisCourseLearningGoalsDetailsModule {}
+export class ArtemisCourseCompetenciesDetailsModule {}
