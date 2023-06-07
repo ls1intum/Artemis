@@ -6,60 +6,70 @@
         <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
         <comment>Step 1: Create channels for lectures that do not have a channel and update post</comment>
         <sql>
-            INSERT INTO conversation (id, course_id, lecture_id, name, description,discriminator, is_public, is_announcement, creation_date)
-            SELECT null, l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), CONCAT('Description of lecture: ', l.title), 'C', true, false, NOW()
+            INSERT INTO conversation (course_id, lecture_id, name, description,discriminator, is_public, is_announcement, creation_date)
+            SELECT l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), CONCAT('Description of lecture: ', l.title), 'C', true, false, NOW()
             FROM lecture l
-            LEFT JOIN conversation c ON l.id = c.lecture_id
-            LEFT JOIN course c2 on l.course_id = c2.id
+                     LEFT JOIN conversation c ON l.id = c.lecture_id
+                     LEFT JOIN course c2 on l.course_id = c2.id
             WHERE c.lecture_id IS NULL
               AND (c2.info_sharing_config = 1 OR c2.info_sharing_config = 2)
               AND (c2.end_date IS NULL OR c2.end_date > now())
               AND NOT EXISTS (
-                        SELECT 1
-                        FROM conversation
-                        WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id)
-                    );
+                SELECT 1
+                FROM conversation
+                WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id)
+                );
         </sql>
         <sql>
             UPDATE post p
-            LEFT JOIN lecture l ON p.lecture_id = l.id
-            LEFT JOIN conversation c ON l.id = c.lecture_id
-            SET p.lecture_id = null, p.conversation_id = c.id
-            WHERE p.conversation_id IS NULL;
+            SET conversation_id = (
+                SELECT DISTINCT c.id as conversation_id
+                FROM conversation c
+                         LEFT JOIN lecture l ON l.id = c.lecture_id
+                WHERE p.lecture_id = l.id
+            ),
+                lecture_id = NULL
+            WHERE p.lecture_id IS NOT NULL
+              AND p.conversation_id IS NULL;
         </sql>
         <comment>Step 2: Create channels for exercises that do not have a channel</comment>
         <sql>
-            INSERT INTO conversation (id, course_id, exercise_id, name, description,discriminator, is_public, is_announcement, creation_date)
-            SELECT null, e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), CONCAT('Description of exercise: ', e.title), 'C', true, false, NOW()
+            INSERT INTO conversation (course_id, exercise_id, name, description,discriminator, is_public, is_announcement, creation_date)
+            SELECT e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), CONCAT('Description of exercise: ', e.title), 'C', true, false, NOW()
             FROM exercise e
-            LEFT JOIN conversation c ON e.id = c.exercise_id
-            LEFT JOIN course c2 on e.course_id = c2.id
+                     LEFT JOIN conversation c ON e.id = c.exercise_id
+                     LEFT JOIN course c2 on e.course_id = c2.id
             WHERE c.exercise_id IS NULL
               AND (c2.info_sharing_config = 1 OR c2.info_sharing_config = 2)
               AND (c2.end_date IS NULL OR c2.end_date > now())
               AND NOT EXISTS (
-                        SELECT 1
-                        FROM conversation
-                        WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id)
-                    );
+                SELECT 1
+                FROM conversation
+                WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id)
+                );
         </sql>
         <sql>
             UPDATE post p
-            LEFT JOIN exercise e ON p.exercise_id = e.id
-            LEFT JOIN conversation c ON e.id = c.exercise_id
-            SET p.exercise_id = null, p.conversation_id = c.id
-            WHERE p.conversation_id IS NULL;
+            SET conversation_id = (
+                SELECT DISTINCT c.id as conversation_id
+                FROM conversation c
+                         LEFT JOIN exercise e ON e.id = c.exercise_id
+                WHERE p.exercise_id = e.id
+            ),
+                exercise_id = NULL
+            WHERE p.exercise_id IS NOT NULL
+              AND p.conversation_id IS NULL;
         </sql>
         <comment>Step 3: Create conversation participants for channels of lectures or exercises that do not have participants at all</comment>
         <sql>
             INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
-            SELECT uid, convid, MAX(is_moderator), is_hidden, is_favorite, NOW(), 0
+            SELECT uid, convid, CASE WHEN MAX(CASE WHEN is_moderator THEN 1 ELSE 0 END) = 1 THEN true ELSE false END, false, false, NOW(), 0
             FROM (
-                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator, false as is_hidden, false as is_favorite, NOW(), 0
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator
                      FROM conversation conv
                               LEFT JOIN lecture l ON conv.lecture_id = l.id
                               JOIN course c ON l.course_id = c.id
-                              JOIN user_groups ug ON c.student_group_name = ug.`groups` OR c.instructor_group_name = ug.`groups` OR c.teaching_assistant_group_name = ug.`groups`
+                              JOIN user_groups ug ON c.student_group_name = ug.groups OR c.instructor_group_name = ug.groups OR c.teaching_assistant_group_name = ug.groups
                               JOIN jhi_user u ON ug.user_id = u.id
                               JOIN jhi_user_authority jua ON u.id = jua.user_id
                               JOIN jhi_authority r ON jua.authority_name = r.name
@@ -75,13 +85,13 @@
         </sql>
         <sql>
             INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
-            SELECT uid, convid, MAX(is_moderator), is_hidden, is_favorite, NOW(), 0
+            SELECT uid, convid, CASE WHEN MAX(CASE WHEN is_moderator THEN 1 ELSE 0 END) = 1 THEN true ELSE false END, false, false, NOW(), 0
             FROM (
-                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator, false as is_hidden, false as is_favorite, NOW(), 0
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.groups THEN true ELSE false END as is_moderator
                      FROM conversation conv
                               LEFT JOIN exercise e ON conv.exercise_id = e.id
                               JOIN course c ON e.course_id = c.id
-                              JOIN user_groups ug ON c.student_group_name = ug.`groups` OR c.instructor_group_name = ug.`groups` OR c.teaching_assistant_group_name = ug.`groups`
+                              JOIN user_groups ug ON c.student_group_name = ug.groups OR c.instructor_group_name = ug.groups OR c.teaching_assistant_group_name = ug.groups
                               JOIN jhi_user u ON ug.user_id = u.id
                               JOIN jhi_user_authority jua ON u.id = jua.user_id
                               JOIN jhi_authority r ON jua.authority_name = r.name
