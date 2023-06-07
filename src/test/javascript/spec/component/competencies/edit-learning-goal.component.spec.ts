@@ -13,7 +13,7 @@ import { Competency, CourseCompetencyProgress } from 'app/entities/competency.mo
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
+import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { ArtemisTestModule } from '../../test.module';
 
 describe('EditLearningGoalComponent', () => {
@@ -22,7 +22,7 @@ describe('EditLearningGoalComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [LearningGoalFormStubComponent, EditCompetencyComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CompetencyFormStubComponent, EditCompetencyComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(CompetencyService),
@@ -110,8 +110,8 @@ describe('EditLearningGoalComponent', () => {
         const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
 
         editLearningGoalComponentFixture.detectChanges();
-        const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
-            By.directive(LearningGoalFormStubComponent),
+        const learningGoalFormStubComponent: CompetencyFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
+            By.directive(CompetencyFormStubComponent),
         ).componentInstance;
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(getCourseProgressSpy).toHaveBeenCalledOnce();
@@ -174,7 +174,7 @@ describe('EditLearningGoalComponent', () => {
         const updatedSpy = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const learningGoalForm: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(By.directive(LearningGoalFormStubComponent)).componentInstance;
+        const learningGoalForm: CompetencyFormStubComponent = editLearningGoalComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
         learningGoalForm.formSubmitted.emit({
             title: changedUnit.title,
             description: changedUnit.description,

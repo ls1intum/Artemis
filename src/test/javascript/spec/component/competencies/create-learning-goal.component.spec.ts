@@ -13,7 +13,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
-import { LearningGoalFormStubComponent } from './learning-goal-form-stub.component';
+import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('CreateLearningGoal', () => {
@@ -23,7 +23,7 @@ describe('CreateLearningGoal', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LearningGoalFormStubComponent, CreateCompetencyComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
+            declarations: [CompetencyFormStubComponent, CreateCompetencyComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent)],
             providers: [
                 MockProvider(CompetencyService),
                 MockProvider(LectureService),
@@ -87,9 +87,7 @@ describe('CreateLearningGoal', () => {
 
         createLearningGoalComponentFixture.detectChanges();
 
-        const learningGoalForm: LearningGoalFormStubComponent = createLearningGoalComponentFixture.debugElement.query(
-            By.directive(LearningGoalFormStubComponent),
-        ).componentInstance;
+        const learningGoalForm: CompetencyFormStubComponent = createLearningGoalComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
         learningGoalForm.formSubmitted.emit(formData);
 
         return createLearningGoalComponentFixture.whenStable().then(() => {

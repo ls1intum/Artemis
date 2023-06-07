@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { Lecture } from 'app/entities/lecture.model';
 
-@Component({ selector: 'jhi-learning-goal-form', template: '' })
-export class LearningGoalFormStubComponent {
+@Component({ selector: 'jhi-competency-form', template: '' })
+export class CompetencyFormStubComponent {
     @Input() formData: CompetencyFormData;
     @Input() courseId: number;
     @Input() isEditMode = false;
