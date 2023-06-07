@@ -117,7 +117,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
-    public irisActivated: boolean;
 
     // Additional options for import
     public recreateBuildPlans = false;
