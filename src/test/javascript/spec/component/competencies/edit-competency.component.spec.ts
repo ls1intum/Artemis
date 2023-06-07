@@ -16,9 +16,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { ArtemisTestModule } from '../../test.module';
 
-describe('EditLearningGoalComponent', () => {
-    let editLearningGoalComponentFixture: ComponentFixture<EditCompetencyComponent>;
-    let editLearningGoalComponent: EditCompetencyComponent;
+describe('EditCompetencyComponent', () => {
+    let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
+    let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -34,7 +34,7 @@ describe('EditLearningGoalComponent', () => {
                         paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
-                                    case 'learningGoalId':
+                                    case 'competencyId':
                                         return 1;
                                 }
                             },
@@ -58,8 +58,8 @@ describe('EditLearningGoalComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                editLearningGoalComponentFixture = TestBed.createComponent(EditCompetencyComponent);
-                editLearningGoalComponent = editLearningGoalComponentFixture.componentInstance;
+                editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
+                editCompetencyComponent = editCompetencyComponentFixture.componentInstance;
             });
     });
 
@@ -68,33 +68,33 @@ describe('EditLearningGoalComponent', () => {
     });
 
     it('should initialize', () => {
-        editLearningGoalComponentFixture.detectChanges();
-        expect(editLearningGoalComponent).toBeDefined();
+        editCompetencyComponentFixture.detectChanges();
+        expect(editCompetencyComponent).toBeDefined();
     });
 
     it('should set form data correctly', () => {
         // mocking competency service
-        const learningGoalService = TestBed.inject(CompetencyService);
+        const competencyService = TestBed.inject(CompetencyService);
         const lectureUnit = new TextUnit();
         lectureUnit.id = 1;
 
-        const learningGoalOfResponse = new Competency();
-        learningGoalOfResponse.id = 1;
-        learningGoalOfResponse.title = 'test';
-        learningGoalOfResponse.description = 'lorem ipsum';
-        learningGoalOfResponse.lectureUnits = [lectureUnit];
+        const competencyOfResponse = new Competency();
+        competencyOfResponse.id = 1;
+        competencyOfResponse.title = 'test';
+        competencyOfResponse.description = 'lorem ipsum';
+        competencyOfResponse.lectureUnits = [lectureUnit];
 
-        const learningGoalResponse: HttpResponse<Competency> = new HttpResponse({
-            body: learningGoalOfResponse,
+        const competencyResponse: HttpResponse<Competency> = new HttpResponse({
+            body: competencyOfResponse,
             status: 200,
         });
-        const learningGoalCourseProgressResponse: HttpResponse<CourseCompetencyProgress> = new HttpResponse({
+        const competencyCourseProgressResponse: HttpResponse<CourseCompetencyProgress> = new HttpResponse({
             body: { competencyId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseCompetencyProgress,
             status: 200,
         });
 
-        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(learningGoalResponse));
-        const getCourseProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(of(learningGoalCourseProgressResponse));
+        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(competencyResponse));
+        const getCourseProgressSpy = jest.spyOn(competencyService, 'getCourseProgress').mockReturnValue(of(competencyCourseProgressResponse));
 
         // mocking lecture service
         const lectureService = TestBed.inject(LectureService);
@@ -109,40 +109,40 @@ describe('EditLearningGoalComponent', () => {
 
         const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
 
-        editLearningGoalComponentFixture.detectChanges();
-        const learningGoalFormStubComponent: CompetencyFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
+        editCompetencyComponentFixture.detectChanges();
+        const competencyFormStubComponent: CompetencyFormStubComponent = editCompetencyComponentFixture.debugElement.query(
             By.directive(CompetencyFormStubComponent),
         ).componentInstance;
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(getCourseProgressSpy).toHaveBeenCalledOnce();
         expect(findAllByCourseSpy).toHaveBeenCalledOnce();
 
-        expect(editLearningGoalComponent.formData.title).toEqual(learningGoalOfResponse.title);
-        expect(editLearningGoalComponent.formData.description).toEqual(learningGoalOfResponse.description);
-        expect(editLearningGoalComponent.formData.connectedLectureUnits).toEqual(learningGoalOfResponse.lectureUnits);
-        expect(editLearningGoalComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
-        expect(learningGoalFormStubComponent.formData).toEqual(editLearningGoalComponent.formData);
+        expect(editCompetencyComponent.formData.title).toEqual(competencyOfResponse.title);
+        expect(editCompetencyComponent.formData.description).toEqual(competencyOfResponse.description);
+        expect(editCompetencyComponent.formData.connectedLectureUnits).toEqual(competencyOfResponse.lectureUnits);
+        expect(editCompetencyComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
+        expect(competencyFormStubComponent.formData).toEqual(editCompetencyComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
-        const learningGoalService = TestBed.inject(CompetencyService);
+        const competencyService = TestBed.inject(CompetencyService);
         const lectureService = TestBed.inject(LectureService);
 
         const textUnit = new TextUnit();
         textUnit.id = 1;
-        const learningGoalDatabase: Competency = new Competency();
-        learningGoalDatabase.id = 1;
-        learningGoalDatabase.title = 'test';
-        learningGoalDatabase.description = 'lorem ipsum';
-        learningGoalDatabase.lectureUnits = [textUnit];
+        const competencyDatabase: Competency = new Competency();
+        competencyDatabase.id = 1;
+        competencyDatabase.title = 'test';
+        competencyDatabase.description = 'lorem ipsum';
+        competencyDatabase.lectureUnits = [textUnit];
 
         const findByIdResponse: HttpResponse<Competency> = new HttpResponse({
-            body: learningGoalDatabase,
+            body: competencyDatabase,
             status: 200,
         });
-        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
-        jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(
+        const findByIdSpy = jest.spyOn(competencyService, 'findById').mockReturnValue(of(findByIdResponse));
+        jest.spyOn(competencyService, 'getCourseProgress').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {},
@@ -158,12 +158,12 @@ describe('EditLearningGoalComponent', () => {
                 }),
             ),
         );
-        editLearningGoalComponentFixture.detectChanges();
+        editCompetencyComponentFixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(editLearningGoalComponent.competency).toEqual(learningGoalDatabase);
+        expect(editCompetencyComponent.competency).toEqual(competencyDatabase);
 
         const changedUnit: Competency = {
-            ...learningGoalDatabase,
+            ...competencyDatabase,
             title: 'Changed',
         };
 
@@ -171,11 +171,11 @@ describe('EditLearningGoalComponent', () => {
             body: changedUnit,
             status: 200,
         });
-        const updatedSpy = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(updateResponse));
+        const updatedSpy = jest.spyOn(competencyService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const learningGoalForm: CompetencyFormStubComponent = editLearningGoalComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
-        learningGoalForm.formSubmitted.emit({
+        const competencyForm: CompetencyFormStubComponent = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
+        competencyForm.formSubmitted.emit({
             title: changedUnit.title,
             description: changedUnit.description,
             connectedLectureUnits: changedUnit.lectureUnits,
