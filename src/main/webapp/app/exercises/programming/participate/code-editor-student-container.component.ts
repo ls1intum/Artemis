@@ -56,6 +56,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     latestResult: Result | undefined;
     hasTutorAssessment = false;
     isIllegalSubmission = false;
+    numberOfSubmissionsForSubmissionPolicy?: number;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -94,7 +95,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course = getCourseFromExercise(this.exercise);
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
-                            this.exercise.submissionPolicy = submissionPolicy;
+                            if (submissionPolicy) {
+                                this.exercise.submissionPolicy = submissionPolicy;
+                                this.getNumberOfSubmissionsForSubmissionPolicy();
+                            }
                         });
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
@@ -170,6 +174,14 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
     }
 
+    getNumberOfSubmissionsForSubmissionPolicy() {
+        if (this.participation.id) {
+            this.submissionPolicyService.getParticipationSubmissionCount(this.participation.id).subscribe((numberOfSubmissions) => {
+                this.numberOfSubmissionsForSubmissionPolicy = numberOfSubmissions;
+            });
+        }
+    }
+
     /**
      * Check whether a latestResult exists and if, returns the unreferenced feedback of it
      */
@@ -179,6 +191,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
+    }
+
+    receivedNewResult() {
+        this.loadStudentExerciseHints();
+        this.getNumberOfSubmissionsForSubmissionPolicy();
     }
 
     loadStudentExerciseHints() {
