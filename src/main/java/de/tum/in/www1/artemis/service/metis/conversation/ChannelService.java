@@ -159,7 +159,6 @@ public class ChannelService {
      */
     @Async
     public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
-        SecurityUtils.setAuthorizationObject();
         registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
     }
 
