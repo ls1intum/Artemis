@@ -91,13 +91,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     getErrorMessage(error: CompetencyRelationError): string {
         switch (error) {
             case CompetencyRelationError.CIRCULAR: {
-                return 'artemisApp.learningGoal.relation.createsCircularRelation';
+                return 'artemisApp.competency.relation.createsCircularRelation';
             }
             case CompetencyRelationError.EXISTING: {
-                return 'artemisApp.learningGoal.relation.relationAlreadyExists';
+                return 'artemisApp.competency.relation.relationAlreadyExists';
             }
             case CompetencyRelationError.SELF: {
-                return 'artemisApp.learningGoal.relation.selfRelation';
+                return 'artemisApp.competency.relation.selfRelation';
             }
             case CompetencyRelationError.NONE: {
                 throw new TypeError('There is no error message if there is no error.');
