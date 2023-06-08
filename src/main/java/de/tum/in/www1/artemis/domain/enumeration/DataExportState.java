@@ -19,7 +19,4 @@ public enum DataExportState {
         return this == FAILED;
     }
 
-    public boolean shouldBeCreated() {
-        return this == REQUESTED || this == IN_CREATION;
-    }
 }

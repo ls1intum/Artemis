@@ -29,16 +29,31 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     }
 
     /**
-     * Find all data exports whose creation needs to be scheduled. This includes all data exports that are currently in the state creation (the export was not completed then) or
+     * Find all data exports that need to be created needs. This includes all data exports that are currently in the state IN_CREATION (the export was not completed then) or
      * requested.
      * 0 = REQUESTED, 1 = IN_CREATION
      *
-     * @return a set of data exports that need to be scheduled
+     * @return a set of data exports that need to be created
      */
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
             WHERE dataExport.dataExportState = 0 OR dataExport.dataExportState = 1
             """)
-    Set<DataExport> findAllThatNeedToBeScheduled();
+    Set<DataExport> findAllToBeCreated();
+
+    /**
+     * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days
+     *
+     *
+     * @return a set of data exports that need to be deleted
+     */
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.creationDate is NOT NULL
+            AND dataExport.creationDate < :#{T(java.time.ZonedDateTime).now().minusDays(7)}
+            """)
+    Set<DataExport> findAllToBeDeleted();
+
 }
