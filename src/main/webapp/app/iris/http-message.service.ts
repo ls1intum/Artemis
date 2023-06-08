@@ -42,13 +42,17 @@ export class IrisHttpMessageService {
         return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
                 const messages = response.body;
+                if (messages == null) return response;
 
                 const modifiedMessages = messages.map((message) => {
                     return Object.assign({}, message, {
                         sentAt: convertDateFromServer(message.sentAt),
                     });
                 });
-                return { ...response, body: modifiedMessages };
+
+                return Object.assign({}, response, {
+                    body: modifiedMessages,
+                });
             }),
         );
     }
