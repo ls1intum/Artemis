@@ -87,7 +87,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
-        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK)).isEqualTo(20);
+        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
 
