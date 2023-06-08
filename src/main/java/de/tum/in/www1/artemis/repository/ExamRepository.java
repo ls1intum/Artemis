@@ -91,6 +91,21 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Page<Exam> findAllActiveExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("toDate") ZonedDateTime toDate);
 
+    /**
+     * Count all active exams
+     *
+     * @param now Current time
+     * @return Number of active exams
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = false
+                AND exam.visibleDate >= :#{#now}
+                AND exam.visibleDate <= :#{#now}
+            """)
+    Integer countAllActiveExams(@Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam

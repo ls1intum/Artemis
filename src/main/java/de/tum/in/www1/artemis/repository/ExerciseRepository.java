@@ -92,6 +92,24 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT COUNT(e.id)
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
+            	AND (e.dueDate <= :#{#now} OR e.dueDate IS NULL)
+            	AND (e.releaseDate >= :#{#now} OR e.releaseDate IS NULL)
+                AND TYPE(e) = :#{#exerciseType}
+            """)
+    Integer countActiveExercisesByExerciseType(@Param("now") ZonedDateTime now, @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+
+    @Query("""
+            SELECT COUNT(e.id)
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            AND TYPE(e) = :#{#exerciseType}
+            """)
+    Integer countExercisesByExerciseType(@Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+
+    @Query("""
+            SELECT COUNT(e.id)
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#now}
             	AND e.dueDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}

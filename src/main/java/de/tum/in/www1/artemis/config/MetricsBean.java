@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 
@@ -13,6 +15,7 @@ import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealt
 import org.springframework.core.env.Environment;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
@@ -20,14 +23,16 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StatisticsRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MultiGauge;
+import io.micrometer.core.instrument.Tags;
 
 @Component
 public class MetricsBean {
@@ -58,11 +63,18 @@ public class MetricsBean {
 
     private final ExamRepository examRepository;
 
+    private final StudentExamRepository studentExamRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
     private final StatisticsRepository statisticsRepository;
 
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            ExamRepository examRepository, StatisticsRepository statisticsRepository) {
+            StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
+            StatisticsRepository statisticsRepository) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -71,11 +83,17 @@ public class MetricsBean {
         this.webSocketHandler = websocketHandler;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
+        this.studentExamRepository = studentExamRepository;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
         registerExerciseAndExamMetrics();
+
+        registerPublicArtemisMetrics();
+
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
     }
@@ -149,7 +167,8 @@ public class MetricsBean {
 
             Gauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14",
                     () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
-                    .tag("exerciseType", exerciseType.toString()).description("Number of exercises ending within the next minutes multiplied with students in the course that have been active in the past 14 days")
+                    .tag("exerciseType", exerciseType.toString())
+                    .description("Number of exercises ending within the next minutes multiplied with students in the course that have been active in the past 14 days")
                     .register(meterRegistry);
 
             Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
@@ -162,7 +181,8 @@ public class MetricsBean {
 
             Gauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14",
                     () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
-                    .tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes multiplied with students in the course that have been active in the past 14 days")
+                    .tag("exerciseType", exerciseType.toString())
+                    .description("Number of exercises starting within the next minutes multiplied with students in the course that have been active in the past 14 days")
                     .register(meterRegistry);
         }
     }
@@ -266,6 +286,97 @@ public class MetricsBean {
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
         return examRepository.countExamUsersInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+    }
+
+    private MultiGauge activeUserMultiGauge;
+
+    private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
+
+    private final AtomicInteger coursesGauge = new AtomicInteger(0);
+
+    private MultiGauge studentsCourseGauge;
+
+    private final AtomicInteger activeExamsGauge = new AtomicInteger(0);
+
+    private final AtomicInteger examsGauge = new AtomicInteger(0);
+
+    private MultiGauge studentsExamGauge;
+
+    private MultiGauge exerciseGauge;
+
+    private MultiGauge activeExerciseGauge;
+
+    private void registerPublicArtemisMetrics() {
+        SecurityUtils.setAuthorizationObject();
+
+        activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
+                .register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.active_courses", activeCoursesGauge::get).description("Number of active courses").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.courses", coursesGauge::get).description("Number of courses").register(meterRegistry);
+
+        studentsCourseGauge = MultiGauge.builder("artemis.statistics.public.course_students").description("Number of registered students per course").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.active_exams", activeExamsGauge::get).description("Number of active exams").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.exams", examsGauge::get).description("Number of exams").register(meterRegistry);
+
+        studentsExamGauge = MultiGauge.builder("artemis.statistics.public.exam_students").description("Number of registered students per exam").register(meterRegistry);
+
+        activeExerciseGauge = MultiGauge.builder("artemis.statistics.public.active_exercises").description("Number of active exercises by type").register(meterRegistry);
+
+        exerciseGauge = MultiGauge.builder("artemis.statistics.public.exercises").description("Number of exercises by type").register(meterRegistry);
+    }
+
+    @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
+    private void calculatePublicArtemisMetrics() {
+        SecurityUtils.setAuthorizationObject();
+
+        var activeUserPeriodInDays = new Integer[] { 1, 7, 14, 30 };
+        activeUserMultiGauge.register(Stream.of(activeUserPeriodInDays)
+                .map(days -> MultiGauge.Row.of(Tags.of("period", days + ""), statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(days), ZonedDateTime.now())))
+                .collect(Collectors.toList()));
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        var courses = courseRepository.findAll();
+        courses.forEach(course -> course.setNumberOfStudents((long) userRepository.getStudents(course).size()));
+
+        var activeCourses = courses.stream()
+                .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
+                .toList();
+
+        courses.forEach(course -> {
+            if (course.getSemester() == null) {
+                course.setSemester("No semester");
+            }
+        });
+
+        studentsCourseGauge.register(
+                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
+                        .collect(Collectors.toList()));
+
+        var coursesGroupedBySemester = courses.stream().collect(Collectors.groupingBy(Course::getSemester));
+
+        activeCoursesGauge.set(activeCourses.size());
+        coursesGauge.set(courseRepository.findAll().size());
+
+        activeExamsGauge.set(examRepository.countAllActiveExams(ZonedDateTime.now()));
+        examsGauge.set(examRepository.findAll().size());
+
+        List<Exam> examsInActiveCourses = new ArrayList<>();
+        activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
+        studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(
+                // TODO: Add semester here
+                Tags.of("examName", exam.getTitle(), "semester", exam.getCourse().getSemester()), studentExamRepository.findByExamId(exam.getId()).size()))
+                .collect(Collectors.toList()));
+
+        activeExerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
+                exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass()))).collect(Collectors.toList()));
+
+        exerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
+                exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toList()));
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

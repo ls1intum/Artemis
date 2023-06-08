@@ -83,6 +83,16 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select
+            COUNT(*)
+            from User u, Submission s, StudentParticipation p
+            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
+            and (s.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where s.participation.exercise.course.testCourse = false))
+            order by s.submissionDate asc
+            """)
+    Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query("""
+            select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 s.submissionDate, u.login
                 )
