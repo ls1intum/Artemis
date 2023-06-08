@@ -5,6 +5,26 @@
         font-size: 1.575rem;
     }
 
+    &:hover {
+        animation: on-hover 1s ease;
+        animation-fill-mode: forwards;
+        background-color: var(--hover-slightly-darker-body-bg);
+
+        @keyframes on-hover {
+            0% {
+                transform: scale(1);
+            }
+
+            33% {
+                transform: scale(1.012);
+            }
+
+            100% {
+                transform: scale(1.012);
+            }
+        }
+    }
+
     .card-heading {
         transition: 0.15s;
 
