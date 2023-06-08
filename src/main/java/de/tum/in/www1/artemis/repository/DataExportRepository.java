@@ -52,7 +52,7 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             SELECT dataExport
             FROM DataExport dataExport
             WHERE dataExport.creationDate is NOT NULL
-            AND dataExport.creationDate < :#{T(java.time.ZonedDateTime).now().minusDays(7)}
+                  AND dataExport.creationDate < :#{T(java.time.ZonedDateTime).now().minusDays(7)}
             """)
     Set<DataExport> findAllToBeDeleted();
 

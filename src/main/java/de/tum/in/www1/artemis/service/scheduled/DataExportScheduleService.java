@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.scheduled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.service.ProfileService;
 
 /**
  * Service responsible for scheduling data exports.
@@ -26,16 +26,16 @@ public class DataExportScheduleService {
 
     private final DataExportService dataExportService;
 
-    private final Environment env;
+    private final ProfileService profileService;
 
     private final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
 
     public DataExportScheduleService(DataExportRepository dataExportRepository, DataExportCreationService dataExportCreationService, DataExportService dataExportService,
-            Environment env) {
+            ProfileService profileService) {
         this.dataExportRepository = dataExportRepository;
         this.dataExportCreationService = dataExportCreationService;
         this.dataExportService = dataExportService;
-        this.env = env;
+        this.profileService = profileService;
     }
 
     /**
@@ -45,6 +45,12 @@ public class DataExportScheduleService {
      */
     @Scheduled(cron = "0 0 4 * * *") // execute this every night at 4:00:00 am
     public void createDataExportsAndDeleteOldOnes() {
+        if (profileService.isDev()) {
+            // do not execute this in a development environment
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            return;
+        }
+
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();

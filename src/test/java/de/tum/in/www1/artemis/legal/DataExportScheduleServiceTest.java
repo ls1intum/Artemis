@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,7 +34,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private static final String TEST_PREFIX = "dataexportscheduleservice";
 
-    @Autowired
+    @SpyBean
     private DataExportRepository dataExportRepository;
 
     @Autowired
@@ -47,6 +48,9 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private ScheduledTaskHolder scheduledTaskHolder;
+
+    @SpyBean
+    private ProfileService profileService;
 
     @BeforeEach
     void init() {
@@ -104,6 +108,16 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
                 .map(scheduledTask -> (CronTask) scheduledTask.getTask()).filter(cronTask -> (cronExpression).equals(cronTask.getExpression()))
                 .filter(cronTask -> cronTaskName.equals(cronTask.toString())).count();
         assertThat(scheduledCronTasksToCreateDataExportsAt4AM).isEqualTo(1);
+    }
+
+    @Test
+    void testDoesntExecuteCronJobInDevMode() {
+        when(profileService.isDev()).thenReturn(true);
+        dataExportScheduleService.createDataExportsAndDeleteOldOnes();
+        verify(dataExportCreationService, never()).createDataExport(any(DataExport.class));
+        verify(dataExportService, never()).deleteDataExportAndSetDataExportState(any(DataExport.class));
+        verify(dataExportRepository, never()).findAllToBeCreated();
+        verify(dataExportRepository, never()).findAllToBeDeleted();
     }
 
     private DataExport createDataExportWithState(DataExportState state) {
