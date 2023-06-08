@@ -26,11 +26,6 @@
     }
 
     .card-heading {
-        transition: 0.15s;
-
-        &:hover {
-            background-color: rgba(62, 137, 204, 0.8) !important;
-        }
         position: relative;
         opacity: 1;
         filter: alpha(opacity = 100);

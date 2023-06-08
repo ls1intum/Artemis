@@ -109,4 +109,13 @@ export class CourseCardComponent implements OnChanges {
         }
         this.nextExerciseDueDate = nextExerciseDueDate;
     }
+
+    /**
+     * Returns the background color of the course as a variable
+     */
+    get hoverEffectForBackground(): Record<string, string> {
+        return {
+            '--background-color-for-hover': this.course.color || this.ARTEMIS_DEFAULT_COLOR,
+        };
+    }
 }

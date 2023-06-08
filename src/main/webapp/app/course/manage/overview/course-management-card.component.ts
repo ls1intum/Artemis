@@ -144,7 +144,9 @@ export class CourseManagementCardComponent implements OnChanges {
         this.pastExerciseCount = allPastExercises.length;
         this.pastExercises = allPastExercises.slice(0, 5);
     }
-
+    /**
+     * Returns the background color of the course as a variable
+     */
     get hoverEffectForBackground(): Record<string, string> {
         return {
             '--background-color-for-hover': this.course.color || this.ARTEMIS_DEFAULT_COLOR,
