@@ -210,7 +210,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam = examRepository.save(exam);
 
         boolean result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, OK);
-        assertThat(monitoring).isEqualTo(result);
+        assertThat(result).isEqualTo(monitoring);
         assertThat(examRepository.findById(exam.getId()).map(Exam::isMonitoring)).isEqualTo(Optional.of(monitoring));
     }
 }
