@@ -83,21 +83,22 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public LectureUnitInformationDTO postWithMultipartFile(long lectureId, MockMultipartFile filePart) throws Exception {
+    public LectureUnitInformationDTO postWithMultipartFile(long lectureId, MockMultipartFile filePart, HttpStatus expectedStatus) throws Exception {
         var splitResult = mvc.perform(
                 MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/process-units").file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk()).andReturn();
+                .andExpect(status().is(expectedStatus.value())).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         return lectureUnitSplitInfo;
     }
 
-    public List<AttachmentUnit> postWithMultipartFile(@NotNull LectureUnitInformationDTO lectureUnitSplitInfo, MockMultipartFile filePart, long lectureId) throws Exception {
+    public List<AttachmentUnit> postWithMultipartFile(@NotNull LectureUnitInformationDTO lectureUnitSplitInfo, MockMultipartFile filePart, long lectureId,
+            HttpStatus expectedStatus) throws Exception {
         var lectureUnitSplitPart = new MockMultipartFile("lectureUnitInformationDTO", "", MediaType.APPLICATION_JSON_VALUE,
                 mapper.writeValueAsString(lectureUnitSplitInfo).getBytes());
 
         var createUnitsResult = mvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/attachment-units/split").file(lectureUnitSplitPart)
-                .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)).andExpect(status().isOk()).andReturn();
+                .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)).andExpect(status().is(expectedStatus.value())).andReturn();
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
                 mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
 

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -79,18 +80,18 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
-        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true)).numberOfPages()).isEqualTo(20);
+        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).numberOfPages()).isEqualTo(20);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true));
-        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true))).isEqualTo(20);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
+        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK)).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
 
-        List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId());
+        List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId(), OK);
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
 
@@ -114,7 +115,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var filePartWord = createLectureFile(false);
 
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartPDF,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+                LectureUnitInformationDTO.class, OK);
 
         // if trying to create multiple units with not the right pdf file then it should throw error
         request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
@@ -124,15 +125,15 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true));
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
 
-        List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId());
+        List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId(), OK);
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
         String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
-        byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
+        byte[] fileBytes = request.get(attachmentPath, OK, byte[].class);
 
         try (PDDocument document = PDDocument.load(fileBytes)) {
             // 12 is the number of pages for the first unit without the break slide
