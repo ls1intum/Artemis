@@ -18,4 +18,8 @@ public enum DataExportState {
     public boolean hasFailed() {
         return this == FAILED;
     }
+
+    public boolean shouldBeCreated() {
+        return this == REQUESTED || this == IN_CREATION;
+    }
 }

@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
-import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -30,14 +28,14 @@ public class DataExportService {
 
     private final DataExportRepository dataExportRepository;
 
-    private final DataExportScheduleService dataExportScheduleService;
+    private final FileService fileService;
 
     public DataExportService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService, DataExportRepository dataExportRepository,
-            DataExportScheduleService dataExportScheduleService) {
+            FileService fileService) {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.dataExportRepository = dataExportRepository;
-        this.dataExportScheduleService = dataExportScheduleService;
+        this.fileService = fileService;
     }
 
     /**
@@ -49,11 +47,10 @@ public class DataExportService {
     public DataExport requestDataExport() throws IOException {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
-        dataExportScheduleService.scheduleDataExportCreation(dataExport);
         return dataExport;
     }
 
@@ -114,6 +111,25 @@ public class DataExportService {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
         return dataExport.getDataExportState().isDownloadable();
+    }
+
+    /**
+     * Deletes the given data export and sets the state to DELETED or DOWNLOADED_DELETED depending on whether the export has been downloaded or not.
+     *
+     * @param dataExport the data export to delete
+     */
+    public void deleteDataExportAndSetDataExportState(DataExport dataExport) {
+        if (dataExport.getFilePath() == null) {
+            return;
+        }
+        fileService.scheduleForDirectoryDeletion(Path.of(dataExport.getFilePath()), 2);
+        if (dataExport.getDataExportState().hasBeenDownloaded()) {
+            dataExport.setDataExportState(DataExportState.DOWNLOADED_DELETED);
+        }
+        else {
+            dataExport.setDataExportState(DataExportState.DELETED);
+        }
+        dataExportRepository.save(dataExport);
     }
 
 }

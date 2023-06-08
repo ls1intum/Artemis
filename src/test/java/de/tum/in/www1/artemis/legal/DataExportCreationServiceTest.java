@@ -14,11 +14,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.jgit.lib.Repository;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -330,32 +327,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         verify(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
     }
 
-    @ParameterizedTest
-    @EnumSource(value = DataExportState.class, names = { "EMAIL_SENT", "DOWNLOADED" })
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectState(DataExportState state) {
-        var dataExport = initDataExport(state);
-        doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyInt());
-        dataExportCreationService.deleteDataExportAndSetDataExportState(dataExport);
-        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        if (state == DataExportState.DOWNLOADED) {
-            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED_DELETED);
-        }
-        else {
-            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
-        }
-        verify(fileService).scheduleForDirectoryDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
-    }
-
-    @NotNull
     private DataExport initDataExport() {
-        return initDataExport(DataExportState.REQUESTED);
-    }
-
-    private DataExport initDataExport(DataExportState state) {
         DataExport dataExport = new DataExport();
-        dataExport.setUser(userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get());
-        dataExport.setDataExportState(state);
+        dataExport.setUser(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
+        dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);

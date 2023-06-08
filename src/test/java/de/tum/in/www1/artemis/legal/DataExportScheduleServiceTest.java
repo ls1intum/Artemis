@@ -1,23 +1,25 @@
 package de.tum.in.www1.artemis.legal;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.*;
-import java.util.stream.Stream;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.config.CronTask;
+import org.springframework.scheduling.config.ScheduledTask;
+import org.springframework.scheduling.config.ScheduledTaskHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -25,7 +27,6 @@ import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,8 +47,8 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     @SpyBean
     private DataExportCreationService dataExportCreationService;
 
-    @SpyBean
-    private ProfileService profileService;
+    @Autowired
+    private ScheduledTaskHolder scheduledTaskHolder;
 
     @BeforeEach
     void init() {
@@ -55,83 +56,38 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 1, 0, 0, 0);
     }
 
-    @Test
-    void testScheduleDataExportOnStartup() {
-        dataExportRepository.deleteAll();
-        createDataExportWithState(DataExportState.DOWNLOADED);
-        createDataExportWithState(DataExportState.REQUESTED);
-        createDataExportWithState(DataExportState.IN_CREATION);
-        doNothing().when(dataExportCreationService).createDataExport(any(DataExport.class));
-        var mockedDate = LocalDate.of(2023, 1, 1);
-        var mockedTime = LocalTime.of(10, 0);
-        var expectedDate = LocalDate.of(2023, 1, 2);
-        var expectedTime = LocalTime.of(4, 0);
-        Mockito.reset(scheduler);
-        try (var localDate = Mockito.mockStatic(LocalDate.class); var localTime = Mockito.mockStatic(LocalTime.class)) {
-            localDate.when(LocalDate::now).thenReturn(mockedDate);
-            localTime.when(LocalTime::now).thenReturn(mockedTime);
-            localTime.when(() -> LocalTime.of(4, 0)).thenReturn(expectedTime);
-            Instant expectedTimeInstant = expectedDate.atTime(expectedTime).atZone(ZoneId.systemDefault()).toInstant();
-            dataExportScheduleService.scheduleDataExportOnStartup();
-            // we want to schedule data exports that are in the state requested or in_creation on startup.
-            verify(scheduler, times(2)).schedule(any(Runnable.class), eq(expectedTimeInstant));
-        }
-    }
-
-    @Test
-    void testDontScheduleDataExportOnStartupInDevMode() {
-        dataExportRepository.deleteAll();
-        createDataExportWithState(DataExportState.DOWNLOADED);
-        createDataExportWithState(DataExportState.REQUESTED);
-        createDataExportWithState(DataExportState.IN_CREATION);
-        doNothing().when(dataExportCreationService).createDataExport(any(DataExport.class));
-        when(profileService.isDev()).thenReturn(true);
-        var mockedDate = LocalDate.of(2023, 1, 1);
-        var mockedTime = LocalTime.of(10, 0);
-        var expectedDate = LocalDate.of(2023, 1, 2);
-        var expectedTime = LocalTime.of(4, 0);
-        Mockito.reset(scheduler);
-        try (var localDate = Mockito.mockStatic(LocalDate.class); var localTime = Mockito.mockStatic(LocalTime.class)) {
-            localDate.when(LocalDate::now).thenReturn(mockedDate);
-            localTime.when(LocalTime::now).thenReturn(mockedTime);
-            localTime.when(() -> LocalTime.of(4, 0)).thenReturn(expectedTime);
-            Instant expectedTimeInstant = expectedDate.atTime(expectedTime).atZone(ZoneId.systemDefault()).toInstant();
-            dataExportScheduleService.scheduleDataExportOnStartup();
-            // we want to schedule data exports that are in the state requested or in_creation on startup.
-            verify(scheduler, times(0)).schedule(any(Runnable.class), eq(expectedTimeInstant));
-        }
-    }
-
-    @Test
-    void scheduleOnStartupHandlesExceptionGracefully() {
-        createDataExportWithState(DataExportState.REQUESTED);
-        doThrow(new RuntimeException("error")).when(scheduler).schedule(any(Runnable.class), any(Instant.class));
-        assertThatCode(() -> dataExportScheduleService.scheduleDataExportOnStartup()).doesNotThrowAnyException();
-    }
-
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ParameterizedTest
-    @MethodSource("timeExpectedDateProvider")
-    void schedulesDataExportForCorrectDay(LocalTime mockedTime, LocalDate expectedDate) {
-        var dataExport = createDataExport();
-        var mockedDate = LocalDate.of(2023, 1, 1);
-        var expectedTime = LocalTime.of(4, 0);
-        try (var localDate = Mockito.mockStatic(LocalDate.class); var localTime = Mockito.mockStatic(LocalTime.class)) {
-            localDate.when(LocalDate::now).thenReturn(mockedDate);
-            localTime.when(LocalTime::now).thenReturn(mockedTime);
-            localTime.when(() -> LocalTime.of(4, 0)).thenReturn(expectedTime);
-            Instant expectedTimeInstant = expectedDate.atTime(expectedTime).atZone(ZoneId.systemDefault()).toInstant();
-            dataExportScheduleService.scheduleDataExportCreation(dataExport);
-            verify(scheduler).schedule(any(Runnable.class), eq(expectedTimeInstant));
+    @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "EMAIL_SENT", "DOWNLOADED", "DOWNLOADED_DELETED", "FAILED" })
+    void testScheduledCronTaskCreatesDataExportAndSchedulesDataExportForDeletion(DataExportState state) {
+        dataExportRepository.deleteAll();
+        createDataExportWithState(state);
+        var mockeZonedDateTime = ZonedDateTime.of(2023, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
+        var expectedZonedDateTime = ZonedDateTime.of(2023, 1, 8, 0, 0, 0, 0, ZoneId.systemDefault());
+        try (var zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
+            zonedDateTime.when(ZonedDateTime::now).thenReturn(mockeZonedDateTime);
+            zonedDateTime.when(() -> mockeZonedDateTime.plusDays(7)).thenReturn(expectedZonedDateTime);
+            dataExportScheduleService.createDataExports();
+            if (state.shouldBeCreated()) {
+                verify(dataExportCreationService).createDataExport(any(DataExport.class));
+                verify(scheduler).schedule(any(Runnable.class), eq(expectedZonedDateTime.toInstant()));
+            }
+            else {
+                verify(dataExportCreationService, never()).createDataExport(any(DataExport.class));
+                verify(scheduler, never()).schedule(any(Runnable.class), any(Instant.class));
+            }
         }
     }
 
-    private static Stream<Arguments> timeExpectedDateProvider() {
-        return Stream.of(Arguments.of(LocalTime.of(1, 0), LocalDate.of(2023, 1, 1)), Arguments.of(LocalTime.of(10, 0), LocalDate.of(2023, 1, 2)));
-    }
-
-    private DataExport createDataExport() {
-        return createDataExportWithState(DataExportState.REQUESTED);
+    @Test
+    void testCronDataExportCreationTaskScheduledEveryDayAt4AM() {
+        final String cronExpression = "0 0 4 * * *";
+        final String cronTaskName = "de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService.createDataExports";
+        Set<ScheduledTask> scheduledTasks = scheduledTaskHolder.getScheduledTasks();
+        long scheduledCronTasksToCreateDataExportsAt4AM = scheduledTasks.stream().filter(scheduledTask -> scheduledTask.getTask() instanceof CronTask)
+                .map(scheduledTask -> (CronTask) scheduledTask.getTask()).filter(cronTask -> (cronExpression).equals(cronTask.getExpression()))
+                .filter(cronTask -> cronTaskName.equals(cronTask.toString())).count();
+        assertThat(scheduledCronTasksToCreateDataExportsAt4AM).isEqualTo(1);
     }
 
     private DataExport createDataExportWithState(DataExportState state) {
@@ -141,19 +97,5 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExport.setUser(database.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("path");
         return dataExportRepository.save(dataExport);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void schedulesDataExportForDeletionAtCorrectTime() {
-        var dataExport = createDataExport();
-        var mockeZonedDateTime = ZonedDateTime.of(2023, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
-        var expectedZonedDateTime = ZonedDateTime.of(2023, 1, 8, 0, 0, 0, 0, ZoneId.systemDefault());
-        try (var zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
-            zonedDateTime.when(ZonedDateTime::now).thenReturn(mockeZonedDateTime);
-            zonedDateTime.when(() -> mockeZonedDateTime.plusDays(7)).thenReturn(expectedZonedDateTime);
-            dataExportScheduleService.scheduleDataExportDeletion(dataExport);
-            verify(scheduler).schedule(any(Runnable.class), eq(expectedZonedDateTime.toInstant()));
-        }
     }
 }

@@ -106,12 +106,14 @@ public class DataExportCreationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserRepository userRepository;
+
     public DataExportCreationService(CourseRepository courseRepository, ZipFileService zipFileService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExamService examService, QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService,
-            DataExportRepository dataExportRepository, AuthorizationCheckService authorizationCheckService) {
+            DataExportRepository dataExportRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
         this.courseRepository = courseRepository;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -130,6 +132,7 @@ public class DataExportCreationService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -139,9 +142,10 @@ public class DataExportCreationService {
      * @param dataExport the data export to be created
      **/
     private void createDataExportWithContent(DataExport dataExport) throws IOException {
-        var user = dataExport.getUser();
-        log.info("Creating data export for user {}", user.getLogin());
-        var userId = user.getId();
+        log.info("Creating data export for user {}", dataExport.getUser().getLogin());
+        var userId = dataExport.getUser().getId();
+        // we need to load the user with the authorities and groups to avoid lazy loading exception when passing the user to the authorization check service
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
         var workingDirectory = prepareDataExport(dataExport);
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
         var posts = postRepository.findPostsByAuthorId(userId);
@@ -150,7 +154,7 @@ public class DataExportCreationService {
         var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
             Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
-                    user.getId());
+                    userId);
             Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
             if (!exercises.isEmpty()) {
                 courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
@@ -706,22 +710,6 @@ public class DataExportCreationService {
             builder.add(programmingSubmission.getCommitHash());
         }
         return builder.build();
-    }
-
-    /**
-     * Deletes the given data export and sets the state to DELETED or DOWNLOADED_DELETED depending on whether the export has been downloaded or not.
-     *
-     * @param dataExport the data export to delete
-     */
-    public void deleteDataExportAndSetDataExportState(DataExport dataExport) {
-        fileService.scheduleForDirectoryDeletion(Path.of(dataExport.getFilePath()), 2);
-        if (dataExport.getDataExportState().hasBeenDownloaded()) {
-            dataExport.setDataExportState(DataExportState.DOWNLOADED_DELETED);
-        }
-        else {
-            dataExport.setDataExportState(DataExportState.DELETED);
-        }
-        dataExportRepository.save(dataExport);
     }
 
 }

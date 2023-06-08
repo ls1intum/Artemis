@@ -265,17 +265,41 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRequestDataExportSchedulesDataExport() throws Exception {
-        doNothing().when(dataExportScheduleService).scheduleDataExportCreation(any(DataExport.class));
         var dataExport = request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
-        verify(dataExportScheduleService).scheduleDataExportCreation(any(DataExport.class));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRequestDataExport_error_internalServerError() throws Exception {
-        doNothing().when(dataExportScheduleService).scheduleDataExportCreation(any(DataExport.class));
         doThrow(new RuntimeException("error")).when(dataExportService).requestDataExport();
         request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataExportState.class, names = { "EMAIL_SENT", "DOWNLOADED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectState(DataExportState state) {
+        var dataExport = initDataExport(state);
+        doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyInt());
+        dataExportService.deleteDataExportAndSetDataExportState(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        if (state == DataExportState.DOWNLOADED) {
+            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED_DELETED);
+        }
+        else {
+            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
+        }
+        verify(fileService).scheduleForDirectoryDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+    }
+
+    private DataExport initDataExport(DataExportState state) {
+        DataExport dataExport = new DataExport();
+        dataExport.setUser(userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get());
+        dataExport.setDataExportState(state);
+        dataExport.setRequestDate(ZonedDateTime.now());
+        dataExport.setFilePath("path");
+        dataExport = dataExportRepository.save(dataExport);
+        return dataExport;
     }
 }
