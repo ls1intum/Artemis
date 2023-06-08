@@ -567,7 +567,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
-        Course course = database.createCourse();
+        Course course = database.createCourseWithMessagingEnabled();
 
         QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);

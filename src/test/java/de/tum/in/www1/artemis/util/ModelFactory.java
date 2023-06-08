@@ -545,6 +545,12 @@ public class ModelFactory {
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
+            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, boolean messagingEnabled) {
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
+                messagingEnabled, 7);
+    }
+
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
             int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();

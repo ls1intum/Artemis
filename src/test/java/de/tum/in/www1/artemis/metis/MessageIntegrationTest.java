@@ -122,6 +122,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList());
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        database.enableMessagingForCourse(course);
 
         courseId = course.getId();
 

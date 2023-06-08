@@ -148,6 +148,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
+        database.enableMessagingForCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
         fileUploadExercise.setFilePattern(creationFilePattern);
         fileUploadExercise.setChannelName("testchannel");
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);

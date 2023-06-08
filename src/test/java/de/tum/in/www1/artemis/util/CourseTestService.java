@@ -376,7 +376,7 @@ public class CourseTestService {
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(userPrefix, true, 5));
-        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null);
+        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null, true);
         course3.setStudentGroupName(course3.getDefaultStudentGroupName());
         course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
         course3.setEditorGroupName(course3.getDefaultEditorGroupName());

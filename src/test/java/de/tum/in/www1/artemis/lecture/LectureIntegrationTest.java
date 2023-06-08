@@ -114,6 +114,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLecture_correctRequestBody_shouldCreateLecture() throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+        database.enableMessagingForCourse(course);
 
         Lecture lecture = new Lecture();
         lecture.setTitle("loremIpsum");

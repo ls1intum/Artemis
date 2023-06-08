@@ -155,6 +155,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        database.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.setChannelName("testchannel");
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -183,6 +184,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        database.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);

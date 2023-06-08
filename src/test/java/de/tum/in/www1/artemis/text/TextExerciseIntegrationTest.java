@@ -153,6 +153,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
+        database.enableMessagingForCourse(course);
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         String title = "New Text Exercise";

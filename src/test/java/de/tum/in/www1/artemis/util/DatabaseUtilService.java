@@ -750,6 +750,11 @@ public class DatabaseUtilService {
         return createCourse(null);
     }
 
+    public Course createCourseWithMessagingEnabled() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        return courseRepo.save(course);
+    }
+
     public Course createCourse(Long id) {
         Course course = ModelFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);

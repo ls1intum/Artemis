@@ -75,7 +75,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void setupTestScenario() throws Exception {
         this.testPrefix = getTestPrefix();
-        var course = this.database.createCourse();
+        var course = this.database.createCourseWithMessagingEnabled();
         courseRepository.save(course);
         exampleCourseId = course.getId();
     }

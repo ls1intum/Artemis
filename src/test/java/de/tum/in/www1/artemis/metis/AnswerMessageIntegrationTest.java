@@ -60,7 +60,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
                 .toList();
 
-        courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+        Course course = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        database.enableMessagingForCourse(course);
+        courseId = course.getId();
 
         SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
         doNothing().when(simpMessageSendingOperations).convertAndSendToUser(any(), any(), any());
