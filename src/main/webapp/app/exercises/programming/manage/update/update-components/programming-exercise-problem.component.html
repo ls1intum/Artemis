@@ -28,11 +28,11 @@
 </div>
 <div class="form-group" *ngIf="!isExamMode">
     <jhi-competency-selection
-        id="learning-goals"
-        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+        id="competencies"
+        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+        [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
         [(ngModel)]="programmingExercise.competencies"
-        name="learningGoals"
+        name="competencies"
     ></jhi-competency-selection>
 </div>
 <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
