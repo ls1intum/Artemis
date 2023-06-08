@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -369,8 +368,8 @@ public class ProgrammingExerciseResultTestService {
     public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("different branch");
+        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification))
+                .withMessageContaining("different branch");
     }
 
     // Test
@@ -388,8 +387,8 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation.setBranch("default");
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("different branch");
+        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification))
+                .withMessageContaining("different branch");
     }
 
     // Test

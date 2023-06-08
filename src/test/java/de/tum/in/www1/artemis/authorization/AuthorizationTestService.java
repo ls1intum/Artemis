@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.authorization;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Fail.fail;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
