@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet author="baboci" id="20230601154000">
+    <changeSet author="baboci" id="20230601154000" context="prod">
         <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
         <comment>Step 1: Create channels for lectures that do not have a channel and update post</comment>
         <sql>
@@ -60,13 +60,6 @@
             WHERE p.exercise_id IS NOT NULL
               AND p.conversation_id IS NULL;
         </sql>
-        <comment>
-            For the next step, we need the user_groups table, which contains a column called "groups".
-            However, the word "groups" is being added as a restricted word starting in MySQL 8.0.2.
-            As a workaround, you can use `groups` to escape this word using backticks.
-            However, this isn't compatible with Postgres. Therefore, we need to temporarily rename the column as an alternative workaround.
-        </comment>
-        <renameColumn tableName="user_groups" oldColumnName="groups" newColumnName="user_groups" columnDataType="varchar(255)"/>
         <comment>Step 3: Create conversation participants for channels of lectures or exercises that do not have participants at all</comment>
         <sql>
             INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
@@ -112,7 +105,5 @@
                  ) AS subquery
             GROUP BY uid, convid;
         </sql>
-        <comment>Undo renaming the "groups" column in the user_groups table</comment>
-        <renameColumn tableName="user_groups" oldColumnName="user_groups" newColumnName="groups" columnDataType="varchar(255)" />
     </changeSet>
 </databaseChangeLog>
