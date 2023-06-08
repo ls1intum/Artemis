@@ -80,6 +80,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
+        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).units()).hasSize(2);
         assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).numberOfPages()).isEqualTo(20);
     }
 
@@ -87,11 +88,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
 
         List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId(), OK);
+        assertThat(attachmentUnits).hasSize(2);
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
 
@@ -126,10 +129,12 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
 
         List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId(), OK);
+        assertThat(attachmentUnits).hasSize(2);
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
         String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();

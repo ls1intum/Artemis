@@ -88,7 +88,6 @@ public class RequestUtilService {
                 MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/process-units").file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         return lectureUnitSplitInfo;
     }
 
@@ -102,7 +101,6 @@ public class RequestUtilService {
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
                 mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
 
-        assertThat(attachmentUnits).hasSize(2);
         return attachmentUnits;
     }
 
