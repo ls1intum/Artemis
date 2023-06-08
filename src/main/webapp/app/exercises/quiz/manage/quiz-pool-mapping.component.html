@@ -64,7 +64,7 @@
             <span jhiTranslate="artemisApp.quizPool.dragExplanation"></span>
         </div>
         <div class="question-list-container px-3 py-3">
-            <jhi-quiz-pool-mapping-question-list [quizQuestions]="unmappedQuizQuestions" (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event)">
+            <jhi-quiz-pool-mapping-question-list [disabled]="disabled" [quizQuestions]="unmappedQuizQuestions" (onQuizQuestionDropped)="handleOnQuizQuestionDropped($event)">
             </jhi-quiz-pool-mapping-question-list>
         </div>
     </div>
