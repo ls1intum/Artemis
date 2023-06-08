@@ -182,9 +182,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                               exerciseId: this.exercise?.id,
                               lectureId: this.lecture?.id,
                           };
-                    if (channel) {
-                        this.metisService.getFilteredPosts(contextFilter);
-                    }
+                    this.metisService.getFilteredPosts(contextFilter);
                     this.createEmptyPost();
                     this.resetFormGroup();
                 },
@@ -215,9 +213,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
-        const conversation = this.channel;
-        this.shouldSendMessage = false;
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+        if (this.channel) {
+            const conversation = this.channel;
+            this.shouldSendMessage = false;
+            this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+        } else {
+            this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+        }
     }
 
     /**

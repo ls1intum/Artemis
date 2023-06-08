@@ -45,6 +45,7 @@
                 class="col-auto"
             >
                 <a
+                    *ngIf="posting.conversation !== undefined"
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"
                     [queryParams]="metisService.getQueryParamsForPost(posting)"
