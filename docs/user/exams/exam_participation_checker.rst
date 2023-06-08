@@ -21,7 +21,7 @@ Usage
 1.2 Exam Overview
 ^^^^^^^^^^^^^^^^^
 - The Exam Overview consists of a list of all currently available exams.
-- The overview only shows exams where the start date is +/- one week from now.
+- The overview only shows exams where the start date is +/- one week from now and your account has the correct rights to access the exam.
 - Each list cell consists of basic exam information, like the name and the start and end date of the respective exam.
 - A tap on the cell opens up the Student Detail View.
 
