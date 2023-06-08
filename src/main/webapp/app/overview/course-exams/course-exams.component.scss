@@ -6,6 +6,26 @@
     box-shadow: 0 2px 4px 0 var(--success);
 }
 
+.hover-effect:hover {
+    animation: on-hover 0.5s linear;
+    animation-fill-mode: forwards;
+    background-color: var(--hover-slightly-darker-body-bg);
+
+    @keyframes on-hover {
+        0% {
+            transform: scale(1);
+        }
+
+        33% {
+            transform: scale(1.012);
+        }
+
+        100% {
+            transform: scale(1.012);
+        }
+    }
+}
+
 .btn-disabled {
     pointer-events: none;
 }
