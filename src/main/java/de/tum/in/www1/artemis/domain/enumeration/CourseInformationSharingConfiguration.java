@@ -4,6 +4,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
  * NOTE: Ordinal mapping in property of Course.java do NOT change the order of the existing values.
  */
 public enum CourseInformationSharingConfiguration {
+
     /**
      * Both Communication and Messaging are disabled VALUE = 0
      */
@@ -20,5 +21,9 @@ public enum CourseInformationSharingConfiguration {
     /**
      * Only Messaging is enabled VALUE = 3
      */
-    MESSAGING_ONLY,
+    MESSAGING_ONLY;
+
+    public boolean isMessagingEnabled() {
+        return this == MESSAGING_ONLY || this == COMMUNICATION_AND_MESSAGING;
+    }
 }

@@ -171,7 +171,7 @@ public class ChannelService {
      */
     @Async
     public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
-        if (channel == null) {
+        if (channel == null || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return;
         }
         SecurityUtils.setAuthorizationObject();
@@ -294,6 +294,9 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createLectureChannel(Lecture lecture, String channelName) {
+        if (!lecture.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            return null;
+        }
         Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -309,7 +312,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createExerciseChannel(Exercise exercise, String channelName) {
-        if (!exercise.isCourseExercise()) {
+        if (!exercise.isCourseExercise() || !exercise.getCourseViaExerciseGroupOrCourseMember().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
         Channel channelToCreate = createDefaultChannel(channelName);
@@ -325,7 +328,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createExamChannel(Exam exam, String channelName) {
-        if (exam.isTestExam()) {
+        if (exam.isTestExam() || !exam.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
         Channel channelToCreate = createDefaultChannel(channelName);

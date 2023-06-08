@@ -974,6 +974,18 @@ public class DatabaseUtilService {
         return onlineUnitRepository.save(onlineUnit);
     }
 
+    public void enableMessagingForCourse(Course course) {
+        CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
+        if (currentConfig == CourseInformationSharingConfiguration.DISABLED) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+            courseRepo.save(course);
+        }
+        else if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepo.save(course);
+        }
+    }
+
     public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
         return createCoursesWithExercisesAndLectures(prefix, withParticipations, false, numberOfTutorParticipations);
     }
