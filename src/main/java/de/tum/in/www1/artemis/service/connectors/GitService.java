@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -673,34 +672,6 @@ public class GitService {
      *
      * @param targetRepo    Local target repo
      * @param targetRepoUrl URI of targets repo
-     * @throws GitAPIException if the repo could not be pushed
-     */
-    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
-        try (Git git = new Git(targetRepo)) {
-            // overwrite the old remote uri with the target uri
-            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
-            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURI());
-
-            String oldBranch = git.getRepository().getBranch();
-            if (!defaultBranch.equals(oldBranch)) {
-                git.branchRename().setNewName(defaultBranch).setOldName(oldBranch).call();
-            }
-
-            // push the source content to the new remote
-            pushCommand(git).call();
-        }
-        catch (URISyntaxException | IOException e) {
-            log.error("Error while pushing to remote target: ", e);
-        }
-    }
-
-    /**
-     * The remote uri of the target repo is still the uri of the source repo.
-     * We need to change it to the uri of the target repo.
-     * The content to be copied then gets pushed to the new repo.
-     *
-     * @param targetRepo    Local target repo
-     * @param targetRepoUrl URI of targets repo
      * @param oldBranch     default branch that was used when the exercise was created (might differ from the default branch of a participation)
      * @throws GitAPIException if the repo could not be pushed
      */
@@ -904,8 +875,6 @@ public class GitService {
      * @param lastValidSubmission       The last valid submission from the database or empty, if not found
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
-
-    @Transactional(readOnly = true) // TODO: remove transactional
     public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
         if (filterLateSubmissionsDate == null) {
             // No date set in client and exercise has no due date
@@ -1193,7 +1162,7 @@ public class GitService {
             log.debug("Did not combine the repository {} as there were no changes to commit. Exception: {}", repo, ex.getMessage());
         }
         catch (GitAPIException ex) {
-            log.error("Could not combine repository {} due to exception: {}", repo, ex);
+            log.error("Could not combine repository {} due to exception: {}", repo, ex, ex);
             throw ex;
         }
     }
