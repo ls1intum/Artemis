@@ -13,7 +13,7 @@ export interface OnlineUnitFormData {
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
-    learningGoals?: Competency[];
+    competencies?: Competency[];
 }
 
 function urlValidator(control: AbstractControl) {
