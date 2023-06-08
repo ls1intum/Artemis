@@ -76,38 +76,21 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         this.testAllPreAuthorize();
     }
 
-
-    LectureUnitInformationDTO checkLectureUnitInformation() throws Exception {
-        var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        return lectureUnitSplitInfo;
-    }
-
-    List<AttachmentUnit> checkAttachmentUnits(LectureUnitInformationDTO lectureUnitSplitInfo) throws Exception {
-        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
-        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
-        assertThat(attachmentUnits).hasSize(2);
-        return attachmentUnits;
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
-        LectureUnitInformationDTO lectureUnitSplitInfo = checkLectureUnitInformation();
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true)).numberOfPages()).isEqualTo(20);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
-        LectureUnitInformationDTO lectureUnitSplitInfo = checkLectureUnitInformation();
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true));
+        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true))).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
-        List<AttachmentUnit> attachmentUnits = checkAttachmentUnits(lectureUnitSplitInfo);
 
+        List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId());
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
 
@@ -141,23 +124,23 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-       LectureUnitInformationDTO lectureUnitSplitInfo = checkLectureUnitInformation();
-       assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true));
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
 
-       lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
-       List<AttachmentUnit> attachmentUnits = checkAttachmentUnits(lectureUnitSplitInfo);
+        List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId());
+        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
+        List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
+        String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
+        byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
 
-       List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
-       List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
-       String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
-       byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
-
-       try (PDDocument document = PDDocument.load(fileBytes)) {
+        try (PDDocument document = PDDocument.load(fileBytes)) {
             // 12 is the number of pages for the first unit without the break slide
             assertThat(document.getNumberOfPages()).isEqualTo(12);
-       }
-       assertThat(attachmentUnitList).hasSize(2);
-       assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
+            document.close();
+        }
+        assertThat(attachmentUnitList).hasSize(2);
+        assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
     }
 
     private void testAllPreAuthorize() throws Exception {

@@ -17,6 +17,7 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -38,6 +39,8 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 @Service
@@ -78,6 +81,28 @@ public class RequestUtilService {
         }
         restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    public LectureUnitInformationDTO postWithMultipartFile(long lectureId, MockMultipartFile filePart) throws Exception {
+        var splitResult = mvc.perform(
+                MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/process-units").file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk()).andReturn();
+        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        return lectureUnitSplitInfo;
+    }
+
+    public List<AttachmentUnit> postWithMultipartFile(@NotNull LectureUnitInformationDTO lectureUnitSplitInfo, MockMultipartFile filePart, long lectureId) throws Exception {
+        var lectureUnitSplitPart = new MockMultipartFile("lectureUnitInformationDTO", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(lectureUnitSplitInfo).getBytes());
+
+        var createUnitsResult = mvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/attachment-units/split").file(lectureUnitSplitPart)
+                .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)).andExpect(status().isOk()).andReturn();
+        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
+                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+
+        assertThat(attachmentUnits).hasSize(2);
+        return attachmentUnits;
     }
 
     public <T> URI post(String path, T body, HttpStatus expectedStatus) throws Exception {
