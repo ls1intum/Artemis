@@ -1,5 +1,5 @@
 <div
-    [id]="'learning-goal-card-' + competency.id"
+    [id]="'competency-card-' + competency.id"
     class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative"
     [class.border-secondary]="isPrerequisite"
     [class.border-success]="isMastered"
@@ -21,7 +21,7 @@
             <div class="col-sm col py-2">
                 <h4 class="m-0">
                     {{ competency.title }}
-                    <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
+                    <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
                 </h4>
                 <p *ngIf="competency.description" class="m-0">{{ competency.description }}</p>
                 <div *ngIf="isPrerequisite && competency.course">
