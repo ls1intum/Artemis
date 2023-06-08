@@ -59,7 +59,7 @@
                     *ngIf="lecture.course?.id && showCompetencies"
                     [courseId]="lecture.course!.id!"
                     [competencies]="lectureUnit.competencies || []"
-                    [navigateTo]="'learningGoalManagement'"
+                    [navigateTo]="'competencyManagement'"
                 ></jhi-competencies-popover>
                 <div class="d-flex gap-1 w-100">
                     <button
