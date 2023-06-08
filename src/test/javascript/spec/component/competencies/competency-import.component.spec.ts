@@ -35,7 +35,7 @@ describe('CompetencyImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(CompetencyPagingService);
                 sortService = TestBed.inject(SortService);
-                searchForCompetenciesStub = jest.spyOn(pagingService, 'searchForLearningGoals');
+                searchForCompetenciesStub = jest.spyOn(pagingService, 'searchForCompetencies');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
