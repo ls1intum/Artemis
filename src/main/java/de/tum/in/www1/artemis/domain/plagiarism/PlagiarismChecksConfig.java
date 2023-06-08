@@ -22,9 +22,6 @@ public class PlagiarismChecksConfig extends DomainObject {
 
     private int minimumSize;
 
-    public PlagiarismChecksConfig() {
-    }
-
     public float getSimilarityThreshold() {
         return similarityThreshold;
     }
