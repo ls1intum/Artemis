@@ -45,23 +45,19 @@ export class IrisWebsocketService implements OnDestroy {
     private changeWebsocketSubscription(sessionId: number | null): void {
         const channel = '/user/topic/iris/sessions/' + sessionId;
 
-        // If the channel subscription does not change, do nothing
         if (sessionId != null && this.subscriptionChannel === channel) {
             return;
         }
 
-        // Unsubscribe from the existing channel subscription
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
         }
 
         if (sessionId == null) return;
 
-        // Create a new subscription
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisServerMessage) => {
-            // Dispatch a new action to update the state with the received message
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(newMessage));
         });
     }

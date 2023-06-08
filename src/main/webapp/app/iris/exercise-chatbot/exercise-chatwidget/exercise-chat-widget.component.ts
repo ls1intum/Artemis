@@ -66,14 +66,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => this.scrollToBottom())
+                .then(() => this.scrollToBottom('smooth'))
                 .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!')));
             this.newMessageTextContent = '';
         }
-        this.scrollToBottom();
+        this.scrollToBottom('smooth');
     }
 
-    scrollToBottom(behavior: ScrollBehavior = 'smooth') {
+    scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
             const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
             chatBodyElement.scrollTo({
