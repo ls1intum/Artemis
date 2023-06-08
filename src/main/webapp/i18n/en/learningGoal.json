@@ -1,10 +1,10 @@
 {
     "artemisApp": {
-        "learningGoal": {
+        "competency": {
             "created": "Competency created",
             "deleted": "Competency deleted",
             "updated": "Competency updated",
-            "learningGoalButton": "Competencies",
+            "competencyButton": "Competencies",
             "title": "Competencies",
             "description": "Description",
             "taxonomy": "Taxonomy",
@@ -37,7 +37,7 @@
             "table": {
                 "panelHeader": "Your advancement"
             },
-            "manageLearningGoals": {
+            "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competency",
                 "create": "Create competency"
@@ -53,7 +53,7 @@
                     "doSelect": "Select"
                 }
             },
-            "createLearningGoal": {
+            "createCompetency": {
                 "title": "Create a new competency",
                 "titlePlaceholder": "Give the competency a title",
                 "titleRequiredValidationError": "A competency needs to have a title",
@@ -79,7 +79,7 @@
                     "participationRate": "Participation Rate"
                 }
             },
-            "editLearningGoal": {
+            "editCompetency": {
                 "title": "Edit a competency"
             },
             "link": {
@@ -87,7 +87,7 @@
                 "lectureUnit": "Optionally link this lecture unit to one or more competencies.",
                 "exercise": "Optionally link this exercise to one or more competencies."
             },
-            "learningGoalCard": {
+            "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Units",
                 "connectedLectureUnitsExplanation": "The following lecture units are linked to this competency:",
                 "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Confidence, Blue = Progress)",
@@ -104,10 +104,10 @@
                 "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"
             },
-            "learningGoalPopover": {
-                "connectedLearningGoals": "Linked Competencies",
+            "competencyPopover": {
+                "connectedCompetencies": "Linked Competencies",
                 "explanation": "This lecture unit helps you to achieve the following competencies: ",
-                "noLearningGoals": "No competencies are linked with this lecture unit! "
+                "noCompetencies": "No competencies are linked with this lecture unit! "
             },
             "prerequisite": {
                 "title": "Prerequisites",
@@ -123,15 +123,15 @@
                         "semester": "Semester",
                         "doSelect": "Select"
                     },
-                    "searchLearningGoal": "Search competency:",
+                    "searchCompetency": "Search competency:",
                     "loading": "Loading..."
                 }
             },
             "relation": {
                 "competencyRelations": "Competency Relations",
-                "tailLearningGoal": "Tail Competency",
+                "tailCompetency": "Tail Competency",
                 "relationType": "Relation Type",
-                "headLearningGoal": "Head Competency",
+                "headCompetency": "Head Competency",
                 "relates": "Relates",
                 "assumes": "Assumes",
                 "extends": "Extends",

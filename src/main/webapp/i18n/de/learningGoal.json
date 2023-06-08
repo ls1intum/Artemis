@@ -1,10 +1,10 @@
 {
     "artemisApp": {
-        "learningGoal": {
+        "competency": {
             "created": "Kompetenz erstellt",
             "deleted": "Kompetenz gelöscht",
             "updated": "Kompetenz bearbeitet",
-            "learningGoalButton": "Kompetenzen",
+            "competencyButton": "Kompetenzen",
             "title": "Kompetenzen",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
@@ -38,7 +38,7 @@
                 "panelHeader": "Deine Fortentwicklung",
                 "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
             },
-            "manageLearningGoals": {
+            "manageCompetencies": {
                 "title": "Kompetenzmanagement",
                 "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen"
@@ -54,7 +54,7 @@
                     "doSelect": "Auswählen"
                 }
             },
-            "createLearningGoal": {
+            "createCompetency": {
                 "title": "Erstelle eine neue Kompetenz",
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
@@ -80,7 +80,7 @@
                     "participationRate": "Teilnahmerate"
                 }
             },
-            "editLearningGoal": {
+            "editCompetency": {
                 "title": "Bearbeite eine Kompetenz"
             },
             "link": {
@@ -88,7 +88,7 @@
                 "lectureUnit": "Verbinde diese Vorlesungseinheit wahlweise mit einer oder mehreren Kompetenzen.",
                 "exercise": "Verbinde diese Übung wahlweise mit einer oder mehreren Kompetenzen."
             },
-            "learningGoalCard": {
+            "competencyCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
                 "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit der Kompetenz verbunden:",
                 "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Selbstsicherheit, Blau = Fortschritt)",
@@ -105,10 +105,10 @@
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
             },
-            "learningGoalPopover": {
-                "connectedLearningGoals": "Verbundene Kompetenzen",
+            "competencyPopover": {
+                "connectedCompetencies": "Verbundene Kompetenzen",
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen:",
-                "noLearningGoals": "Keine Kompetenzen mit dieser Vorlesungseinheit verbunden!"
+                "noCompetencies": "Keine Kompetenzen mit dieser Vorlesungseinheit verbunden!"
             },
             "prerequisite": {
                 "title": "Voraussetzungen",
@@ -124,15 +124,15 @@
 
                         "doSelect": "Auswählen"
                     },
-                    "searchLearningGoal": "Nach Kompetenz suchen:",
+                    "searchCompetency": "Nach Kompetenz suchen:",
                     "loading": "Lade..."
                 }
             },
             "relation": {
                 "competencyRelations": "Beziehungen zwischen Kompetenzen",
-                "tailLearningGoal": "Kompetenz Schluss",
+                "tailCompetency": "Kompetenz Schluss",
                 "relationType": "Beziehungstyp",
-                "headLearningGoal": "Kompetenz Start",
+                "headCompetency": "Kompetenz Start",
                 "relates": "Bezieht sich auf",
                 "assumes": "Setzt voraus",
                 "extends": "Erweitert",
