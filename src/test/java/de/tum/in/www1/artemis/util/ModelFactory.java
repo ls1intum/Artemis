@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismChecksConfig;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
@@ -241,6 +242,14 @@ public class ModelFactory {
         return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
     }
 
+    public static PlagiarismChecksConfig generateDefaultPlagiarismChecksConfig() {
+        var plagiarismChecksConfig = new PlagiarismChecksConfig();
+        plagiarismChecksConfig.setSimilarityThreshold(0.5f);
+        plagiarismChecksConfig.setMinimumSize(0);
+        plagiarismChecksConfig.setMinimumScore(0);
+        return plagiarismChecksConfig;
+    }
+
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -256,6 +265,10 @@ public class ModelFactory {
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         exercise.setCourse(course);
         exercise.setExerciseGroup(null);
+
+        var plagiarismChecksConfig = generateDefaultPlagiarismChecksConfig();
+        exercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
+
         return exercise;
     }
 

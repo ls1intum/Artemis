@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -56,12 +55,8 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
      * @param path The provided path to the rest endpoint
      */
     private void createAndTestPlagiarismResult(String path) throws Exception {
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
 
-        PlagiarismResult<?> plagiarismResult = request.get(path, HttpStatus.OK, PlagiarismResult.class, params);
+        PlagiarismResult<?> plagiarismResult = request.get(path, HttpStatus.OK, PlagiarismResult.class);
 
         for (PlagiarismComparison<?> comparison : plagiarismResult.getComparisons()) {
             var submissionA = comparison.getSubmissionA();

@@ -1651,7 +1651,7 @@ class ProgrammingExerciseIntegrationTestService {
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, new LinkedMultiValueMap<>());
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
@@ -1662,7 +1662,7 @@ class ProgrammingExerciseIntegrationTestService {
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM_JPLAG_REPORT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        var jplagZipArchive = request.getFile(path, HttpStatus.OK, database.getDefaultPlagiarismOptions());
+        var jplagZipArchive = request.getFile(path, HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
 
@@ -2044,6 +2044,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.setShortName("ExerciseTitle");
         programmingExercise.setTitle("Title");
+        programmingExercise.getPlagiarismChecksConfig().setId(null);
         if (expectedStatus == HttpStatus.CREATED) {
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());

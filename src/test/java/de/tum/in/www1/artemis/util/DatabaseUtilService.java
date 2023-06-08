@@ -4466,21 +4466,6 @@ public class DatabaseUtilService {
     }
 
     @NotNull
-    public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
-        return getPlagiarismOptions(50D, 0, 0);
-    }
-
-    @NotNull
-    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", String.valueOf(similarityThreshold));
-        params.add("minimumScore", String.valueOf(minimumScore));
-        params.add("minimumSize", String.valueOf(minimumSize));
-        return params;
-    }
-
-    @NotNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();

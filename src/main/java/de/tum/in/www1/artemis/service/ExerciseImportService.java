@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismChecksConfig;
 import de.tum.in.www1.artemis.repository.*;
 
 public abstract class ExerciseImportService {
@@ -59,6 +60,11 @@ public abstract class ExerciseImportService {
                 newExercise.setTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
             }
         }
+        var plagiarismChecksConfig = new PlagiarismChecksConfig();
+        plagiarismChecksConfig.setSimilarityThreshold(importedExercise.getPlagiarismChecksConfig().getSimilarityThreshold());
+        plagiarismChecksConfig.setMinimumSize(importedExercise.getPlagiarismChecksConfig().getMinimumSize());
+        plagiarismChecksConfig.setMinimumScore(importedExercise.getPlagiarismChecksConfig().getMinimumScore());
+        newExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
     }
 
     /**

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.modeling;
 
+import static de.tum.in.www1.artemis.util.ModelFactory.generateDefaultPlagiarismChecksConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
@@ -344,7 +345,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison()
-                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(modelingExerciseToImport);
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "plagiarismChecksConfig.id")
+                .isEqualTo(modelingExerciseToImport);
     }
 
     @Test
@@ -849,6 +851,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        modelingExercise.setPlagiarismChecksConfig(generateDefaultPlagiarismChecksConfig());
 
         var result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);

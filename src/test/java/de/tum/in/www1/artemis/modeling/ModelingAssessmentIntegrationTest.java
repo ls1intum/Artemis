@@ -1529,7 +1529,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, database.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, new LinkedMultiValueMap<>());
         assertThat(result.getComparisons()).hasSize(1);
         assertThat(result.getExercise().getId()).isEqualTo(classExercise.getId());
 
