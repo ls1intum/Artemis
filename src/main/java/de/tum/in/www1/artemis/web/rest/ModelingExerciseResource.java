@@ -150,7 +150,8 @@ public class ModelingExerciseResource {
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
-        channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 

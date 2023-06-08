@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
@@ -108,7 +109,8 @@ public class ExamImportService {
 
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
-        channelService.createExamChannel(examCopied, examToCopy.getChannelName());
+        Channel createdChannel = channelService.createExamChannel(examCopied, examToCopy.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(false, examCopied.getCourse(), createdChannel);
 
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
     }

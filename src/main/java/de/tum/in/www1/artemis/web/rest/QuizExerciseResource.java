@@ -161,7 +161,8 @@ public class QuizExerciseResource {
 
         QuizExercise result = quizExerciseService.save(quizExercise);
 
-        channelService.createExerciseChannel(result, quizExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, quizExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

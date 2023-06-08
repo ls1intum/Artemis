@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -143,7 +144,8 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseRepository.save(newExercise);
 
         if (newExercise.getChannelName() != null) {
-            channelService.createExerciseChannel(newExercise, newExercise.getChannelName());
+            Channel createdChannel = channelService.createExerciseChannel(newExercise, newExercise.getChannelName());
+            channelService.registerUsersToChannelAsynchronously(true, newExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         }
 
         return newExercise;

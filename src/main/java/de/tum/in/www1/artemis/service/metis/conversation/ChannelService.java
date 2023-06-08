@@ -159,6 +159,10 @@ public class ChannelService {
      */
     @Async
     public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
+        if (channel == null) {
+            return;
+        }
+        SecurityUtils.setAuthorizationObject();
         registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
     }
 
@@ -282,7 +286,6 @@ public class ChannelService {
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
-        registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
         return createdChannel;
     }
 
@@ -299,9 +302,7 @@ public class ChannelService {
         }
         Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setExercise(exercise);
-        Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
-        registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
-        return createdChannel;
+        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     /**
@@ -320,7 +321,6 @@ public class ChannelService {
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
-        registerUsersToChannelAsynchronously(false, createdChannel.getCourse(), createdChannel);
         return createdChannel;
     }
 
