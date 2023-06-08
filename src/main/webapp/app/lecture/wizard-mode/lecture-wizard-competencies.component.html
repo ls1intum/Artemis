@@ -1,7 +1,7 @@
 <div class="form-group">
     <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.competenciesStepTitle">Competencies</span></h1>
     <p>
-        <span jhiTranslate="artemisApp.lecture.wizardMode.steps.learningGoalsStepMessage"
+        <span jhiTranslate="artemisApp.lecture.wizardMode.steps.competenciesStepMessage"
             >Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies.</span
         >
     </p>
@@ -13,41 +13,41 @@
                         <tr>
                             <th><span>ID</span></th>
                             <th>
-                                <span>{{ 'artemisApp.lecture.wizardMode.learningGoalTitle' | artemisTranslate }}</span>
+                                <span>{{ 'artemisApp.lecture.wizardMode.competencyTitle' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span>{{ 'artemisApp.lecture.wizardMode.learningGoalConnectedUnits' | artemisTranslate }}</span>
+                                <span>{{ 'artemisApp.lecture.wizardMode.competencyConnectedUnits' | artemisTranslate }}</span>
                             </th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let learningGoal of competencies; trackBy: trackCompetencyId" class="position-relative">
+                        <tr *ngFor="let competency of competencies; trackBy: trackCompetencyId" class="position-relative">
                             <td>
-                                {{ learningGoal.id }}
-                                <div *ngIf="currentlyProcessedCompetency?.id === learningGoal?.id" class="edit-overlay">
+                                {{ competency.id }}
+                                <div *ngIf="currentlyProcessedCompetency?.id === competency?.id" class="edit-overlay">
                                     {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
                                 </div>
                             </td>
-                            <td>{{ learningGoal.title }}</td>
-                            <td>{{ getConnectedUnitsForCompetency(learningGoal) }}</td>
+                            <td>{{ competency.title }}</td>
+                            <td>{{ getConnectedUnitsForCompetency(competency) }}</td>
                             <td class="text-end">
                                 <div class="flex-btn-group-container">
-                                    <button type="submit" (click)="startEditCompetency(learningGoal)" class="btn btn-primary btn-sm me-1">
+                                    <button type="submit" (click)="startEditCompetency(competency)" class="btn btn-primary btn-sm me-1">
                                         <fa-icon [icon]="faPencilAlt"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </button>
-                                    <button type="submit" (click)="startConnectingCompetency(learningGoal)" class="btn btn-primary btn-sm me-1">
+                                    <button type="submit" (click)="startConnectingCompetency(competency)" class="btn btn-primary btn-sm me-1">
                                         <fa-icon [icon]="faLink"></fa-icon>
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.connect">Connect</span>
                                     </button>
                                     <button
                                         *ngIf="lecture.isAtLeastInstructor"
                                         jhiDeleteButton
-                                        [entityTitle]="learningGoal?.title || ''"
+                                        [entityTitle]="competency?.title || ''"
                                         deleteQuestion="artemisApp.attachment.deleteQuestion"
                                         [dialogError]="dialogError$"
-                                        (delete)="deleteCompetency(learningGoal)"
+                                        (delete)="deleteCompetency(competency)"
                                     ></button>
                                 </div>
                             </td>
@@ -63,8 +63,8 @@
         </div>
     </div>
     <div class="form-group" *ngIf="!isEditingCompetency">
-        <button id="addLearningGoalButton" class="btn btn-primary" type="button" [disabled]="isAddingCompetency" (click)="showCreateCompetency()">
-            <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>
+        <button id="addCompetencyButton" class="btn btn-primary" type="button" [disabled]="isAddingCompetency" (click)="showCreateCompetency()">
+            <span>{{ 'artemisApp.competency.createCompetency.title' | artemisTranslate }}</span>
         </button>
     </div>
     <div *ngIf="isLoadingCompetencyForm" class="d-flex justify-content-center">
