@@ -118,6 +118,13 @@ public class NotificationTargetFactory {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
     }
 
+    /**
+     * Create a NotificationTarget for a SingleUserNotification for a successful data export creation
+     *
+     * @param dataExport the data export that was created
+     * @param message    to use for the notification
+     * @return the final NotificationTarget for this case
+     */
     public static NotificationTarget createDataExportCreatedTarget(DataExport dataExport, String message) {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setEntity(message);
@@ -126,6 +133,12 @@ public class NotificationTargetFactory {
         return notificationTarget;
     }
 
+    /**
+     * Create a NotificationTarget for a SingleUserNotification for a failed data export creation
+     *
+     * @param message to use for the notification
+     * @return the final NotificationTarget for this case
+     */
     public static NotificationTarget createDataExportFailedTarget(String message) {
         NotificationTarget notificationTarget = new NotificationTarget();
         notificationTarget.setEntity(message);

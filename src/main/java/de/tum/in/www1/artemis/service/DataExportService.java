@@ -79,6 +79,11 @@ public class DataExportService {
         }
     }
 
+    /**
+     * Checks if the user can request a new data export.
+     *
+     * @return true if the user can request a new data export, false otherwise
+     */
     public boolean canRequestDataExport() {
         var user = userRepository.getUserWithDataExports();
         var latestDataExport = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
@@ -90,6 +95,11 @@ public class DataExportService {
         return Duration.between(latestDataExportCreationDate, ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS || latestDataExport.get().getDataExportState().hasFailed();
     }
 
+    /**
+     * Checks if the user can download any data export.
+     *
+     * @return a DataExportDTO containing the id of the data export to download or null if no data export can be downloaded
+     */
     public DataExportDTO canDownloadAnyDataExport() {
         var cannotDownload = new DataExportDTO(null);
         var user = userRepository.getUserWithDataExports();
@@ -107,6 +117,14 @@ public class DataExportService {
         }
     }
 
+    /**
+     * Checks if the data export with the given id can be downloaded.
+     *
+     * @param dataExportId the id of the data export to check
+     * @return true if the data export can be downloaded, false otherwise
+     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
+     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
+     */
     public boolean canDownloadSpecificDataExport(long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
