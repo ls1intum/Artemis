@@ -45,6 +45,12 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private QuizPool quizPool;
 
+    private QuizGroup quizGroup0;
+
+    private QuizGroup quizGroup1;
+
+    private QuizGroup quizGroup2;
+
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
@@ -57,17 +63,30 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizPoolSuccessful() throws Exception {
+        QuizPool responseQuizPool = createQuizPool();
+        assertThat(responseQuizPool.getExam().getId()).isEqualTo(exam.getId());
+        assertThat(responseQuizPool.getQuizGroups()).hasSize(quizPool.getQuizGroups().size()).extracting("name").containsExactly(quizPool.getQuizGroups().get(0).getName(),
+                quizPool.getQuizGroups().get(1).getName(), quizPool.getQuizGroups().get(2).getName());
+        assertThat(responseQuizPool.getQuizQuestions()).hasSize(quizPool.getQuizQuestions().size()).extracting("title", "quizGroup.name").containsExactly(
+                tuple(quizPool.getQuizQuestions().get(0).getTitle(), quizGroup0.getName()), tuple(quizPool.getQuizQuestions().get(1).getTitle(), quizGroup0.getName()),
+                tuple(quizPool.getQuizQuestions().get(2).getTitle(), quizGroup1.getName()), tuple(quizPool.getQuizQuestions().get(3).getTitle(), quizGroup2.getName()),
+                tuple(quizPool.getQuizQuestions().get(4).getTitle(), null));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolSuccessful() throws Exception {
-        QuizGroup quizGroup0 = database.createQuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = database.createQuizGroup("Inheritance");
-        QuizGroup quizGroup2 = database.createQuizGroup("Polymorphism");
-        QuizQuestion mcQuizQuestion0 = database.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
-        QuizQuestion mcQuizQuestion1 = database.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
-        QuizQuestion dndQuizQuestion0 = database.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
-        QuizQuestion dndQuizQuestion1 = database.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
-        QuizQuestion saQuizQuestion0 = database.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
-        quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
-        quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
+        QuizPool quizPool = createQuizPool();
+
+        QuizGroup quizGroup3 = database.createQuizGroup("Exception Handling");
+        QuizQuestion saQuizQuestion1 = database.createShortAnswerQuestionWithTitleAndGroup("SA 1", quizGroup2);
+        QuizQuestion saQuizQuestion2 = database.createShortAnswerQuestionWithTitleAndGroup("SA 2", quizGroup3);
+        QuizQuestion saQuizQuestion3 = database.createShortAnswerQuestionWithTitleAndGroup("SA 3", null);
+        quizPool.setQuizGroups(List.of(quizPool.getQuizGroups().get(0), quizPool.getQuizGroups().get(2), quizGroup3));
+        quizPool.setQuizQuestions(List.of(quizPool.getQuizQuestions().get(0), quizPool.getQuizQuestions().get(1), quizPool.getQuizQuestions().get(2), saQuizQuestion1,
+                saQuizQuestion2, saQuizQuestion3));
+        quizPool.getQuizQuestions().get(2).setQuizGroup(quizGroup3);
 
         QuizPool responseQuizPool = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class,
                 HttpStatus.OK, null);
@@ -77,30 +96,8 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                 quizPool.getQuizGroups().get(1).getName(), quizPool.getQuizGroups().get(2).getName());
         assertThat(responseQuizPool.getQuizQuestions()).hasSize(quizPool.getQuizQuestions().size()).extracting("title", "quizGroup.name").containsExactly(
                 tuple(quizPool.getQuizQuestions().get(0).getTitle(), quizGroup0.getName()), tuple(quizPool.getQuizQuestions().get(1).getTitle(), quizGroup0.getName()),
-                tuple(quizPool.getQuizQuestions().get(2).getTitle(), quizGroup1.getName()), tuple(quizPool.getQuizQuestions().get(3).getTitle(), quizGroup2.getName()),
-                tuple(quizPool.getQuizQuestions().get(4).getTitle(), null));
-
-        QuizGroup quizGroup3 = database.createQuizGroup("Exception Handling");
-        QuizQuestion saQuizQuestion1 = database.createShortAnswerQuestionWithTitleAndGroup("SA 1", quizGroup2);
-        QuizQuestion saQuizQuestion2 = database.createShortAnswerQuestionWithTitleAndGroup("SA 2", quizGroup3);
-        QuizQuestion saQuizQuestion3 = database.createShortAnswerQuestionWithTitleAndGroup("SA 3", null);
-        responseQuizPool.setQuizGroups(List.of(responseQuizPool.getQuizGroups().get(0), responseQuizPool.getQuizGroups().get(2), quizGroup3));
-        responseQuizPool.setQuizQuestions(List.of(responseQuizPool.getQuizQuestions().get(0), responseQuizPool.getQuizQuestions().get(1),
-                responseQuizPool.getQuizQuestions().get(2), saQuizQuestion1, saQuizQuestion2, saQuizQuestion3));
-        responseQuizPool.getQuizQuestions().get(2).setQuizGroup(quizGroup3);
-
-        QuizPool responseQuizPool2 = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", responseQuizPool, QuizPool.class,
-                HttpStatus.OK, null);
-
-        assertThat(responseQuizPool2.getExam().getId()).isEqualTo(exam.getId());
-        assertThat(responseQuizPool2.getQuizGroups()).hasSize(responseQuizPool.getQuizGroups().size()).extracting("name").containsExactly(
-                responseQuizPool.getQuizGroups().get(0).getName(), responseQuizPool.getQuizGroups().get(1).getName(), responseQuizPool.getQuizGroups().get(2).getName());
-        assertThat(responseQuizPool2.getQuizQuestions()).hasSize(responseQuizPool.getQuizQuestions().size()).extracting("title", "quizGroup.name").containsExactly(
-                tuple(responseQuizPool.getQuizQuestions().get(0).getTitle(), quizGroup0.getName()),
-                tuple(responseQuizPool.getQuizQuestions().get(1).getTitle(), quizGroup0.getName()),
-                tuple(responseQuizPool.getQuizQuestions().get(2).getTitle(), quizGroup3.getName()),
-                tuple(responseQuizPool.getQuizQuestions().get(3).getTitle(), quizGroup2.getName()),
-                tuple(responseQuizPool.getQuizQuestions().get(4).getTitle(), quizGroup3.getName()), tuple(responseQuizPool.getQuizQuestions().get(5).getTitle(), null));
+                tuple(quizPool.getQuizQuestions().get(2).getTitle(), quizGroup3.getName()), tuple(quizPool.getQuizQuestions().get(3).getTitle(), quizGroup2.getName()),
+                tuple(quizPool.getQuizQuestions().get(4).getTitle(), quizGroup3.getName()), tuple(quizPool.getQuizQuestions().get(5).getTitle(), null));
     }
 
     @Test
@@ -137,7 +134,6 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolNotFoundCourse() throws Exception {
         QuizQuestion quizQuestion = database.createMultipleChoiceQuestion();
-        quizQuestion.setTitle(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundCourseId = 0;
@@ -148,7 +144,6 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolNotFoundExam() throws Exception {
         QuizQuestion quizQuestion = database.createMultipleChoiceQuestion();
-        quizQuestion.setTitle(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundExamId = 0;
@@ -180,5 +175,20 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetQuizPoolNotFoundExam() throws Exception {
         int notFoundExamId = 0;
         request.get("/api/courses/" + course.getId() + "/exams/" + notFoundExamId + "/quiz-pools", HttpStatus.NOT_FOUND, QuizPool.class);
+    }
+
+    private QuizPool createQuizPool() throws Exception {
+        quizGroup0 = database.createQuizGroup("Encapsulation");
+        quizGroup1 = database.createQuizGroup("Inheritance");
+        quizGroup2 = database.createQuizGroup("Polymorphism");
+        QuizQuestion mcQuizQuestion0 = database.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
+        QuizQuestion mcQuizQuestion1 = database.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
+        QuizQuestion dndQuizQuestion0 = database.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
+        QuizQuestion dndQuizQuestion1 = database.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
+        QuizQuestion saQuizQuestion0 = database.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
+        quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
+        quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
+
+        return request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/quiz-pools", quizPool, QuizPool.class, HttpStatus.OK, null);
     }
 }
