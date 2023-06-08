@@ -10,6 +10,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
+/**
+ * Stores configuration for manual and continuous plagiarism control.
+ */
 @Entity
 @Table(name = "plagiarism_checks_config")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

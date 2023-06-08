@@ -20,6 +20,9 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
+/**
+ * Manages continuous plagiarism control.
+ */
 @Service
 @Component
 @Profile("scheduling")
