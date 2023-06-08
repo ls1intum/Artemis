@@ -1,13 +1,13 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.learningGoal.importCompetency.title">Import a Competency</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.competency.importCompetency.title">Import a Competency</h4>
         <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            <span jhiTranslate="artemisApp.learningGoal.importCompetency.search">Search for competency:</span>
-            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningGoal" type="text" />
-            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.learningGoal.importCompetency.loading">Loading...</span>
+            <span jhiTranslate="artemisApp.competency.importCompetency.search">Search for competency:</span>
+            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchCompetency" type="text" />
+            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.competency.importCompetency.loading">Loading...</span>
         </div>
         <table class="table table-striped align-middle flex">
             <thead class="thead-dark">
@@ -17,15 +17,15 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.TITLE }}">
-                        <span jhiTranslate="artemisApp.learningGoal.importCompetency.table.title">Title</span>
+                        <span jhiTranslate="artemisApp.competency.importCompetency.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
-                        <span jhiTranslate="artemisApp.learningGoal.importCompetency.table.course">Course</span>
+                        <span jhiTranslate="artemisApp.competency.importCompetency.table.course">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
-                        <span jhiTranslate="artemisApp.learningGoal.importCompetency.table.semester">Semester</span>
+                        <span jhiTranslate="artemisApp.competency.importCompetency.table.semester">Semester</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-1"></th>
@@ -49,7 +49,7 @@
                         <jhi-button
                             (onClick)="selectImport(competency)"
                             [disabled]="disabledIds.includes(competency.id!)"
-                            [title]="'artemisApp.learningGoal.importCompetency.table.doSelect'"
+                            [title]="'artemisApp.competency.importCompetency.table.doSelect'"
                         ></jhi-button>
                     </td>
                 </tr>
