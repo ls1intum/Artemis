@@ -75,15 +75,15 @@
                     "unitsStepTitle": "Units",
                     "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units.",
                     "competenciesStepTitle": "Competencies",
-                    "learningGoalsStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies."
+                    "competenciesStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies."
                 },
                 "newLectureUnit": "New Lecture Unit",
                 "editLectureUnit": "Edit Lecture Unit",
                 "newExercise": "Create new exercise",
                 "backToWizard": "Back to lecture",
-                "learningGoalTitle": "Title",
-                "learningGoalConnectedUnits": "Connected Units",
-                "learningGoalNoConnectedUnits": "No connected units"
+                "competencyTitle": "Title",
+                "competencyConnectedUnits": "Connected Units",
+                "competencyNoConnectedUnits": "No connected units"
             }
         },
         "attachment": {
