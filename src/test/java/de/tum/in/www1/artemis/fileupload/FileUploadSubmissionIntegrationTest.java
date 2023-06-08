@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.fileupload;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +9,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,10 +83,13 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3")
     void testRepositoryMethods() {
-        assertThrows(EntityNotFoundException.class, () -> fileUploadSubmissionRepository.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class,
-                () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> fileUploadSubmissionRepository.findByIdElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long.MAX_VALUE));
     }
 
     @Test
@@ -667,7 +667,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void testOnDeleteSubmission() {
         submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
-        Assertions.assertDoesNotThrow(() -> submittedFileUploadSubmission.onDelete());
+        assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }
 
     @Test
@@ -675,6 +675,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void testOnDeleteSubmissionWithException() {
         submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
-        Assertions.assertThrows(FilePathParsingException.class, () -> submittedFileUploadSubmission.onDelete());
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }
 }

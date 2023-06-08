@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -224,9 +221,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testManageFilesForUpdatedFilePath_shouldNotThrowException() {
-        assertDoesNotThrow(() -> {
-            fileService.manageFilesForUpdatedFilePath("oldFilePath", "newFilePath", "targetFolder", 1L, true);
-        });
+        assertThatNoException().isThrownBy(() -> fileService.manageFilesForUpdatedFilePath("oldFilePath", "newFilePath", "targetFolder", 1L, true));
     }
 
     @Test
@@ -249,11 +244,11 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testActualPathForPublicFileUploadExercisePath_shouldThrowException() {
-        Exception exception = assertThrows(FilePathParsingException.class, () -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-upload-exercises"));
-        assertThat(exception.getMessage()).startsWith("Public path does not contain correct exerciseId or submissionId:");
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-upload-exercises"))
+                .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
-        exception = assertThrows(FilePathParsingException.class, () -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-asd-exercises"));
-        assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-asd-exercises"))
+                .withMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
@@ -265,38 +260,39 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPublicPathForActualPath_shouldThrowException() {
-        Exception exception = assertThrows(FilePathParsingException.class, () -> {
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             Path actualFileUploadPath = Path.of(FilePathService.getFileUploadExercisesFilePath());
             fileService.publicPathForActualPathOrThrow(actualFileUploadPath.toString(), 1L);
-        });
-        assertThat(exception.getMessage()).startsWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
-        exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPathOrThrow(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L));
-        assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
+        }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
+
+        assertThatExceptionOfType(FilePathParsingException.class)
+                .isThrownBy(() -> fileService.publicPathForActualPathOrThrow(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L))
+                .withMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
     void testReplaceVariablesInFileRecursive_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>()));
-        assertThat(exception.getMessage()).endsWith("should be replaced but the directory does not exist.");
+        assertThatRuntimeException().isThrownBy(() -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>()))
+                .withMessageEndingWith("should be replaced but the directory does not exist.");
     }
 
     @Test
     void testNormalizeLineEndingsDirectory_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> fileService.normalizeLineEndingsDirectory("some-path"));
-        assertThat(exception.getMessage()).endsWith("should be normalized but the directory does not exist.");
+        assertThatRuntimeException().isThrownBy(() -> fileService.normalizeLineEndingsDirectory("some-path"))
+                .withMessageEndingWith("should be normalized but the directory does not exist.");
     }
 
     @Test
     void testConvertToUTF8Directory_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> fileService.convertToUTF8Directory("some-path"));
-        assertThat(exception.getMessage()).endsWith("should be converted to UTF-8 but the directory does not exist.");
+        assertThatRuntimeException().isThrownBy(() -> fileService.convertToUTF8Directory("some-path"))
+                .withMessageEndingWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
     // TODO: either rework those tests or delete them
     @Test
     void testGetUniquePath_shouldNotThrowException() {
-        assertDoesNotThrow(() -> {
+        assertThatNoException().isThrownBy(() -> {
             var uniquePath = fileService.getUniquePath("some-random-path-which-does-not-exist");
             assertThat(uniquePath.toString()).isNotEmpty();
         });
@@ -305,13 +301,13 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testCreateDirectory_shouldNotThrowException() {
         Path path = Path.of("some-random-path-which-does-not-exist");
-        assertDoesNotThrow(() -> fileService.createDirectory(path));
+        assertThatNoException().isThrownBy(() -> fileService.createDirectory(path));
     }
 
     @Test
     void testDeleteFiles_shouldNotThrowException() {
         Path path = Path.of("some-random-path-which-does-not-exist");
-        assertDoesNotThrow(() -> fileService.deleteFiles(List.of(path)));
+        assertThatNoException().isThrownBy(() -> fileService.deleteFiles(List.of(path)));
     }
 
     @Test
