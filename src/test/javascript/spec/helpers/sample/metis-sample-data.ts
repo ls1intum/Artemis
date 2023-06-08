@@ -22,7 +22,7 @@ export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [meti
 export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
 export const metisLecture3 = { id: 3, title: 'Third Metis  Lecture 3', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
 
-export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT, channelName: 'metis-ex-channel' } as Exercise;
+export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
@@ -273,7 +273,7 @@ export const directMessageUser2 = {
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
 
 export const metisExerciseChannel = {
-    id: 1,
+    id: 14,
     name: 'exercise-channel',
     description: 'Channel for exercise related questions',
     isAnnouncementChannel: false,
@@ -283,28 +283,13 @@ export const metisExerciseChannel = {
     exercise: metisExercise,
 } as Channel;
 
-export const metisChannelMessage1 = {
-    id: 1,
-    author: metisUser1,
-    content: 'metisPostTechSupport',
-    creationDate: undefined,
-    channel: metisExerciseChannel,
-} as Post;
-
-export const metisChannelMessage2 = {
-    id: 1,
-    author: metisUser1,
-    content: 'metisPostTechSupport',
-    creationDate: undefined,
-    channel: metisExerciseChannel,
-} as Post;
-
-export const metisChannelMessage3 = {
-    id: 1,
-    author: metisUser1,
-    content: 'metisPostTechSupport',
-    creationDate: undefined,
-    channel: metisExerciseChannel,
-} as Post;
-
-export const metisChannelMessages = [metisChannelMessage1, metisChannelMessage2, metisChannelMessage3];
+export const metisLectureChannel = {
+    id: 15,
+    name: 'lecture-channel',
+    description: 'Channel for lecture related',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+    course: metisCourse,
+    exercise: metisLecture,
+} as Channel;

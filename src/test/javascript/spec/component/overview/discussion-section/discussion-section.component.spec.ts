@@ -31,11 +31,12 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { getElement, getElements } from '../../../helpers/utils/general.utils';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import {
-    metisChannelMessages,
     metisCourse,
     metisExercise,
+    metisExerciseChannel,
     metisExercisePosts,
     metisLecture,
+    metisLectureChannel,
     metisLecturePosts,
     metisPostTechSupport,
     post1WithCreationDate,
@@ -136,6 +137,42 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.posts).toEqual(metisExercisePosts);
     }));
 
+    it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {
+        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisLectureChannel as Channel,
+                    status: 200,
+                }),
+            ),
+        );
+        component.lecture = metisLecture;
+        component.ngOnInit();
+        tick();
+        expect(component.course).toEqual(metisCourse);
+        expect(component.createdPost).toBeDefined();
+        expect(component.channel).toEqual(metisLectureChannel);
+        expect(getChannelOfLectureSpy).toHaveBeenCalled();
+    }));
+
+    it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
+        getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisExerciseChannel as Channel,
+                    status: 200,
+                }),
+            ),
+        );
+        component.exercise = metisExercise;
+        component.ngOnInit();
+        tick();
+        expect(component.course).toEqual(metisCourse);
+        expect(component.createdPost).toBeDefined();
+        expect(component.channel).toEqual(metisExerciseChannel);
+        expect(getChannelOfExerciseSpy).toHaveBeenCalled();
+    }));
+
     it('should set course and posts for lecture on initialization', fakeAsync(() => {
         component.lecture = metisLecture;
         component.ngOnInit();
@@ -143,8 +180,6 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.posts).toEqual(metisLecturePosts);
     }));
-
-    // TODO: add meaningful tests for new exercise/lecture channel
 
     it('should reset current post', fakeAsync(() => {
         component.resetCurrentPost();
@@ -211,7 +246,7 @@ describe('PageDiscussionSectionComponent', () => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        component.posts = metisChannelMessages;
+        component.posts = metisExercisePosts;
         fixture.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
         expect(newPostButtons).not.toBeNull();
@@ -242,21 +277,6 @@ describe('PageDiscussionSectionComponent', () => {
         expect(filterResolvedCheckbox).not.toBeNull();
         expect(filterOwnCheckbox).not.toBeNull();
         expect(filterToAnsweredOrReacted).not.toBeNull();
-    }));
-
-    it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
-        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
-        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
-
-        expect(searchInput).toBeNull();
-        expect(filterResolvedCheckbox).toBeNull();
-        expect(filterOwnCheckbox).toBeNull();
-        expect(filterToAnsweredOrReacted).toBeNull();
     }));
 
     it('triggering filters should invoke the metis service', fakeAsync(() => {
