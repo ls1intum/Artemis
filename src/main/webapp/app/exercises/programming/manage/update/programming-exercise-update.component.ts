@@ -570,7 +570,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.programmingExercise);
 
         this.isSaving = true;
-        this.programmingExercise.plagiarismChecksConfig.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
+        this.programmingExercise.plagiarismChecksConfig!.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
             this.alertService.addAlert({

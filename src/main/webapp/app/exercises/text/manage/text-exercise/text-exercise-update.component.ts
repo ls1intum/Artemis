@@ -181,7 +181,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.textExercise.plagiarismChecksConfig.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
+        this.textExercise.plagiarismChecksConfig!.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.textExercise, this.isExamMode, this.notificationText)

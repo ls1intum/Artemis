@@ -193,7 +193,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
-        this.modelingExercise.plagiarismChecksConfig.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
+        this.modelingExercise.plagiarismChecksConfig!.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)

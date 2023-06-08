@@ -71,7 +71,7 @@ describe('ModelingExercise Management Update Component', () => {
                 comp.plagiarismChecksSimilarityThresholdPercentage = 55;
 
                 const entity = { ...modelingExercise };
-                entity.plagiarismChecksConfig.similarityThreshold = 0.55;
+                entity.plagiarismChecksConfig!.similarityThreshold = 0.55;
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
