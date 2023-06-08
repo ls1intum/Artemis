@@ -87,12 +87,12 @@ export function getIconTooltip(competencyTaxonomy?: CompetencyTaxonomy): string 
     }
 
     const tooltips = {
-        [CompetencyTaxonomy.REMEMBER]: 'artemisApp.learningGoal.taxonomies.remember',
-        [CompetencyTaxonomy.UNDERSTAND]: 'artemisApp.learningGoal.taxonomies.understand',
-        [CompetencyTaxonomy.APPLY]: 'artemisApp.learningGoal.taxonomies.apply',
-        [CompetencyTaxonomy.ANALYZE]: 'artemisApp.learningGoal.taxonomies.analyze',
-        [CompetencyTaxonomy.EVALUATE]: 'artemisApp.learningGoal.taxonomies.evaluate',
-        [CompetencyTaxonomy.CREATE]: 'artemisApp.learningGoal.taxonomies.create',
+        [CompetencyTaxonomy.REMEMBER]: 'artemisApp.competency.taxonomies.remember',
+        [CompetencyTaxonomy.UNDERSTAND]: 'artemisApp.competency.taxonomies.understand',
+        [CompetencyTaxonomy.APPLY]: 'artemisApp.competency.taxonomies.apply',
+        [CompetencyTaxonomy.ANALYZE]: 'artemisApp.competency.taxonomies.analyze',
+        [CompetencyTaxonomy.EVALUATE]: 'artemisApp.competency.taxonomies.evaluate',
+        [CompetencyTaxonomy.CREATE]: 'artemisApp.competency.taxonomies.create',
     };
 
     return tooltips[competencyTaxonomy];
