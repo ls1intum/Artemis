@@ -4233,6 +4233,34 @@ public class DatabaseUtilService {
         return mc;
     }
 
+    @NotNull
+    public QuizGroup createQuizGroup(String name) {
+        QuizGroup quizGroup = new QuizGroup();
+        quizGroup.setName(name);
+        return quizGroup;
+    }
+
+    @NotNull
+    public MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        return setQuizQuestionsTitleAndGroup(createMultipleChoiceQuestion(), title, quizGroup);
+    }
+
+    @NotNull
+    public DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        return setQuizQuestionsTitleAndGroup(createDragAndDropQuestion(), title, quizGroup);
+    }
+
+    @NotNull
+    public ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        return setQuizQuestionsTitleAndGroup(createShortAnswerQuestion(), title, quizGroup);
+    }
+
+    private <Q extends QuizQuestion> Q setQuizQuestionsTitleAndGroup(Q quizQuestion, String title, QuizGroup quizGroup) {
+        quizQuestion.setTitle(title);
+        quizQuestion.setQuizGroup(quizGroup);
+        return quizQuestion;
+    }
+
     /**
      * Generate submissions for a student for an exercise. Results depend on the studentID.
      *
