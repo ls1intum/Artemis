@@ -112,7 +112,7 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let teamService: TeamService;
-    let learningGoalService: CompetencyService;
+    let competencyService: CompetencyService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
@@ -178,7 +178,7 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
-                learningGoalService = TestBed.inject(CompetencyService);
+                competencyService = TestBed.inject(CompetencyService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
@@ -401,10 +401,10 @@ describe('CourseOverviewComponent', () => {
         expect(bool).toBeFalse();
     });
 
-    it('should have learning goals and tutorial groups', () => {
+    it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const learningGoalsResponse: HttpResponse<Competency[]> = new HttpResponse({
+        const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
             body: [new Competency()],
             status: 200,
         });
@@ -417,8 +417,8 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(learningGoalsResponse));
-        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsResponse));
+        jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(competenciesResponse));
+        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesResponse));
         jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
         jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
@@ -427,7 +427,7 @@ describe('CourseOverviewComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.hasLearningGoals()).toBeTrue();
+        expect(component.hasCompetencies()).toBeTrue();
         expect(component.hasTutorialGroups()).toBeTrue();
         expect(component.course?.competencies).not.toBeEmpty();
         expect(component.course?.prerequisites).not.toBeEmpty();
