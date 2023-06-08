@@ -596,6 +596,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setId(null);
         fileUploadExercise.setAssessmentDueDate(null);
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        fileUploadExercise.getPlagiarismChecksConfig().setId(null);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
         fileUploadExercise.setDueDate(baseTime.plusHours(2));
@@ -633,7 +634,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedFileUploadExercise).usingRecursiveComparison()
-                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(expectedFileUploadExercise);
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "plagiarismChecksConfig.id")
+                .isEqualTo(expectedFileUploadExercise);
     }
 
     @Test
