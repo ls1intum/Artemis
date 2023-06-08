@@ -33,7 +33,7 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorial Groups",
-                "learningGoals": "Competencies",
+                "competencies": "Competencies",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
@@ -139,7 +139,7 @@
                 "exercisesWithNoCategories": "Exercises with no categories",
                 "pointsPerExercise": "Points per Exercise"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "No competencies available for this course."
             },
             "lectureList": {

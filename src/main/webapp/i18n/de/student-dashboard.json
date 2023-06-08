@@ -32,7 +32,7 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
-                "learningGoals": "Kompetenzen",
+                "competencies": "Kompetenzen",
                 "tutorialGroups": "Übungsgruppen",
                 "exams": "Klausuren",
                 "testExam": "Testklausur",
@@ -137,7 +137,7 @@
                 "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
                 "pointsPerExercise": "Punkte pro Aufgabe"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "Es sind keine Kompetenzen für diesen Kurs vorhanden."
             },
             "lectureList": {
