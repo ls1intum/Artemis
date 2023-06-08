@@ -1,4 +1,4 @@
-.course-goal-card {
+.course-competency-card {
     width: 100%;
     min-width: 350px;
     max-width: 440px;
@@ -7,15 +7,15 @@
     border-radius: 10px;
 }
 
-.course-goal-card-header {
+.course-competency-card-header {
     border-radius: 10px 10px 0 0 !important;
 }
 
-.course-goal-card-footer {
+.course-competency-card-footer {
     border-radius: 0 0 10px 10px !important;
 }
 
-.course-goal-card:hover {
+.course-competency-card:hover {
     box-shadow: rgba(100, 100, 111, 0.2) 0 7px 29px 0;
 }
 

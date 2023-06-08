@@ -506,9 +506,9 @@ $user-management-background-color: rgba($black, 0.02);
 $user-management-border-color: rgba($black, 0.15);
 
 // Competency Rings
-$learning-goal-rings-red: $red;
-$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
-$learning-goal-rings-green: $green;
-$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
-$learning-goal-rings-blue: $blue;
-$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);
+$competency-rings-red: $red;
+$competency-rings-red-bg: transparentize($competency-rings-red, 0.8);
+$competency-rings-green: $green;
+$competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
+$competency-rings-blue: $blue;
+$competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);

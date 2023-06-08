@@ -34,10 +34,10 @@ svg {
         transform: scale(1) rotate(-90deg);
 
         .background {
-            stroke: var(--learning-goal-rings-red-bg);
+            stroke: var(--competency-rings-red-bg);
         }
         .progressbar {
-            stroke: var(--learning-goal-rings-red);
+            stroke: var(--competency-rings-red);
             animation-duration: 1.6s;
             transition-duration: 1.6s;
         }
@@ -47,10 +47,10 @@ svg {
         transform: scale(0.75) rotate(-90deg);
 
         .background {
-            stroke: var(--learning-goal-rings-green-bg);
+            stroke: var(--competency-rings-green-bg);
         }
         .progressbar {
-            stroke: var(--learning-goal-rings-green);
+            stroke: var(--competency-rings-green);
             animation-duration: 1.3s;
             transition-duration: 1.3s;
         }
@@ -60,10 +60,10 @@ svg {
         transform: scale(0.5) rotate(-90deg);
 
         .background {
-            stroke: var(--learning-goal-rings-blue-bg);
+            stroke: var(--competency-rings-blue-bg);
         }
         .progressbar {
-            stroke: var(--learning-goal-rings-blue);
+            stroke: var(--competency-rings-blue);
             animation-duration: 1s;
             transition-duration: 1s;
         }
