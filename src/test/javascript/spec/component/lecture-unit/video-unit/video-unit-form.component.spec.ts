@@ -117,7 +117,7 @@ describe('VideoUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
-                learningGoals: null,
+                competencies: null,
                 source: validYouTubeUrlInEmbeddableFormat,
                 urlHelper: null,
             });
