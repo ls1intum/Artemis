@@ -98,12 +98,17 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
     }
 
     /**
-     * Check if all quiz questions are valid
+     * Check if all quiz groups and questions are valid
      *
-     * @return true if all quiz questions are valid
+     * @return true if all quiz groups and questions are valid
      */
     @JsonIgnore
     public boolean isValid() {
+        for (QuizGroup quizGroup : getQuizGroups()) {
+            if (!quizGroup.isValid()) {
+                return false;
+            }
+        }
         for (QuizQuestion quizQuestion : getQuizQuestions()) {
             if (!quizQuestion.isValid()) {
                 return false;
