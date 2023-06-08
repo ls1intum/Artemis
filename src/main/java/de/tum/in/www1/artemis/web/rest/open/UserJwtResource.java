@@ -110,7 +110,8 @@ public class UserJwtResource {
         try {
             authentication = saml2Service.get().handleAuthentication(principal);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (UserNotActivatedException e) {
+        }
+        catch (UserNotActivatedException e) {
             // If the exception is not caught a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();

@@ -39,6 +39,7 @@ public class AccountResource {
     }
 
     /**
+     * {@code POST  /account} : update the provided account.
      *
      * @param userDTO the current user information.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
