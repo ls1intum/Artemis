@@ -12,7 +12,7 @@ export interface TextUnitFormData {
     name?: string;
     releaseDate?: dayjs.Dayjs;
     content?: string;
-    learningGoals?: Competency[];
+    competencies?: Competency[];
 }
 
 @Component({
