@@ -46,7 +46,7 @@ export class EditVideoUnitComponent implements OnInit {
                         description: this.videoUnit.description,
                         releaseDate: this.videoUnit.releaseDate,
                         source: this.videoUnit.source,
-                        learningGoals: this.videoUnit.competencies,
+                        competencies: this.videoUnit.competencies,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -54,12 +54,12 @@ export class EditVideoUnitComponent implements OnInit {
     }
 
     updateVideoUnit(formData: VideoUnitFormData) {
-        const { name, description, releaseDate, source, learningGoals } = formData;
+        const { name, description, releaseDate, source, competencies } = formData;
         this.videoUnit.name = name;
         this.videoUnit.description = description;
         this.videoUnit.releaseDate = releaseDate;
         this.videoUnit.source = source;
-        this.videoUnit.competencies = learningGoals;
+        this.videoUnit.competencies = competencies;
         this.isLoading = true;
         this.videoUnitService
             .update(this.videoUnit, this.lectureId)

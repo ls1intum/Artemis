@@ -91,7 +91,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         this.form = this.fb.group({
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
-            learningGoals: [undefined as Competency[] | undefined],
+            competencies: [undefined as Competency[] | undefined],
         });
     }
 

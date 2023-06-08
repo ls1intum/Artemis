@@ -57,7 +57,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                             description: this.attachmentUnit.description,
                             releaseDate: this.attachment.releaseDate,
                             version: this.attachment.version,
-                            learningGoals: this.attachmentUnit.competencies,
+                            competencies: this.attachmentUnit.competencies,
                         },
                         fileProperties: {
                             fileName: this.attachment.link,

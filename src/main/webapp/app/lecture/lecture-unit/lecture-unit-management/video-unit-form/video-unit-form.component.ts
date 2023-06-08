@@ -10,7 +10,7 @@ export interface VideoUnitFormData {
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
-    learningGoals?: Competency[];
+    competencies?: Competency[];
 }
 
 function videoUrlValidator(control: AbstractControl) {
@@ -111,7 +111,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             source: [undefined as string | undefined, [Validators.required, this.urlValidator]],
             urlHelper: [undefined as string | undefined, this.videoUrlValidator],
-            learningGoals: [undefined as Competency[] | undefined],
+            competencies: [undefined as Competency[] | undefined],
         });
     }
 

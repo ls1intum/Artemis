@@ -93,7 +93,7 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
             description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
-            learningGoals: [undefined as Competency[] | undefined],
+            competencies: [undefined as Competency[] | undefined],
         });
     }
 

@@ -46,7 +46,7 @@ export class EditOnlineUnitComponent implements OnInit {
                         description: this.onlineUnit.description,
                         releaseDate: this.onlineUnit.releaseDate,
                         source: this.onlineUnit.source,
-                        learningGoals: this.onlineUnit.competencies,
+                        competencies: this.onlineUnit.competencies,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
