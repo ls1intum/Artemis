@@ -235,7 +235,7 @@
                             id="plagiarism-minimum-score"
                             name="modelingExercise.plagiarismChecksConfig.minimumScore"
                             #modelingExercise.plagiarismChecksConfig.minimumScore="ngModel"
-                            [(ngModel)]="modelingExercise.plagiarismChecksConfig.minimumScore"
+                            [(ngModel)]="modelingExercise.plagiarismChecksConfig!.minimumScore"
                         />
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"></fa-icon>
                     </div>
@@ -254,7 +254,7 @@
                             id="plagiarism-minimum-size"
                             name="modelingExercise.plagiarismChecksConfig.minimumSize"
                             #modelingExercise.plagiarismChecksConfig.minimumSize="ngModel"
-                            [(ngModel)]="modelingExercise.plagiarismChecksConfig.minimumSize"
+                            [(ngModel)]="modelingExercise.plagiarismChecksConfig!.minimumSize"
                         />
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumSizeTooltip' | artemisTranslate"></fa-icon>
                     </div>
