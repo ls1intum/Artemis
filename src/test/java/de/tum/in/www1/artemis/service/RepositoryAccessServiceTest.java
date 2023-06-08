@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
@@ -92,6 +93,7 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @ValueSource(booleans = { true, false })
     // Student should not have access to the tests repository.
     void testShouldDenyAccessToTestRepository(boolean atLeastEditor) {
-        assertThrows(AccessForbiddenException.class, () -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, student));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, student));
     }
 }

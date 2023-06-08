@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -439,8 +439,8 @@ public class LocalVCLocalCITestService {
      */
     public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
             Class<T> expectedException, String expectedMessage) {
-        T exception = assertThrows(expectedException, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
-        assertThat(exception.getMessage()).contains(expectedMessage);
+        assertThatExceptionOfType(expectedException).isThrownBy(() -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug))
+                .withMessageContaining(expectedMessage);
     }
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
@@ -517,8 +517,8 @@ public class LocalVCLocalCITestService {
      * @param expectedMessage  the expected message of the exception.
      */
     public void testPushReturnsError(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
-        TransportException exception = assertThrows(TransportException.class, () -> performPush(repositoryHandle, username, password, projectKey, repositorySlug));
-        assertThat(exception.getMessage()).contains(expectedMessage);
+        assertThatExceptionOfType(TransportException.class).isThrownBy(() -> performPush(repositoryHandle, username, password, projectKey, repositorySlug))
+                .withMessageContaining(expectedMessage);
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
@@ -538,10 +538,10 @@ public class LocalVCLocalCITestService {
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
         LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }

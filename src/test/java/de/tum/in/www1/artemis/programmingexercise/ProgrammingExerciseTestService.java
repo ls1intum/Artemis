@@ -8,8 +8,8 @@ import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExpo
 import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -35,6 +35,8 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -89,6 +91,8 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
  */
 @Service
 public class ProgrammingExerciseTestService {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -1687,7 +1691,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
-        assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
+        assertThatExceptionOfType(GitLabException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
     }
 
     // TEST
@@ -1701,13 +1705,14 @@ public class ProgrammingExerciseTestService {
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
-        assertThat(Files.exists(teamLocalPath)).isTrue();
+        assertThat(teamLocalPath).exists();
+
         // Start participation
-        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
+        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
+                .matches(exception -> !exception.getMessage().isEmpty());
+
         // the directory of the repo should be deleted
-        assertThat(Files.exists(teamLocalPath)).isFalse();
-        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
-        assertThat(exception.getMessage()).isNotEmpty();
+        assertThat(teamLocalPath).doesNotExist();
     }
 
     @NotNull
@@ -1759,9 +1764,9 @@ public class ProgrammingExerciseTestService {
         Team team = setupTeamForBadRequestForStartExercise();
 
         // Start participation
-        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
-        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
-        assertThat(exception.getMessage()).isNotEmpty();
+        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
+                .matches(exception -> !exception.getMessage().isEmpty());
+
     }
 
     // TEST
@@ -1930,7 +1935,7 @@ public class ProgrammingExerciseTestService {
             try (Git git = new Git(repository)) {
                 List<DiffEntry> diffs = git.diff().setNewTree(newTreeIter).setOldTree(oldTreeIter).call();
                 for (DiffEntry entry : diffs) {
-                    System.out.println("Entry: " + entry);
+                    log.debug("Entry: {}", entry.toString());
                 }
                 return diffs;
             }
