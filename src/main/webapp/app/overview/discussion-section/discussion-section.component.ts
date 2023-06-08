@@ -3,7 +3,7 @@ import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { combineLatest, map } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -172,6 +172,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * @param courseId
      */
     setChannel(courseId: number): void {
+        if (this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+            this.metisService.getFilteredPosts({
+                exerciseId: this.exercise?.id,
+                lectureId: this.lecture?.id,
+            });
+            return;
+        }
         const getChannel = () => {
             return {
                 next: (channel: Channel) => {

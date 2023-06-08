@@ -129,17 +129,17 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('fa-icon.resolved').should('exist');
     }
 
-    checkSinglePostByPosition(position: number, title: string, content: string, context?: CourseWideContext) {
+    checkSinglePostByPosition(position: number, title: string | undefined, content: string, context?: CourseWideContext) {
         if (context) {
             cy.get('.items-container .item').eq(position).find('.context-information').contains(titleCaseWord(context));
         }
-        cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
+        if (title !== undefined) {
+            cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
+        }
         cy.get('.items-container .item').eq(position).find('.markdown-preview').contains(content);
     }
 
-    checkSingleExercisePost(postID: number, title: string, content: string) {
-        this.getSinglePost(postID).find('.post-title').contains(title);
+    checkSingleExercisePost(postID: number, content: string) {
         this.getSinglePost(postID).find('.markdown-preview').contains(content);
-        this.getSinglePost(postID).find('.reference-hash').contains(`#${postID}`);
     }
 }

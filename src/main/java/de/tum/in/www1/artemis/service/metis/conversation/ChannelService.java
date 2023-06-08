@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -126,6 +125,7 @@ public class ChannelService {
         if (StringUtils.hasText(channel.getName())) {
             channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
         }
+
         channel.setCreator(creator.orElse(null));
         channel.setCourse(course);
         channel.setIsArchived(false);
@@ -277,8 +277,11 @@ public class ChannelService {
      * @param channelName the name of the channel
      * @return the created channel
      */
-    public Channel createLectureChannel(Lecture lecture, @NotNull String channelName) {
-        Channel channelToCreate = createDefaultChannel(channelName);
+    public Channel createLectureChannel(Lecture lecture, String channelName) {
+        Channel channelToCreate = createDefaultChannel(channelName, lecture.getCourse());
+        if (channelToCreate == null) {
+            return null;
+        }
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
@@ -293,12 +296,16 @@ public class ChannelService {
      * @param channelName the name of the channel
      * @return the created channel
      */
-    public Channel createExerciseChannel(Exercise exercise, @NotNull String channelName) {
+    public Channel createExerciseChannel(Exercise exercise, String channelName) {
         if (!exercise.isCourseExercise()) {
             return null;
         }
 
-        Channel channelToCreate = createDefaultChannel(channelName);
+        Channel channelToCreate = createDefaultChannel(channelName, exercise.getCourseViaExerciseGroupOrCourseMember());
+        if (channelToCreate == null) {
+            return null;
+        }
+
         channelToCreate.setExercise(exercise);
         Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
@@ -312,11 +319,16 @@ public class ChannelService {
      * @param channelName the name of the channel
      * @return the created channel
      */
-    public Channel createExamChannel(Exam exam, @NotNull String channelName) {
+    public Channel createExamChannel(Exam exam, String channelName) {
         if (exam.isTestExam()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName);
+
+        Channel channelToCreate = createDefaultChannel(channelName, exam.getCourse());
+        if (channelToCreate == null) {
+            return null;
+        }
+
         channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -398,7 +410,10 @@ public class ChannelService {
         }
     }
 
-    private static Channel createDefaultChannel(@NotNull String channelName) {
+    private static Channel createDefaultChannel(String channelName, Course course) {
+        if (!course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            return null;
+        }
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);

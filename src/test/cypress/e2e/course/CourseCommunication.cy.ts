@@ -6,6 +6,7 @@ import { convertCourseAfterMultiPart } from '../../support/requests/CourseManage
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { generateUUID, titleCaseWord } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
+import day from 'dayjs/esm';
 
 // Common primitives
 let courseName: string;
@@ -19,13 +20,15 @@ describe('Course communication', () => {
         const uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
-            courseManagementRequest.addStudentToCourse(course, studentThree);
-        });
+        courseManagementRequest
+            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
+            .then((response) => {
+                course = convertCourseAfterMultiPart(response);
+                courseManagementRequest.addInstructorToCourse(course, instructor);
+                courseManagementRequest.addStudentToCourse(course, studentOne);
+                courseManagementRequest.addStudentToCourse(course, studentTwo);
+                courseManagementRequest.addStudentToCourse(course, studentThree);
+            });
     });
 
     describe('Course overview communication', () => {
@@ -248,7 +251,7 @@ describe('Course communication', () => {
             courseCommunication.save();
         });
 
-        it.skip('instructor should be able pin a post within exercises', () => {
+        it('instructor should be able pin a post within exercises', () => {
             const title = 'Pin Test Exercise Post';
             const content = 'Pin Exercise Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
@@ -257,11 +260,11 @@ describe('Course communication', () => {
                 cy.login(instructor, `/courses/${course.id}/exercises/${textExercise.id}`);
                 courseCommunication.pinPost(post.id);
                 cy.reload();
-                courseCommunication.checkSinglePostByPosition(0, title, content);
+                courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
         });
 
-        it.skip('instructor should be able to archive a post within exercises', () => {
+        it('instructor should be able to archive a post within exercises', () => {
             const title = 'Archive Test Exercise Post';
             const content = 'Archive Exercise Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
@@ -283,7 +286,7 @@ describe('Course communication', () => {
                 cy.login(studentTwo, `/courses/${course.id}/exercises/${textExercise.id}`);
                 cy.reload();
                 courseCommunication.searchForPost(title);
-                courseCommunication.checkSingleExercisePost(post.id, title, content);
+                courseCommunication.checkSingleExercisePost(post.id, content);
             });
         });
 
@@ -364,7 +367,7 @@ describe('Course communication', () => {
             courseCommunication.save();
         });
 
-        it.skip('instructor should be able pin a post within lectures', () => {
+        it('instructor should be able pin a post within lectures', () => {
             const title = 'Pin Test Lecture Post';
             const content = 'Pin Lecture Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
@@ -373,11 +376,11 @@ describe('Course communication', () => {
                 cy.login(instructor, `/courses/${course.id}/lectures/${lecture.id}`);
                 courseCommunication.pinPost(post.id);
                 cy.reload();
-                courseCommunication.checkSinglePostByPosition(0, title, content);
+                courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
         });
 
-        it.skip('instructor should be able to archive a post within lectures', () => {
+        it('instructor should be able to archive a post within lectures', () => {
             const title = 'Archive Test Lecture Post';
             const content = 'Archive Lecture Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
@@ -399,7 +402,7 @@ describe('Course communication', () => {
                 cy.login(studentTwo, `/courses/${course.id}/lectures/${lecture.id}`);
                 cy.reload();
                 courseCommunication.searchForPost(title);
-                courseCommunication.checkSingleExercisePost(post.id, title, content);
+                courseCommunication.checkSingleExercisePost(post.id, content);
             });
         });
 
