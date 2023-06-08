@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -278,10 +279,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createLectureChannel(Lecture lecture, String channelName) {
-        Channel channelToCreate = createDefaultChannel(channelName, lecture.getCourse());
-        if (channelToCreate == null) {
-            return null;
-        }
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
@@ -300,12 +298,7 @@ public class ChannelService {
         if (!exercise.isCourseExercise()) {
             return null;
         }
-
-        Channel channelToCreate = createDefaultChannel(channelName, exercise.getCourseViaExerciseGroupOrCourseMember());
-        if (channelToCreate == null) {
-            return null;
-        }
-
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setExercise(exercise);
         Channel createdChannel = createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         registerUsersToChannelAsynchronously(true, createdChannel.getCourse(), createdChannel);
@@ -323,12 +316,7 @@ public class ChannelService {
         if (exam.isTestExam()) {
             return null;
         }
-
-        Channel channelToCreate = createDefaultChannel(channelName, exam.getCourse());
-        if (channelToCreate == null) {
-            return null;
-        }
-
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -410,10 +398,7 @@ public class ChannelService {
         }
     }
 
-    private static Channel createDefaultChannel(String channelName, Course course) {
-        if (!course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            return null;
-        }
+    private static Channel createDefaultChannel(@NotNull String channelName) {
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);
