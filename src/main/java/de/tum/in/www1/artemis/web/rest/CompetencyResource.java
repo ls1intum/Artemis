@@ -39,8 +39,7 @@ public class CompetencyResource {
 
     private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
-    // TODO: change to `competency` once the translation labels are changed on client
-    private static final String ENTITY_NAME = "learningGoal";
+    private static final String ENTITY_NAME = "competency";
 
     private final CourseRepository courseRepository;
 
