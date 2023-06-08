@@ -193,7 +193,7 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
+                        // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
                             pageTitle: 'artemisApp.competency.manageCompetencies.title',
@@ -204,7 +204,7 @@ export const courseManagementState: Routes = [
                                 component: CreateCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.competency.createLearningGoal.title',
+                                    pageTitle: 'artemisApp.competency.createCompetency.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -213,7 +213,7 @@ export const courseManagementState: Routes = [
                                 component: EditCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.competency.editLearningGoal.title',
+                                    pageTitle: 'artemisApp.competency.editCompetency.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
