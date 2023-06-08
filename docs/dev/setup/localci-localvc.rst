@@ -9,7 +9,7 @@ This also reduces system requirements as you do not have to run any systems in a
 For now, this setup is only recommended for development and testing purposes.
 If you are setting Artemis up for the first time, these are the steps you should follow:
 
-- Install and run Docker: https://docs.docker.com/install/
+- Install and run Docker: https://docs.docker.com/get-docker
 - Start the database: :ref:`Database Setup`
 - :ref:`Configure Artemis`
 - (optional) :ref:`Configure Jira`
@@ -26,7 +26,7 @@ If you are setting Artemis up for the first time, these are the steps you should
 Configure Artemis
 ^^^^^^^^^^^^^^^^^
 
-Modify ``src/main/resources/config/application-local.yml`` to include the correct URLs and directories:
+Create a file ``src/main/resources/config/application-local.yml`` with the following content:
 
 .. code:: yaml
 
@@ -35,6 +35,8 @@ Modify ``src/main/resources/config/application-local.yml`` to include the correc
                use-external: false # if you do not wish to use Jira for user management
            version-control:
                url: http://localhost:8080
+
+The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with the local VC and local CI systems.
 
 .. HINT::
    If you are running Artemis in Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri`` with the value ``tcp://localhost:2375``.
@@ -84,7 +86,7 @@ e.g.:
    --spring.profiles.active=dev,localci,localvc,artemis,scheduling,local
 
 All of these profiles are enabled by default when using the ``Artemis (Server, LocalVC & LocalCI)`` run configuration in IntelliJ.
-Add ``jira`` to the list of profiles if you want to use Jira for user management.
+Add ``jira`` to the list of profiles if you want to use Jira for user management: `dev,localci,localvc,artemis,scheduling,local,jira`
 Please read :ref:`Server Setup` for more details.
 
 
