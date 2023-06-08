@@ -19,7 +19,7 @@ export interface FormProperties {
     releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
-    learningGoals?: Competency[];
+    competencies?: Competency[];
 }
 
 // file input is a special case and is not included in the reactive form structure
