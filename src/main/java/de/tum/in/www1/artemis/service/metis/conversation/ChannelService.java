@@ -151,6 +151,18 @@ public class ChannelService {
     }
 
     /**
+     * Adds all course students to the given channel asynchronously
+     *
+     * @param course  the course to add the students from
+     * @param channel the channel to add the students to
+     */
+    @Async
+    public void registerCourseStudentsToChannelAsynchronously(Course course, Channel channel) {
+        SecurityUtils.setAuthorizationObject();
+        registerUsersToChannel(true, false, false, List.of(), course, channel);
+    }
+
+    /**
      * Adds users to the given channel asynchronously
      *
      * @param addAllStudents if true, all students of the course will be added to the channel

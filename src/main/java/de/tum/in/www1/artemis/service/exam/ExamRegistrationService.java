@@ -340,7 +340,7 @@ public class ExamRegistrationService {
         var students = userRepository.getStudents(course);
 
         Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerUsersToChannelAsynchronously(false, course, channel);
+        channelService.registerCourseStudentsToChannelAsynchronously(course, channel);
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());
