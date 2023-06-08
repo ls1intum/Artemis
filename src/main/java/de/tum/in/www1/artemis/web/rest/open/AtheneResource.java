@@ -39,7 +39,6 @@ public class AtheneResource {
      * @param auth           The secret for authorization
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
-    // TODO: /public
     @PostMapping(value = "athene-result/{exerciseId}", consumes = "application/x-protobuf")
     @EnforceNothing
     public ResponseEntity<Void> saveAtheneResult(@PathVariable Long exerciseId, @RequestBody AtheneResponse atheneResponse, @RequestHeader("Authorization") String auth) {
