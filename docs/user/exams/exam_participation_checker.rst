@@ -2,9 +2,28 @@
 Exam Participation Checker
 **************************
 
-For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in :ref:`exam configuration <exam_creation_and_configuration>`.
-
 .. _exam_participation_checker:
+
+What is it?
+===========
+The Artemis Exam Participation Checker iPad application is designed to streamline the process of checking student attendance during on-site exams conducted with the Artemis platform. The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier. The application includes features such as student identification, digital signing, and attendance tracking. The Artemis web platform was adapted to additionally support exam management tasks, such as uploading the seating arrangement and images for students.
+
+Requirements
+============
+
+.. note::
+    For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in :ref:`exam configuration <exam_creation_and_configuration>`.
+
+To use the Artemis Exam Participation Checker iPad application, additional setup before the exam is required. This includes:
+
+- upload images for the students. This can be done via the |upload_images| button. An exemplatory file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
+- setup the room and seating information via the bulk import.
+
+.. note::
+    To upload the images each student needs to have a matriculation number assigned. This is used to match the image with the according student.
+
+.. note::
+    Seats and rooms (only needed can currently only be assigned via the bulk import of students, by defining the seat and room in the ``CSV`` file.
 
 Download
 ========
@@ -55,4 +74,5 @@ Usage
 .. |exam_overview| image:: exam-participation-checker/exam_overview.png
 .. |student_list_view| image:: exam-participation-checker/student_list_view.png
 .. |student_detail_view| image:: exam-participation-checker/student_detail_view.png
+.. |upload_images| image:: exam-participation-checker/upload_images.png
 
