@@ -135,6 +135,25 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.canComplainLaterOn).toBeFalse();
     });
 
+    it('should not show an earlier date than the dueDate once over', () => {
+        exercise.dueDate = dayjs().add(2, 'days');
+        exercise.releaseDate = dayjs().subtract(1, 'day');
+        component.ngOnInit();
+        expect(component.nextRelevantDate).toBeUndefined();
+        expect(component.nextRelevantDateLabel).toBeUndefined();
+        expect(component.nextRelevantDateStatusBadge).toBeUndefined();
+    });
+
+    it('should determine correct badge for due date', () => {
+        exercise.dueDate = dayjs().add(2, 'days');
+        component.ngOnInit();
+        expect(component.dueDateStatusBadge).toBe('bg-success');
+
+        exercise.dueDate = dayjs().subtract(2, 'days');
+        component.ngOnInit();
+        expect(component.dueDateStatusBadge).toBe('bg-danger');
+    });
+
     it('should set the icon according to the exam end date', () => {
         exam.endDate = dayjs().subtract(1, 'day');
         component.exam = exam;

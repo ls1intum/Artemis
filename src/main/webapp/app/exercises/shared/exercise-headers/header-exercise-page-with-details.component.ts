@@ -46,6 +46,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public nextRelevantDate?: dayjs.Dayjs;
     public nextRelevantDateLabel?: string;
     public nextRelevantDateStatusBadge?: string;
+    public dueDateStatusBadge?: string;
     public canComplainLaterOn: boolean;
     public achievedPoints?: number;
     public numberOfSubmissions: number;
@@ -87,6 +88,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
             this.determineNextRelevantDateCourseMode();
         }
+
+        if (this.dueDate) {
+            this.dueDateStatusBadge = dayjs().isBefore(this.dueDate) ? 'bg-success' : 'bg-danger';
+        }
     }
 
     ngOnChanges() {
@@ -120,15 +125,16 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the course exercise cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateCourseMode() {
-        const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.dueDate, this.exercise.assessmentDueDate, this.individualComplaintDeadline];
-        const possibleDatesLabels = ['releaseDate', 'startDate', 'submissionDue', 'assessmentDue', 'complaintDue'];
+        const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.exercise.assessmentDueDate, this.individualComplaintDeadline];
+        const possibleDatesLabels = ['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());
     }
 
     /**
      * Iterates over the given dates and determines the first date that is in the future.
-     * If no such date exists, it is determined if the student can complaint later on. If that is also not the case, the latest date in the past is chosen.
+     * If no such date exists, it is determined if the student can complaint later on.
+     * If that is also not the case, the latest date in the past is chosen that is after the due date.
      * @param dates that should be iterated over. Can contain undefined if that date does not exist
      * @param dateLabels the labels used to translate the given dates
      * @param now the current date and time
@@ -150,6 +156,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         }
         for (let i = dates.length - 1; i >= 0; i--) {
             if (dates[i]) {
+                if (this.dueDate && this.dueDate.isAfter(dates[i])) {
+                    break;
+                }
+
                 this.nextRelevantDate = dates[i]!;
                 this.nextRelevantDateLabel = dateLabels[i];
                 this.nextRelevantDateStatusBadge = 'bg-danger';

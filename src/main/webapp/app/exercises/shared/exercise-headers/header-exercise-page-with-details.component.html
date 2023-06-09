@@ -57,16 +57,18 @@
         </div>
     </div>
     <div class="right-col">
-        <div *ngIf="nextRelevantDate && (!exam || !isTestRun)" class="fw-500">
-            {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+        <ng-container *ngIf="!nextRelevantDateLabel || (nextRelevantDateLabel !== 'releaseDate' && nextRelevantDateLabel !== 'startDate'); else displayNextRelevantDate" />
+        <div *ngIf="dueDate" class="fw-500">
+            {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
             <span
-                [ngClass]="nextRelevantDateStatusBadge"
+                [ngClass]="dueDateStatusBadge"
                 class="badge"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate : { date: nextRelevantDate | artemisDate }"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate : { date: dueDate | artemisDate }"
             >
-                {{ nextRelevantDate | artemisTimeAgo }}
+                {{ dueDate | artemisTimeAgo }}
             </span>
         </div>
+        <ng-container *ngIf="!nextRelevantDateLabel || (nextRelevantDateLabel !== 'assessmentDue' && nextRelevantDateLabel !== 'complaintDue'); else displayNextRelevantDate" />
         <div *ngIf="!nextRelevantDate && canComplainLaterOn" class="fw-500">
             {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
             <span
@@ -76,5 +78,17 @@
                 {{ 'global.generic.yes' | artemisTranslate }}
             </span>
         </div>
+        <ng-template #displayNextRelevantDate>
+            <div *ngIf="nextRelevantDate && (!exam || !isTestRun)" class="fw-500">
+                {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+                <span
+                    [ngClass]="nextRelevantDateStatusBadge"
+                    class="badge"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate : { date: nextRelevantDate | artemisDate }"
+                >
+                    {{ nextRelevantDate | artemisTimeAgo }}
+                </span>
+            </div>
+        </ng-template>
     </div>
 </div>
