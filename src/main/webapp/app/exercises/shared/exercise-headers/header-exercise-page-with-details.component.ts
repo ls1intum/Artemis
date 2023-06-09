@@ -140,6 +140,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * @param now the current date and time
      */
     private determineNextDate(dates: (dayjs.Dayjs | undefined)[], dateLabels: string[], now: dayjs.Dayjs) {
+        this.nextRelevantDate = undefined;
+        this.nextRelevantDateLabel = undefined;
+        this.nextRelevantDateStatusBadge = undefined;
+
         for (let i = 0; i < dates.length; i++) {
             if (dates[i] && now.isBefore(dates[i])) {
                 this.nextRelevantDate = dates[i]!;
@@ -149,17 +153,11 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             }
         }
         if (this.canComplainLaterOn) {
-            this.nextRelevantDate = undefined;
-            this.nextRelevantDateLabel = undefined;
-            this.nextRelevantDateStatusBadge = undefined;
             return;
         }
         for (let i = dates.length - 1; i >= 0; i--) {
             if (dates[i]) {
                 if (this.dueDate && this.dueDate.isAfter(dates[i])) {
-                    this.nextRelevantDate = undefined;
-                    this.nextRelevantDateLabel = undefined;
-                    this.nextRelevantDateStatusBadge = undefined;
                     return;
                 }
 

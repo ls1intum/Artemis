@@ -82,7 +82,6 @@ describe('HeaderExercisePageWithDetails', () => {
     });
 
     it('should set the icon according to the exercise due date', () => {
-        exercise.dueDate = dayjs().subtract(2, 'days');
         exercise.assessmentType = AssessmentType.MANUAL;
 
         exercise.releaseDate = dayjs().add(1, 'day');
@@ -97,13 +96,13 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
 
         exercise.startDate = undefined;
-        const dueDate1 = dayjs().add(1, 'day');
-        participation.individualDueDate = dueDate1;
+        exercise.dueDate = dayjs().subtract(2, 'days');
+        participation.individualDueDate = dayjs().add(1, 'day');
         component.studentParticipation = participation;
         component.ngOnInit();
-        expect(component.dueDate).toEqual(dueDate1);
-        expect(component.nextRelevantDate).toEqual(dueDate1);
-        expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
+        expect(component.dueDate).toEqual(participation.individualDueDate);
+        expect(component.nextRelevantDate).toBeUndefined();
+        expect(component.nextRelevantDateStatusBadge).toBeUndefined();
 
         participation.individualDueDate = undefined;
         exercise.assessmentDueDate = dayjs().add(2, 'days');
