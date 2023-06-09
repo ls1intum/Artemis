@@ -237,8 +237,4 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
         return false;
     }
-
-    asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
-    }
 }
