@@ -18,9 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
@@ -437,6 +436,32 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
             assertThat(result.get().getScore()).isEqualTo(25);
             assertThat(result.get().getFeedbacks()).noneMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void test_getParticipationSubmissionCount() throws Exception {
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        int numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        assertThat(numberOfSubmissionsForSubmissionPolicy).isZero();
+
+        Submission submission1 = database.addSubmission(participation, new ProgrammingSubmission().commitHash("first").type(SubmissionType.MANUAL));
+        database.addResultToParticipation(participation, submission1);
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
+
+        Submission submission2 = database.addSubmission(participation, new ProgrammingSubmission().commitHash("second").type(SubmissionType.MANUAL));
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
+
+        database.addResultToParticipation(participation, submission2);
+
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
+
+        database.addResultToParticipation(participation, submission2);
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
     }
 
     private void mockBitbucketRequests(ProgrammingExerciseParticipation participation) throws Exception {
