@@ -368,7 +368,10 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
 /**
  * Removes references from the {@link Participation}, {@link Submission}, and {@link Feedback} back to the result itself.
  *
- * @param result
+ * To be used before sending data to the server.
+ * Otherwise, no valid JSON can be constructed.
+ *
+ * @param result Some result.
  */
 export function breakCircularResultBackReferences(result: Result) {
     if (result.participation?.results) {
