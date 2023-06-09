@@ -41,13 +41,7 @@ public class DataExportResource {
     @PutMapping("data-exports")
     @PreAuthorize("hasRole('USER')")
     public DataExport requestDataExport() throws IOException {
-        try {
-            return dataExportService.requestDataExport();
-        }
-        catch (Exception e) {
-            log.error("Could not request data export", e);
-            throw new InternalServerErrorException("Could not request data export:" + e.getMessage());
-        }
+        return dataExportService.requestDataExport();
     }
 
     /**

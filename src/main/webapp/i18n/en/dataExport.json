@@ -16,7 +16,8 @@
             "downloadError": "Failed to download the data export. Please try again later.",
             "recentlyRequested": "A data export has already been requested recently. Please try again later.",
             "notDownloadable": "This data export can no longer be downloaded because it doesn't exist (anymore).",
-            "mostRecentNotDownloadable": "The most recently requested data export can not be downloaded because it either has already been deleted or has not yet been created."
+            "mostRecentNotDownloadable": "The most recently requested data export can not be downloaded because it either has already been deleted or has not yet been created.",
+            "isBeingCreated": "Your recently requested data export is currently being created."
         }
     }
 }

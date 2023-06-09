@@ -19,6 +19,8 @@ import {
     CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
     CONVERSATION_REMOVE_USER_CHANNEL_TITLE,
     CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
+    DATA_EXPORT_CREATED_TITLE,
+    DATA_EXPORT_FAILED_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
@@ -83,7 +85,11 @@ export class NotificationService {
             const targetCourseId = target.course || notification.course?.id;
             const targetConversationId = target.conversation;
 
-            if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
+            if (notification.title === DATA_EXPORT_CREATED_TITLE) {
+                this.router.navigate([target.mainPage, 'data-exports', target.id]);
+            } else if (notification.title === DATA_EXPORT_FAILED_TITLE) {
+                this.router.navigate([target.mainPage, 'data-exports']);
+            } else if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.router.navigate([target.mainPage, targetCourseId, 'quiz-exercises', target.id, 'live']);
             } else if (
                 // check with plain strings is needed to support legacy notifications that were created before it was possible to translate notifications

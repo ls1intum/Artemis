@@ -45,9 +45,12 @@ public class DataExportService {
      * @return the created DataExport object
      */
     public DataExport requestDataExport() throws IOException {
+        if (!canRequestDataExport()) {
+            throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
+        }
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        var user = userRepository.getUser();
+        User user = userRepository.getUser();
         dataExport.setUser(user);
         dataExport.setRequestDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
@@ -101,19 +104,19 @@ public class DataExportService {
      * @return a DataExportDTO containing the id of the data export to download or null if no data export can be downloaded
      */
     public DataExportDTO canDownloadAnyDataExport() {
-        var cannotDownload = new DataExportDTO(null);
+        var noDataExport = new DataExportDTO(null, null);
         var user = userRepository.getUserWithDataExports();
         var latestDataExportOptional = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
         if (latestDataExportOptional.isEmpty()) {
-            return cannotDownload;
+            return noDataExport;
         }
         var latestDataExport = latestDataExportOptional.get();
         // either the latest data export is downloadable or none of the data exports are
         if (latestDataExport.getDataExportState().isDownloadable()) {
-            return new DataExportDTO(latestDataExport.getId());
+            return new DataExportDTO(latestDataExport.getId(), latestDataExport.getDataExportState());
         }
         else {
-            return cannotDownload;
+            return new DataExportDTO(null, latestDataExport.getDataExportState());
         }
     }
 

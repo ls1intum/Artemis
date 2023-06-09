@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.DataExportService;
-import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,9 +43,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private UserRepository userRepository;
-
-    @SpyBean
-    private DataExportScheduleService dataExportScheduleService;
 
     @BeforeEach
     void initTestCase() {
@@ -97,14 +93,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setUser(user2);
         dataExport = dataExportRepository.save(dataExport);
         request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportErrorDuringCreation_internalServerError() throws Exception {
-        when(dataExportService.requestDataExport()).thenThrow(new RuntimeException("Error!"));
-        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -256,6 +244,18 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequest_ifDataExportInThePast14Days_forbidden() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport.setRequestDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanRequest_ifNoDataExport() throws Exception {
         dataExportRepository.deleteAll();
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
@@ -264,9 +264,11 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRequestDataExportSchedulesDataExport() throws Exception {
+    void testRequestingDataExportCreatesCorrectDataExportObject() throws Exception {
+        dataExportRepository.deleteAll();
         var dataExport = request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(dataExport.getRequestDate()).isNotNull();
     }
 
     @Test

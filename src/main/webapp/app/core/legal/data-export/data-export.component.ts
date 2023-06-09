@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { DataExport } from 'app/entities/data-export.model';
+import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -18,18 +18,21 @@ export class DataExportComponent implements OnInit {
     readonly ActionType = ActionType;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
+    readonly DataExportState = DataExportState;
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     canDownload = false;
     canRequestDataExport = false;
+    hasToBeCreatedDataExport = false;
 
     currentLogin: string | undefined;
     dataExportId: number;
     downloadMode = false;
     titleKey: string;
     description: string;
+    state?: DataExportState;
 
     constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService, private route: ActivatedRoute) {}
 
@@ -58,6 +61,7 @@ export class DataExportComponent implements OnInit {
                 this.canDownload = !!dataExport.id;
                 if (this.canDownload) {
                     this.dataExportId = dataExport.id!;
+                    this.state = dataExport.dataExportState!;
                 }
             });
         }
@@ -70,6 +74,7 @@ export class DataExportComponent implements OnInit {
                 this.alertService.success('artemisApp.dataExport.requestSuccess');
                 this.dataExportId = response.id!;
                 this.canRequestDataExport = false;
+                this.state = response.dataExportState!;
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

@@ -1,4 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-public record DataExportDTO(Long id) {
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
+
+public record DataExportDTO(Long id, DataExportState dataExportState) {
 }

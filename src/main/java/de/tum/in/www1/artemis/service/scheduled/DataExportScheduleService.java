@@ -43,7 +43,9 @@ public class DataExportScheduleService {
      * Created will be all data exports that are in the state REQUESTED OR IN_CREATION
      * Deleted will be all data exports that have a creation date older than seven days
      */
-    @Scheduled(cron = "0 0 4 * * *") // execute this every night at 4:00:00 am
+    // TODO change the cron expression again once the testing is done.
+    // @Scheduled(cron = "0 0 4 * * *") // execute this every night at 4:00:00 am
+    @Scheduled(cron = "0 0/2 * * * *") // execute this every 2 minutes
     public void createDataExportsAndDeleteOldOnes() {
         if (profileService.isDev()) {
             // do not execute this in a development environment
@@ -60,7 +62,7 @@ public class DataExportScheduleService {
     }
 
     /**
-     * Create a single data export and schedule its deletion one week after creation.
+     * Create a single data export
      *
      * @param dataExport the data export to be created
      */
@@ -76,6 +78,11 @@ public class DataExportScheduleService {
         }
     }
 
+    /**
+     * Delete a single data export
+     *
+     * @param dataExport the data export to be deleted
+     */
     private void deleteDataExport(DataExport dataExport) {
         checkSecurityUtils();
         dataExportService.deleteDataExportAndSetDataExportState(dataExport);

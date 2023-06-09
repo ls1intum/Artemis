@@ -16,7 +16,8 @@
             "downloadError": "Datenexport konnte nicht heruntergeladen werden. Bitte versuche es später erneut.",
             "recentlyRequested": "Du hast kürzlich einen Datenexport angefordert. Deshalb kannst du aktuell keinen Datenexport anfordern.",
             "notDownloadable": "Dieser Datenexport kann nicht mehr heruntergeladen werden, da er nicht (mehr) existiert.",
-            "mostRecentNotDownloadable": "Dein aktuellster Datenexport kann nicht heruntergeladen werden, da er entweder bereits gelöscht wurde oder noch nicht erstellt wurde."
+            "mostRecentNotDownloadable": "Dein aktuellster Datenexport kann nicht heruntergeladen werden, da er entweder bereits gelöscht wurde oder noch nicht erstellt wurde.",
+            "isBeingCreated": "Dein kürzlicher angeforderter Datenexport wird aktuell noch erstellt."
         }
     }
 }

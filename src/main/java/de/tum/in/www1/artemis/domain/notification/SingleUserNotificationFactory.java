@@ -90,7 +90,7 @@ public class SingleUserNotificationFactory {
             title = DATA_EXPORT_FAILED_TITLE;
             text = DATA_EXPORT_FAILED_TEXT;
         }
-        var notification = new SingleUserNotification(recipient, title, text, false, new String[0]);
+        var notification = new SingleUserNotification(recipient, title, text, true, new String[0]);
         if (type == NotificationType.DATA_EXPORT_FAILED) {
             notification.setPriority(HIGH);
             notification.setTransientAndStringTarget(createDataExportFailedTarget(path));

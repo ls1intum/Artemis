@@ -34,13 +34,16 @@
         ></jhi-button>
     </div>
     <div class="mt-3 row d-flex align-content-center">
-        <p *ngIf="!canRequestDataExport && !downloadMode">
+        <p *ngIf="!canRequestDataExport && !downloadMode && state !== DataExportState.REQUESTED && state !== DataExportState.IN_CREATION">
             {{ 'artemisApp.dataExport.recentlyRequested' | artemisTranslate }}
+        </p>
+        <p *ngIf="!canRequestDataExport && !downloadMode && (state === DataExportState.REQUESTED || state === DataExportState.IN_CREATION)">
+            {{ 'artemisApp.dataExport.isBeingCreated' | artemisTranslate }}
         </p>
         <p *ngIf="!canDownload && downloadMode">
             {{ 'artemisApp.dataExport.notDownloadable' | artemisTranslate }}
         </p>
-        <p *ngIf="!canDownload && !downloadMode">
+        <p *ngIf="!canDownload && !downloadMode && (state === DataExportState.DOWNLOADED_DELETED || state === DataExportState.DELETED)">
             {{ 'artemisApp.dataExport.mostRecentNotDownloadable' | artemisTranslate }}
         </p>
     </div>
