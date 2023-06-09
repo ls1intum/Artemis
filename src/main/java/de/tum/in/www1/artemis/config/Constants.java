@@ -162,7 +162,7 @@ public final class Constants {
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
-    public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
+    public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
@@ -274,6 +274,8 @@ public final class Constants {
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
     /**
      * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.

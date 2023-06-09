@@ -159,17 +159,14 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     private countSubmissions() {
-        let submissionCompensation = 0;
-        if (this.studentParticipation?.submissions?.length) {
-            submissionCompensation = !this.studentParticipation.submissions.first()?.results?.length ? 1 : 0;
-        }
-
         const commitHashSet = new Set<string>();
-        this.studentParticipation?.submissions
-            ?.filter((submission) => submission.type === SubmissionType.MANUAL && submission.results?.length)
+
+        this.studentParticipation?.results
+            ?.map((result) => result.submission)
+            .filter((submission) => submission?.type === SubmissionType.MANUAL)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
 
-        this.numberOfSubmissions = submissionCompensation + commitHashSet.size;
+        this.numberOfSubmissions = commitHashSet.size;
     }
 }
