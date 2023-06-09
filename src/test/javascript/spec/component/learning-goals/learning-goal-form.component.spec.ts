@@ -114,7 +114,7 @@ describe('LearningGoalFormComponent', () => {
 
         expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
         expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
-        expect(learningGoalFormComponent.dueDateControl?.value).toEqual(formData.softDueDate);
+        expect(learningGoalFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 

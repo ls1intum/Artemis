@@ -117,8 +117,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         return this.form.get('description');
     }
 
-    get dueDateControl() {
-        return this.form.get('dueDate');
+    get softDueDateControl() {
+        return this.form.get('softDueDate');
     }
 
     get masteryThresholdControl() {
@@ -151,7 +151,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
                 [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
-            dueDate: [undefined],
+            softDueDate: [undefined],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
         });

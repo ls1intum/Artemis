@@ -25,7 +25,7 @@
                 <div *ngIf="learningGoal.description">{{ learningGoal.description }}</div>
             </div>
             <div *ngIf="learningGoal.softDueDate" class="col-3" style="text-align: right">
-                <span style="vertical-align: middle"> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
+                <span style="vertical-align: middle"> {{ 'artemisApp.learningGoal.learningGoalCard.softDueDate' | artemisTranslate }} </span>
                 <span *ngIf="softDueDatePassed" class="badge bg-danger" id="date-badge-danger"> {{ learningGoal.softDueDate | artemisTimeAgo }} </span>
                 <span *ngIf="!softDueDatePassed" class="badge bg-success" id="date-badge-success"> {{ learningGoal.softDueDate | artemisTimeAgo }} </span>
             </div>

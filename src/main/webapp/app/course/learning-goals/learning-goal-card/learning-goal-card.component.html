@@ -31,7 +31,7 @@
                 <ng-content></ng-content>
             </div>
             <div *ngIf="!isPrerequisite && learningGoal.softDueDate" class="col-sm col py-2" style="max-width: fit-content">
-                <span style="vertical-align: middle"> {{ 'artemisApp.learningGoal.learningGoalCard.dueDate' | artemisTranslate }} </span>
+                <span style="vertical-align: middle"> {{ 'artemisApp.learningGoal.learningGoalCard.softDueDate' | artemisTranslate }} </span>
                 <span *ngIf="softDueDatePassed && !isMastered" class="badge bg-danger" id="date-badge-danger"> {{ learningGoal.softDueDate | artemisTimeAgo }} </span>
                 <span *ngIf="!(softDueDatePassed && !isMastered)" class="badge bg-success" id="date-badge-success"> {{ learningGoal.softDueDate | artemisTimeAgo }} </span>
             </div>

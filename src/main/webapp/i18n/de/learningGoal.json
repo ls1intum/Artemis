@@ -8,7 +8,7 @@
             "title": "Kompetenzen",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
-            "dueDate": "Empfohlen bis",
+            "softDueDate": "Empfohlen bis",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "course": "Kurs",
             "progress": "Fortschritt",
@@ -63,8 +63,8 @@
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
                 "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal 10 000 Symbole beschränkt",
-                "dueDate": "Empfohlenes Fertigstellungsdatum",
-                "dueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
+                "softDueDate": "Empfohlenes Fertigstellungsdatum",
+                "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "suggestedTaxonomy": "Vorschlag",
                 "averageStudentScore": "Aktuelle durchschnittliche Konfidenz",
                 "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten",
@@ -107,7 +107,7 @@
                 "noUnitsConnected": "Die Kompetenz ist mit keinen Vorlesungseinheiten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
-                "dueDate": "Empfohlen"
+                "softDueDate": "Empfohlen"
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Verbundene Kompetenzen",
