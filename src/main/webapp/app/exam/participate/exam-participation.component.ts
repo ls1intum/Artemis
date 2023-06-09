@@ -275,7 +275,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents.find(
-            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise!.id,
+            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
     }
 
@@ -730,11 +730,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
         if ((activeComponent && forceSave) || (activeComponent as ExamSubmissionComponent)?.hasUnsavedChanges()) {
             const activeSubmission = (activeComponent as ExamSubmissionComponent)?.getSubmission();
-            const activeExercise = (activeComponent as ExamSubmissionComponent)?.getExercise();
+            const activeExerciseType = (activeComponent as ExamSubmissionComponent)?.getExerciseType();
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
                 // it only makes sense to set "isSynced" to false for quiz, text and modeling
-                if (activeExercise?.type !== ExerciseType.PROGRAMMING && activeExercise?.type !== ExerciseType.FILE_UPLOAD) {
+                if (activeExerciseType !== ExerciseType.PROGRAMMING && activeExerciseType !== ExerciseType.FILE_UPLOAD) {
                     activeSubmission.isSynced = false;
                 }
             }

@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -51,8 +51,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
-    getExercise(): Exercise {
-        return this.exercise;
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
+    }
+
+    getExerciseType(): ExerciseType {
+        return ExerciseType.TEXT;
     }
 
     updateProblemStatement(newProblemStatement: string): void {

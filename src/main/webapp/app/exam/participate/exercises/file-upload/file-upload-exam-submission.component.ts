@@ -15,7 +15,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
@@ -110,8 +110,12 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
     }
 
-    getExercise(): Exercise {
-        return this.exercise;
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
+    }
+
+    getExerciseType(): ExerciseType {
+        return ExerciseType.FILE_UPLOAD;
     }
 
     public hasUnsavedChanges(): boolean {

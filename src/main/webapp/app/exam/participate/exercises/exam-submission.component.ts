@@ -1,5 +1,5 @@
 import { Submission } from 'app/entities/submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
@@ -23,5 +23,6 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract updateViewFromSubmission(): void;
 
     abstract getSubmission(): Submission | undefined;
-    abstract getExercise(): Exercise;
+    abstract getExerciseId(): number | undefined;
+    abstract getExerciseType(): ExerciseType;
 }

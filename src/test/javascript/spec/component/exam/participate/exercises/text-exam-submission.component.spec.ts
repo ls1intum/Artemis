@@ -63,7 +63,8 @@ describe('TextExamSubmissionComponent', () => {
         expect(component.answer).toBe('Hello World');
         expect(component.wordCount).toBe(2);
         expect(component.characterCount).toBe(11);
-        expect(component.getExercise()).toEqual(exercise);
+        expect(component.getExerciseId()).toEqual(exercise.id);
+        expect(component.getExerciseType()).toEqual(exercise.type);
         expect(component.getSubmission()).toEqual(textSubmission);
     });
 

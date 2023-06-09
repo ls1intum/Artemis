@@ -16,8 +16,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
 
 @Component({
@@ -68,10 +67,12 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.studentSubmission;
     }
 
-    getExercise(): Exercise {
-        const quizExercise = new QuizExercise(undefined, undefined);
-        quizExercise.id = this.quizConfiguration.id;
-        return quizExercise;
+    getExerciseId(): number | undefined {
+        return this.quizConfiguration.id;
+    }
+
+    getExerciseType(): ExerciseType {
+        return ExerciseType.QUIZ;
     }
 
     /**

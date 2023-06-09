@@ -84,7 +84,8 @@ describe('ProgrammingExamSubmissionComponent', () => {
         expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
 
         expect(component.repositoryIsLocked).toBeFalse();
-        expect(component.getExercise()).toEqual(newExercise());
+        expect(component.getExerciseId()).toEqual(exercise.id);
+        expect(component.getExerciseType()).toEqual(exercise.type);
     });
 
     it('should set the repositoryIsLocked value to true', () => {
