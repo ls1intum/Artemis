@@ -519,8 +519,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void testQuizSubmitPractice_badRequest_exam() throws Exception {
-        Thread.sleep(2000);
-        resetSpyBeans();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExerciseServer = database.createQuizForExam(exerciseGroup);
         quizExerciseService.save(quizExerciseServer);
