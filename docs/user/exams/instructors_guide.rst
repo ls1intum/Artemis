@@ -213,7 +213,7 @@ During the exam creation and configuration, you can create your exam and configu
 .. note::
     Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
 
-..note::
+.. note::
     Artemis also supports validating participants signatures for on-site exams.
     For more information please see :ref:`Exam Participation Checker <exam_participation_checker>`.
 

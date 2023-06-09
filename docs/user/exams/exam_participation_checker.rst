@@ -14,16 +14,16 @@ Requirements
 .. note::
     For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in :ref:`exam configuration <exam_creation_and_configuration>`.
 
-To use the Artemis Exam Participation Checker iPad application, additional setup before the exam is required. This includes:
+To use the Artemis Exam Participation Checker iPad application, additional setup before the exam is required. This includes the following tasks on the *Students* page:
 
-- upload images for the students. This can be done via the |upload_images| button. An exemplatory file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
-- setup the room and seating information via the bulk import.
+- uploading images for the students. This can be done via the |upload_images| button. An exemplatory file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
+- setting up the room and seating information via the bulk import.
 
 .. note::
     To upload the images each student needs to have a matriculation number assigned. This is used to match the image with the according student.
 
 .. note::
-    Seats and rooms (only needed can currently only be assigned via the bulk import of students, by defining the seat and room in the ``CSV`` file.
+    Seats and rooms can currently only be assigned via the bulk import of students, by defining the seat and room in the ``CSV`` file.
 
 Download
 ========
