@@ -23,6 +23,9 @@ import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * This service contains the functions to manage QuizPool entity.
+ */
 @Service
 public class QuizPoolService extends QuizService<QuizPool> {
 
