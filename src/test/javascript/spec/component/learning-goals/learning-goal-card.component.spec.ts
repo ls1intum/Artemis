@@ -82,12 +82,12 @@ describe('LearningGoalCardComponent', () => {
         const learningGoalFuture = { softDueDate: dayjs().add(1, 'days') } as LearningGoal;
         learningGoalCardComponent.learningGoal = learningGoalFuture;
         learningGoalCardComponentFixture.detectChanges();
-        expect(learningGoalCardComponent.dueDatePassed).toBeFalse();
+        expect(learningGoalCardComponent.softDueDatePassed).toBeFalse();
 
         const learningGoalPast = { softDueDate: dayjs().subtract(1, 'days') } as LearningGoal;
         learningGoalCardComponent.learningGoal = learningGoalPast;
         learningGoalCardComponentFixture.detectChanges();
-        expect(learningGoalCardComponent.dueDatePassed).toBeTrue();
+        expect(learningGoalCardComponent.softDueDatePassed).toBeTrue();
     });
 
     it.each([

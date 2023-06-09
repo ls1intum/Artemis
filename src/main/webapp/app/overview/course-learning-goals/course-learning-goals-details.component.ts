@@ -132,7 +132,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
         });
     }
 
-    get dueDatePassed(): boolean {
+    get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.learningGoal.softDueDate);
     }
 }

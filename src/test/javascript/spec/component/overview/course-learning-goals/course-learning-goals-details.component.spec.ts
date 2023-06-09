@@ -150,12 +150,12 @@ describe('CourseLearningGoalsDetails', () => {
         const learningGoalFuture = { softDueDate: dayjs().add(1, 'days') } as LearningGoal;
         component.learningGoal = learningGoalFuture;
         fixture.detectChanges();
-        expect(component.dueDatePassed).toBeFalse();
+        expect(component.softDueDatePassed).toBeFalse();
 
         const learningGoalPast = { softDueDate: dayjs().subtract(1, 'days') } as LearningGoal;
         component.learningGoal = learningGoalPast;
         fixture.detectChanges();
-        expect(component.dueDatePassed).toBeTrue();
+        expect(component.softDueDatePassed).toBeTrue();
     });
 
     it.each([
