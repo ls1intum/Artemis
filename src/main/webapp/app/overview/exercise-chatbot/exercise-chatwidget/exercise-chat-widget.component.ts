@@ -21,8 +21,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
     componentClass = 'chat-widget';
     headerClass = 'chat-header';
     userAccepted = false;
-    perMessage =
-        "By choosing to continue, you agree that your interactions with IrisBot will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'. ";
     public firstName: string | undefined;
     isScrolledToBottom = true;
 
@@ -37,7 +35,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
     faCircleInfo = faCircleInfo;
 
     ngOnInit() {
-        //localStorage.removeItem('ge86let');
         this.route.url.subscribe((data) => {
             if (data[0].path === 'chat') {
                 this.setFullScreenClass();

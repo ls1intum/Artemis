@@ -32,10 +32,10 @@
         <!-- main chat section -->
         <div class="chat-body" #chatBody (scroll)="onChatScroll()">
             <div class="p-chat" *ngIf="!userAccepted">
-                <div class="message-text">{{ perMessage }}</div>
+                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
                 <div class="button-container">
-                    <button class="button" (click)="acceptPermission()">Accept</button>
-                    <button class="button" (click)="closeChat()">Decline</button>
+                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
+                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
                 </div>
             </div>
             <div *ngFor="let message of irisMessages" class="client-chat">{{ message }}</div>

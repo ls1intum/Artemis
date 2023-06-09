@@ -15,8 +15,8 @@
     position: fixed;
     bottom: 90px;
     right: 60px;
-    width: 300px;
-    height: 400px;
+    width: 330px;
+    height: 430px;
     background-color: var(--iris-chat-widget-background);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
 }
@@ -90,14 +90,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 5px;
+    padding: 6px;
     background-color: var(--iris-client-chat-input);
 }
 
 .chat-input textarea {
     flex: 1;
     margin-right: 10px;
-    padding: 5px 15px;
+    padding: 5px 13px;
 }
 
 .btn-circle {
@@ -122,6 +122,7 @@
     flex-direction: column;
     align-items: stretch;
     border: 1.5px solid var(--iris-client-chat-background);
+    overflow: hidden;
 }
 
 .message-text {
