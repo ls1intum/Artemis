@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -604,6 +606,9 @@ public class DatabaseUtilService {
 
         if (usersToAdd.size() > 0) {
             log.debug("Save {} users to database...", usersToAdd.size());
+            Page<User> currentUsers = userRepo.findAllWithGroups(Pageable.unpaged());
+            currentUsers.forEach(user -> user.setGroups(Set.of()));
+            userRepo.saveAll(currentUsers);
             usersToAdd = userRepo.saveAll(usersToAdd);
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
