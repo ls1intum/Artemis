@@ -157,7 +157,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         for (let i = dates.length - 1; i >= 0; i--) {
             if (dates[i]) {
                 if (this.dueDate && this.dueDate.isAfter(dates[i])) {
-                    break;
+                    this.nextRelevantDate = undefined;
+                    this.nextRelevantDateLabel = undefined;
+                    this.nextRelevantDateStatusBadge = undefined;
+                    return;
                 }
 
                 this.nextRelevantDate = dates[i]!;
