@@ -106,8 +106,8 @@ export class LearningGoalService {
     }
 
     convertLearningGoalResponseFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body?.dueDate) {
-            res.body.dueDate = convertDateFromServer(res.body.dueDate);
+        if (res.body?.softDueDate) {
+            res.body.softDueDate = convertDateFromServer(res.body.softDueDate);
         }
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
@@ -121,7 +121,7 @@ export class LearningGoalService {
 
     convertLearningGoalFromClient(learningGoal: LearningGoal): LearningGoal {
         const copy = Object.assign({}, learningGoal, {
-            dueDate: convertDateFromClient(learningGoal.dueDate),
+            softDueDate: convertDateFromClient(learningGoal.softDueDate),
         });
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
@@ -137,7 +137,7 @@ export class LearningGoalService {
      */
     private static convertArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.map((learningGoal: LearningGoal) => (learningGoal.dueDate = convertDateFromServer(learningGoal.dueDate)));
+            res.body.map((learningGoal: LearningGoal) => (learningGoal.softDueDate = convertDateFromServer(learningGoal.softDueDate)));
         }
         return res;
     }

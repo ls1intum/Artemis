@@ -29,7 +29,7 @@ export class LearningGoal implements BaseEntity {
     public id?: number;
     public title?: string;
     public description?: string;
-    public dueDate?: dayjs.Dayjs;
+    public softDueDate?: dayjs.Dayjs;
     public taxonomy?: LearningGoalTaxonomy;
     public masteryThreshold?: number;
     public course?: Course;

@@ -85,7 +85,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     }
 
     getColClass() {
-        if (this.learningGoal.dueDate) {
+        if (this.learningGoal.softDueDate) {
             return 'col-7';
         }
         return 'col-10';
@@ -133,6 +133,6 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     }
 
     get dueDatePassed(): boolean {
-        return dayjs().isAfter(this.learningGoal.dueDate);
+        return dayjs().isAfter(this.learningGoal.softDueDate);
     }
 }

@@ -104,7 +104,7 @@ describe('LearningGoalFormComponent', () => {
             id: 1,
             title: 'test',
             description: 'lorem ipsum',
-            dueDate: dayjs(),
+            softDueDate: dayjs(),
             connectedLectureUnits: [textUnit],
             taxonomy: LearningGoalTaxonomy.ANALYZE,
         };
@@ -114,7 +114,7 @@ describe('LearningGoalFormComponent', () => {
 
         expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
         expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
-        expect(learningGoalFormComponent.dueDateControl?.value).toEqual(formData.dueDate);
+        expect(learningGoalFormComponent.dueDateControl?.value).toEqual(formData.softDueDate);
         expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 

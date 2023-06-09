@@ -26,8 +26,8 @@ public class Competency extends DomainObject {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "due_date")
-    private ZonedDateTime dueDate;
+    @Column(name = "soft_due_date")
+    private ZonedDateTime softDueDate;
 
     @Column(name = "mastery_threshold")
     private Integer masteryThreshold;
@@ -84,12 +84,12 @@ public class Competency extends DomainObject {
         this.description = description;
     }
 
-    public ZonedDateTime getDueDate() {
-        return dueDate;
+    public ZonedDateTime getSoftDueDate() {
+        return softDueDate;
     }
 
-    public void setDueDate(ZonedDateTime dueDate) {
-        this.dueDate = dueDate;
+    public void setSoftDueDate(ZonedDateTime dueDate) {
+        this.softDueDate = dueDate;
     }
 
     public int getMasteryThreshold() {

@@ -48,7 +48,7 @@ export interface LearningGoalFormData {
     id?: number;
     title?: string;
     description?: string;
-    dueDate?: dayjs.Dayjs;
+    softDueDate?: dayjs.Dayjs;
     taxonomy?: LearningGoalTaxonomy;
     masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
@@ -65,7 +65,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         id: undefined,
         title: undefined,
         description: undefined,
-        dueDate: undefined,
+        softDueDate: undefined,
         taxonomy: undefined,
         masteryThreshold: undefined,
         connectedLectureUnits: undefined,

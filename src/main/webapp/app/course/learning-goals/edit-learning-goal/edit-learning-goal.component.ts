@@ -77,7 +77,7 @@ export class EditLearningGoalComponent implements OnInit {
                     this.formData = {
                         id: this.learningGoal.id,
                         title: this.learningGoal.title,
-                        dueDate: this.learningGoal.dueDate,
+                        softDueDate: this.learningGoal.softDueDate,
                         description: this.learningGoal.description,
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                         taxonomy: this.learningGoal.taxonomy,
@@ -89,11 +89,11 @@ export class EditLearningGoalComponent implements OnInit {
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
-        const { title, description, dueDate, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoal.title = title;
         this.learningGoal.description = description;
-        this.learningGoal.dueDate = dueDate;
+        this.learningGoal.softDueDate = softDueDate;
         this.learningGoal.taxonomy = taxonomy;
         this.learningGoal.masteryThreshold = masteryThreshold;
         this.learningGoal.lectureUnits = connectedLectureUnits;

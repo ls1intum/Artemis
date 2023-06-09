@@ -147,20 +147,20 @@ describe('CourseLearningGoalsDetails', () => {
     }));
 
     it('should detect if due date is passed', () => {
-        const learningGoalFuture = { dueDate: dayjs().add(1, 'days') } as LearningGoal;
+        const learningGoalFuture = { softDueDate: dayjs().add(1, 'days') } as LearningGoal;
         component.learningGoal = learningGoalFuture;
         fixture.detectChanges();
         expect(component.dueDatePassed).toBeFalse();
 
-        const learningGoalPast = { dueDate: dayjs().subtract(1, 'days') } as LearningGoal;
+        const learningGoalPast = { softDueDate: dayjs().subtract(1, 'days') } as LearningGoal;
         component.learningGoal = learningGoalPast;
         fixture.detectChanges();
         expect(component.dueDatePassed).toBeTrue();
     });
 
     it.each([
-        { learningGoal: { dueDate: dayjs().add(1, 'days') } as LearningGoal, expectedBadge: 'success' },
-        { learningGoal: { dueDate: dayjs().subtract(1, 'days') } as LearningGoal, expectedBadge: 'danger' },
+        { learningGoal: { softDueDate: dayjs().add(1, 'days') } as LearningGoal, expectedBadge: 'success' },
+        { learningGoal: { softDueDate: dayjs().subtract(1, 'days') } as LearningGoal, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ learningGoal, expectedBadge }) => {
         component.learningGoal = learningGoal;
         fixture.detectChanges();
