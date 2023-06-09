@@ -68,7 +68,7 @@ describe('QuizExamSubmissionComponent', () => {
     it('should initialize', () => {
         const quizServiceSpy = jest.spyOn(quizService, 'randomizeOrder');
 
-        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
+        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
         fixture.detectChanges();
 
         expect(fixture).toBeDefined();
@@ -81,7 +81,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
-        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
+        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
 
         const multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
         const multipleChoiceSelectedOptions = new AnswerOption();
@@ -123,7 +123,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should set answerOptions/mappings/submitted texts to empty array when not submitted answer', () => {
-        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
+        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
 
         component.updateViewFromSubmission();
         fixture.detectChanges();
@@ -146,6 +146,7 @@ describe('QuizExamSubmissionComponent', () => {
 
         const windowSpy = jest.spyOn(window, 'scrollTo');
 
+        component.quizConfiguration = {};
         component.navigateToQuestion(1);
         fixture.detectChanges();
         expect(getNavigationStub).toHaveBeenCalledTimes(2);
@@ -154,7 +155,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should create multiple choice submission from users selection', () => {
-        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
+        component.quizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
         component.studentSubmission = new QuizSubmission();
 
         const multipleChoiceSelectedOptions = new AnswerOption();
