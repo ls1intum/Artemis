@@ -86,8 +86,10 @@ describe('QuizExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizExamSummaryComponent);
                 component = fixture.componentInstance;
-                component.quizQuestions = exercise.quizQuestions!;
-                component.studentParticipations = exercise.studentParticipations;
+                component.quizParticipation = {
+                    quizQuestions: exercise.quizQuestions!,
+                    studentParticipations: exercise.studentParticipations,
+                };
                 component.submission = { id: 2, submittedAnswers: [] };
                 component.resultsPublished = true;
                 component.exam = { id: 1 } as Exam;
