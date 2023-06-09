@@ -4,10 +4,10 @@ import { Exam } from 'app/entities/exam.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class QuizPool implements BaseEntity {
-    public id?: number;
-    public exam: Exam;
-    public quizGroups: QuizGroup[] = [];
-    public quizQuestions: QuizQuestion[] = [];
-    public maxPoints = 0;
-    public randomizeQuestionOrder = false;
+    id?: number;
+    exam: Exam;
+    quizGroups: QuizGroup[] = [];
+    quizQuestions: QuizQuestion[] = [];
+    maxPoints = 0;
+    randomizeQuestionOrder = false;
 }
