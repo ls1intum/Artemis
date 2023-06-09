@@ -113,8 +113,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private final PointCounter pc60 = pc(6, 0);
 
-    private final static String CHANNEL_NAME = "testchannel";
-
     @BeforeEach
     void init() {
         database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -572,7 +570,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
 
-        quizExercise.setChannelName(CHANNEL_NAME + UUID.randomUUID().toString().substring(0, 8));
+        quizExercise.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseDatabase).isNotNull();

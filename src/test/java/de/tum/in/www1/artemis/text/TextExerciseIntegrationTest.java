@@ -710,7 +710,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + textExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(textExercise);
         channelRepository.save(channel);
         TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
@@ -757,7 +757,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         Channel channel = new Channel();
-        channel.setName("testchannel-" + textExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);

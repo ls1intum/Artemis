@@ -57,10 +57,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         var lecture = this.course1.getLectures().stream().findFirst().get();
         lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
         Channel channel = new Channel();
+        channel.setCourse(course1);
         channel.setIsAnnouncementChannel(false);
         channel.setIsPublic(true);
         channel.setIsArchived(false);
-        channel.setName("test");
+        channel.setName("lecture" + UUID.randomUUID().toString().substring(0, 8));
         lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(lecture);
         channel.setLecture(this.lecture1);
@@ -149,13 +150,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        originalLecture.setChannelName("test");
+        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        originalLecture.setChannelName(uniqueChannelName);
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
         Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
 
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo("test");
+        assertThat(channel.getName()).isEqualTo(uniqueChannelName);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }

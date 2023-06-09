@@ -575,7 +575,6 @@ public class ModelFactory {
         }
         else {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);

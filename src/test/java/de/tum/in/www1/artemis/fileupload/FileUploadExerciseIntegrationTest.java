@@ -150,7 +150,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         database.enableMessagingForCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
         fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setChannelName("testchannel");
+        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        fileUploadExercise.setChannelName(uniqueChannelName);
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
@@ -173,7 +174,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
                 .isEqualTo("created first instruction with empty criteria for testing");
 
         assertThat(channelFromDB).isNotNull();
-        assertThat(channelFromDB.getName()).isEqualTo("testchannel");
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
     }
 
     @Test
@@ -238,7 +239,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + fileUploadExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(fileUploadExercise);
         channelRepository.save(channel);
 
@@ -308,7 +309,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + fileUploadExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(fileUploadExercise);
         channelRepository.save(channel);
 

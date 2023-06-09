@@ -823,14 +823,14 @@ public class CourseTestService {
             courses[i] = courseRepo.save(courses[i]);
             Exam examRegistered = ModelFactory.generateExam(courses[i]);
             Channel channel = new Channel();
-            channel.setName(examRegistered.getTitle());
+            channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
             channel.setIsAnnouncementChannel(false);
             channel.setIsPublic(false);
             channel.setIsArchived(false);
             channelRepository.save(channel);
             Exam examUnregistered = ModelFactory.generateExam(courses[i]);
             Channel channel1 = new Channel();
-            channel1.setName(examUnregistered.getTitle());
+            channel1.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
             channel1.setIsAnnouncementChannel(false);
             channel1.setIsPublic(false);
             channel1.setIsArchived(false);
@@ -900,7 +900,7 @@ public class CourseTestService {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
         Channel channel = new Channel();
-        channel.setName(programmingExercise.getTitle());
+        channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setIsAnnouncementChannel(false);
         channel.setIsPublic(true);
         channel.setIsArchived(false);

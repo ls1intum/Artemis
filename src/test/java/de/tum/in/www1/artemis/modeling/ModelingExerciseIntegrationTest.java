@@ -97,7 +97,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + classExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(classExercise);
         channelRepository.save(channel);
 
@@ -131,7 +131,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + classExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(classExercise);
         channelRepository.save(channel);
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
@@ -157,14 +157,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         database.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
-        modelingExercise.setChannelName("testchannel");
+        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
+        modelingExercise.setChannelName(uniqueChannelName);
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.getId());
 
         assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
         assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
         assertThat(channelFromDB).isNotNull();
-        assertThat(channelFromDB.getName()).isEqualTo("testchannel");
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
