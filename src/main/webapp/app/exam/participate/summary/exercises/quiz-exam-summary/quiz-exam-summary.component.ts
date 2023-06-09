@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -13,7 +13,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -29,10 +29,7 @@ export class QuizExamSummaryComponent implements OnChanges {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     @Input()
-    quizQuestions: QuizQuestion[];
-
-    @Input()
-    studentParticipations: StudentParticipation[] | undefined;
+    quizParticipation: QuizParticipation;
 
     @Input()
     submission: QuizSubmission;
@@ -49,8 +46,11 @@ export class QuizExamSummaryComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.updateViewFromSubmission();
-        if (this.studentParticipations) {
-            this.result = this.studentParticipations.length > 0 && this.studentParticipations[0].results?.length ? this.studentParticipations[0].results[0] : undefined;
+        if (this.quizParticipation.studentParticipations) {
+            this.result =
+                this.quizParticipation.studentParticipations.length > 0 && this.quizParticipation.studentParticipations[0].results?.length
+                    ? this.quizParticipation.studentParticipations[0].results[0]
+                    : undefined;
         } else {
             this.result = this.submission.results?.length ? this.submission.results[0] : undefined;
         }
@@ -69,9 +69,9 @@ export class QuizExamSummaryComponent implements OnChanges {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizQuestions && this.submission) {
+        if (this.quizParticipation.quizQuestions && this.submission) {
             // iterate through all questions of this quiz
-            this.quizQuestions.forEach((question) => {
+            this.quizParticipation.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers
                     ? this.submission.submittedAnswers.find((answer) => {
@@ -129,7 +129,7 @@ export class QuizExamSummaryComponent implements OnChanges {
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
     get showMissingResultsNotice(): boolean {
-        if (this.exam && this.exam.publishResultsDate && this.studentParticipations && this.studentParticipations.length > 0) {
+        if (this.exam && this.exam.publishResultsDate && this.quizParticipation.studentParticipations && this.quizParticipation.studentParticipations.length > 0) {
             return dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
         }
         return false;
