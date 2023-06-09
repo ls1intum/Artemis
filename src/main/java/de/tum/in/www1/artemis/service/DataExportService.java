@@ -262,7 +262,7 @@ public class DataExportService {
 
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
         // we only want to export the results if the student has submitted the exam
-        if (studentExam.isSubmitted() == null || !studentExam.isSubmitted()) {
+        if (studentExam.isSubmitted() == null || !studentExam.isSubmitted() || studentExam.isTestRun()) {
             return;
         }
         var studentExamGrade = examService.getStudentExamGradeForDataExport(studentExam);
