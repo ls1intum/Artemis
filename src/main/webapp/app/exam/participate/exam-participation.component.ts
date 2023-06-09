@@ -46,7 +46,6 @@ import {
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -888,16 +887,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
-    }
-
-    asQuizExercise(exercise: Exercise): QuizExercise | undefined {
-        if (this.isQuizExercise(exercise)) {
-            return exercise as QuizExercise;
-        }
-        return undefined;
-    }
-
-    isQuizExercise(exercise: Exercise): exercise is QuizExercise {
-        return (exercise as QuizExercise).quizQuestions !== undefined;
     }
 }

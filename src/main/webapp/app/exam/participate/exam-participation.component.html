@@ -36,11 +36,7 @@
                             <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                                 <jhi-quiz-submission-exam
                                     *ngSwitchCase="QUIZ"
-                                    [exerciseId]="exercise.id"
-                                    [quizQuestions]="asQuizExercise(exercise)!.quizQuestions"
-                                    [randomizeQuizQuestions]="asQuizExercise(exercise)!.randomizeQuestionOrder"
-                                    [title]="exercise.title"
-                                    [maxPoints]="asQuizExercise(exercise)!.maxPoints"
+                                    [quizConfiguration]="exercise"
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
                                 <jhi-file-upload-submission-exam
