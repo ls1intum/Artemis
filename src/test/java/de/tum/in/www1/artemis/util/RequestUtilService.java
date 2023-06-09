@@ -87,8 +87,7 @@ public class RequestUtilService {
         var splitResult = mvc.perform(
                 MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/process-units").file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        return lectureUnitSplitInfo;
+        return mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
     }
 
     public List<AttachmentUnit> postWithMultipartFile(@NotNull LectureUnitInformationDTO lectureUnitSplitInfo, MockMultipartFile filePart, long lectureId,
@@ -98,10 +97,7 @@ public class RequestUtilService {
 
         var createUnitsResult = mvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/attachment-units/split").file(lectureUnitSplitPart)
                 .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)).andExpect(status().is(expectedStatus.value())).andReturn();
-        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
-
-        return attachmentUnits;
+        return mapper.readValue(createUnitsResult.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
     }
 
     public <T> URI post(String path, T body, HttpStatus expectedStatus) throws Exception {

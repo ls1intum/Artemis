@@ -80,8 +80,9 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
-        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).units()).hasSize(2);
-        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).numberOfPages()).isEqualTo(20);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
     }
 
     @Test
@@ -89,7 +90,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        assertThat(request.postWithMultipartFile(lecture1.getId(), createLectureFile(true), OK).numberOfPages()).isEqualTo(20);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
 
