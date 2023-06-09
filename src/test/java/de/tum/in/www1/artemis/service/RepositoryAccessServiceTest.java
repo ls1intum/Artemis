@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -84,8 +84,9 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, bambooBuildResult);
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
-        AccessForbiddenException exception = assertThrows(AccessForbiddenException.class,
-                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE));
+        AccessForbiddenException exception = catchThrowableOfType(
+                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE),
+                AccessForbiddenException.class);
         assertThat(exception.getMessage()).isEqualTo("submitAfterReachingSubmissionLimit");
     }
 
