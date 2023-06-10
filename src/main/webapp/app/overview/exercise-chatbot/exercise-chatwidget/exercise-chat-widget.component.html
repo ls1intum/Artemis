@@ -38,8 +38,12 @@
                     <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
                 </div>
             </div>
-            <div *ngFor="let message of irisMessages" class="client-chat">{{ message }}</div>
-            <div *ngFor="let message of userMessages" class="my-chat">{{ message }}</div>
+            <div *ngFor="let message of irisMessages" class="client-chat">
+                <pre>{{ message }}</pre>
+            </div>
+            <div *ngFor="let message of userMessages" class="my-chat">
+                <pre>{{ message }}</pre>
+            </div>
             <div class="scroll-to-bottom" *ngIf="!isScrolledToBottom" (click)="scrollToBottomOnClick()">
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
