@@ -32,6 +32,8 @@ import {
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.PROGRAMMING;
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
@@ -58,10 +60,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
-    }
-
-    getExerciseType(): ExerciseType {
-        return ExerciseType.PROGRAMMING;
     }
 
     isSaving: boolean;

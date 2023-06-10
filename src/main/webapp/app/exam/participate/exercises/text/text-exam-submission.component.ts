@@ -19,6 +19,8 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
     styleUrls: ['./text-exam-submission.component.scss'],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.TEXT;
+
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -53,10 +55,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
-    }
-
-    getExerciseType(): ExerciseType {
-        return ExerciseType.TEXT;
     }
 
     updateProblemStatement(newProblemStatement: string): void {

@@ -26,6 +26,8 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
     // change deactivation must be triggered manually
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.FILE_UPLOAD;
+
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
     @Input()
@@ -112,10 +114,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
-    }
-
-    getExerciseType(): ExerciseType {
-        return ExerciseType.FILE_UPLOAD;
     }
 
     public hasUnsavedChanges(): boolean {

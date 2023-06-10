@@ -3,6 +3,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
+    abstract exerciseType: ExerciseType;
     /**
      * checks whether the component has unsaved changes.
      * It is called in the periodic update timer to determine, if the component needs an update
@@ -24,5 +25,4 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
 
     abstract getSubmission(): Submission | undefined;
     abstract getExerciseId(): number | undefined;
-    abstract getExerciseType(): ExerciseType;
 }

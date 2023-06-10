@@ -85,7 +85,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         expect(component.repositoryIsLocked).toBeFalse();
         expect(component.getExerciseId()).toEqual(exercise.id);
-        expect(component.getExerciseType()).toEqual(exercise.type);
     });
 
     it('should set the repositoryIsLocked value to true', () => {

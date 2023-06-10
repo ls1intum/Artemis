@@ -730,7 +730,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
         if ((activeComponent && forceSave) || (activeComponent as ExamSubmissionComponent)?.hasUnsavedChanges()) {
             const activeSubmission = (activeComponent as ExamSubmissionComponent)?.getSubmission();
-            const activeExerciseType = (activeComponent as ExamSubmissionComponent)?.getExerciseType();
+            const activeExerciseType = (activeComponent as ExamSubmissionComponent)?.exerciseType;
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
                 // it only makes sense to set "isSynced" to false for quiz, text and modeling

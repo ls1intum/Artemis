@@ -26,6 +26,8 @@ import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.QUIZ;
+
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -69,10 +71,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     getExerciseId(): number | undefined {
         return this.quizConfiguration.id;
-    }
-
-    getExerciseType(): ExerciseType {
-        return ExerciseType.QUIZ;
     }
 
     /**

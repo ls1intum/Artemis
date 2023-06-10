@@ -18,6 +18,8 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.MODELING;
+
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -60,10 +62,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
-    }
-
-    getExerciseType(): ExerciseType {
-        return ExerciseType.MODELING;
     }
 
     updateViewFromSubmission(): void {

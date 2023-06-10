@@ -157,7 +157,6 @@ describe('ModelingExamSubmissionComponent', () => {
         });
         it('should return exercise', () => {
             expect(comp.getExerciseId()).toEqual(mockExercise.id);
-            expect(comp.getExerciseType()).toEqual(mockExercise.type);
         });
     });
 
