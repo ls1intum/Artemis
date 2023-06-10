@@ -18,7 +18,7 @@
             </column>
         </createTable>
         <addColumn tableName="exercise">
-            <column name="continuous_plagiarism_control_enabled" type="bit"/>
+            <column name="continuous_plagiarism_control_enabled" type="bit" defaultValue="false"/>
         </addColumn>
         <addColumn tableName="exercise">
             <column name="plagiarism_checks_config_id" type="bigint"/>
