@@ -49,6 +49,22 @@ describe('QuizPoolMappingComponent', () => {
         expect(component.quizGroups).toBeArrayOfSize(1);
     });
 
+    it('should not add group with empty name', () => {
+        expect(component.quizGroups).toBeArrayOfSize(0);
+
+        component.addGroup('');
+
+        expect(component.quizGroups).toBeArrayOfSize(0);
+    });
+
+    it('should not add group with name consisting of more than 100 characters', () => {
+        expect(component.quizGroups).toBeArrayOfSize(0);
+
+        component.addGroup('Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean ma');
+
+        expect(component.quizGroups).toBeArrayOfSize(0);
+    });
+
     it('should not add group with the same name', () => {
         expect(component.quizGroups).toBeArrayOfSize(0);
 
