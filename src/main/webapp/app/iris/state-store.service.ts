@@ -7,15 +7,18 @@ import {
     HistoryMessageLoadedAction,
     MessageStoreAction,
     MessageStoreState,
+    RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
     isActiveConversationMessageLoadedAction,
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
     isNumNewMessagesResetAction,
+    isRateMessageSuccessAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
+import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: string) => void };
 
@@ -163,6 +166,15 @@ export class IrisStateStore implements OnDestroy {
                 messages: [...state.messages, castedAction.message],
                 isLoading: true,
                 error: '',
+            };
+        }
+        if (isRateMessageSuccessAction(action)) {
+            const castedAction = action as RateMessageSuccessAction;
+            const newMessages = state.messages;
+            (newMessages[castedAction.index] as IrisServerMessage).helpful = castedAction.helpful;
+            return {
+                ...state,
+                messages: newMessages,
             };
         }
 

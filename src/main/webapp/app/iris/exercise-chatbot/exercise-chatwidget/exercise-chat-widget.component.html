@@ -19,12 +19,30 @@
             <div *ngFor="let message of messages; let i = index">
                 <p *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</p>
                 <div *ngFor="let content of message.content">
-                    <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
+                    <div *ngIf="message.sender === SENDER_USER" class="my-chat">
                         <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                     </div>
-                    <div *ngIf="message.sender === SENDER_SERVER" class="rate-message-buttons">
-                        <fa-icon style="margin-right: 15px" [icon]="faThumbsUp" size="sm"></fa-icon>
-                        <fa-icon [icon]="faThumbsDown" size="sm"></fa-icon>
+                    <div *ngIf="message.sender === SENDER_SERVER" style="width: fit-content">
+                        <div class="client-chat">
+                            <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                        </div>
+                        <div class="rate-message-buttons">
+                            <fa-icon
+                                (click)="rateMessage(message.id, i, true)"
+                                [class]="message.helpful !== true ? 'clickable notClicked' : 'thumbsUpClicked'"
+                                style="margin-right: 15px"
+                                [icon]="faThumbsUp"
+                                size="sm"
+                            >
+                            </fa-icon>
+                            <fa-icon
+                                (click)="rateMessage(message.id, i, false)"
+                                [class]="message.helpful !== false ? 'clickable notClicked' : 'thumbsDownClicked'"
+                                [icon]="faThumbsDown"
+                                size="sm"
+                            >
+                            </fa-icon>
+                        </div>
                     </div>
                 </div>
             </div>

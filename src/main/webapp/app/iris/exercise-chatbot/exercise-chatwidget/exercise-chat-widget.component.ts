@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewCh
 import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, NumNewMessagesResetAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
@@ -107,6 +107,17 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     closeChat() {
         this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.dialog.closeAll();
+    }
+
+    rateMessage(message_id: number, index: number, helpful: boolean) {
+        this.httpMessageService
+            .rateMessage(<number>this.sessionId, message_id, helpful)
+            .toPromise()
+            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
+                this.scrollToBottom('smooth');
+            });
     }
 
     private newUserMessage(message: string): IrisClientMessage {
