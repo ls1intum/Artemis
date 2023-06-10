@@ -139,7 +139,7 @@ public class ContinuousPlagiarismControlService {
     }
 
     private void executeChecksForModelingExercise(ModelingExercise exercise) throws Exception {
-        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(exercise, exercise.getPlagiarismChecksConfig().getSimilarityThreshold() / 100,
+        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(exercise, exercise.getPlagiarismChecksConfig().getSimilarityThreshold(),
                 exercise.getPlagiarismChecksConfig().getMinimumSize(), exercise.getPlagiarismChecksConfig().getMinimumScore());
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
