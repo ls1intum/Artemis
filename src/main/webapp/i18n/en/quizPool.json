@@ -13,6 +13,7 @@
             "updated": "Updated Quiz Pool with identifier {{ param }}",
             "invalidReasons": {
                 "groupNameEmpty": "Group name cannot be empty.",
+                "groupNameLength": "Group name cannot be longer than 100 characters.",
                 "groupSameName": "Group name must be unique.",
                 "groupNoQuestion": "Group {{name}}: Group does not have any question.",
                 "groupHasDifferentQuestionPoints": "Group {{name}}: Group has questions with different points."

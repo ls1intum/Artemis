@@ -62,6 +62,8 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
     addGroup(name: string) {
         if (name.length == 0) {
             this.alertService.error('artemisApp.quizPool.invalidReasons.groupNameEmpty');
+        } else if (name.length > 100) {
+            this.alertService.error('artemisApp.quizPool.invalidReasons.groupNameLength');
         } else if (this.quizGroupNameQuestionsMap.has(name)) {
             this.alertService.error('artemisApp.quizPool.invalidReasons.groupSameName');
         } else {
