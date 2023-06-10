@@ -105,6 +105,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroup(@Param("groupName") String groupName);
 
+    @Query("""
+            SELECT user from User user
+            JOIN user.groups
+            """)
+    Set<User> findAllInAnyGroup();
+
     /**
      * Searches for users in a group by their login or full name.
      *
