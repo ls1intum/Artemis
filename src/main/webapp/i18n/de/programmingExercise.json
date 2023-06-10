@@ -202,6 +202,11 @@
                 "ok": "Testfälle ok.",
                 "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden."
             },
+            "tasksAnalysis": {
+                "issues": "Aufgabenprobleme.",
+                "ok": "Aufgaben ok.",
+                "numOfTasks": "Die Anzahl der Aufgaben sollte {{limit}} nicht überschreiten. Derzeit gibt es {{number}} Aufgaben."
+            },
             "hintsAnalysis": {
                 "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",
                 "issues": "Hinweisprobleme.",
@@ -464,7 +469,7 @@
                 "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
                 "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
                 "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
-                "submissionsAllowed": "erlaubte Abgaben",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} erlaubte Abgaben",
                 "none": {
                     "optionLabel": "Keine"
                 },

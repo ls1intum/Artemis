@@ -175,6 +175,44 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getTasksWithoutInactiveFiltersOutInactive() {
+        programmingExercise = programmingExerciseRepository
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+        programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
+
+        String[] testCaseNames = { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
+        for (var name : testCaseNames) {
+            var testCase = new ProgrammingExerciseTestCase();
+            testCase.setExercise(programmingExercise);
+            testCase.setTestName(name);
+            testCase.setActive(true);
+            programmingExerciseTestCaseRepository.save(testCase);
+        }
+
+        var testCase = new ProgrammingExerciseTestCase();
+        testCase.setExercise(programmingExercise);
+        testCase.setTestName("testWithBraces()");
+        testCase.setActive(false);
+        programmingExerciseTestCaseRepository.save(testCase);
+
+        programmingExercise = programmingExerciseRepository
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+
+        updateProblemStatement("""
+                [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
+                """);
+
+        var actualTasks = programmingExerciseTaskService.getTasksWithoutInactiveTestCases(programmingExercise.getId());
+        assertThat(actualTasks).hasSize(1);
+
+        var actualTestCases = actualTasks.stream().findFirst().get().getTestCases();
+        assertThat(actualTestCases).allMatch(ProgrammingExerciseTestCase::isActive);
+        assertThat(actualTestCases).hasSize(2);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testParseTestCaseNames() {
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mockStatic;
 import java.io.IOException;
 import java.util.Set;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,11 +57,9 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(taLogins)))
                 .thenThrow(DOMException.class);
 
-        Exception exception = assertThrows(IOException.class, () -> {
-            jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set.of(TEST_PREFIX + "ta1"), Set.of(TEST_PREFIX + "editor1"),
-                    Set.of(TEST_PREFIX + "instructor1"), folderName);
-        });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot add instructor, editor, and/or ta permissions to users for folder");
+        assertThatIOException().isThrownBy(() -> jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set.of(TEST_PREFIX + "ta1"),
+                Set.of(TEST_PREFIX + "editor1"), Set.of(TEST_PREFIX + "instructor1"), folderName))
+                .withMessageStartingWith("Cannot add instructor, editor, and/or ta permissions to users for folder");
     }
 
     @Test
@@ -77,10 +74,8 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(Set.of(taLogin))))
                 .thenThrow(DOMException.class);
 
-        Exception exception = assertThrows(IOException.class, () -> {
-            jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForFolder(taLogin, folderName);
-        });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot add ta permissions to user for folder");
+        assertThatIOException().isThrownBy(() -> jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForFolder(taLogin, folderName))
+                .withMessageStartingWith("Cannot add ta permissions to user for folder");
     }
 
     @Test
@@ -94,10 +89,8 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
 
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.addPermissionsToFolder(any(), eq(taPermissions), eq(taLogins))).thenThrow(DOMException.class);
 
-        Exception exception = assertThrows(IOException.class, () -> {
-            jenkinsJobPermissionsService.addPermissionsForUsersToFolder(taLogins, folderName, taPermissions);
-        });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot add permissions to users for folder:");
+        assertThatIOException().isThrownBy(() -> jenkinsJobPermissionsService.addPermissionsForUsersToFolder(taLogins, folderName, taPermissions))
+                .withMessageStartingWith("Cannot add permissions to users for folder:");
     }
 
     @Test
@@ -112,10 +105,8 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(taPermissions), eq(Set.of(taLogin))))
                 .thenThrow(DOMException.class);
 
-        Exception exception = assertThrows(IOException.class, () -> {
-            jenkinsJobPermissionsService.removePermissionsFromUserOfFolder(taLogin, folderName, taPermissions);
-        });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot remove permissions to user for folder:");
+        assertThatIOException().isThrownBy(() -> jenkinsJobPermissionsService.removePermissionsFromUserOfFolder(taLogin, folderName, taPermissions))
+                .withMessageStartingWith("Cannot remove permissions to user for folder:");
     }
 
     @Test
@@ -130,9 +121,7 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(taPermissions), eq(taLogins)))
                 .thenThrow(DOMException.class);
 
-        Exception exception = assertThrows(IOException.class, () -> {
-            jenkinsJobPermissionsService.removePermissionsFromUsersForFolder(taLogins, folderName, taPermissions);
-        });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot remove permissions to user for folder:");
+        assertThatIOException().isThrownBy(() -> jenkinsJobPermissionsService.removePermissionsFromUsersForFolder(taLogins, folderName, taPermissions))
+                .withMessageStartingWith("Cannot remove permissions to user for folder:");
     }
 }

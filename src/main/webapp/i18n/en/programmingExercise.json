@@ -198,6 +198,11 @@
                 "ok": "Test cases ok.",
                 "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
             },
+            "tasksAnalysis": {
+                "issues": "Task issues.",
+                "ok": "Tasks ok.",
+                "numOfTasks": "The number of tasks should not exceed {{limit}}. Currently, there are {{number}} tasks."
+            },
             "hintsAnalysis": {
                 "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but couldn't be found in the database or are not assigned to this programming exercise:",
                 "issues": "Hints issues.",
@@ -459,7 +464,7 @@
                 "created": "The submission policy was created successfully!",
                 "updated": "The submission policy was updated successfully!",
                 "deleted": "The submission policy was deleted successfully!",
-                "submissionsAllowed": "allowed Submissions",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} allowed Submissions",
                 "none": {
                     "optionLabel": "None"
                 },

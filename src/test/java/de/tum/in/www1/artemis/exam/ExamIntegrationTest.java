@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exam;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,7 +54,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
-import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -94,9 +92,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private UserRepository userRepo;
-
-    @Autowired
-    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     @Autowired
     private ExamRepository examRepository;
@@ -1055,7 +1050,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
         var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
-        assertEquals(exam1, returnedExam);
+        assertThat(returnedExam).isEqualTo(exam1);
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
     }
 
@@ -1144,11 +1139,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExam_asInstructor() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdWithExamUsersElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> examRepository.findByIdWithExerciseGroupsElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdWithExamUsersElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdWithExerciseGroupsElseThrow(Long.MAX_VALUE));
+
         assertThat(examRepository.findAllExercisesByExamId(Long.MAX_VALUE)).isEmpty();
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
@@ -1248,7 +1248,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
@@ -2005,7 +2004,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
-        assertEquals(participationCounter, noGeneratedParticipations);
+        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
 
         if (withSecondCorrectionAndStarted) {
             exercisesInExam.forEach(exercise -> exercise.setSecondCorrectionEnabled(true));
@@ -2013,8 +2012,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
 
         // Scores used for all exercise results
-        Double correctionResultScore = 60D;
-        Double resultScore = 75D;
+        double correctionResultScore = 60D;
+        double resultScore = 75D;
 
         // Assign results to participations and submissions
         for (var exercise : exercisesInExam) {
@@ -2069,7 +2068,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser(TEST_PREFIX + "instructor1");
         final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        exerciseWithNoUsers.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true,
@@ -2129,8 +2127,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints();
             assertThat(exerciseGroupDTO.maxPoints()).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints());
-            assertEquals(exerciseGroupDTO.maxPoints(), groupMaxScoreFromExam, EPSILON);
+            assertThat(groupMaxScoreFromExam).isEqualTo(exerciseGroupDTO.maxPoints(), withPrecision(EPSILON));
 
+            // EPSILON
             // Compare exercise information
             long noOfExerciseGroupParticipations = 0;
             for (var originalExercise : originalExerciseGroup.getExercises()) {
@@ -2170,14 +2169,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
             var calculatedOverallPoints = calculateOverallPoints(resultScore, studentExamOfUser);
 
-            assertEquals(studentResult.overallPointsAchieved(), calculatedOverallPoints, EPSILON);
+            assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(EPSILON));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            assertEquals(studentResult.overallPointsAchievedInFirstCorrection(), expectedPointsAchievedInFirstCorrection, EPSILON);
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(EPSILON));
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
-            assertEquals(studentResult.overallScoreAchieved(), calculatedOverallScore, EPSILON);
+            assertThat(studentResult.overallScoreAchieved()).isEqualTo(calculatedOverallScore, withPrecision(EPSILON));
 
             assertThat(studentResult.overallGrade()).isNotNull();
             assertThat(studentResult.hasPassed()).isNotNull();
@@ -2235,7 +2234,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     assertThat(exerciseResult.hasNonEmptySubmission()).isFalse();
                 }
                 // TODO: create a test where hasNonEmptySubmission() is false for a quiz
-                assertEquals(exerciseResult.achievedPoints(), originalExercise.getMaxPoints() * resultScore / 100, EPSILON);
+                assertThat(exerciseResult.achievedPoints()).isEqualTo(originalExercise.getMaxPoints() * resultScore / 100, withPrecision(EPSILON));
             }
         }
 
@@ -2696,7 +2695,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
-        assertEquals(participationCounter, noGeneratedParticipations);
+        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 6 done");
 
@@ -3005,7 +3004,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         testExam = examRepository.save(testExam);
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), student1);
         Exam testExamReloaded = examRepository.findByIdWithExamUsersElseThrow(testExam.getId());
-        assertTrue(testExamReloaded.getExamUsers().contains(examUser));
+        assertThat(testExamReloaded.getExamUsers()).contains(examUser);
     }
 
     // ExamResource - getStudentExamForTestExamForStart
@@ -3053,7 +3052,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_successful() throws Exception {
         Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
-        assertEquals(exam2, received);
+        assertThat(received).isEqualTo(exam2);
     }
 
     @Test
@@ -3324,7 +3323,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException().getMessage()).isEqualTo("Exam contains programming exercise(s) with invalid short name."));
+                .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
 
     private int prepareExerciseStart(Exam exam) throws Exception {
