@@ -87,6 +87,16 @@
     margin-bottom: 10px;
 }
 
+pre {
+    background: transparent;
+    white-space: pre-wrap;
+    padding: 0;
+    margin: 0;
+    border: transparent;
+    font-family: inherit;
+    font-size: inherit;
+}
+
 .chat-input {
     display: flex;
     align-items: center;
