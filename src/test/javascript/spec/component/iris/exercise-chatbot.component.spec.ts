@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseChatbotComponent } from 'app/overview/exercise-chatbot/exercise-chatbot.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ChatbotPopupComponent } from 'app/overview/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +32,7 @@ describe('ExerciseChatbotComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule],
-            declarations: [ExerciseChatbotComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExerciseChatbotComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
@@ -45,15 +44,6 @@ describe('ExerciseChatbotComponent', () => {
                 component = fixture.componentInstance;
                 fixture.detectChanges();
             });
-    });
-
-    it('should open dialog when chat not accepted', () => {
-        jest.spyOn(component, 'openDialog');
-
-        component.chatAccepted = false;
-        component.handleButtonClick();
-
-        expect(component.openDialog).toHaveBeenCalled();
     });
 
     it('should open chat when chat accepted', () => {
