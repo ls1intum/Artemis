@@ -102,8 +102,8 @@ export class IrisStateStore implements OnDestroy {
         return this.action.asObservable().pipe(map((resolvableAction: ResolvableAction) => resolvableAction.action));
     }
 
-    private static exhaustiveCheck(action: never): void {
-        console.debug('You forgot to handle a case of MessageStoreAction: ' + action);
+    private static exhaustiveCheck(_: never): void {
+        // typescript will detect any new unhandled action types using its inference system, this method should never be called
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {

@@ -29,7 +29,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     sessionId: number;
     numNewMessages = 0;
     unreadMessageIndex: number;
-    error = ''; // TODO: error object
+    error = '';
     dots = 1;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
@@ -78,19 +78,19 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => this.scrollToBottom())
+                .then(() => this.scrollToBottom('smooth'))
                 .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!')));
             this.newMessageTextContent = '';
         }
-        this.scrollToBottom();
+        this.scrollToBottom('smooth');
     }
 
-    scrollToBottom(behavior = 'smooth') {
+    scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
             const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
             chatBodyElement.scrollTo({
                 top: chatBodyElement.scrollHeight,
-                behavior: behavior as ScrollBehavior,
+                behavior: behavior,
             });
         });
     }
