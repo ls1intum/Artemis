@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, StudentMessageSentAction } from 'app/iris/state-store.model';
@@ -41,6 +41,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faCircle = faCircle;
     faExpand = faExpand;
     faXmark = faXmark;
+    faThumbsUp = faThumbsUp;
+    faThumbsDown = faThumbsDown;
 
     ngOnInit() {
         this.animateDots();

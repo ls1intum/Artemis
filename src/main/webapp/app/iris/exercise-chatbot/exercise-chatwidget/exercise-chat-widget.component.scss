@@ -42,7 +42,6 @@
     color: var(--bs-body-color);
     padding: 10px;
     border-radius: 10px;
-    margin-bottom: 10px;
 }
 
 .client-chat-error {
@@ -113,4 +112,10 @@
     display: flex;
     justify-content: center;
     color: var(--gray-600);
+}
+
+.rate-message-buttons {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end;
 }

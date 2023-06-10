@@ -22,6 +22,10 @@
                     <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
                         <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                     </div>
+                    <div *ngIf="message.sender === SENDER_SERVER" class="rate-message-buttons">
+                        <fa-icon style="margin-right: 15px" [icon]="faThumbsUp" size="sm"></fa-icon>
+                        <fa-icon [icon]="faThumbsDown" size="sm"></fa-icon>
+                    </div>
                 </div>
             </div>
             <div class="client-chat" *ngIf="isLoading">
