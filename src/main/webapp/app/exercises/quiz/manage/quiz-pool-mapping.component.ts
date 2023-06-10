@@ -60,14 +60,16 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
      * @param name the name of the new quiz group
      */
     addGroup(name: string) {
-        if (!this.quizGroupNameQuestionsMap.has(name) && name.length > 0) {
+        if (name.length == 0) {
+            this.alertService.error('artemisApp.quizPool.invalidReasons.groupNameEmpty');
+        } else if (this.quizGroupNameQuestionsMap.has(name)) {
+            this.alertService.error('artemisApp.quizPool.invalidReasons.groupSameName');
+        } else {
             const quizGroup = new QuizGroup();
             quizGroup.name = name;
             this.quizGroups.push(quizGroup);
             this.quizGroupNameQuestionsMap.set(quizGroup.name, new Array<QuizQuestion>());
             this.onQuizGroupUpdated.emit();
-        } else {
-            this.alertService.error('artemisApp.quizPool.invalidReasons.groupSameName');
         }
     }
 
