@@ -107,7 +107,7 @@ test {
     maxHeapSize = "3072m" // maximum heap size
 }
 
-tasks.register('testReport', TestReport) {
+tasks.register("testReport", TestReport) {
     destinationDirectory = file("$buildDir/reports/tests")
     testResults.from(test)
 }
@@ -177,7 +177,7 @@ repositories {
     }
 }
 
-ext['jackson.version'] = fasterxml_version
+ext["jackson.version"] = fasterxml_version
 
 dependencies {
 
@@ -195,12 +195,12 @@ dependencies {
     implementation ("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
         // also see https://github.com/dom4j/dom4j/issues/99
-        exclude module: 'pull-parser'
-        exclude module: 'jaxen'
-        exclude module: 'xpp3'
-        exclude module: 'xsdlib'
-        exclude module: 'stax-api'
-        exclude module: 'jaxb-api'
+        exclude module: "pull-parser"
+        exclude module: "jaxen"
+        exclude module: "xpp3"
+        exclude module: "xsdlib"
+        exclude module: "stax-api"
+        exclude module: "jaxb-api"
     }
 
 
@@ -254,8 +254,8 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-ui:1.7.0"
     implementation "com.vdurmont:semver4j:3.1.0"
 
-    implementation 'com.github.docker-java:docker-java-core:3.3.1'
-    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.1'
+    implementation "com.github.docker-java:docker-java-core:3.3.1"
+    implementation "com.github.docker-java:docker-java-transport-httpclient5:3.3.1"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
@@ -322,7 +322,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-j:8.0.33"
+    implementation "mysql:mysql-connector-java:8.0.33"
     implementation "org.postgresql:postgresql:42.6.0"
     implementation "com.h2database:h2:2.1.214"
 
@@ -376,7 +376,7 @@ dependencyManagement {
     }
 }
 
-tasks.register('cleanResources', Delete) {
+tasks.register("cleanResources", Delete) {
     delete "build/resources"
 }
 
@@ -410,7 +410,7 @@ wrapper {
     gradleVersion = "8.1.1"
 }
 
-tasks.register('stage') {
+tasks.register("stage") {
     dependsOn "bootWar"
 }
 
