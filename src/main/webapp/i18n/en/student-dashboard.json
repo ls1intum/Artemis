@@ -59,6 +59,7 @@
                 "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
+                "shortDueDate": "Due",
                 "noDueDate": "No due date",
                 "userNotAssignedToTeam": "You have not been assigned to a team yet.",
                 "userNotStartedExercise": "You have not started this exercise yet.",
