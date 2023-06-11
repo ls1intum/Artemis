@@ -171,11 +171,15 @@ export class IrisStateStore implements OnDestroy {
         if (isRateMessageSuccessAction(action)) {
             const castedAction = action as RateMessageSuccessAction;
             const newMessages = state.messages;
-            (newMessages[castedAction.index] as IrisServerMessage).helpful = castedAction.helpful;
-            return {
-                ...state,
-                messages: newMessages,
-            };
+            if (castedAction.index < state.messages.length) {
+                (newMessages[castedAction.index] as IrisServerMessage).helpful = castedAction.helpful;
+                return {
+                    ...state,
+                    messages: newMessages,
+                };
+            }
+
+            return state;
         }
 
         IrisStateStore.exhaustiveCheck(action);

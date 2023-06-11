@@ -6,6 +6,7 @@ import {
     HistoryMessageLoadedAction,
     MessageStoreState,
     NumNewMessagesResetAction,
+    RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
@@ -24,6 +25,44 @@ describe('IrisStateStore', () => {
         });
         stateStore = TestBed.inject(IrisStateStore);
         stateStore.dispatch(new SessionReceivedAction(0, []));
+    });
+
+    describe('RateMessageSuccessAction', () => {
+        it('should keep the state when index is out of range', async () => {
+            const action: RateMessageSuccessAction = new RateMessageSuccessAction(0, true);
+            const obs = stateStore.getState();
+            const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+            stateStore.dispatch(action);
+
+            const state = (await promise) as MessageStoreState;
+            expect(state).toEqual(mockState);
+        });
+
+        it('should change helpful attribute of message position when index is in range', async () => {
+            const obs = stateStore.getState();
+            stateStore.dispatch(new SessionReceivedAction(123, [mockServerMessage, mockServerMessage]));
+
+            const action: RateMessageSuccessAction = new RateMessageSuccessAction(0, true);
+            const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+            stateStore.dispatch(action);
+
+            const state = (await promise) as MessageStoreState;
+            expect(state).toEqual({
+                ...mockState,
+                sessionId: 123,
+                messages: [
+                    {
+                        ...mockServerMessage,
+                        helpful: true,
+                    },
+                    {
+                        ...mockServerMessage,
+                    },
+                ],
+            });
+        });
     });
 
     it('should dispatch and handle NumNewMessagesResetAction', async () => {
