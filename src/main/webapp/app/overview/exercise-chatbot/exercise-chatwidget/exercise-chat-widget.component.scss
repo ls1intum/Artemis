@@ -23,7 +23,10 @@
 }
 
 .chat-widget-fullscreen {
-    @extend .chat-widget;
+    position: fixed;
+    bottom: 90px;
+    right: 60px;
+    background-color: var(--iris-chat-widget-background);
     width: 100%;
     height: 100%;
     left: 0;
@@ -50,7 +53,12 @@
 }
 
 .chat-header-fullscreen {
-    @extend .chat-header;
+    display: flex;
+    height: 50px;
+    background-color: var(--artemis-dark);
+    color: white;
+    font-weight: bold;
+    padding: 10px;
     justify-content: center;
 }
 
@@ -142,10 +150,6 @@ pre {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom: 1px solid var(--iris-client-chat-background);
-}
-
-.button-container {
-    display: flex;
 }
 
 .button {
