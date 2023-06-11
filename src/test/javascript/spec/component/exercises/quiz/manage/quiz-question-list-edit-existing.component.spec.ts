@@ -186,8 +186,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const findSpy = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
             const applyFilterSpy = jest.spyOn(component, 'applyFilter').mockImplementation();
             component.onCourseSelect();
-            expect(findForCourseSpy).toHaveBeenCalledOnceWith(course0.id);
-            expect(findSpy).toHaveBeenCalledOnceWith(quizExercise.id);
+            expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
+            expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
             expect(quizQuestion.exercise).toEqual(quizExercise);
             expect(component.allExistingQuestions).toBeArrayOfSize(1);
             expect(component.allExistingQuestions[0]).toEqual(quizQuestion);
@@ -221,8 +221,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const findSpy = jest.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
             const applyFilterSpy = jest.spyOn(component, 'applyFilter').mockImplementation();
             component.onExamSelect();
-            expect(findForExamSpy).toHaveBeenCalledOnceWith(exam0.id);
-            expect(findSpy).toHaveBeenCalledOnceWith(quizExercise.id);
+            expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
+            expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
             expect(quizQuestion.exercise).toEqual(quizExercise);
             expect(component.allExistingQuestions).toBeArrayOfSize(1);
             expect(component.allExistingQuestions[0]).toEqual(quizQuestion);
@@ -386,7 +386,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             component.existingQuestions = [question0, question1];
             const addQuestionsSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
             component.addExistingQuestions();
-            expect(addQuestionsSpy).toHaveBeenCalledOnceWith([question0]);
+            expect(addQuestionsSpy).toHaveBeenCalledExactlyOnceWith([question0]);
         });
     });
 

@@ -730,7 +730,7 @@ describe('ExamParticipationComponent', () => {
             comp.toggleHandInEarly();
 
             // Verify that resetPageComponentVisited has been called with the correct index
-            expect(resetPageComponentVisitedSpy).toHaveBeenCalledOnceWith(1);
+            expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
 
             // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
             expect(comp.pageComponentVisited).toEqual([false, true, false]);

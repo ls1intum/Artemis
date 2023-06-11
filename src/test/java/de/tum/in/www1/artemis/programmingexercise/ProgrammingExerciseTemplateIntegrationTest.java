@@ -18,7 +18,6 @@ import org.apache.maven.plugin.surefire.log.api.PrintStreamLogger;
 import org.apache.maven.plugins.surefire.report.ReportTestCase;
 import org.apache.maven.plugins.surefire.report.ReportTestSuite;
 import org.apache.maven.plugins.surefire.report.SurefireReportParser;
-import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.shared.invoker.*;
 import org.apache.maven.shared.utils.Os;
 import org.gradle.tooling.BuildLauncher;
@@ -229,12 +228,12 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         Files.move(sourceSrc, assignment.resolve("src"));
     }
 
-    private Map<TestResult, Integer> readTestReports(String testResultPath) throws MavenReportException {
+    private Map<TestResult, Integer> readTestReports(String testResultPath) {
         File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
         assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles);
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods
-        SurefireReportParser reportParser = new SurefireReportParser(List.of(reportFolder), Locale.US, new PrintStreamLogger(System.out));
+        SurefireReportParser reportParser = new SurefireReportParser(List.of(reportFolder), new PrintStreamLogger(System.out));
         List<ReportTestSuite> reports = reportParser.parseXMLReportFiles();
         return reports.stream().flatMap(testSuite -> testSuite.getTestCases().stream()).map(TestResult::of)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.summingInt(testCase -> 1)));

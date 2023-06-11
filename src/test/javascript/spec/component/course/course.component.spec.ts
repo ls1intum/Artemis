@@ -192,7 +192,7 @@ describe('CoursesComponent', () => {
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             req.flush(null);
             expect(component.courses).toBeUndefined();
-            expect(courseStorageServiceSpy).toHaveBeenCalledOnceWith(undefined);
+            expect(courseStorageServiceSpy).toHaveBeenCalledExactlyOnceWith(undefined);
         });
 
         it('should load exercises on init', () => {
