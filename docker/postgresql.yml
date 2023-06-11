@@ -1,11 +1,11 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# PostgreSQL base service
+# Postgres base service
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
     postgresql:
         container_name: artemis-postgresql
-        image: postgres:15-alpine
+        image: postgres:15.3-alpine
         pull_policy: always
         user: postgres
         command: ["postgres", "-c", "max_connections=200"]
