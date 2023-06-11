@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,7 +15,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -295,16 +293,5 @@ export class QuizExerciseComponent extends ExerciseComponent {
     public sortRows() {
         this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
         this.applyFilter();
-    }
-
-    /**
-     * Opens the import modal for a quiz exercise
-     */
-    openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseType = ExerciseType.QUIZ;
-        modalRef.result.then((result: QuizExercise) => {
-            this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'import']);
-        });
     }
 }

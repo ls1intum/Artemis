@@ -242,6 +242,8 @@ describe('CourseOverviewComponent', () => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
 
+        await component.ngOnInit();
+
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
 
@@ -254,6 +256,22 @@ describe('CourseOverviewComponent', () => {
 
             expect(spy).toHaveBeenCalledOnce();
         });
+    });
+
+    it('should not try to load message related data when not activated for course', () => {
+        const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService');
+
+        component.course = { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED };
+
+        const tabs = ['exercises', 'messages', 'exercises', 'messages'];
+        tabs.forEach((tab) => {
+            route.snapshot.firstChild!.routeConfig!.path = tab;
+            component.onSubRouteActivate({ controlConfiguration: undefined });
+        });
+
+        expect(unreadMessagesSpy).not.toHaveBeenCalled();
+        expect(setUpConversationServiceSpy).not.toHaveBeenCalled();
     });
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
@@ -354,7 +372,7 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
-        component.loadCourse();
+        component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
     });

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,14 +56,15 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
-        assertThrows(AccessForbiddenException.class,
-                () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     // Student should not have access to the tests repository.
     void testShouldDenyAccessToTestRepository(boolean atLeastEditor) {
-        assertThrows(AccessForbiddenException.class, () -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, student));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, student));
     }
 }
