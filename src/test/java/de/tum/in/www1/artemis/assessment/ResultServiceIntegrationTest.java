@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
@@ -489,10 +489,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
 
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -517,44 +521,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(true);
-        submissionRepository.save(modelingSubmission);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult_wrongExerciseId() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(true);
-        submissionRepository.save(modelingSubmission);
-        long randomId = 1874;
-        request.postWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExampleResult_notExampleSubmission() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
-        exampleSubmission = database.addExampleSubmission(exampleSubmission);
-        modelingSubmission.setExampleSubmission(false);
-        submissionRepository.save(modelingSubmission);
-
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

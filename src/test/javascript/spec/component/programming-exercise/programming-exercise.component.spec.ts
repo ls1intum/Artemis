@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
@@ -131,19 +130,6 @@ describe('ProgrammingExercise Management Component', () => {
         expect(programmingExerciseService.delete).toHaveBeenCalledOnce();
         expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
         expect(mockSubscriber).toHaveBeenCalledOnce();
-    });
-
-    it.each([undefined, 456])('should open import modal', (id: number | undefined) => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id } as ProgrammingExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
     });
 
     it('should open edit selected modal', () => {

@@ -1670,11 +1670,8 @@ class ProgrammingExerciseIntegrationTestService {
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, database.getDefaultPlagiarismOptions());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
+
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            // var entries = zipFile.entries();
-            // while(entries.hasMoreElements()) {
-            // System.out.println(entries.nextElement().getName());
-            // }
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
             assertThat(zipFile.getEntry("files/Submission-1.java/Submission-1.java")).isNotNull();
             assertThat(zipFile.getEntry("files/Submission-2.java/Submission-2.java")).isNotNull();

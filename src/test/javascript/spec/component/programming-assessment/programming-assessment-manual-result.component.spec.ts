@@ -597,7 +597,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             if (needsConfirmation) {
                 expect(window.confirm).toHaveBeenCalledOnce();
             } else {
-                expect(window.confirm).toHaveBeenCalledTimes(0);
+                expect(window.confirm).not.toHaveBeenCalled();
             }
         },
     );
