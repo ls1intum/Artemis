@@ -476,11 +476,13 @@ span.result:hover {
 }
 
 span.clickable-result {
-    text-decoration: underline;
+    border-bottom-width: 0.4px;
+    border-bottom-style: solid;
 }
 
 span.clickable-result:hover {
-    text-decoration: underline;
+    border-bottom-width: 0.4px;
+    border-bottom-style: solid;
     cursor: pointer;
 }
 
@@ -738,6 +740,15 @@ Course Info Bar
         margin-bottom: 0 !important;
         display: inline;
     }
+}
+
+/* Make PlantUML outputs responsive */
+[id^='plantUml-'] {
+    display: flex;
+}
+
+[id^='plantUml-'] > * {
+    height: 100% !important;
 }
 
 .ngb-tooltip-window {

@@ -57,8 +57,8 @@ export class Course implements BaseEntity {
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;
-    public registrationEnabled?: boolean;
-    public registrationConfirmationMessage?: string;
+    public enrollmentEnabled?: boolean;
+    public enrollmentConfirmationMessage?: string;
     public presentationScore?: number;
     public maxComplaints?: number;
     public maxTeamComplaints?: number;
@@ -107,7 +107,7 @@ export class Course implements BaseEntity {
         this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
 
-        this.registrationEnabled = false; // default value
+        this.enrollmentEnabled = false; // default value
         this.presentationScore = 0; // default value
         this.maxComplaints = 3; // default value
         this.maxTeamComplaints = 3; // default value

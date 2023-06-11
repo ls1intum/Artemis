@@ -160,7 +160,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request
+     * Finds one course using a GET request.
+     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
@@ -244,7 +245,7 @@ export class CourseManagementService {
      */
     findAllForRegistration(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
     }
 
@@ -253,7 +254,7 @@ export class CourseManagementService {
      */
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
@@ -263,7 +264,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' }).pipe(
+        return this.http.post<User>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
             map((res: HttpResponse<User>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
@@ -284,6 +285,13 @@ export class CourseManagementService {
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
+    }
+
+    /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
     }
 
     /**
