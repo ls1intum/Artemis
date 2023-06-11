@@ -476,11 +476,13 @@ span.result:hover {
 }
 
 span.clickable-result {
-    text-decoration: underline;
+    border-bottom-width: 0.4px;
+    border-bottom-style: solid;
 }
 
 span.clickable-result:hover {
-    text-decoration: underline;
+    border-bottom-width: 0.4px;
+    border-bottom-style: solid;
     cursor: pointer;
 }
 
