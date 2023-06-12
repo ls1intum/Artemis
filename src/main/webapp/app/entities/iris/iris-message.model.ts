@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { IrisMessageContent } from 'app/entities/iris/iris-content-type.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export enum IrisSender {
     LLM = 'LLM',

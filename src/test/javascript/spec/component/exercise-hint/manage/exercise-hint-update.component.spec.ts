@@ -18,7 +18,6 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
