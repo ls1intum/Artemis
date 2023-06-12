@@ -1,16 +1,9 @@
 <div class="container">
     <!-- chat box -->
-    <div
-        [class]="componentClass"
-        [ngDraggable]="componentClass !== 'chat-widget-fullscreen'"
-        [ngResizable]="componentClass !== 'chat-widget-fullscreen'"
-        [rzHandles]="componentClass !== 'chat-widget-fullscreen' ? 'all' : ''"
-        [rzMinWidth]="componentClass !== 'chat-widget-fullscreen' ? 250 : 0"
-        [rzMinHeight]="componentClass !== 'chat-widget-fullscreen' ? 200 : 0"
-    >
+    <div class="chat-widget">
         <!-- client -->
         <div class="client">
-            <div [class]="headerClass">
+            <div class="chat-header">
                 <h3 class="header-start">
                     <fa-icon size="xs" [icon]="faRobot" style="padding-right: 5px"></fa-icon>
                     Iris
@@ -19,10 +12,10 @@
                     </a>
                 </h3>
                 <div class="button-container">
-                    <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="openComponentInNewWindow()" class="header-icon">
+                    <button class="header-icon">
                         <fa-icon style="font-size: 16px" [icon]="faExpand"></fa-icon>
                     </button>
-                    <button *ngIf="componentClass !== 'chat-widget-fullscreen'" (click)="closeChat()" class="header-icon">
+                    <button (click)="closeChat()" class="header-icon">
                         <fa-icon style="font-size: 19px" [icon]="faXmark"></fa-icon>
                     </button>
                 </div>

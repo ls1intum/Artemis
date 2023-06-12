@@ -18,8 +18,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
     irisMessages: string[] = [];
     userMessages: string[] = [];
     newMessage = '';
-    componentClass = 'chat-widget';
-    headerClass = 'chat-header';
     userAccepted = false;
     public firstName: string | undefined;
     isScrolledToBottom = true;
@@ -35,28 +33,11 @@ export class ExerciseChatWidgetComponent implements OnInit {
     faCircleInfo = faCircleInfo;
 
     ngOnInit() {
-        this.route.url.subscribe((data) => {
-            if (data[0].path === 'chat') {
-                this.setFullScreenClass();
-            } else {
-                this.setDefaultClass();
-            }
-        });
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
                 this.userAccepted = localStorage.getItem(user!.login) == 'true';
             }
         });
-    }
-
-    private setDefaultClass() {
-        this.componentClass = 'chat-widget ngDraggable ngResizable';
-        this.headerClass = 'chat-header';
-    }
-
-    private setFullScreenClass() {
-        this.componentClass = 'chat-widget-fullscreen';
-        this.headerClass = 'chat-header-fullscreen';
     }
 
     onSend(): void {
@@ -76,11 +57,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
 
     closeChat() {
         this.dialog.closeAll();
-    }
-
-    openComponentInNewWindow() {
-        window.open('/chat', '_blank', 'width=600,height=600');
-        this.closeChat();
     }
 
     acceptPermission() {
