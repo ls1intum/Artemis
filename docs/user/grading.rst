@@ -24,8 +24,8 @@ The ``Presentation Mode`` allows you to decide whether students can hold present
 Note that you can define for every exercise whether it should be eligible for the presentation score within the exercise settings. There are three different modes:
 
 - ``None``: No presentation can be held.
-- ``Basic``: Students have to hold a given ``Number`` of presentations to be eligible for the exam bonus. The presentations are not graded.
-- ``Graded``: Students can hold a given ``Number`` of presentations. The presentations are graded and the ``Combined Weight`` of the presentations make up for the specified percentage of points of the course.
+- ``Basic``: Students must hold a given ``Number`` of presentations to be eligible for the exam bonus. The presentations are not graded.
+- ``Graded``: Students can hold a given ``Number`` of presentations. The presentations are graded, and their ``Combined Weight`` makes up for the specified percentage of points in the course.
 
 .. note::
     The ``Presentation Mode`` is only available for grading keys of courses but not for exams.

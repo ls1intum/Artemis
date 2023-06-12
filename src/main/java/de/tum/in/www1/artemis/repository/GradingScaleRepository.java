@@ -171,9 +171,9 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return a set of grading scales for the courses
      */
     @Query("""
-                SELECT gradingScale
-                FROM GradingScale gradingScale
-                WHERE gradingScale.course.id IN :courseIds
+                SELECT gs
+                FROM GradingScale gs
+                WHERE gs.course.id IN :courseIds
             """)
     Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
