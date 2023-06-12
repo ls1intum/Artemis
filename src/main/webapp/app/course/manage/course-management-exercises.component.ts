@@ -5,12 +5,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-course-management-exercises',
     templateUrl: './course-management-exercises.component.html',
 })
 export class CourseManagementExercisesComponent implements OnInit {
+    readonly ExerciseType = ExerciseType;
+
     course: Course;
     showSearch = false;
     quizExercisesCount = 0;
@@ -33,6 +36,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     documentationType = DocumentationType.Exercise;
 
     // extension points, see shared/extension-point
+    @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
