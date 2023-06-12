@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -37,24 +38,16 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     }
 
     @Query("""
-            SELECT DISTINCT c
+            SELECT DISTINCT c.id
             FROM Conversation c
-                LEFT JOIN FETCH c.conversationParticipants cp
-                LEFT JOIN FETCH cp.user user
-                LEFT JOIN c.course
+                LEFT JOIN c.conversationParticipants cp
+                LEFT JOIN cp.user user
+                LEFT JOIN c.course course
             WHERE user.id = :userId
+                AND (course.startDate <= :now OR course.startDate IS NULL)
+                AND (course.endDate >= :now OR course.endDate IS NULL)
             """)
-    List<Conversation> findAllWhereUserIsParticipant(@Param("userId") Long userId);
-
-    @Query("""
-            SELECT DISTINCT c
-            FROM Conversation c
-                LEFT JOIN FETCH c.conversationParticipants cp
-                LEFT JOIN FETCH cp.user user
-                LEFT JOIN c.course
-            WHERE user.id = :userId AND cp.unreadMessagesCount > 0
-            """)
-    List<Conversation> findAllUnreadConversationsWhereUserIsParticipant(@Param("userId") Long userId);
+    List<Long> findAllIdsWhereUserIsParticipant(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
     @Query("""
              SELECT COUNT(c.id) > 0

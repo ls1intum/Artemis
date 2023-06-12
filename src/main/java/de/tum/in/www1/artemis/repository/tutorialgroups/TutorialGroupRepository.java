@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,7 +40,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-                SELECT DISTINCT tutorialGroup.campus
+            SELECT DISTINCT tutorialGroup.campus
             FROM TutorialGroup tutorialGroup
             WHERE tutorialGroup.course.id = :#{#courseId} AND tutorialGroup.campus IS NOT NULL""")
     Set<String> findAllUniqueCampusValuesInCourse(@Param("courseId") Long courseId);
@@ -133,6 +135,19 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
             """)
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
+
+    @Query("""
+            SELECT tutorialGroup.id
+            FROM TutorialGroup tutorialGroup
+                LEFT JOIN tutorialGroup.teachingAssistant tutor
+                LEFT JOIN tutorialGroup.registrations registrations
+                LEFT JOIN registrations.student student
+                LEFT JOIN tutorialGroup.course course
+            WHERE (student.id = :userId OR tutor.id = :userId)
+                AND (course.startDate <= :now OR course.startDate IS NULL)
+                AND (course.endDate >= :now OR course.endDate IS NULL)
+            """)
+    List<Long> findAllIdsOfActiveCoursesWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return findByIdWithSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));

@@ -29,9 +29,11 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.in.www1.artemis.web.rest.dto.NotificationsUpdateDTO;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -56,13 +58,16 @@ public class NotificationResource {
 
     private final TutorialGroupService tutorialGroupService;
 
+    private final ConversationService conversationService;
+
     public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
-            NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
+            NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService, ConversationService conversationService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.notificationSettingRepository = notificationSettingRepository;
         this.notificationSettingsService = notificationSettingsService;
         this.tutorialGroupService = tutorialGroupService;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -93,5 +98,20 @@ public class NotificationResource {
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET notifications/for-updates: Get all ids to which the client should subscribe in order to get notifications
+     *
+     * @return a dto containing all relevant ids of tutorial groups and conversations to subscribe to
+     */
+    @GetMapping("notifications/for-updates")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<NotificationsUpdateDTO> getIdsForNotifications() {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        List<Long> tutorialGroupIds = tutorialGroupService.findAllTutorialGroupIdsForNotifications(user);
+        List<Long> conversationIds = conversationService.findAllConversationIdsForNotifications(user);
+
+        return ResponseEntity.ok(new NotificationsUpdateDTO(tutorialGroupIds, conversationIds));
     }
 }

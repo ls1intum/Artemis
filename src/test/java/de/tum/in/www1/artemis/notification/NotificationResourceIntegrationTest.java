@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +19,15 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.NotificationsUpdateDTO;
 
 class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -242,5 +246,27 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
         assertThat(notifications).as("Future notification is returned because it is after the hideUntil property").contains(futureNotification);
         assertThat(notifications).as("Past notification is not returned because it is prior to the hideUntil property").doesNotContain(pastNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetIdsForNotifications() throws Exception {
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User tutor1 = database.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        Conversation conversation1 = database.createPostsWithAnswersAndReactionsAndConversation(course1, student1, student2, 42, TEST_PREFIX).get(0).getConversation();
+        TutorialGroup tutorialGroup1 = database.createTutorialGroup(course1.getId(), "title", "additionalInfo", 42, false, "campus", "de", tutor1, Set.of(student1));
+
+        course2.setStartDate(ZonedDateTime.now().minusDays(2));
+        course2.setEndDate(ZonedDateTime.now().minusDays(1));
+        courseRepository.save(course2);
+
+        database.createPostsWithAnswersAndReactionsAndConversation(course2, student1, student2, 42, TEST_PREFIX);
+        database.createTutorialGroup(course2.getId(), "title", "additionalInfo", 42, false, "campus", "de", tutor1, Set.of(student1));
+
+        NotificationsUpdateDTO notificationsUpdateDTO = request.get("/api/notifications/for-updates", HttpStatus.OK, NotificationsUpdateDTO.class);
+        assertThat(notificationsUpdateDTO.conversationIds()).containsExactly(conversation1.getId());
+        assertThat(notificationsUpdateDTO.tutorialGroupIds()).containsExactly(tutorialGroup1.getId());
     }
 }

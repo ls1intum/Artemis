@@ -1,13 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
 import { Observable, ReplaySubject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
-
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ActivatedRoute, Params, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -36,9 +33,12 @@ import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+
+export class NotificationsUpdateDTO {
+    tutorialGroupIds: number[];
+    conversationIds: number[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -54,9 +54,6 @@ export class NotificationService {
         private accountService: AccountService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
-        private serializer: UrlSerializer,
-        private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
-        private courseConversationsNotificationsService: CourseConversationsNotificationsService,
     ) {
         this.initNotificationObserver();
     }
@@ -186,17 +183,15 @@ export class NotificationService {
                 this.subscribeToQuizUpdates(courses);
             }
         });
-        this.tutorialGroupsNotificationService.getTutorialGroupsForNotifications().subscribe((tutorialGroups) => {
-            if (tutorialGroups) {
-                this.subscribeToTutorialGroupNotificationUpdates(tutorialGroups);
-            }
-        });
-        this.courseConversationsNotificationsService.getConversationsForNotifications().subscribe((conversations) => {
-            if (conversations) {
-                this.subscribeToConversationNotificationUpdates(conversations);
-            }
+        this.getIdsForNotifications().subscribe((relevantIds) => {
+            this.subscribeToTutorialGroupNotificationUpdates(relevantIds.tutorialGroupIds);
+            this.subscribeToConversationNotificationUpdates(relevantIds.conversationIds);
         });
         return this.notificationObserver;
+    }
+
+    private getIdsForNotifications(): Observable<NotificationsUpdateDTO> {
+        return this.http.get<NotificationsUpdateDTO>(`${this.resourceUrl}/for-updates`);
     }
 
     private subscribeToSingleUserNotificationUpdates(): void {
@@ -290,9 +285,9 @@ export class NotificationService {
         });
     }
 
-    private subscribeToTutorialGroupNotificationUpdates(tutorialGroups: TutorialGroup[]): void {
-        tutorialGroups.forEach((tutorialGroup) => {
-            const tutorialGroupTopic = '/topic/tutorial-group/' + tutorialGroup.id + '/notifications';
+    private subscribeToTutorialGroupNotificationUpdates(tutorialGroupIds: number[]): void {
+        tutorialGroupIds.forEach((tutorialGroupId) => {
+            const tutorialGroupTopic = `/topic/tutorial-group/${tutorialGroupId}/notifications`;
             if (!this.subscribedTopics.includes(tutorialGroupTopic)) {
                 this.subscribedTopics.push(tutorialGroupTopic);
                 this.jhiWebsocketService.subscribe(tutorialGroupTopic);
@@ -303,9 +298,9 @@ export class NotificationService {
         });
     }
 
-    private subscribeToConversationNotificationUpdates(conversations: Conversation[]): void {
-        conversations.forEach((conversation) => {
-            const conversationTopic = '/topic/conversation/' + conversation.id + '/notifications';
+    private subscribeToConversationNotificationUpdates(conversationIds: number[]): void {
+        conversationIds.forEach((conversationId) => {
+            const conversationTopic = `/topic/conversation/${conversationId}/notifications`;
             if (!this.subscribedTopics.includes(conversationTopic)) {
                 this.subscribedTopics.push(conversationTopic);
                 this.jhiWebsocketService.subscribe(conversationTopic);

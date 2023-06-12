@@ -390,16 +390,12 @@ public class ConversationService {
     }
 
     /**
-     * Find all conversations for which the given user should be able to receive notifications.
+     * Find all Ids of conversations that the user is part of. Additionally, the course has to be active, i.e. after end date and before start date
      *
-     * @param user                    The user for which to find the courses.
-     * @param unreadConversationsOnly Whether to only return conversations that have unread messages.
-     * @return A list of conversations for which the user should receive notifications.
+     * @param user the user for which the relevant ids should be retrieved
+     * @return list of all relevant ids of conversations
      */
-    public List<Conversation> findAllConversationsForNotifications(User user, boolean unreadConversationsOnly) {
-        if (unreadConversationsOnly) {
-            return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
-        }
-        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+    public List<Long> findAllConversationIdsForNotifications(User user) {
+        return conversationRepository.findAllIdsWhereUserIsParticipant(ZonedDateTime.now(), user.getId());
     }
 }

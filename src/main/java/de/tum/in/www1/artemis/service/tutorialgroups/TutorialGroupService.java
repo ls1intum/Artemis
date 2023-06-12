@@ -285,7 +285,11 @@ public class TutorialGroupService {
      */
     public List<TutorialGroup> findAllForNotifications(User user) {
         return courseRepository.findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId()).stream()
-                .flatMap(course -> course.getTutorialGroups().stream()).collect(Collectors.toList());
+                .flatMap(course -> course.getTutorialGroups().stream()).toList();
+    }
+
+    public List<Long> findAllTutorialGroupIdsForNotifications(User user) {
+        return tutorialGroupRepository.findAllIdsOfActiveCoursesWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
     }
 
     /**

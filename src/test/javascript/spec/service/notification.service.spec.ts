@@ -20,14 +20,13 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
-import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
-import { MockProvider } from 'ng-mocks';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 
 describe('Notification Service', () => {
+    const resourceUrl = 'api/notifications';
+
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
@@ -37,12 +36,7 @@ describe('Notification Service', () => {
     let wsUnSubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
     let wsNotificationSubject: Subject<Notification | undefined>;
-    let tutorialGroupNotificationService: TutorialGroupsNotificationService;
-    let getTutorialGroupsForNotificationsSpy: jest.SpyInstance;
     let tutorialGroup: TutorialGroup;
-
-    let conversationNotificationService: CourseConversationsNotificationsService;
-    let getConversationsForNotificationsSpy: jest.SpyInstance;
     const conversation: OneToOneChat = new OneToOneChat();
     const groupChat: GroupChat = new GroupChat();
     conversation.id = 99;
@@ -155,8 +149,6 @@ describe('Notification Service', () => {
                         },
                     },
                 },
-                MockProvider(TutorialGroupsNotificationService),
-                MockProvider(CourseConversationsNotificationsService),
             ],
         })
             .compileComponents()
@@ -172,14 +164,9 @@ describe('Notification Service', () => {
                 wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
 
                 wsQuizExerciseSubject = new Subject<QuizExercise | undefined>();
-                tutorialGroupNotificationService = TestBed.inject(TutorialGroupsNotificationService);
 
                 tutorialGroup = new TutorialGroup();
                 tutorialGroup.id = 99;
-                getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([]));
-
-                conversationNotificationService = TestBed.inject(CourseConversationsNotificationsService);
-                getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([]));
 
                 courseManagementService = TestBed.inject(CourseManagementService);
                 cmCoursesSubject = new Subject<[Course] | undefined>();
@@ -197,7 +184,7 @@ describe('Notification Service', () => {
     describe('Service methods', () => {
         it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
             notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
-            const req = httpMock.expectOne({ method: 'GET' });
+            const req = httpMock.expectOne({ method: 'GET', url: resourceUrl });
             const url = 'api/notifications';
             expect(req.request.url).toBe(url);
         });
@@ -228,7 +215,7 @@ describe('Notification Service', () => {
                 expect(resp.body).toEqual(expectedResult);
             });
 
-            const req = httpMock.expectOne({ method: 'GET' });
+            const req = httpMock.expectOne({ method: 'GET', url: resourceUrl });
             req.flush(serverResponse);
             tick();
         }));
@@ -256,6 +243,8 @@ describe('Notification Service', () => {
             expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
             expect(wsSubscribeStub).toHaveBeenCalledWith(conversationNotificationTopic);
             expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(2);
+
+            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
 
         it('should unsubscribe from deleted conversation', fakeAsync(() => {
@@ -277,6 +266,8 @@ describe('Notification Service', () => {
 
             // websocket unsubscribe called for the deleted conversation
             expect(wsUnSubscribeStub).toHaveBeenCalledOnce();
+
+            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
 
         it('should subscribe to single user notification updates and receive new single user notification', fakeAsync(() => {
@@ -298,15 +289,18 @@ describe('Notification Service', () => {
             // add new single user notification
             wsNotificationSubject.next(singleUserNotification);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+
+            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
 
         it('should subscribe to tutorial group notification updates and receive new tutorial group notifications', fakeAsync(() => {
-            getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([tutorialGroup]));
-
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
                 expect(notification).toEqual(tutorialGroupNotification);
             });
-            expect(getTutorialGroupsForNotificationsSpy).toHaveBeenCalledOnce();
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
+            req.flush({ tutorialGroupIds: [tutorialGroup.id], conversationIds: [] });
+
             const notificationTopic = `/topic/tutorial-group/${tutorialGroup.id}/notifications`;
             expect(wsSubscribeStub).toHaveBeenCalledOnce();
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
@@ -315,12 +309,13 @@ describe('Notification Service', () => {
         }));
 
         it('should subscribe to conversation notification updates and receive new message notifications', fakeAsync(() => {
-            getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([conversation]));
-
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
                 expect(notification).toEqual(conversationNotification);
             });
-            expect(getConversationsForNotificationsSpy).toHaveBeenCalledOnce();
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
+            req.flush({ tutorialGroupIds: [], conversationIds: [conversation.id] });
+
             const notificationTopic = `/topic/conversation/${tutorialGroup.id}/notifications`;
             expect(wsSubscribeStub).toHaveBeenCalledOnce();
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
@@ -352,6 +347,8 @@ describe('Notification Service', () => {
             // add new single user notification
             wsNotificationSubject.next(groupNotification);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+
+            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
 
         it('should subscribe to quiz notification updates and receive a new quiz exercise and create a new quiz notification from it', fakeAsync(() => {
@@ -385,6 +382,8 @@ describe('Notification Service', () => {
             wsQuizExerciseSubject.next(quizExercise);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
             tick();
+
+            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
     });
 });
