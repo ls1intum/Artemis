@@ -61,10 +61,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
         });
-        // if(this.messages == null) {
-        //     this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(this.firstMessage));
-        // }
         this.loadFirstMessage();
+        console.log(this.messages);
     }
 
     ngOnDestroy() {
@@ -94,6 +92,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
             this.newMessageTextContent = '';
         }
         this.scrollToBottom();
+        console.log(this.stateStore);
+        console.log(this.messages);
     }
 
     scrollToBottom(behavior: ScrollBehavior = 'smooth') {
