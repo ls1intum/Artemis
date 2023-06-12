@@ -426,7 +426,7 @@ public class ExerciseService {
             if (submission.getSubmissionDate() != null) {
                 StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
                 quizParticipation.setInitializationState(InitializationState.INITIALIZED);
-                relevantParticipations.add(quizParticipation);
+                relevantParticipations = List.of(quizParticipation);
             }
         }
 

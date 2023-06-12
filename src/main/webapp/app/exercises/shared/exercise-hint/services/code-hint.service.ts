@@ -13,6 +13,13 @@ export interface ICodeHintService {
     generateCodeHintsForExercise(exerciseId: number, deleteOldCodeHints: boolean): Observable<CodeHint[]>;
 
     /**
+     * Generates the description for a code hint using Iris
+     * @param exerciseId of the programming exercise
+     * @param codeHintId of the code hint for which the description will be generated
+     */
+    generateDescriptionForCodeHint(exerciseId: number, codeHintId: number): Observable<HttpResponse<CodeHint>>;
+
+    /**
      * Removes a programming exercise solution entry from a code hint
      * @param exerciseId of the programming exercise
      * @param codeHintId of the code hint from which the solution entry will be removed
@@ -37,6 +44,15 @@ export class CodeHintService implements ICodeHintService {
         return this.http.post<CodeHint[]>(`${this.resourceUrl}/${exerciseId}/code-hints`, undefined, {
             params: options,
         });
+    }
+
+    /**
+     * Generates the description for a code hint using Iris
+     * @param exerciseId of the programming exercise
+     * @param codeHintId of the code hint for which the description will be generated
+     */
+    generateDescriptionForCodeHint(exerciseId: number, codeHintId: number): Observable<HttpResponse<CodeHint>> {
+        return this.http.post<CodeHint>(`${this.resourceUrl}/${exerciseId}/code-hints/${codeHintId}/generate-description`, undefined, { observe: 'response' });
     }
 
     /**

@@ -81,6 +81,12 @@
                         "label": "Code-Hinweise neu erstellen",
                         "tooltip": "Erstellt Code-Hinweise aus den existierenden Fragmenten. Existierende Hinweise werden überschrieben.",
                         "success": "Code-Hinweise erfolgreich neu erstellt. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
+                    },
+                    "iris": {
+                        "generateDescription": {
+                            "label": "Beschreibungen generieren",
+                            "tooltip": "Generiert eine kurze und lange Beschreibung basierend auf dem Lösungs Codeschnipseln mit Hilfe von Iris."
+                        }
                     }
                 }
             }

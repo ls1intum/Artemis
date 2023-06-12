@@ -160,7 +160,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request
+     * Finds one course using a GET request.
+     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
@@ -284,6 +285,13 @@ export class CourseManagementService {
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
+    }
+
+    /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
     }
 
     /**

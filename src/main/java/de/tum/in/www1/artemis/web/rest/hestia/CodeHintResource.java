@@ -91,6 +91,35 @@ public class CodeHintResource {
     }
 
     /**
+     * {@code POST programming-exercises/:exerciseId/code-hints/:codeHintId/generate-description} : Generate a description for a code hint using Iris.
+     *
+     * @param exerciseId The id of the exercise of the code hint
+     * @param codeHintId The id of the code hint
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
+     */
+    @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
+        log.debug("REST request to generate description with Iris for CodeHint: {}", codeHintId);
+
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        // Hints for exam exercises are not supported at the moment
+        if (exercise.isExamExercise()) {
+            throw new AccessForbiddenException("Code hints for exams are currently not supported");
+        }
+
+        var codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintId);
+        if (!Objects.equals(codeHint.getExercise().getId(), exercise.getId())) {
+            throw new ConflictException("The code hint does not belong to the exercise", "CodeHint", "codeHintExerciseConflict");
+        }
+
+        codeHint = codeHintService.generateDescriptionWithIris(codeHint);
+        return ResponseEntity.ok(codeHint);
+    }
+
+    /**
      * {@code DELETE programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries/:solutionEntryId} :
      * Removes a solution entry from a code hint.
      *

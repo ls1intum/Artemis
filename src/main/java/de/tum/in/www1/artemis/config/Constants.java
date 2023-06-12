@@ -275,6 +275,8 @@ public final class Constants {
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
 
+    public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
+
     /**
      * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.
      */
