@@ -32,6 +32,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      *
      * @param postContextFilter filtering and sorting properties for post objects
      * @param pageable          paging object which contains the page number and number of records to fetch
+     * @param userId            the id of the user for which the messages should be returned
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
