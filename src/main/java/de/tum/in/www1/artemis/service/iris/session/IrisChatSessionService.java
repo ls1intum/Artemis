@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -10,11 +11,15 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisModelService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -27,7 +32,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
-    private final IrisModelService irisModelService;
+    private final IrisConnectorService irisConnectorService;
 
     private final IrisMessageService irisMessageService;
 
@@ -39,14 +44,26 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisChatSessionService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository) {
-        this.irisModelService = irisModelService;
+    private final SubmissionRepository submissionRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
+            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+            SubmissionRepository submissionRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+        this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisWebsocketService = irisWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
+        this.submissionRepository = submissionRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+
     }
 
     /**
@@ -86,12 +103,25 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     @Override
     public void requestAndHandleResponse(IrisSession session) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        irisModelService.requestResponse(fullSession).handleAsync((irisMessage, throwable) -> {
+        Map<String, Object> parameters = Map.of();
+        /*
+         * if(fullSession instanceof IrisChatSession) {
+         * ProgrammingExercise exercise = ((IrisChatSession) fullSession).getExercise();
+         * parameters.put("exercise", exercise);
+         * parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
+         * var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), ((IrisChatSession) fullSession).getUser().getId());
+         * parameters.put("submission", submissionRepository.findByIdWithResultsElseThrow(participations.get(participations.size() - 1).getId()));
+         * parameters.put("participation", participations.get(participations.size() - 1));
+         * }
+         * parameters.put("session", fullSession);
+         */
+
+        irisConnectorService.sendRequest(0, IrisModel.GPT3_5, parameters).handleAsync((irisMessage, throwable) -> {
             if (throwable != null) {
                 log.error("Error while getting response from Iris model", throwable);
             }
             else if (irisMessage != null) {
-                var irisMessageSaved = irisMessageService.saveMessage(irisMessage, fullSession, IrisMessageSender.LLM);
+                var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
                 irisWebsocketService.sendMessage(irisMessageSaved);
             }
             else {
