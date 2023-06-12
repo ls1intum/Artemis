@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
@@ -22,7 +24,13 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityResponseType>}
      */
     createMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
-        return this.httpClient.post<IrisServerMessage>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
+        return this.httpClient.post<IrisServerMessage>(
+            `${this.resourceUrl}/${sessionId}/messages`,
+            Object.assign({}, message, {
+                sentAt: convertDateFromClient(message.sentAt),
+            }),
+            { observe: 'response' },
+        );
     }
 
     /**
@@ -31,7 +39,22 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityArrayResponseType>}
      */
     getMessages(sessionId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}/${sessionId}/messages`, { observe: 'response' });
+        return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}/${sessionId}/messages`, { observe: 'response' }).pipe(
+            map((response) => {
+                const messages = response.body;
+                if (messages == null) return response;
+
+                const modifiedMessages = messages.map((message) => {
+                    return Object.assign({}, message, {
+                        sentAt: convertDateFromServer(message.sentAt),
+                    });
+                });
+
+                return Object.assign({}, response, {
+                    body: modifiedMessages,
+                });
+            }),
+        );
     }
 
     /**
