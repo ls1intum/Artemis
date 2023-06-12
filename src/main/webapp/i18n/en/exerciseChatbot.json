@@ -1,0 +1,12 @@
+{
+    "artemisApp": {
+        "exerciseChatbot": {
+            "welcome": "Welcome",
+            "popUpMessage": "By choosing to continue, you agree that your interactions with IrisBot will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'.",
+            "inputMessage": "Write a message...",
+            "accept": "Accept",
+            "decline": "Decline",
+            "buttonTooltip": "Start chatting with Iris!"
+        }
+    }
+}

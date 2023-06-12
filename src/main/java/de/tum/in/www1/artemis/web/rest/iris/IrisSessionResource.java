@@ -10,12 +10,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
 /**
@@ -31,19 +34,22 @@ public class IrisSessionResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final IrisSessionRepository irisSessionRepository;
+    private final IrisChatSessionRepository irisChatSessionRepository;
 
     private final UserRepository userRepository;
 
     private final IrisSessionService irisSessionService;
 
-    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            UserRepository userRepository, IrisSessionService irisSessionService) {
+    private final IrisMessageService irisMessageService;
+
+    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.irisSessionRepository = irisSessionRepository;
+        this.irisChatSessionRepository = irisChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
+        this.irisMessageService = irisMessageService;
     }
 
     /**
@@ -56,10 +62,11 @@ public class IrisSessionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        irisSessionService.checkIsIrisActivated(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var session = irisSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        var session = irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         irisSessionService.checkHasAccessToIrisSession(session, user);
         return ResponseEntity.ok(session);
     }
@@ -74,9 +81,14 @@ public class IrisSessionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        irisSessionService.checkIsIrisActivated(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        var session = irisSessionService.createSessionForProgrammingExercise(exercise, user);
+
+        var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
+        if (session instanceof IrisChatSession) {
+            irisMessageService.saveMessage(irisSessionService.createInitialSystemMessage((IrisChatSession) session), session, IrisMessageSender.ARTEMIS);
+        }
 
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

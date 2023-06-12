@@ -24,7 +24,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     const exercise1 = {
         exerciseId: 1,
-        exerciseName: 'FarcadePattern',
+        exerciseName: 'FacadePattern',
         averageScore: 0,
         exerciseType: ExerciseType.TEXT,
         categories: [{ color: '#347aeb', category: 'structural pattern' }],
@@ -123,7 +123,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         // take first 10 exerciseTitles
 
         expect(component.barChartLabels).toEqual([
-            'FarcadePattern',
+            'FacadePattern',
             'BridgePattern',
             'VisitorPattern',
             'AdapterPattern',

@@ -35,6 +35,8 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -84,9 +86,13 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
+ * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
+ * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
 @Service
 public class ProgrammingExerciseTestService {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -160,7 +166,7 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private UrlService urlService;
 
-    @Autowired // can be used as SpyBean
+    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
@@ -785,7 +791,7 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName("testImportProgrammingExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
         database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
@@ -1824,9 +1830,13 @@ public class ProgrammingExerciseTestService {
         participation7b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7b.getId());
         participation8b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation8b.getId());
 
-        // only return the relevant participations (cleanup service would otherwise return too much
-        when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
-                participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
+        // TODO: only return participations 1a - 8b from findAllWithBuildPlanIdWithResults().
+        // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below, causing an AssertionError.
+        // The previous solution was to use a @SpyBean to spy on the programmingExerciseStudentParticipationRepository and then the commented lines below provided the correct mock.
+        // However, because of a bug in Mockito, these spy beans lead to issues for other tests and the solution either needs to find some other way to mock the returned
+        // participations or refactor the test such that only those participations are returned.
+        // when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
+        // participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
 
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
@@ -1924,7 +1934,7 @@ public class ProgrammingExerciseTestService {
             try (Git git = new Git(repository)) {
                 List<DiffEntry> diffs = git.diff().setNewTree(newTreeIter).setOldTree(oldTreeIter).call();
                 for (DiffEntry entry : diffs) {
-                    System.out.println("Entry: " + entry);
+                    log.debug("Entry: {}", entry.toString());
                 }
                 return diffs;
             }

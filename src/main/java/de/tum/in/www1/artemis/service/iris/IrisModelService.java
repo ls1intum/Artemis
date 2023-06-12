@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
-import de.tum.in.www1.artemis.service.iris.exception.IrisNoModelAvailableException;
 import de.tum.in.www1.artemis.service.iris.model.IrisModel;
 
 /**
@@ -33,6 +32,6 @@ public class IrisModelService {
         if (irisGPT3_5Service.isPresent()) {
             return irisGPT3_5Service.get().getResponse(irisSession);
         }
-        return CompletableFuture.failedFuture(new IrisNoModelAvailableException());
+        return CompletableFuture.failedFuture(new IllegalStateException("No Iris model available"));
     }
 }

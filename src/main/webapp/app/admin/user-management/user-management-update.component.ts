@@ -12,10 +12,13 @@ import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -36,6 +39,8 @@ export class UserManagementUpdateComponent implements OnInit {
     languages: string[];
     authorities: string[];
     isSaving: boolean;
+    allGroups: string[];
+    filteredGroups: Observable<string[]>;
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
 
@@ -45,15 +50,15 @@ export class UserManagementUpdateComponent implements OnInit {
     faTimes = faTimes;
     faBan = faBan;
     faSave = faSave;
+    editForm: FormGroup;
 
     private oldLogin?: string;
     private isJenkins: boolean;
 
-    editForm: FormGroup;
-
     constructor(
         private languageHelper: JhiLanguageHelper,
         private userService: AdminUserService,
+        private courseManagementService: CourseManagementService,
         private route: ActivatedRoute,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
@@ -80,7 +85,19 @@ export class UserManagementUpdateComponent implements OnInit {
                 });
             }
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.courseManagementService.getAllGroupsForAllCourses().subscribe((groups) => {
+            this.allGroups = [];
+            if (groups.body) {
+                groups.body.forEach((group) => {
+                    this.allGroups.push(group);
+                });
+            }
+            this.filteredGroups = this.groupCtrl.valueChanges.pipe(
+                startWith(null),
+                map((value) => (value ? this.filter(value) : this.allGroups.slice())),
+            );
+        });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
         });
         this.authorities = [];
@@ -95,24 +112,6 @@ export class UserManagementUpdateComponent implements OnInit {
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
         this.user.password = undefined;
         this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.editForm) {
-            return;
-        }
-        this.editForm = this.fb.group({
-            idInput: ['', []],
-            loginInput: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            firstNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            lastNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-            emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
-            registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
-            activatedInput: ['', []],
-            langKeyInput: ['', []],
-            authorityInput: ['', []],
-        });
     }
 
     /**
@@ -156,21 +155,6 @@ export class UserManagementUpdateComponent implements OnInit {
         }
     }
 
-    /**
-     * Set isSaving to false and navigate to previous page
-     */
-    private onSaveSuccess() {
-        this.isSaving = false;
-        this.previousState();
-    }
-
-    /**
-     * Set isSaving to false
-     */
-    private onSaveError() {
-        this.isSaving = false;
-    }
-
     shouldRandomizePassword(useRandomPassword: any) {
         if (useRandomPassword) {
             this.user.password = undefined;
@@ -203,20 +187,92 @@ export class UserManagementUpdateComponent implements OnInit {
         this.user.organizations = this.user.organizations!.filter((userOrganization) => userOrganization.id !== organization.id);
     }
 
+    /**
+     * Adds a group to the user
+     * @param user to add the group to
+     * @param event chip input event
+     */
     onGroupAdd(user: User, event: MatChipInputEvent) {
         const groupString = (event.value || '').trim();
-        if (groupString && !user.groups?.includes(groupString)) {
+        this.addGroup(user, groupString);
+        this.groupCtrl.setValue('');
+        event.chipInput!.clear();
+    }
+
+    /**
+     * Removes a group from the user
+     * @param user to remove the group from
+     * @param group to remove
+     */
+    onGroupRemove(user: User, group: string) {
+        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
+    }
+
+    /**
+     * Adds the selected group from panel to the user
+     * @param event autocomplete event
+     */
+    onSelected(event: MatAutocompleteSelectedEvent): void {
+        const groupString = (event.option.viewValue || '').trim();
+        this.addGroup(this.user, groupString);
+        this.groupCtrl.setValue('');
+    }
+
+    private initializeForm() {
+        if (this.editForm) {
+            return;
+        }
+        this.editForm = this.fb.group({
+            idInput: ['', []],
+            loginInput: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
+            firstNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
+            lastNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
+            passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
+            registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
+            activatedInput: ['', []],
+            langKeyInput: ['', []],
+            authorityInput: ['', []],
+        });
+    }
+
+    /**
+     * Set isSaving to false and navigate to previous page
+     */
+    private onSaveSuccess() {
+        this.isSaving = false;
+        this.previousState();
+    }
+
+    /**
+     * Set isSaving to false
+     */
+    private onSaveError() {
+        this.isSaving = false;
+    }
+
+    /**
+     * Filter the groups based on the input value
+     * @param value input value
+     * @private
+     */
+    private filter(value: string): string[] {
+        const filterValue = value.toLowerCase();
+        return this.allGroups.filter((group) => group.toLowerCase().includes(filterValue));
+    }
+
+    /**
+     * Adds a group to the user if it is valid
+     * @param user to add the group to
+     * @param groupString group to add
+     * @private
+     */
+    private addGroup(user: User, groupString: string) {
+        if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
             if (!user.groups) {
                 user.groups = [];
             }
             user.groups.push(groupString);
         }
-        // Clear the input value
-        event.chipInput!.clear();
-        this.groupCtrl.setValue(null);
-    }
-
-    onGroupRemove(user: User, group: string) {
-        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
     }
 }

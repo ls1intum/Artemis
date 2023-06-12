@@ -90,7 +90,6 @@ public class IrisMessage extends DomainObject {
 
     @Override
     public String toString() {
-        return "IrisMessage{" + "id=" + getId() + ",session=" + (session == null ? "null" : session.getId()) + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender
-                + '}';
+        return "IrisMessage{" + "session=" + (session == null ? "null" : session.getId()) + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender + '}';
     }
 }

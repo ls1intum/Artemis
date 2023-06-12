@@ -52,6 +52,6 @@ public class IrisMessageContent extends DomainObject {
 
     @Override
     public String toString() {
-        return "IrisMessageContent{" + "id=" + getId() + "message=" + (message == null ? "null" : message.getId()) + ", textContent='" + textContent + '\'' + '}';
+        return "IrisMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", textContent='" + textContent + '\'' + '}';
     }
 }
