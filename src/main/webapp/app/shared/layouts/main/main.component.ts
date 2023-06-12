@@ -51,7 +51,7 @@ export class JhiMainComponent implements OnInit {
             if (event instanceof NavigationStart) {
                 /*
                 In the case where we do not want to show the skeleton, we also want to set the background to transparent
-                such that the native applications can display their background in the web view.
+                such that the mobile native applications can display their background in the web view.
 
                 However, as the default background attribute is defined in the body html tag it is outside of Angular's reach.
                 We set the background ourselves by adding the transparent-background css class on the body element, thus

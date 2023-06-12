@@ -266,7 +266,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         // Start fetching, even if we don't subscribe to the result.
         // This enables just calling this method to refresh the course, without subscribing to it:
         this.loadCourseSubscription?.unsubscribe();
-        this.loadCourseSubscription = observable.subscribe();
+        if (refresh) {
+            this.loadCourseSubscription = observable.subscribe();
+        }
         return observable;
     }
 
