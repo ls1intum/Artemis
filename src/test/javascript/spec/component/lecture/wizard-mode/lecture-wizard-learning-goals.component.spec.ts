@@ -433,8 +433,8 @@ describe('LectureWizardLearningGoalsComponent', () => {
             wizardLearningGoalsComponent.createLearningGoal(formData);
 
             wizardLearningGoalsComponentFixture.whenStable().then(() => {
-                expect(createStub).toHaveBeenCalledTimes(0);
-                expect(alertStub).toHaveBeenCalledTimes(0);
+                expect(createStub).not.toHaveBeenCalled();
+                expect(alertStub).not.toHaveBeenCalled();
             });
         });
     }));
