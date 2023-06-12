@@ -15,11 +15,14 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.iris.*;
+import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisModelService;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -44,14 +47,17 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
     private final IrisMessageService irisMessageService;
 
+    private final IrisSettingsService irisSettingsService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisHestiaSessionService(IrisModelService irisModelService, IrisMessageService irisMessageService, AuthorizationCheckService authCheckService,
-            IrisSessionRepository irisSessionRepository) {
+    public IrisHestiaSessionService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
+            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository) {
         this.irisModelService = irisModelService;
         this.irisMessageService = irisMessageService;
+        this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
     }
@@ -166,6 +172,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
      */
     @Override
     public void checkIsIrisActivated(IrisSession session) {
-        throw new BadRequestException("Iris Hestia Session not supported");
+        var irisHestiaSession = castToSessionType(session, IrisHestiaSession.class);
+        irisSettingsService.checkIsIrisHestiaSessionEnabledElseThrow(irisHestiaSession.getCodeHint().getExercise());
     }
 }

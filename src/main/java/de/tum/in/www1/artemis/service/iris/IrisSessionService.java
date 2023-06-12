@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
@@ -82,18 +82,6 @@ public class IrisSessionService {
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
-    }
-
-    /**
-     * Checks if the programming exercise for which an Iris operation was requested has Iris activated.
-     * An Iris operation can be performed if the programming exercise has Iris activated.
-     *
-     * @param programmingExercise The programming exercise to check
-     */
-    public void checkIsIrisActivated(ProgrammingExercise programmingExercise) {
-        if (!programmingExercise.isIrisActivated()) {
-            throw new BadRequestException("Iris not activated for Programming Exercise: " + programmingExercise.getId());
-        }
     }
 
     /**

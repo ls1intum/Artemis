@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -142,8 +143,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
 
-    @Column(name = "iris_activated", table = "programming_exercise_details")
-    private boolean irisActivated = false;
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
+    private IrisSettings irisSettings;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -850,11 +852,11 @@ public class ProgrammingExercise extends Exercise {
         buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
-    public boolean isIrisActivated() {
-        return irisActivated;
+    public IrisSettings getIrisSettings() {
+        return irisSettings;
     }
 
-    public void setIrisActivated(boolean irisActivated) {
-        this.irisActivated = irisActivated;
+    public void setIrisSettings(IrisSettings irisSettings) {
+        this.irisSettings = irisSettings;
     }
 }

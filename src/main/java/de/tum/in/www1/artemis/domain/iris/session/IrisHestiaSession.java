@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris;
+package de.tum.in.www1.artemis.domain.iris.session;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;

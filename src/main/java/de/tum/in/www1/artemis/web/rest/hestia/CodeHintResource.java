@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -40,13 +41,17 @@ public class CodeHintResource {
 
     private final CodeHintService codeHintService;
 
+    private final IrisSettingsService irisSettingsService;
+
     public CodeHintResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService) {
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService,
+            IrisSettingsService irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.codeHintRepository = codeHintRepository;
         this.codeHintService = codeHintService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -104,6 +109,7 @@ public class CodeHintResource {
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        irisSettingsService.checkIsIrisHestiaSessionEnabledElseThrow(exercise);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {

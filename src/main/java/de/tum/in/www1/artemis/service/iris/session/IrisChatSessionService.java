@@ -2,21 +2,20 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.util.Objects;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisModelService;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -32,16 +31,19 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final IrisMessageService irisMessageService;
 
+    private final IrisSettingsService irisSettingsService;
+
     private final IrisWebsocketService irisWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisChatSessionService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisWebsocketService irisWebsocketService,
-            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository) {
+    public IrisChatSessionService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
+            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository) {
         this.irisModelService = irisModelService;
         this.irisMessageService = irisMessageService;
+        this.irisSettingsService = irisSettingsService;
         this.irisWebsocketService = irisWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
@@ -72,10 +74,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     @Override
     public void checkIsIrisActivated(IrisSession session) {
         var chatSession = castToSessionType(session, IrisChatSession.class);
-        if (!chatSession.getExercise().isIrisActivated()) {
-            throw new BadRequestException("Iris is not activated for exercise " + chatSession.getExercise().getId());
-        }
-
+        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(chatSession.getExercise());
     }
 
     /**
