@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { faArrowDown, faCircleInfo, faExpand, faPaperPlane, faRobot, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -21,6 +21,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     userAccepted = false;
     public firstName: string | undefined;
     isScrolledToBottom = true;
+    componentClass = 'chat-widget';
 
     constructor(private dialog: MatDialog, private route: ActivatedRoute, private localStorage: LocalStorageService, private accountService: AccountService) {}
 
@@ -31,6 +32,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     faArrowDown = faArrowDown;
     faRobot = faRobot;
     faCircleInfo = faCircleInfo;
+    faCompress = faCompress;
 
     ngOnInit() {
         this.accountService.identity().then((user: User) => {
@@ -82,5 +84,13 @@ export class ExerciseChatWidgetComponent implements OnInit {
         const scrollTop = chatBody.scrollTop;
         const clientHeight = chatBody.clientHeight;
         this.isScrolledToBottom = scrollHeight - scrollTop === clientHeight;
+    }
+
+    maximizeScreen() {
+        this.componentClass = 'chat-widget-fullscreen';
+    }
+
+    minimizeScreen() {
+        this.componentClass = 'chat-widget';
     }
 }

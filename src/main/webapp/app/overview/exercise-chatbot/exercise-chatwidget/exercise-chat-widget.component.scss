@@ -22,6 +22,16 @@
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
 }
 
+.chat-widget-fullscreen {
+    position: fixed;
+    bottom: 90px;
+    right: 60px;
+    width: 95vw;
+    height: 85vh;
+    background-color: var(--iris-chat-widget-background);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+}
+
 .ng-draggable {
     cursor: grab;
 }
@@ -44,6 +54,7 @@
     border: none;
     background: transparent;
     color: var(--secondary);
+    font-size: 16px;
 }
 
 .chat-body {
