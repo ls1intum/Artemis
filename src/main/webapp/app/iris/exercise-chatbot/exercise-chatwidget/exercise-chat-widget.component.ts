@@ -2,11 +2,12 @@ import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@an
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -29,6 +30,18 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     error = '';
     dots = 1;
 
+    readonly firstMessageContent = {
+        textContent: 'Hey! What can I help you?',
+        type: IrisMessageContentType.TEXT,
+    } as IrisMessageContent;
+
+    readonly firstMessage = {
+        sender: IrisSender.LLM,
+        id: 1,
+        content: [this.firstMessageContent],
+        sentAt: dayjs(),
+    } as IrisServerMessage;
+
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
     }
@@ -48,6 +61,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
         });
+        // if(this.messages == null) {
+        //     this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(this.firstMessage));
+        // }
+        this.loadFirstMessage();
     }
 
     ngOnDestroy() {
@@ -58,6 +75,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
         setInterval(() => {
             this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
         }, 500);
+    }
+
+    loadFirstMessage(): void {
+        if (this.messages == null) {
+            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(this.firstMessage));
+        }
     }
 
     onSend(): void {
