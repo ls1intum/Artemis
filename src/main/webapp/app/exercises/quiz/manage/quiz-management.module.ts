@@ -34,6 +34,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
 import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
 import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
+import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 
@@ -61,6 +62,7 @@ const ENTITY_STATES = [...quizManagementRoute];
     ],
     declarations: [
         QuizExerciseComponent,
+        QuizExerciseCreateButtonsComponent,
         QuizConfirmImportInvalidQuestionsModalComponent,
         QuizExerciseDetailComponent,
         MultipleChoiceQuestionEditComponent,
@@ -80,6 +82,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         QuizQuestionListEditComponent,
         QuizQuestionListEditExistingComponent,
     ],
-    exports: [QuizExerciseComponent],
+    exports: [QuizExerciseComponent, QuizExerciseCreateButtonsComponent],
 })
 export class ArtemisQuizManagementModule {}

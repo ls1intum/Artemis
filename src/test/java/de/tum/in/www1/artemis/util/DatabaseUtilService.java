@@ -330,6 +330,9 @@ public class DatabaseUtilService {
     @Autowired
     private ReactionRepository reactionRepository;
 
+    @Autowired
+    private QuizBatchRepository quizBatchRepository;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -4019,6 +4022,34 @@ public class DatabaseUtilService {
     }
 
     /**
+     * creates and saves an exam exercise group in a course that is currently active.
+     *
+     * @param mandatory if the exerciseGroup is mandatory
+     * @return exercise group created
+     */
+    public ExerciseGroup createAndSaveActiveExerciseGroup(boolean mandatory) {
+        Course course = createAndSaveCourse(1L, pastTimestamp, futureFutureTimestamp, Set.of());
+        Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        examRepository.save(exam);
+
+        return exerciseGroup;
+    }
+
+    /**
+     * important quiz fields are emptied, so it can be imported,
+     *
+     * @param quizExercise to be emptied
+     */
+    public void emptyOutQuizExercise(QuizExercise quizExercise) {
+        quizExercise.setReleaseDate(null);
+        quizExercise.setCourse(null);
+        quizExercise.setDueDate(null);
+        quizExercise.setAssessmentDueDate(null);
+        quizExercise.setQuizBatches(new HashSet<>());
+    }
+
+    /**
      * Creates a new quiz that gets saved in the QuizExercise repository.
      *
      * @param releaseDate release date of the quiz, is also used to set the start date of the course
@@ -4027,13 +4058,65 @@ public class DatabaseUtilService {
      * @return quiz that was created
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Creates a new quiz
+     *
+     * @param releaseDate release date of the quiz, is also used to set the start date of the course
+     * @param dueDate     due date of the quiz, is also used to set the end date of the course
+     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @return quiz that was created
+     */
+    public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
-        quizExerciseRepository.save(quizExercise);
 
         return quizExercise;
+    }
+
+    /**
+     * Creates a team quiz exercise with a team and saves it into the repository.
+     *
+     * @param releaseDate release date of the quiz
+     * @param dueDate     due date of the quiz
+     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @param minTeamSize minimum number of members the team is allowed to have
+     * @param maxTeamSize maximum number of members the team is allowed to have
+     * @return exercise created
+     */
+    public QuizExercise createAndSaveTeamQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, int minTeamSize, int maxTeamSize) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        setupTeamQuizExercise(quizExercise, minTeamSize, maxTeamSize);
+        quizExerciseRepository.save(quizExercise);
+
+        Team team = new Team();
+        team.setShortName("team");
+        teamRepo.save(quizExercise, team);
+
+        return quizExercise;
+    }
+
+    /**
+     * sets up a team quiz exercise.
+     *
+     * @param quiz        quiz exercise that should be a team exercise.
+     * @param minTeamSize minimum number of members the team is allowed to have
+     * @param maxTeamSize maximum number of members the team is allowed to have
+     */
+    public void setupTeamQuizExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(quiz);
+        teamAssignmentConfig.setMinTeamSize(minTeamSize);
+        teamAssignmentConfig.setMaxTeamSize(maxTeamSize);
+        quiz.setMode(ExerciseMode.TEAM);
+        quiz.setTeamAssignmentConfig(teamAssignmentConfig);
     }
 
     /**
@@ -4069,13 +4152,14 @@ public class DatabaseUtilService {
 
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         initializeQuizExercise(quizExercise);
+
         quizExerciseRepository.save(quizExercise);
 
         return quizExercise;
     }
 
     /**
-     * Removes a user from all courses they are currently in
+     * Removes a user from all courses they are currently in.
      *
      * @param login login to find user with
      */
@@ -4085,11 +4169,26 @@ public class DatabaseUtilService {
         userRepo.save(user);
     }
 
-    @NotNull
-    public QuizExercise createQuizWithQuizBatchedExercises(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        QuizExercise quizExerciseWithQuizBatches = ModelFactory.generateQuizExerciseWithQuizBatches(releaseDate, dueDate, quizMode, course);
-        initializeQuizExercise(quizExerciseWithQuizBatches);
-        return quizExerciseWithQuizBatches;
+    /**
+     * renames the quiz with the passed title, the quiz gets saved in the repository.
+     *
+     * @param quizExercise quiz to be renamed
+     * @param newTitle     new name of the quiz
+     */
+    public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
+        quizExercise.setTitle(newTitle);
+        quizExerciseRepository.save(quizExercise);
+    }
+
+    /**
+     * sets the quiz exercise of quiz batch and saves the batch into the repository
+     *
+     * @param batch        quiz batch that should get saved
+     * @param quizExercise quiz exercise to be added to the batch
+     */
+    public void setQuizBatchExerciseAndSave(QuizBatch batch, QuizExercise quizExercise) {
+        batch.setQuizExercise(quizExercise);
+        quizBatchRepository.save(batch);
     }
 
     @NotNull
@@ -4100,6 +4199,11 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * initializes a quiz with all different types of questions
+     *
+     * @param quizExercise to be initialized
+     */
     private void initializeQuizExercise(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
@@ -4212,6 +4316,7 @@ public class DatabaseUtilService {
         log.debug("DnD: {}", dnd);
         log.debug("DnD.hashCode: {}", dnd.hashCode());
         dnd.copyQuestionId();
+
         return dnd;
     }
 
@@ -4226,9 +4331,7 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
-        // invoke some util methods
-        log.debug("MC: {}", mc);
-        log.debug("MC.hashCode: {}", mc.hashCode());
+
         mc.copyQuestionId();
         return mc;
     }
