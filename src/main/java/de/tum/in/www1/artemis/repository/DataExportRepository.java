@@ -29,8 +29,8 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     }
 
     /**
-     * Find all data exports that need to be created needs. This includes all data exports that are currently in the state IN_CREATION (the export was not completed then) or
-     * requested.
+     * Find all data exports that need to be created. This includes all data exports that are currently in the state IN_CREATION (the export was not completed then) or
+     * REQUESTED.
      * 0 = REQUESTED, 1 = IN_CREATION
      *
      * @return a set of data exports that need to be created

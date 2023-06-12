@@ -325,7 +325,7 @@ public class MailService implements InstantNotificationService {
             case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             case DATA_EXPORT_CREATED -> templateEngine.process("mail/notification/dataExportCreatedEmail", context);
-            case DATA_EXPORT_FAILED -> templateEngine.process("mail/notification/dataExportFailedEmail.html", context);
+            case DATA_EXPORT_FAILED -> templateEngine.process("mail/notification/dataExportFailedEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

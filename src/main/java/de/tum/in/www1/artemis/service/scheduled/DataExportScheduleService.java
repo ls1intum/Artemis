@@ -47,13 +47,13 @@ public class DataExportScheduleService {
     // @Scheduled(cron = "0 0 4 * * *") // execute this every night at 4:00:00 am
     @Scheduled(cron = "0 0/2 * * * *") // execute this every 2 minutes
     public void createDataExportsAndDeleteOldOnes() {
-        if (profileService.isDev()) {
-            // do not execute this in a development environment
-            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-            return;
-        }
+        // if (profileService.isDev()) {
+        // // do not execute this in a development environment
+        // // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+        // return;
+        // }
 
-        checkSecurityUtils();
+        // checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
         dataExportsToBeCreated.forEach(this::createDataExport);
@@ -67,7 +67,6 @@ public class DataExportScheduleService {
      * @param dataExport the data export to be created
      */
     private void createDataExport(DataExport dataExport) {
-        checkSecurityUtils();
         log.info("Creating data export for {}", dataExport.getUser().getLogin());
         dataExportCreationService.createDataExport(dataExport);
     }
@@ -84,7 +83,7 @@ public class DataExportScheduleService {
      * @param dataExport the data export to be deleted
      */
     private void deleteDataExport(DataExport dataExport) {
-        checkSecurityUtils();
+        log.info("Deleting data export for {}", dataExport.getUser().getLogin());
         dataExportService.deleteDataExportAndSetDataExportState(dataExport);
     }
 
