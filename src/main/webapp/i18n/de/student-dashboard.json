@@ -59,6 +59,7 @@
                 "notReleasedTooltip": "Nicht sichtbar für Studierende. Veröffentlichungsdatum: ",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
+                "shortDueDate": "Bis",
                 "noDueDate": "Keine Deadline",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
