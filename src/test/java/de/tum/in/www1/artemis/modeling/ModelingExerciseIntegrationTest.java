@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.modeling;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -20,13 +21,16 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -67,6 +71,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private ModelingExercise classExercise;
 
@@ -172,6 +179,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(-1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 4; // 2 student, 1 tutor, 1 instructor (see @BeforeEach)
+        });
     }
 
     @Test

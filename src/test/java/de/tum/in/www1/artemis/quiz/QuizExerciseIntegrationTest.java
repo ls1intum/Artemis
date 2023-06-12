@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
+import static org.awaitility.Awaitility.await;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -28,9 +29,11 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -85,6 +88,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private QuizExercise quizExercise;
 
@@ -579,6 +585,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Channel channelDB = channelRepository.findChannelByExerciseId(quizExerciseDatabase.getId());
         assertThat(channelDB).isNotNull();
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelDB.getId());
+            return conversationParticipants.size() == 4; // 1 student, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
+        });
 
         for (int i = 0; i < quizExercise.getQuizQuestions().size(); i++) {
             var question = quizExercise.getQuizQuestions().get(i);

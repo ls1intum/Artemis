@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -14,9 +15,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,6 +41,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private Attachment attachmentDirectOfLecture;
 
@@ -133,6 +140,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
+
+        // Check that the conversation participants are added correctly to the lecture channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            return conversationParticipants.size() == 4; // 2 tutors, 1 instructor, 1 student (see @BeforeEach)
+        });
     }
 
     @Test

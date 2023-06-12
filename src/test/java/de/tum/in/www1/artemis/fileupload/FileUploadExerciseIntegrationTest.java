@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -20,9 +22,12 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -53,6 +58,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private List<GradingCriterion> gradingCriteria;
 
@@ -175,6 +183,13 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 5; // 2 students, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
+        });
     }
 
     @Test

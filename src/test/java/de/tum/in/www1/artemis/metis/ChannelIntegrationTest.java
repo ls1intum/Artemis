@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -18,9 +19,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -34,6 +39,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
+    @Autowired
+    private LectureRepository lectureRepository;
 
     private static final String TEST_PREFIX = "chtest";
 
@@ -736,6 +744,57 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(publicChannelWhereNotMember.getId());
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         conversationRepository.deleteById(privateChannelWhereNotMember.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getExerciseChannel_asCourseStudent_shouldGetExerciseChannel() throws Exception {
+        Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+        var exercise = database.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(7), ZonedDateTime.now().plusMinutes(14));
+        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        channel.setExercise(exercise);
+        channelRepository.save(channel);
+        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
+        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+
+        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+
+        // switch to student1
+        database.changeUser(testPrefix + "student1");
+
+        Channel exerciseChannel = request.get("/api/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
+        assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
+        assertThat(exerciseChannel.getExercise().getId()).isEqualTo(exercise.getId());
+
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLectureChannel_asCourseStudent_shouldGetLectureChannel() throws Exception {
+        Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        lecture = lectureRepository.save(lecture);
+        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        channel.setLecture(lecture);
+        channelRepository.save(channel);
+        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
+        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+
+        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+
+        database.changeUser(testPrefix + "student1");
+
+        Channel lectureChannel = request.get("/api/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
+        assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
+        assertThat(lectureChannel.getLecture().getId()).isEqualTo(lecture.getId());
+
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        lectureRepository.deleteById(lecture.getId());
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {
