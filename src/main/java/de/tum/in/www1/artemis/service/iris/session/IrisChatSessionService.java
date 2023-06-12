@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -7,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
@@ -18,7 +20,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
@@ -44,11 +45,11 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final IrisSessionRepository irisSessionRepository;
 
-    private final SubmissionRepository submissionRepository;
+    private final SubmissionRepository submissionRepository; // which of these do we need?
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final StudentParticipationRepository studentParticipationRepository; // which of these do we need?
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository; // which of these do we need? -> build failed
 
     public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
@@ -103,20 +104,23 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     @Override
     public void requestAndHandleResponse(IrisSession session) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        Map<String, Object> parameters = Map.of();
-        /*
-         * if(fullSession instanceof IrisChatSession) {
-         * ProgrammingExercise exercise = ((IrisChatSession) fullSession).getExercise();
-         * parameters.put("exercise", exercise);
-         * parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
-         * var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), ((IrisChatSession) fullSession).getUser().getId());
-         * parameters.put("submission", submissionRepository.findByIdWithResultsElseThrow(participations.get(participations.size() - 1).getId()));
-         * parameters.put("participation", participations.get(participations.size() - 1));
-         * }
-         * parameters.put("session", fullSession);
-         */
+        Map<String, Object> parameters = new HashMap<>();
 
-        irisConnectorService.sendRequest(0, IrisModel.GPT3_5, parameters).handleAsync((irisMessage, throwable) -> {
+        ProgrammingExercise exercise = ((IrisChatSession) fullSession).getExercise();
+        parameters.put("exercise", exercise);
+        parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), ((IrisChatSession) fullSession).getUser().getId());
+        // is this the correct id?
+        parameters.put("submission", submissionRepository.findByIdWithResultsElseThrow(participations.get(participations.size() - 1).getId()));
+        // how are the participations sorted
+        parameters.put("participation", participations.get(participations.size() - 1));
+        // Why are there multiple results, or what does it mean to have multiple results?
+        parameters.put("programmingSubmission",
+                programmingSubmissionRepository.findByResultIdElseThrow(participations.get(participations.size() - 1).getResults().stream().findFirst().get().getId()));
+        parameters.put("session", fullSession);
+
+        // where do we store the templateId if we submitted a template to Python?
+        irisConnectorService.sendRequest(0, exercise.getIrisSettings().getIrisChatSettings().getPreferredModel(), parameters).handleAsync((irisMessage, throwable) -> {
             if (throwable != null) {
                 log.error("Error while getting response from Iris model", throwable);
             }

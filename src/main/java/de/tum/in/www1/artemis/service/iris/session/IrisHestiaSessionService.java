@@ -87,6 +87,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
 
         try {
+            // what is the IrisModel for a HestiaSession since it has no ProgrammingExercise to fetch it from
             var irisMessage1 = irisConnectorService.sendRequest(0, IrisModel.GPT3_5, Map.of()).get();
             irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
