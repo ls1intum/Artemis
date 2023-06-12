@@ -81,7 +81,7 @@
                     </a>
                     <button
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.isAtLeastEditor"
                         (click)="checkConsistencies(programmingExercise)"
                         class="btn btn-outline-primary btn-sm me-1"
                         style="margin-bottom: 10px"

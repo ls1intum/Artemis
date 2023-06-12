@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
  */
 @RestController
 @RequestMapping("api/")
-@PreAuthorize("hasRole('INSTRUCTOR')")
+@PreAuthorize("hasRole('EDITOR')")
 public class ConsistencyCheckResource {
 
     private final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
@@ -50,7 +50,7 @@ public class ConsistencyCheckResource {
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
         final Exercise exercise = exerciseRepository.findByIdElseThrow(programmingExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
         return ResponseEntity.ok(result);
     }
