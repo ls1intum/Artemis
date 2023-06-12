@@ -677,14 +677,26 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         Course course = database.addCourseWithFileUploadExercise();
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
         Course course2 = database.addEmptyCourse();
+        database.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
-        expectedFileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 8));
+        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        expectedFileUploadExercise.setChannelName(uniqueChannelName);
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedFileUploadExercise).usingRecursiveComparison()
                 .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient")
                 .isEqualTo(expectedFileUploadExercise);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 5; // 2 students, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
+        });
     }
 
     @Test

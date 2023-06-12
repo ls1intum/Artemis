@@ -388,17 +388,29 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
+        database.enableMessagingForCourse(course2);
         ModelingExercise modelingExerciseToImport = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
         modelingExerciseRepository.save(modelingExerciseToImport);
         modelingExerciseToImport.setCourse(course2);
-        modelingExerciseToImport.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
+        modelingExerciseToImport.setChannelName(uniqueChannelName);
 
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison()
                 .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient")
                 .isEqualTo(modelingExerciseToImport);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 4; // 2 student, 1 tutor, 1 instructor (see @BeforeEach)
+        });
     }
 
     @Test
@@ -446,7 +458,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
+        assertThat(channelFromDB).isNull();
     }
 
     @Test
