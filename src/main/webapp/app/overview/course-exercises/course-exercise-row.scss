@@ -56,3 +56,20 @@
     position: relative;
     z-index: 1;
 }
+
+.max-width {
+    @media (min-width: 768px) {
+        max-width: 90%;
+    }
+
+    @media (max-width: 767px) {
+        max-width: 100%;
+    }
+}
+
+.exercise-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}

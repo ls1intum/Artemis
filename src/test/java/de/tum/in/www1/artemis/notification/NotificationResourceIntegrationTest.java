@@ -181,8 +181,8 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        NotificationSetting allowedSetting = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
-        NotificationSetting blockedSetting = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
+        NotificationSetting allowedSetting = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
+        NotificationSetting blockedSetting = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
 
         notificationSettingRepository.save(allowedSetting);
         notificationSettingRepository.save(blockedSetting);

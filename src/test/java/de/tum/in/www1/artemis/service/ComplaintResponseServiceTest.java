@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Set;
 
@@ -87,9 +86,9 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
         complaintWithResult.setResult(new Result());
         User user = new User();
 
-        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user)).isInstanceOf(IllegalArgumentException.class);
+        assertThatIllegalArgumentException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null));
+        assertThatIllegalArgumentException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user));
+        assertThatIllegalArgumentException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user));
     }
 
     @Test
