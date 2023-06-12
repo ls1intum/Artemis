@@ -76,8 +76,8 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("iris-gpt3_5")
-    public RestTemplate gpt35RestTemplate() {
+    @Profile("iris")
+    public RestTemplate irisRestTemplate() {
         return createRestTemplate();
     }
 
@@ -126,6 +126,12 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile("apollon")
     public RestTemplate shortTimeoutApollonRestTemplate() {
+        return createShortTimeoutRestTemplate();
+    }
+
+    @Bean
+    @Profile("iris")
+    public RestTemplate shortTimeoutIrisRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
 
