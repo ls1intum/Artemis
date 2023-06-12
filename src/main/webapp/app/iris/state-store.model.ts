@@ -1,4 +1,5 @@
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorType } from 'app/entities/iris/iris-errors.model';
 
 export enum ActionType {
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',
@@ -27,7 +28,7 @@ export class ActiveConversationMessageLoadedAction {
 export class ConversationErrorOccurredAction {
     readonly type: ActionType;
 
-    public constructor(public readonly errorMessage: string) {
+    constructor(public readonly errorType: IrisErrorType) {
         this.type = ActionType.CONVERSATION_ERROR_OCCURRED;
     }
 }
@@ -76,5 +77,5 @@ export function isSessionReceivedAction(action: MessageStoreAction): action is S
 }
 
 export class MessageStoreState {
-    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean, public error: string) {}
+    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean, public error: IrisErrorType | null) {}
 }

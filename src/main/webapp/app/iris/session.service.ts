@@ -6,6 +6,7 @@ import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -39,14 +40,14 @@ export class IrisSessionService {
                         this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages.body!));
                     })
                     .catch(() => {
-                        this.dispatchError('Could not fetch messages');
+                        this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);
                     });
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
                     return this.createNewSession(exerciseId);
                 } else {
-                    this.dispatchError('Could not fetch session details');
+                    this.dispatchError(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 }
             });
     }
@@ -60,7 +61,7 @@ export class IrisSessionService {
             (irisSessionResponse: any) => {
                 this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.id, []));
             },
-            () => this.dispatchError('Could not create a new session'), // TODO move to messages.json
+            () => this.dispatchError(IrisErrorMessageKey.SESSION_CREATION_FAILED),
         );
     }
 
@@ -68,7 +69,7 @@ export class IrisSessionService {
      * Dispatches an error action with the specified error message.
      * @param error The error message.
      */
-    private dispatchError(error: string): void {
-        this.stateStore.dispatch(new ConversationErrorOccurredAction(error));
+    private dispatchError(error: IrisErrorMessageKey): void {
+        this.stateStore.dispatch(new ConversationErrorOccurredAction(errorMessages[error]));
     }
 }

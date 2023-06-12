@@ -12,6 +12,7 @@ import { skip, take } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { mockClientMessage, mockServerMessage, mockState } from '../../helpers/sample/iris-sample-data';
+import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
 
 describe('IrisStateStore', () => {
     let stateStore: IrisStateStore;
@@ -139,13 +140,13 @@ describe('IrisStateStore', () => {
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        stateStore.dispatch(new ConversationErrorOccurredAction('123'));
+        stateStore.dispatch(new ConversationErrorOccurredAction(errorMessages[IrisErrorMessageKey.HISTORY_LOAD_FAILED]));
 
         const state = (await promise) as MessageStoreState;
 
         expect(state).toStrictEqual({
             ...mockState,
-            error: '123',
+            error: errorMessages[IrisErrorMessageKey.HISTORY_LOAD_FAILED],
         });
     });
 
@@ -184,8 +185,6 @@ describe('IrisStateStore with an empty session state', () => {
             message: mockServerMessage,
         };
 
-        const youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId = 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.';
-
         const obs = stateStore.getState();
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
@@ -196,7 +195,7 @@ describe('IrisStateStore with an empty session state', () => {
 
         expect(state).toStrictEqual({
             ...mockState,
-            error: youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId,
+            error: errorMessages[IrisErrorMessageKey.INVALID_SESSION_STATE],
             sessionId: null,
         });
     });

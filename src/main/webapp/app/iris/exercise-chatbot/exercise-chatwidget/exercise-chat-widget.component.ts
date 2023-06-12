@@ -7,6 +7,7 @@ import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
+import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -26,7 +27,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     newMessageTextContent = '';
     isLoading: boolean;
     sessionId: number;
-    error = '';
+    error: IrisErrorType | null;
     dots = 1;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
@@ -67,7 +68,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => this.scrollToBottom('smooth'))
-                .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!')));
+                .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(errorMessages[IrisErrorMessageKey.SEND_MESSAGE_FAILED])));
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');

@@ -6,7 +6,14 @@
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
-            "buttonTooltip": "Beginne mit Iris zu chatten!"
+            "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "errors": {
+                "invalidSessionState": "Der Iris-Sitzungszustand ist ungültig. Es ist unmöglich, in diesem Zustand Nachrichten zu senden.",
+                "historyLoadFailed": "Konnte Nachrichten nicht abrufen.",
+                "sessionLoadFailed": "Konnte Sitzungsdetails nicht abrufen.",
+                "sessionCreationFailed": "Konnte keine neue Sitzung erstellen.",
+                "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!"
+            }
         }
     }
 }

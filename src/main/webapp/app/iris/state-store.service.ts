@@ -10,8 +10,9 @@ import {
     isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
+import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
 
-type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: string) => void };
+type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: IrisErrorType) => void };
 
 /**
  * Provides a store to manage message-related state data and dispatch actions. Is valid only inside CourseExerciseDetailsComponent
@@ -22,7 +23,7 @@ export class IrisStateStore implements OnDestroy {
         messages: [],
         sessionId: null,
         isLoading: false,
-        error: '',
+        error: null,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -100,12 +101,21 @@ export class IrisStateStore implements OnDestroy {
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
+        if (state.error != null && state.error.fatal) {
+            return {
+                messages: [...state.messages],
+                sessionId: state.sessionId,
+                isLoading: false,
+                error: state.error,
+            };
+        }
+
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
                 messages: [...state.messages],
                 sessionId: state.sessionId,
                 isLoading: false,
-                error: 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.', // TODO translate to German
+                error: errorMessages[IrisErrorMessageKey.INVALID_SESSION_STATE],
             };
         }
 
@@ -114,7 +124,7 @@ export class IrisStateStore implements OnDestroy {
                 messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
                 isLoading: false,
-                error: '',
+                error: null,
             };
         }
         if (isConversationErrorOccurredAction(action)) {
@@ -122,7 +132,7 @@ export class IrisStateStore implements OnDestroy {
                 messages: state.messages,
                 sessionId: state.sessionId,
                 isLoading: false,
-                error: action.errorMessage,
+                error: action.errorType,
             };
         }
         if (isSessionReceivedAction(action)) {
@@ -130,7 +140,7 @@ export class IrisStateStore implements OnDestroy {
                 messages: action.messages,
                 sessionId: action.sessionId,
                 isLoading: state.isLoading,
-                error: '',
+                error: null,
             };
         }
         if (isStudentMessageSentAction(action)) {
@@ -138,7 +148,7 @@ export class IrisStateStore implements OnDestroy {
                 messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
                 isLoading: true,
-                error: '',
+                error: null,
             };
         }
 
