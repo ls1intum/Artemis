@@ -433,8 +433,8 @@ describe('LectureWizardCompetenciesComponent', () => {
             wizardCompetenciesComponent.createCompetency(formData);
 
             wizardCompetenciesComponentFixture.whenStable().then(() => {
-                expect(createStub).toHaveBeenCalledTimes(0);
-                expect(alertStub).toHaveBeenCalledTimes(0);
+                expect(createStub).not.toHaveBeenCalled();
+                expect(alertStub).not.toHaveBeenCalled();
             });
         });
     }));
