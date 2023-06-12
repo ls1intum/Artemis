@@ -15,6 +15,8 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockModule } from 'ng-mocks';
 
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
@@ -24,7 +26,7 @@ describe('LearningGoalFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule)],
             declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
             providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })

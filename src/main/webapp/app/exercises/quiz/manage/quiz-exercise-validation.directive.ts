@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -20,6 +21,7 @@ export abstract class QuizExerciseValidationDirective {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly QuizMode = QuizMode;
     readonly ButtonType = ButtonType;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     warningQuizCache = false;
     quizIsValid: boolean;

@@ -154,6 +154,7 @@
                     <th width="300"><span jhiTranslate="artemisApp.learningGoal.description">Description</span></th>
                     <th><span jhiTranslate="artemisApp.learningGoal.taxonomy">Taxonomy</span></th>
                     <th class="d-none d-lg-table-cell"><span jhiTranslate="artemisApp.learningGoal.masteredStudents">Mastered Students</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.optional">Optional</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -179,6 +180,9 @@
                             [value]="learningGoal.courseProgress?.numberOfMasteredStudents ?? 0"
                             [max]="learningGoal.courseProgress?.numberOfStudents ?? 0"
                         ></ngb-progressbar>
+                    </td>
+                    <td>
+                        <span>{{ 'global.generic.' + (learningGoal.optional ? 'yes' : 'no') | artemisTranslate }}</span>
                     </td>
                     <td class="text-end">
                         <a

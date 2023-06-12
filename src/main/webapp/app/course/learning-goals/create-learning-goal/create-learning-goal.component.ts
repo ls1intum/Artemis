@@ -66,12 +66,13 @@ export class CreateLearningGoalComponent implements OnInit {
             return;
         }
 
-        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.learningGoalToCreate.title = title;
         this.learningGoalToCreate.description = description;
         this.learningGoalToCreate.taxonomy = taxonomy;
         this.learningGoalToCreate.masteryThreshold = masteryThreshold;
+        this.learningGoalToCreate.optional = optional;
         this.learningGoalToCreate.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;

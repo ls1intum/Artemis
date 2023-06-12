@@ -9,7 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
 import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ValidatorFn } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
@@ -43,11 +47,45 @@ export const titleUniqueValidator = (learningGoalService: LearningGoalService, c
     };
 };
 
+/**
+ * Validator to make sure that a competency can only be optional if no exercise is completely included in the score
+ */
+export function canBeOptionalValidator(learningGoalService: LearningGoalService, courseId: number, competencyId?: number): ValidatorFn {
+    return (control: FormControl<boolean>) => {
+        if (!control.value || !competencyId) {
+            return null;
+        }
+
+        let requiredExerciseExists = false;
+        learningGoalService
+            .findById(competencyId, courseId)
+            .pipe(
+                map((res) => {
+                    if (res.body) {
+                        return res.body;
+                    }
+                    return null;
+                }),
+            )
+            .subscribe({
+                next: (learningGoal) => {
+                    if (learningGoal && learningGoal.exercises) {
+                        requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+
+        return requiredExerciseExists ? { canBeOptional: { valid: false } } : null;
+    };
+}
+
 export interface LearningGoalFormData {
     id?: number;
     title?: string;
     description?: string;
     taxonomy?: LearningGoalTaxonomy;
+    optional?: boolean;
     masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
 }
@@ -65,6 +103,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         description: undefined,
         taxonomy: undefined,
         masteryThreshold: undefined,
+        optional: false,
         connectedLectureUnits: undefined,
     };
 
@@ -86,6 +125,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
+    canBeOptionalValidator = canBeOptionalValidator;
     learningGoalTaxonomy = LearningGoalTaxonomy;
 
     @Output()
@@ -97,6 +137,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     suggestedTaxonomies: string[] = [];
 
     faTimes = faTimes;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private fb: FormBuilder,
@@ -115,6 +156,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     get masteryThresholdControl() {
         return this.form.get('masteryThreshold');
+    }
+
+    get optionalControl() {
+        return this.form.get('optional');
     }
 
     ngOnChanges(): void {
@@ -145,6 +190,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
+            optional: [undefined, this.canBeOptionalValidator(this.learningGoalService, this.courseId, this.formData.id)],
         });
         this.selectedLectureUnitsInTable = [];
 

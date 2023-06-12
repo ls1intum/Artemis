@@ -24,6 +24,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() learningGoals: LearningGoal[];
+    @Input() includeOptionals: boolean;
 
     @Output() valueChange = new EventEmitter();
 
@@ -42,10 +43,10 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
         if (this.learningGoals == undefined && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             if (course?.competencies) {
-                this.setLearningGoals(course.competencies!.filter((learningGoal) => !learningGoal.optional));
+                this.setLearningGoals(course.competencies);
             } else {
                 this.isLoading = true;
-                this.learningGoalService.getAllNonOptionalForCourse(courseId).subscribe({
+                this.learningGoalService.getAllForCourse(courseId).subscribe({
                     next: (response) => {
                         this.setLearningGoals(response.body!);
                         this.writeValue(this.value);
@@ -65,7 +66,11 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
      * @param learningGoals The competencies of the course
      */
     setLearningGoals(learningGoals: LearningGoal[]) {
-        this.learningGoals = learningGoals.map((learningGoal) => {
+        let filtered = learningGoals;
+        if (!this.includeOptionals) {
+            filtered = learningGoals.filter((learningGoal) => !learningGoal.optional);
+        }
+        this.learningGoals = filtered.map((learningGoal) => {
             // Remove unnecessary properties
             learningGoal.course = undefined;
             learningGoal.userProgress = undefined;

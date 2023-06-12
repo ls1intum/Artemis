@@ -21,6 +21,7 @@
                     ></fa-icon>
                     <span>{{ learningGoal!.title }}</span>
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
+                    <span *ngIf="learningGoal.optional === true" class="badge text-white bg-warning" jhiTranslate="artemisApp.learningGoal.optional">Optional</span>
                 </h3>
                 <div *ngIf="learningGoal.description">{{ learningGoal.description }}</div>
             </div>

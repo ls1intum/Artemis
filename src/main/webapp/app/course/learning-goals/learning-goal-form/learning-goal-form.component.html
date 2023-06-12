@@ -62,6 +62,12 @@
                 </label>
                 <input type="range" min="0" max="100" class="form-range" id="masteryThreshold" formControlName="masteryThreshold" />
             </div>
+            <div class="form-group">
+                <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" [checked]="formData.optional" />
+                <!--(change)="changeTestCourseEnabled()"-->
+                <label class="form-control-label" jhiTranslate="artemisApp.learningGoal.optional" for="optional"></label>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.learningGoal.optionalDescription' | artemisTranslate }}"></fa-icon>
+            </div>
             <div>
                 <label>{{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | artemisTranslate }}</label>
                 <div
