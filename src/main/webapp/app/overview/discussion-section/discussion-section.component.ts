@@ -3,7 +3,6 @@ import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { combineLatest, map } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,7 +10,6 @@ import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
@@ -57,22 +55,16 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             params: this.activatedRoute.params,
             queryParams: this.activatedRoute.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
-            const { params, queryParams } = routeParams;
-            const courseId = params.courseId;
-            this.currentPostId = +queryParams.postId;
-            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
-                if (res.body !== undefined) {
-                    this.course = res.body!;
-                    this.metisService.setCourse(this.course!);
-                    this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({
-                        exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
-                        lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
-                    });
-                    this.createEmptyPost();
-                    this.resetFormGroup();
-                }
+            this.currentPostId = +routeParams.queryParams.postId;
+            this.course = this.exercise?.course ?? this.lecture?.course;
+            this.metisService.setCourse(this.course);
+            this.metisService.setPageType(this.pageType);
+            this.metisService.getFilteredPosts({
+                exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
+                lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
             });
+            this.createEmptyPost();
+            this.resetFormGroup();
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;

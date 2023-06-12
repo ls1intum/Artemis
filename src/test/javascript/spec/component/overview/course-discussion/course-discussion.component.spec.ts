@@ -5,13 +5,10 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -45,12 +42,13 @@ import {
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MatSelectModule } from '@angular/material/select';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
     let fixture: ComponentFixture<CourseDiscussionComponent>;
-    let courseManagementService: CourseManagementService;
+    let courseStorageService: CourseStorageService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
@@ -94,8 +92,8 @@ describe('CourseDiscussionComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                courseManagementService = TestBed.inject(CourseManagementService);
-                jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
+                courseStorageService = TestBed.inject(CourseStorageService);
+                jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(metisCourse));
                 fixture = TestBed.createComponent(CourseDiscussionComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
