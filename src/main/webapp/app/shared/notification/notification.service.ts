@@ -73,6 +73,10 @@ export class NotificationService {
             .pipe(map((res: HttpResponse<Notification[]>) => this.convertNotificationResponseArrayDateFromServer(res)));
     }
 
+    getUnreadCountForCurrentUserFilteredBySettings(): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrl}/unread-count`);
+    }
+
     /**
      * Navigate to notification target or build router components and params for post related notifications
      * @param {GroupNotification} notification

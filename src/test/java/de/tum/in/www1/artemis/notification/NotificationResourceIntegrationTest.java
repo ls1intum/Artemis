@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -46,6 +44,14 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     private Course course2;
 
+    private final NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
+
+    private final NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
+
+    private NotificationSetting allowedSetting;
+
+    private NotificationSetting blockedSetting;
+
     private static final String TEST_PREFIX = "notificationresource";
 
     @BeforeEach
@@ -58,12 +64,21 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         student1.setLastNotificationRead(ZonedDateTime.now().minusDays(1));
         userRepository.save(student1);
+
+        allowedSetting = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
+        blockedSetting = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
+
+        notificationSettingRepository.save(allowedSetting);
+        notificationSettingRepository.save(blockedSetting);
     }
 
     @AfterEach
     void tearDown() {
         systemNotificationRepository.deleteAll();
         notificationRepository.deleteAll();
+
+        notificationSettingRepository.delete(allowedSetting);
+        notificationSettingRepository.delete(blockedSetting);
     }
 
     @Test
@@ -176,17 +191,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllNotificationsForCurrentUserFilteredBySettings() throws Exception {
-        NotificationType allowedType = NotificationType.ATTACHMENT_CHANGE;
-        NotificationType blockedType = NotificationType.EXERCISE_PRACTICE;
-
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-
-        NotificationSetting allowedSetting = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
-        NotificationSetting blockedSetting = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
-
-        notificationSettingRepository.save(allowedSetting);
-        notificationSettingRepository.save(blockedSetting);
-
         GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         allowedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(allowedType));
         notificationRepository.save(allowedNotification);
@@ -242,5 +246,39 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
         assertThat(notifications).as("Future notification is returned because it is after the hideUntil property").contains(futureNotification);
         assertThat(notifications).as("Past notification is not returned because it is prior to the hideUntil property").doesNotContain(pastNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetUnreadCountForCurrentUserFilteredBySettings() throws Exception {
+        GroupNotification readNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(25), course1, GroupNotificationType.STUDENT);
+        notificationRepository.save(readNotification);
+
+        for (int i = 0; i < 3; i++) {
+            GroupNotification unreadNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
+            notificationRepository.save(unreadNotification);
+        }
+
+        int unreadCount = request.get("/api/notifications/unread-count", HttpStatus.OK, int.class);
+        assertThat(unreadCount).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetUnreadCountForCurrentUserFilteredBySettingsFilteredBySettings() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
+            allowedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(allowedType));
+            notificationRepository.save(allowedNotification);
+        }
+
+        for (int i = 0; i < 2; i++) {
+            GroupNotification blockedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
+            blockedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(blockedType));
+            notificationRepository.save(blockedNotification);
+        }
+
+        int unreadCount = request.get("/api/notifications/unread-count", HttpStatus.OK, int.class);
+        assertThat(unreadCount).isEqualTo(3);
     }
 }

@@ -48,33 +48,60 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 
     @Query("""
+                SELECT COUNT(notification)
+                FROM Notification notification
+                    LEFT JOIN notification.course
+                    LEFT JOIN notification.recipient
+                WHERE notification.notificationDate IS NOT NULL
+                    AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
+                    AND notification.notificationDate > :lastNotificationRead
+                    AND (
+                        (type(notification) = GroupNotification
+                            AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
+                                OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
+                                OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
+                                OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')
+                            )
+                        )
+                        OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
+                        AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
+                            OR notification.title IS NULL
+                        )
+                        OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
+                    )
+            """)
+    int countAllUnreadNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
+
+    @Query("""
                 SELECT notification
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
                 WHERE notification.notificationDate IS NOT NULL
-                    AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
+                    AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
                     AND (
                          (type(notification) = GroupNotification
-                            AND (notification.title NOT IN :#{#deactivatedTitles}
+                            AND (notification.title NOT IN :deactivatedTitles
                                 OR notification.title IS NULL
                             )
-                            AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
-                           OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
-                           OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
-                           OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT'))
+                            AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
+                           OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
+                           OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
+                           OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
                      )
                      OR (type(notification) = SingleUserNotification
-                        AND notification.recipient.login = :#{#login}
-                        AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
+                        AND notification.recipient.login = :login
+                        AND (notification.title NOT IN :titlesToNotLoadNotification
                             OR notification.title IS NULL
                         )
-                        AND (notification.title NOT IN :#{#deactivatedTitles}
+                        AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
                      )
-                     OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
-                        AND (notification.title NOT IN :#{#deactivatedTitles}
+                     OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :tutorialGroupIds
+                        AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
                      )
@@ -83,6 +110,44 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
+
+    @Query("""
+                SELECT COUNT(notification)
+                FROM Notification notification
+                    LEFT JOIN notification.course
+                    LEFT JOIN notification.recipient
+                WHERE notification.notificationDate IS NOT NULL
+                    AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
+                    AND notification.notificationDate > :lastNotificationRead
+                    AND (
+                         (type(notification) = GroupNotification
+                            AND (notification.title NOT IN :deactivatedTitles
+                                OR notification.title IS NULL
+                            )
+                            AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
+                           OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
+                           OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
+                           OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
+                     )
+                     OR (type(notification) = SingleUserNotification
+                        AND notification.recipient.login = :login
+                        AND (notification.title NOT IN :titlesToNotLoadNotification
+                            OR notification.title IS NULL
+                        )
+                        AND (notification.title NOT IN :deactivatedTitles
+                            OR notification.title IS NULL
+                        )
+                     )
+                     OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :tutorialGroupIds
+                        AND (notification.title NOT IN :deactivatedTitles
+                            OR notification.title IS NULL
+                        )
+                     )
+                )
+            """)
+    int countAllUnreadNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
     @Transactional // ok because of modifying query
     @Modifying

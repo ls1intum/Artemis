@@ -5,6 +5,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 
 export class MockNotificationService {
     queryNotificationsFilteredBySettings = (req?: any): Observable<HttpResponse<Notification[]>> => of();
+    getUnreadCountForCurrentUserFilteredBySettings = (): Observable<number> => of();
     subscribeToNotificationUpdates = (): BehaviorSubject<Notification | null> => new BehaviorSubject(null);
     interpretNotification = (notification: GroupNotification): void => {};
     cleanUp = () => {};

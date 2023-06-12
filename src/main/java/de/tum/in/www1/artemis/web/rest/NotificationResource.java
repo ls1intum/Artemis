@@ -75,8 +75,10 @@ public class NotificationResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
+
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
+
+        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
                 notificationSettings);
@@ -93,5 +95,37 @@ public class NotificationResource {
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET notifications/unread-count: Determines the number of unread notifications according to the users' settings and returns it
+     *
+     * @return the amount of unread notifications
+     */
+    @GetMapping("notifications/unread-count")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Integer> getUnreadCountForCurrentUserFilteredBySettings() {
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        ZonedDateTime lastNotificationReadDate = currentUser.getLastNotificationRead();
+
+        log.debug("REST request to count all unread notifications for current user {} filtered by settings", currentUser);
+
+        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
+        Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
+        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
+                notificationSettings);
+        Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
+        ZonedDateTime hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
+
+        int numberOfUnreadMessages;
+        if (deactivatedTitles.isEmpty()) {
+            numberOfUnreadMessages = notificationRepository.countAllUnreadNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
+                    hideNotificationsUntilDate, tutorialGroupIds, TITLES_TO_NOT_LOAD_NOTIFICATION, lastNotificationReadDate);
+        }
+        else {
+            numberOfUnreadMessages = notificationRepository.countAllUnreadNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(),
+                    hideNotificationsUntilDate, deactivatedTitles, tutorialGroupIds, TITLES_TO_NOT_LOAD_NOTIFICATION, lastNotificationReadDate);
+        }
+        return ResponseEntity.ok().body(numberOfUnreadMessages);
     }
 }

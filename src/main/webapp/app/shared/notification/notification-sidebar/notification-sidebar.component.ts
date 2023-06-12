@@ -96,8 +96,8 @@ export class NotificationSidebarComponent implements OnInit {
 
                 this.loadNotificationSettings();
                 this.listenForNotificationSettingsChanges();
-                this.loadNotifications();
                 this.subscribeToNotificationUpdates();
+                this.getUnreadCount();
             } else {
                 this.sessionStorageService.clear(LAST_READ_STORAGE_KEY);
             }
@@ -135,6 +135,12 @@ export class NotificationSidebarComponent implements OnInit {
      */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
+        if (this.page === 0) {
+            this.loadNotifications();
+        }
+        if (this.recentNotificationCount > 0) {
+            this.updateLastNotificationRead();
+        }
     }
 
     // notification logic related methods
@@ -205,6 +211,12 @@ export class NotificationSidebarComponent implements OnInit {
             return JSON.parse(notification.placeholderValues);
         }
         return [];
+    }
+
+    private getUnreadCount(): void {
+        this.notificationService.getUnreadCountForCurrentUserFilteredBySettings().subscribe((unreadMessageCount) => {
+            this.recentNotificationCount = unreadMessageCount;
+        });
     }
 
     private loadNotifications(): void {
