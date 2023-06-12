@@ -84,13 +84,6 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
         return { progress: 0, confidence: 0 } as LearningGoalProgress;
     }
 
-    getColClass() {
-        if (this.learningGoal.softDueDate) {
-            return 'col-7';
-        }
-        return 'col-10';
-    }
-
     get progress(): number {
         // The percentage of completed lecture units and participated exercises
         return Math.round(this.getUserProgress().progress ?? 0);

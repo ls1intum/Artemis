@@ -96,7 +96,7 @@ describe('LearningGoalCardComponent', () => {
     ])('should have [ngClass] resolve to correct date badge', ({ learningGoal, expectedBadge }) => {
         learningGoalCardComponent.learningGoal = learningGoal;
         learningGoalCardComponentFixture.detectChanges();
-        const badge = learningGoalCardComponentFixture.debugElement.query(By.css('#date-badge-' + expectedBadge));
-        expect(badge).not.toBeNull();
+        const badge = learningGoalCardComponentFixture.debugElement.query(By.css('#date-badge')).nativeElement;
+        expect(badge.classList).toContain('bg-' + expectedBadge);
     });
 });
