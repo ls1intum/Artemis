@@ -1,0 +1,6 @@
+<div class="h-100 w-100 d-flex position-relative">
+    <div #lineNumbers class="line-numbers">
+        <div *ngFor="let i of [].constructor(this.linesNumber); let line = index">{{ line }}</div>
+    </div>
+    <textarea #textarea class="textarea-editor" readonly [value]="content || ''"></textarea>
+</div>

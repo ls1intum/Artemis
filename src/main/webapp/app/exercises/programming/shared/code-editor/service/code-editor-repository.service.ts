@@ -220,15 +220,19 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      *
      * @param fileUpdates the Array of updated files
      * @param thenCommit indicates the server to also commit the saved changes
+     * @param monacoServerUrl optional parameter instructing the server to forward the changes to an external monaco server
      */
-    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false) {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false, monacoServerUrl?: URL) {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
         return this.http
             .put<FileSubmission>(`${this.restResourceUrl}/files`, fileUpdates, {
-                params: { commit: thenCommit ? 'yes' : 'no' },
+                params: {
+                    commit: thenCommit ? 'yes' : 'no',
+                    monacoServerUrl: monacoServerUrl?.toString() ?? '',
+                },
             })
             .pipe(
                 handleErrorResponse(this.conflictService),
@@ -245,11 +249,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             );
     }
 
-    renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(handleErrorResponse(this.conflictService));
+    renameFile = (currentFilePath: string, newFilename: string, monacoServerUrl?: URL) => {
+        return this.http
+            .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }, { params: { monacoServerUrl: monacoServerUrl?.toString() ?? '' } })
+            .pipe(handleErrorResponse(this.conflictService));
     };
 
-    deleteFile = (fileName: string) => {
-        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
+    deleteFile = (fileName: string, monacoServerUrl?: URL) => {
+        return this.http
+            .delete<void>(`${this.restResourceUrl}/file`, { params: { file: fileName, monacoServerUrl: monacoServerUrl?.toString() ?? '' } })
+            .pipe(handleErrorResponse(this.conflictService));
     };
 }

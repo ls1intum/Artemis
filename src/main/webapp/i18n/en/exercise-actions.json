@@ -18,6 +18,7 @@
             "openPracticeCodeEditor": "Open practice code editor",
             "openGradedCodeEditor": "Open graded code editor",
             "choseGradedMode": "Graded participation chosen",
+            "openNewCodeEditor": "Open Web IDE (Beta)",
             "openModelingEditor": "Open modeling editor",
             "importIntoIntelliJ": "Open in IntelliJ",
             "practiceMode": {

@@ -1,0 +1,8 @@
+<div class="terminal-container">
+    <div *ngIf="terminalWs" class="overlay-btn">
+        <span class="btn btn-danger close-btn" (click)="killTerminal()" [ngbTooltip]="'artemisApp.terminal.close' | artemisTranslate">
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </span>
+    </div>
+    <div id="terminal" #terminal></div>
+</div>

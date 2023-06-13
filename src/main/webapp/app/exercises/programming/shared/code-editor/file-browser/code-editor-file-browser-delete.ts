@@ -16,6 +16,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     @Input() fileNameToDelete: string;
     @Input() parent: IFileDeleteDelegate;
     @Input() fileType: FileType;
+    @Input() monacoServerUrl: URL;
 
     isLoading: boolean;
 
@@ -41,7 +42,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {
-            this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe({
+            this.repositoryFileService.deleteFile(this.fileNameToDelete, this.monacoServerUrl).subscribe({
                 next: () => {
                     this.closeModal();
                     this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));

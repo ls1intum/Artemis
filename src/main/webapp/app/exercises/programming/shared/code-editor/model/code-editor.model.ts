@@ -70,6 +70,7 @@ export enum EditorState {
     UNSAVED_CHANGES = 'UNSAVED_CHANGES',
     SAVING = 'SAVING',
     REFRESHING = 'REFRESHING',
+    RUNNING = 'RUNNING',
 }
 
 /**

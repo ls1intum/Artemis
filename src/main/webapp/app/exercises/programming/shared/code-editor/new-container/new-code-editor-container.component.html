@@ -1,0 +1,105 @@
+<div [class]="isPresentationMode ? 'grid-container-presentation' : 'grid-container'">
+    <div class="nav-bar d-flex flex-wrap align-items-center mb-1" *ngIf="!isPresentationMode">
+        <div *ngIf="isOnMobile" class="text-center">
+            <span class="small text-warning" jhiTranslate="artemisApp.monaco.limitedFunctionalityOnMobile">Limited functionality: Mobile devices aren't fully supported yet</span>
+        </div>
+        <h4 class="editor-title"><ng-content select="[editorTitle]"></ng-content></h4>
+        <ng-content select="[editorTitleActions]"></ng-content>
+        <div class="switch-box">
+            <span><fa-icon [icon]="faMobileScreenButton"></fa-icon></span>
+            <div class="form-switch">
+                <input class="form-check-input" type="checkbox" (click)="toggleMobile()" [checked]="isOnMobile" />
+            </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
+            <ng-content select="[editorToolbar]"></ng-content>
+            <jhi-code-editor-actions
+                *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
+                [buildable]="buildable"
+                [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
+                [enableRunButton]="isRunEnabled && isTerminalInitialized && !isOnMobile"
+                [unsavedFiles]="unsavedFiles"
+                [monacoServerConfig]="currentLspConfig"
+                [(editorState)]="editorState"
+                [(commitState)]="commitState"
+                (onSavedFiles)="onSavedFiles($event)"
+                (onRefreshFiles)="onRefreshFiles()"
+                (commitStateChange)="onCommitStateChange.emit($event)"
+                (onError)="onError($event)"
+            ></jhi-code-editor-actions>
+        </div>
+    </div>
+    <div class="file-browser">
+        <jhi-code-editor-file-browser
+            [disableActions]="!editable"
+            [disableCollapse]="true"
+            [unsavedFiles]="unsavedFiles | keys"
+            [errorFiles]="errorFiles"
+            [editorState]="editorState"
+            [isTutorAssessment]="isTutorAssessment"
+            [highlightFileChanges]="highlightFileChanges"
+            [monacoServerConfig]="currentLspConfig"
+            [(selectedFile)]="selectedFile"
+            [(commitState)]="commitState"
+            (onFileChange)="onFileChange($event)"
+            (onError)="onError($event)"
+            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
+        ></jhi-code-editor-file-browser>
+    </div>
+    <div class="editor">
+        <jhi-monaco
+            *ngIf="!isOnMobile"
+            [selectedFile]="selectedFile!"
+            [sessionId]="participation ? participation.id! : 'test'"
+            [participation]="participation!"
+            [commitState]="commitState"
+            [editorState]="editorState"
+            [lspConfig]="currentLspConfig"
+            [feedbacks]="(participation?.results && participation!.results!.length > 0 && participation!.results!.first()!.feedbacks) || []"
+            [readOnlyManualFeedback]="readOnlyManualFeedback"
+            [isTutorAssessment]="isTutorAssessment"
+            [highlightDifferences]="highlightDifferences"
+            [course]="course"
+            (onFileContentChange)="onFileContentChange($event)"
+            (onUpdateFeedback)="updateFeedback($event!)"
+            (onError)="onError($event)"
+            (onPresentationMode)="togglePresentationMode($event)"
+        ></jhi-monaco>
+        <div *ngIf="isOnMobile" class="w-100 h-100">
+            <jhi-textarea-editor [content]="selectedFileContent"></jhi-textarea-editor>
+        </div>
+    </div>
+    <div class="instructions">
+        <jhi-code-editor-instructions
+            *ngIf="showEditorInstructions"
+            [disableCollapse]="true"
+            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
+            (onError)="onError($event)"
+            [isAssessmentMode]="isTutorAssessment"
+        >
+            <ng-content select="[editorSidebar]"></ng-content>
+        </jhi-code-editor-instructions>
+    </div>
+    <div class="terminal" *ngIf="!isPresentationMode">
+        <jhi-code-editor-terminal
+            *ngIf="isRunEnabled"
+            [hidden]="!isTerminalInitialized"
+            [lspConfig]="currentLspConfig"
+            [participation]="participation"
+            (onIsInitialized)="onIsTerminalInitialized()"
+        >
+        </jhi-code-editor-terminal>
+        <div *ngIf="!isRunEnabled" class="h-100 d-flex justify-content-center align-items-center">
+            <span jhiTranslate="artemisApp.monaco.terminalNotAvailable">Not Available</span>
+        </div>
+        <div *ngIf="isRunEnabled && !isTerminalInitialized && !lspNotAvailable" class="h-100 d-flex justify-content-center align-items-center bg-dark">
+            <div class="spinner-border text-light" role="status">
+                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!isPresentationMode && isRunEnabled && lspNotAvailable" class="terminal lsp-not-available d-flex flex-column justify-content-center align-items-center">
+        <span class="h3 text-danger" jhiTranslate="artemisApp.monaco.limitedFunctionality">Limited functionality</span>
+        <span class="h4" jhiTranslate="artemisApp.monaco.lspNotAvailable">LSP services currently not available</span>
+    </div>
+</div>

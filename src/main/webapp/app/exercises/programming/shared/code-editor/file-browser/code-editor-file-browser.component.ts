@@ -25,6 +25,7 @@ import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCi
 import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
+import { LspConfigModel } from 'app/exercises/programming/shared/code-editor/model/lsp-config.model';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -59,6 +60,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
     @Input() disableActions = false;
     @Input()
+    disableCollapse = false;
+    @Input()
     unsavedFiles: string[];
     @Input()
     errorFiles: string[];
@@ -72,6 +75,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     isTutorAssessment = false;
     @Input()
     highlightFileChanges = false;
+    @Input()
+    monacoServerConfig?: LspConfigModel;
 
     @Output()
     onToggleCollapse = new EventEmitter<InteractableEvent>();
@@ -394,8 +399,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param event
      */
     toggleEditorCollapse(event: any) {
-        this.collapsed = !this.collapsed;
-        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
+        if (!this.disableCollapse) {
+            this.collapsed = !this.collapsed;
+            this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
+        }
     }
 
     /**
@@ -536,7 +543,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     renameFile = (filePath: string, fileName: string): Observable<void> => {
-        return this.repositoryFileService.renameFile(filePath, fileName);
+        return this.repositoryFileService.renameFile(filePath, fileName, this.monacoServerConfig?.serverUrl);
     };
 
     createFile = (fileName: string): Observable<void> => {
@@ -559,6 +566,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             modalRef.componentInstance.parent = this;
             modalRef.componentInstance.fileNameToDelete = filePath;
             modalRef.componentInstance.fileType = fileType;
+            modalRef.componentInstance.monacoServerUrl = this.monacoServerConfig?.serverUrl;
         }
     }
 

@@ -31,6 +31,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ReactiveFormsModule } from '@angular/forms';
+import { LspManagementComponent } from './lsp/lsp-management.component';
+import { AddServerModalComponent } from './lsp/add-server-modal.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -69,6 +71,8 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementComponent,
         OrganizationManagementDetailComponent,
         OrganizationManagementUpdateComponent,
+        LspManagementComponent,
+        AddServerModalComponent,
     ],
 })
 export class ArtemisAdminModule {}

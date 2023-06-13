@@ -11,22 +11,30 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, Connectio
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlay, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
+import { LspConfigModel } from 'app/exercises/programming/shared/code-editor/model/lsp-config.model';
+import { CodeEditorMonacoService } from 'app/exercises/programming/shared/code-editor/service/code-editor-monaco.service';
 
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
+    styles: ['@media (max-width: 990px) { .run-btn { display: none; } }'],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
     CommitState = CommitState;
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
 
-    @Input() buildable = true;
-    @Input() unsavedFiles: { [fileName: string]: string };
+    @Input()
+    buildable = true;
+    @Input()
+    unsavedFiles: { [fileName: string]: string };
+    @Input()
+    monacoServerConfig?: LspConfigModel;
     @Input() disableActions = false;
     @Input() disableAutoSave = false;
+    @Input() enableRunButton = false;
     @Input() get editorState() {
         return this.editorStateValue;
     }
@@ -53,10 +61,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
+    // Run properties
+    runArguments = '';
+
     // Icons
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faSync = faSync;
+    faPlay = faPlay;
     farPlayCircle = faPlayCircle;
 
     // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
@@ -77,6 +89,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         private conflictService: CodeEditorConflictStateService,
         private modalService: NgbModal,
         private submissionService: CodeEditorSubmissionService,
+        private monacoService: CodeEditorMonacoService,
     ) {}
 
     ngOnInit(): void {
@@ -145,6 +158,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         }
     }
 
+    onRun() {
+        this.saveChangedFiles(false).subscribe(() => {
+            this.monacoService.run(this.runArguments);
+        });
+    }
+
     executeRefresh() {
         this.editorState = EditorState.REFRESHING;
         this.repositoryService.pull().subscribe({
@@ -177,7 +196,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         if (!_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
+            return this.repositoryFileService.updateFiles(unsavedFiles, andCommit, this.monacoServerConfig?.serverUrl).pipe(
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 }),

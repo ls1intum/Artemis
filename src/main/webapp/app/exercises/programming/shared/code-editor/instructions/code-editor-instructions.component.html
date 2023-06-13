@@ -18,7 +18,7 @@
                 <fa-icon class="bottom-icon" [icon]="faChevronLeft"></fa-icon>
             </span>
         </h3>
-        <fa-icon *ngIf="!collapsed" class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
+        <fa-icon *ngIf="!collapsed && !disableCollapse" class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
     </div>
     <div style="display: contents" [hidden]="collapsed">
         <ng-content></ng-content>

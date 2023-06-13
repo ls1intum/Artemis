@@ -61,6 +61,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
 
+    @Column(name = "allow_monaco_online_editor", table = "programming_exercise_details")
+    private Boolean allowMonacoOnlineEditor;
+
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
@@ -261,6 +264,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
+    }
+
+    public Boolean isAllowMonacoOnlineEditor() {
+        return allowMonacoOnlineEditor;
+    }
+
+    public void setAllowMonacoOnlineEditor(Boolean allowMonacoOnlineEditor) {
+        this.allowMonacoOnlineEditor = allowMonacoOnlineEditor;
     }
 
     public Boolean isAllowOfflineIde() {
@@ -728,8 +739,8 @@ public class ProgrammingExercise extends Exercise {
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
                 + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", allowMonacoOnlineEditor='" + isAllowMonacoOnlineEditor() + "'"
+                + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     public boolean getCheckoutSolutionRepository() {

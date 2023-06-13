@@ -59,6 +59,9 @@
         "jszip": "3.10.1",
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "3.0.0-rc.0",
+        "monaco-editor": "^0.34.1",
+        "monaco-editor-workers": "^0.34.2",
+        "monaco-languageclient": "^4.0.3",
         "ngx-infinite-scroll": "16.0.0",
         "ngx-webstorage": "12.0.0",
         "papaparse": "5.3.2",
@@ -74,8 +77,12 @@
         "ts-cacheable": "1.0.9",
         "tslib": "2.5.3",
         "uuid": "9.0.0",
+        "vscode-languageclient": "^8.1.0",
+        "vscode-ws-jsonrpc": "^2.0.1",
         "webstomp-client": "1.2.6",
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz",
+        "xterm": "^5.1.0",
+        "xterm-addon-fit": "^0.7.0",
         "zone.js": "0.13.0"
     },
     "overrides": {
@@ -99,6 +106,7 @@
         }
     },
     "devDependencies": {
+        "@angular-builders/custom-webpack": "^16.0.0",
         "@angular-builders/jest": "16.0.0",
         "@angular-eslint/builder": "16.0.3",
         "@angular-eslint/eslint-plugin": "16.0.3",
@@ -137,13 +145,18 @@
         "jest-junit": "16.0.0",
         "jest-preset-angular": "13.1.1",
         "lint-staged": "13.2.2",
+        "monaco-editor-webpack-plugin": "^7.0.1",
         "ng-mocks": "14.10.1",
         "prettier": "2.8.8",
         "sass": "1.63.3",
+        "style-loader": "^3.3.3",
         "ts-jest": "29.1.0",
         "typescript": "5.0.4",
         "weak-napi": "2.0.2",
-        "webpack-bundle-analyzer": "4.8.0"
+        "webpack": "^5.86.0",
+        "webpack-bundle-analyzer": "4.8.0",
+        "webpack-dev-server": "^4.15.1",
+        "webpack-merge": "^5.9.0"
     },
     "engines": {
         "node": ">=18.14.0 <=19"

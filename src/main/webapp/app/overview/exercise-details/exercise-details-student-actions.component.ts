@@ -3,16 +3,16 @@ import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { CodeEditorMonacoService } from 'app/exercises/programming/shared/code-editor/service/code-editor-monaco.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -40,6 +41,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
 
+    isLspEnabled = false;
+
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
@@ -57,6 +60,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     // Icons
     faComment = faComment;
     faFolderOpen = faFolderOpen;
+    faCode = faCode;
     faUsers = faUsers;
     faEye = faEye;
     faPlayCircle = faPlayCircle;
@@ -71,6 +75,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         private translateService: TranslateService,
         private participationService: ParticipationService,
         private profileService: ProfileService,
+        private featureToggleService: FeatureToggleService,
+        private monacoService: CodeEditorMonacoService,
     ) {}
 
     ngOnInit(): void {
@@ -80,6 +86,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
+            this.featureToggleService.getFeatureToggleActive(FeatureToggle.LSP).subscribe((isActive) => (this.isLspEnabled = isActive));
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
             });
@@ -134,6 +141,29 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     isResumeExerciseAvailable(participation?: StudentParticipation): boolean {
         return !this.examMode && isResumeExerciseAvailable(this.exercise, participation);
+    }
+
+    /**
+     * check if onlineEditor and monacoOnlineEditor are allowed
+     * @return {boolean}
+     */
+    isMonacoOnlineEditorAllowed() {
+        const exercise = this.exercise as ProgrammingExercise;
+        return exercise.allowOnlineEditor && exercise.allowMonacoOnlineEditor;
+    }
+
+    /**
+     * Checks if the exercise's programming language is currently supported
+     * by the LSP implementation
+     * @param exercise
+     */
+    isSupported(exercise: ProgrammingExercise) {
+        return (
+            exercise.programmingLanguage &&
+            (exercise.programmingLanguage === ProgrammingLanguage.JAVA ||
+                exercise.programmingLanguage === ProgrammingLanguage.PYTHON ||
+                exercise.programmingLanguage === ProgrammingLanguage.C)
+        );
     }
 
     /**

@@ -111,7 +111,19 @@
                         *ngIf="!examMode && programmingExercise?.allowOnlineEditor"
                     >
                     </jhi-open-code-editor-button>
-
+                    <button
+                        [id]="'new-open-exercise-' + exercise.id"
+                        jhi-exercise-action-button
+                        class="open-code-editor"
+                        [buttonIcon]="faCode"
+                        [jhiFeatureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.LSP]"
+                        [buttonLabel]="'artemisApp.exerciseActions.openNewCodeEditor' | artemisTranslate"
+                        [buttonLoading]="!!exercise.loading"
+                        [smallButton]="smallButtons"
+                        [hideLabelMobile]="false"
+                        *ngIf="!examMode && isMonacoOnlineEditorAllowed() && isLspEnabled && isSupported(exercise)"
+                        [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations![0].id, 'monaco-editor']"
+                    ></button>
                     <jhi-clone-repo-button
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"

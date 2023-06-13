@@ -56,6 +56,12 @@
                 "refreshExplanationShort": "Aktualisiert alle Dateien aus Deinem Repository.",
                 "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn Du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
+            "run": {
+                "running": "Wird ausgeführt..",
+                "performRun": "Ausführen",
+                "runFilesDescription": "Führt den Code über das integrierte Terminal aus.",
+                "args": "Parameter:"
+            },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",
                 "deleteFileTitle": "Datei löschen",

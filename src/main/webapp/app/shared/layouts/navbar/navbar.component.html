@@ -228,6 +228,12 @@
                             <span jhiTranslate="global.menu.admin.apidocs">API</span>
                         </a>
                     </li>
+                    <li *ngIf="lspEnabled">
+                        <a class="dropdown-item" routerLink="/admin/lsp" rel="noreferrer noopener" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faServer" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.lsp">LSP Servers</span>
+                        </a>
+                    </li>
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>

@@ -15,6 +15,8 @@ export enum FeatureToggle {
     Exports = 'Exports',
     ExamLiveStatistics = 'ExamLiveStatistics',
     TutorialGroups = 'TutorialGroups',
+    LSP = 'LSP',
+    EditorTerminal = 'EditorTerminal',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

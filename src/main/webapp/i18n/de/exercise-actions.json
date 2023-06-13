@@ -17,6 +17,7 @@
             "openCodeEditor": "Programmiereditor öffnen",
             "openPracticeCodeEditor": "Übungs-Programmiereditor öffnen",
             "openGradedCodeEditor": "Bewerteten Programmiereditor öffnen",
+            "openNewCodeEditor": "Web-IDE öffnen (Beta)",
             "openModelingEditor": "Modellierungseditor öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
             "practiceMode": {

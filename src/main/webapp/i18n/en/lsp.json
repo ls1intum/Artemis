@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "lsp": {
+            "title": "LSP Servers Management",
+            "refresh": "Refresh",
+            "addServer": "Add",
+            "resumeServer": "Resume",
+            "pauseServer": "Pause",
+            "removeServer": "Remove",
+            "healthy": "Healthy",
+            "unhealthy": "Unhealthy",
+            "activeSessions": "Active Sessions",
+            "cpu": "CPU Usage",
+            "load": "Load",
+            "memory": "Memory Usage",
+            "tooltips": {
+                "pause": "Ensures that no new sessions are started on this server. This won't stop active sessions.",
+                "remove": "Stops all active sessions and removes the server."
+            },
+            "modals": {
+                "addServerTitle": "Adding new LSP Server",
+                "addServerNote": "Keep in mind that added servers won't persist after Artemis restarts. Please add the new server entry in the Artemis configuration.",
+                "addServerText": "Please enter the URL of the LSP Server to add:",
+                "confirmRemovalTitle": "Are you sure you want to remove this server?",
+                "confirmRemovalText": "Active sessions will be "
+            },
+            "alerts": {
+                "errorServerAdd": "An error occurred while adding the new server",
+                "serverExisting": "A server with the same URL is already included"
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "artemisApp": {
+        "lsp": {
+            "title": "LSP Servers Verwaltung",
+            "refresh": "Aktualisieren",
+            "addServer": "Hinzufügen",
+            "resumeServer": "Fortsetzen",
+            "pauseServer": "Pausieren",
+            "removeServer": "Löschen",
+            "healthy": "OK",
+            "unhealthy": "Fehler",
+            "activeSessions": "Active Verbindungen",
+            "cpu": "CPU Verbrauch",
+            "load": "Last",
+            "memory": "Speicher Verbrauch",
+            "tooltips": {
+                "pause": "Auf diesem Server, werden keine neue Verbindungen gestartet. Aktive Verbindungen werden dadurch nicht gestoppt.",
+                "remove": "Beendet alle aktiven Verbindungen und entfernt den Server."
+            },
+            "modals": {
+                "addServerTitle": "LSP Server hinzufügen",
+                "addServerNote": "Bitte beachten Sie, dass hinzugefügte Server nach einem Neustart von Artemis nicht bestehen bleiben. Bitte fügen Sie den neuen Server-Eintrag in der Artemis-Konfiguration hinzu.",
+                "addServerText": "Bitte geben Sie die URL des hinzuzufügenden LSP-Servers ein:"
+            },
+            "alerts": {
+                "errorServerAdd": "Beim Hinzufügen des neuen Servers ist ein Fehler aufgetreten",
+                "serverExisting": "Ein Server mit der gleichen URL ist bereits enthalten"
+            }
+        }
+    }
+}

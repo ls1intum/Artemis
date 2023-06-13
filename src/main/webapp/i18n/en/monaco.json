@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "monaco": {
+            "presentationMode": "Toggle Presentation Mode",
+            "serverStatus": "Server Status:",
+            "connectionError": "An error occurred while connecting to the Monaco server.",
+            "limitedFunctionalityOnMobile": "Limited functionality: Mobile devices aren't fully supported yet",
+            "terminalNotAvailable": "Terminal not available",
+            "lspNotAvailable": "LSP services currently not available",
+            "limitedFunctionality": "Limited functionality",
+            "refreshLspTooltip": "Restarts the LSP server.\nUse this if the editor does not work correctly.",
+            "settings": {
+                "fontSize": "Font Size:",
+                "theme": "Theme:",
+                "minimap": "Show Minimap:"
+            },
+            "errors": {
+                "imageNotReady": "The server is currently downloading resources for your environment. Please try again in a moment.."
+            }
+        },
+        "terminal": {
+            "close": "Closes this terminal session."
+        }
+    }
+}

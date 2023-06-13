@@ -37,6 +37,36 @@
             <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span>
         </ng-template>
     </button>
+    <div *ngIf="enableRunButton" class="btn-group me-3">
+        <button
+            type="button"
+            class="btn btn-outline-dark navbar-btn run-btn shadow-none"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
+            (click)="onRun()"
+            data-toggle="tooltip"
+            data-placement="left"
+            title="{{ 'artemisApp.editor.run.runFilesDescription' | artemisTranslate }}"
+        >
+            <span *ngIf="editorState === EditorState.RUNNING; else notRunning">
+                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                <span jhiTranslate="artemisApp.editor.run.running">Running</span>
+            </span>
+            <ng-template #notRunning>
+                <fa-icon [icon]="faPlay"></fa-icon>
+                <span jhiTranslate="artemisApp.editor.run.performRun">Run</span>
+            </ng-template>
+        </button>
+        <div ngbDropdown placement="bottom-end" class="run-btn" [autoClose]="'outside'" aria-label="Run Settings">
+            <button ngbDropdownToggle class="btn btn-dark px-1 shadow-none" style="margin-left: -1px" type="button" id="dropdownRunSettings" aria-expanded="false"></button>
+            <div ngbDropdownMenu aria-labelledby="dropdownRunSettings">
+                <div ngbDropdownItem class="d-flex">
+                    <span class="dropdown-item" jhiTranslate="artemisApp.editor.run.args"></span>
+                    <input class="form-control-sm" type="text" [(ngModel)]="runArguments" />
+                </div>
+            </div>
+        </div>
+    </div>
     <button
         id="submit_button"
         type="button"

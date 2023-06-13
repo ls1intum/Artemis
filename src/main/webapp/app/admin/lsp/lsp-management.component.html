@@ -1,0 +1,101 @@
+<div class="mb-3">
+    <h2>
+        <span jhiTranslate="artemisApp.lsp.title">LSP Servers Management</span>
+        <div class="float-end">
+            <button class="btn btn-outline-primary me-1" (click)="refresh(true)">
+                <fa-icon [icon]="faSync"></fa-icon>
+                <span jhiTranslate="artemisApp.lsp.refresh">Refresh</span>
+            </button>
+            <button class="btn btn-outline-primary" (click)="addServer()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span jhiTranslate="artemisApp.lsp.addServer">Add Server</span>
+            </button>
+        </div>
+    </h2>
+</div>
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+<div *ngIf="!isLoading">
+    <div *ngFor="let server of serversStatus">
+        <div class="d-inline-flex align-items-center w-100">
+            <h3 class="me-1">
+                <span *ngIf="server.healthy" class="badge bg-success" jhiTranslate="artemisApp.lsp.healthy">Healthy</span>
+                <span *ngIf="!server.healthy" class="badge bg-danger" jhiTranslate="artemisApp.lsp.unhealthy">Unhealthy</span>
+            </h3>
+            <span class="h4 me-1">{{ server.url }}</span>
+            <span class="small text-center">{{ server.timestamp | artemisDate }}</span>
+            <div class="ms-auto d-inline-flex justify-content-center">
+                <button
+                    class="btn"
+                    [class.btn-warning]="!server.paused"
+                    [class.btn-info]="server.paused"
+                    placement="left"
+                    [ngbTooltip]="'artemisApp.lsp.tooltips.pause' | artemisTranslate"
+                    (click)="pauseServer(server)"
+                >
+                    <fa-icon [icon]="server.paused ? faPlay : faPause"></fa-icon>
+                    <span [jhiTranslate]="server.paused ? 'artemisApp.lsp.resumeServer' : 'artemisApp.lsp.pauseServer'">Pause</span>
+                </button>
+            </div>
+        </div>
+        <span>{{ 'artemisApp.lsp.activeSessions' | artemisTranslate }}</span>
+        <div class="w-100">
+            <strong>{{ server.activeSessions }}</strong>
+        </div>
+        <span>{{ 'artemisApp.lsp.cpu' | artemisTranslate }}</span>
+        <div class="progress position-relative">
+            <div
+                class="progress-bar"
+                role="progressbar"
+                [ngClass]="server.cpuUsage < 75 ? (server.cpuUsage < 50 ? 'bg-success' : 'bg-warning') : 'bg-danger'"
+                [style.width]="server.cpuUsage + '%'"
+                attr.aria-valuenow="{{ server.cpuUsage }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            >
+                <span class="justify-content-center d-flex position-absolute w-100 text-dark"> {{ server.cpuUsage }}% </span>
+            </div>
+        </div>
+        <span>{{ 'artemisApp.lsp.load' | artemisTranslate }}</span>
+        <div
+            class="progress position-relative mb-1"
+            *ngFor="
+                let load of [
+                    ['1min.', server.loadAvg1],
+                    ['5min', server.loadAvg5],
+                    ['15min', server.loadAvg15]
+                ]
+            "
+        >
+            <div
+                class="progress-bar"
+                role="progressbar"
+                [ngClass]="load[1][1] < 75 ? (load[1][1] < 50 ? 'bg-success' : 'bg-warning') : 'bg-danger'"
+                [style.width]="load[1] + '%'"
+                attr.aria-valuenow="{{ load[1] }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            >
+                <span class="justify-content-center d-flex position-absolute w-100 text-dark"> {{ load[1] }} - {{ load[0] }} </span>
+            </div>
+        </div>
+        <span>{{ 'artemisApp.lsp.memory' | artemisTranslate }}</span>
+        <div class="progress position-relative">
+            <div
+                class="progress-bar"
+                role="progressbar"
+                [ngClass]="server.memUsage < 75 ? (server.memUsage < 50 ? 'bg-success' : 'bg-warning') : 'bg-danger'"
+                [style.width]="server.memUsage + '%'"
+                attr.aria-valuenow="{{ server.memUsage }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            >
+                <span class="justify-content-center d-flex position-absolute w-100 text-dark"> {{ server.memUsage }}% </span>
+            </div>
+        </div>
+        <hr />
+    </div>
+</div>

@@ -1,0 +1,53 @@
+<div class="card h-100">
+    <div class="d-flex justify-content-between card-header bg-primary text-white">
+        <h3 class="mt-1 card-title">
+            <fa-icon [icon]="farFileAlt"></fa-icon>
+            <span> &nbsp;{{ selectedFile }}</span>
+            <fa-icon *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
+        </h3>
+        <div class="flex flex-column">
+            <div>
+                <span class="me-2" jhiTranslate="artemisApp.monaco.serverStatus">Server Status:</span>
+                <span class="me-1" [style.color]="isLangServerOnline !== undefined ? (isLangServerOnline ? 'green' : 'red') : 'grey'"><fa-icon [icon]="fasCircle"></fa-icon></span>
+                <span class="me-2">{{ isLangServerOnline !== undefined ? (isLangServerOnline ? 'Connected' : 'Not Connected') : 'Off' }}</span>
+                <span class="btn refreshLspBtn px-2 py-1" [ngbTooltip]="'artemisApp.monaco.refreshLspTooltip' | artemisTranslate" (click)="restartLanguageClient()"
+                    ><fa-icon [icon]="faSync"></fa-icon
+                ></span>
+            </div>
+            <div></div>
+        </div>
+        <div ngbDropdown class="ms-2" placement="bottom-end" [autoClose]="'outside'" aria-label="Code Editor Settings">
+            <button #dropdownToggle ngbDropdownToggle class="btn btn-sm btn-primary" type="button" id="dropdownCodeEditorSettings" aria-expanded="false">
+                <fa-icon [icon]="faGear"></fa-icon>
+            </button>
+            <div ngbDropdownMenu aria-labelledby="dropdownCodeEditorSettings">
+                <div ngbDropdownItem class="d-flex">
+                    <span class="dropdown-item" jhiTranslate="artemisApp.monaco.settings.fontSize"></span>
+                    <input
+                        type="number"
+                        [min]="editorConfigs.minFontSize || 4"
+                        [max]="editorConfigs.maxFontSize || 60"
+                        [(ngModel)]="editorConfigs.fontSize"
+                        (change)="updateFontSize()"
+                    />
+                </div>
+                <div ngbDropdownItem class="d-flex">
+                    <span class="dropdown-item" jhiTranslate="artemisApp.monaco.settings.theme"></span>
+                    <select [(ngModel)]="editorConfigs.theme" (change)="updateTheme()">
+                        <option *ngFor="let theme of themes" [value]="theme[1]">{{ theme[0] }}</option>
+                    </select>
+                </div>
+                <div ngbDropdownItem class="d-flex">
+                    <span class="dropdown-item" jhiTranslate="artemisApp.monaco.settings.minimap"></span>
+                    <input type="checkbox" [(ngModel)]="editorConfigs.minimap" (change)="updateMinimap()" />
+                </div>
+                <div ngbDropdownItem class="d-flex">
+                    <span class="btn btn-outline-primary" (click)="togglePresentationMode(); dropdownToggle.click()" jhiTranslate="artemisApp.monaco.presentationMode"
+                        >Toggle Presentation Mode</span
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="container" class="monaco-editor"></div>
+</div>

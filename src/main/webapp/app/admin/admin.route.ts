@@ -13,6 +13,7 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { LspManagementComponent } from 'app/admin/lsp/lsp-management.component';
 
 export const adminState: Routes = [
     {
@@ -63,6 +64,13 @@ export const adminState: Routes = [
                 component: DocsComponent,
                 data: {
                     pageTitle: 'global.menu.admin.apidocs',
+                },
+            },
+            {
+                path: 'lsp',
+                component: LspManagementComponent,
+                data: {
+                    pageTitle: 'global.menu.admin.lsp',
                 },
             },
             {

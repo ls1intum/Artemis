@@ -1,0 +1,89 @@
+.editor-title {
+    margin-bottom: 0;
+}
+
+.switch-box {
+    display: none;
+}
+
+.nav-bar {
+    grid-area: nav-bar;
+}
+
+.file-browser {
+    grid-area: file-browser;
+    min-width: 15vw;
+    resize: horizontal;
+    overflow: auto;
+}
+
+.editor {
+    grid-area: editor;
+    min-height: 50vh;
+}
+
+.instructions {
+    grid-area: instructions;
+    max-height: 78vh;
+    overflow-y: scroll;
+}
+
+.terminal {
+    grid-area: terminal;
+    height: 22vh;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-areas:
+        'nav-bar nav-bar nav-bar nav-bar nav-bar nav-bar'
+        'file-browser editor editor editor editor instructions'
+        'terminal terminal terminal terminal terminal instructions';
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 2fr;
+    max-height: 81vh;
+}
+
+.grid-container-presentation {
+    display: grid;
+    grid-template-areas: 'file-browser editor editor editor editor instructions';
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    height: 81vh;
+
+    .instructions {
+        max-height: none;
+        height: 100%;
+    }
+}
+
+@media (max-width: 990px) {
+    .switch-box {
+        display: flex;
+        margin-left: auto;
+
+        .form-switch {
+            margin-left: 0.5rem;
+            width: 70px;
+        }
+    }
+
+    .grid-container {
+        grid-template-areas:
+            'nav-bar nav-bar nav-bar nav-bar nav-bar nav-bar'
+            'editor editor editor editor editor editor'
+            'file-browser file-browser file-browser file-browser file-browser file-browser'
+            'instructions instructions instructions instructions instructions instructions';
+        max-height: 100%;
+    }
+
+    .file-browser {
+        resize: none;
+    }
+
+    .terminal {
+        display: none;
+    }
+}
+
+.lsp-not-available {
+    background-color: rgba(0, 0, 0, 0.2);
+}

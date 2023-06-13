@@ -37,6 +37,7 @@ import {
     faHeart,
     faList,
     faLock,
+    faServer,
     faSignOutAlt,
     faTachometerAlt,
     faTasks,
@@ -54,6 +55,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -71,6 +73,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     gitUsername: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
+    lspEnabled?: boolean;
     modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
@@ -97,6 +100,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faLock = faLock;
     faFlag = faFlag;
     faBook = faBook;
+    faServer = faServer;
     faTasks = faTasks;
     faList = faList;
     faHeart = faHeart;
@@ -137,6 +141,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
+        private featureToggleService: FeatureToggleService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -207,6 +212,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.studentExam = studentExam;
             this.checkExamActive();
         });
+
+        this.featureToggleService.getFeatureToggleActive(FeatureToggle.LSP).subscribe((isActive) => (this.lspEnabled = isActive));
 
         this.buildBreadcrumbs(this.router.url);
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));

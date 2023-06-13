@@ -17,7 +17,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.LspException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
@@ -56,12 +58,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
+    private final MonacoEditorService monacoEditorService;
+
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, BuildLogEntryService buildLogService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalCIConnectorService> localCIConnectorService) {
+            Optional<LocalCIConnectorService> localCIConnectorService, MonacoEditorService monacoEditorService) {
         super(profileService, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
                 repositoryAccessService, localCIConnectorService);
         this.participationAuthCheckService = participationAuthCheckService;
@@ -70,6 +74,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
+        this.monacoEditorService = monacoEditorService;
     }
 
     @Override
@@ -239,15 +244,33 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
-        return super.renameFile(participationId, fileMove);
+    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove, @RequestParam(required = false) String monacoServerUrl) {
+        ResponseEntity<Void> response = super.renameFile(participationId, fileMove);
+        if (monacoServerUrl != null && !monacoServerUrl.isEmpty()) {
+            try {
+                this.monacoEditorService.forwardFileRename(participationRepository.findByIdElseThrow(participationId), fileMove, monacoServerUrl);
+            }
+            catch (IllegalArgumentException | LspException e) {
+                log.error("Error while forwarding file rename to external Monaco server", e);
+            }
+        }
+        return response;
     }
 
     @Override
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
-        return super.deleteFile(participationId, filename);
+    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename, @RequestParam(required = false) String monacoServerUrl) {
+        ResponseEntity<Void> response = super.deleteFile(participationId, filename);
+        if (monacoServerUrl != null && !monacoServerUrl.isEmpty()) {
+            try {
+                this.monacoEditorService.forwardFileRemoval(participationRepository.findByIdElseThrow(participationId), filename, monacoServerUrl);
+            }
+            catch (IllegalArgumentException | LspException e) {
+                log.error("Error while forwarding file removal to external Monaco server", e);
+            }
+        }
+        return response;
     }
 
     @Override
@@ -268,7 +291,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PutMapping(value = "/repository/{participationId}/files")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam(defaultValue = "false") boolean commit) {
+            @RequestParam(defaultValue = "false") boolean commit, @RequestParam(required = false) String monacoServerUrl) {
 
         // Git repository must be available to update a file
         Repository repository;
@@ -306,6 +329,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new ResponseStatusException(response.getStatusCode());
             }
+        }
+
+        if (!monacoServerUrl.isEmpty()) {
+            this.monacoEditorService.forwardFileUpdates(participationId, submissions, monacoServerUrl);
         }
 
         return ResponseEntity.ok(fileSaveResult);

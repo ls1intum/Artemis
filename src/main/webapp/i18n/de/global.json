@@ -108,6 +108,7 @@
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",
+                "lsp": "LSP Servers",
                 "database": "Datenbank",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },

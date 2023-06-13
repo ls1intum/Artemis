@@ -56,6 +56,12 @@
                 "refreshExplanationShort": "Refresh and load all files from your repository.",
                 "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
             },
+            "run": {
+                "running": "Running..",
+                "performRun": "Run",
+                "runFilesDescription": "Runs the code through the integrated terminal.",
+                "args": "Arguments:"
+            },
             "fileBrowser": {
                 "fileBrowser": "File browser",
                 "deleteFileTitle": "Delete file",

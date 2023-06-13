@@ -16,6 +16,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Input()
     isAssessmentMode = true;
 
+    @Input()
+    disableCollapse = false;
+
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
@@ -45,7 +48,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param event - any event
      */
     toggleEditorCollapse(event: any) {
-        this.collapsed = !this.collapsed;
-        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
+        if (!this.disableCollapse) {
+            this.collapsed = !this.collapsed;
+            this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
+        }
     }
 }

@@ -18,8 +18,11 @@
       "prefix": "jhi",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-builders/custom-webpack:browser",
           "options": {
+            "customWebpackConfig": {
+              "path": "./webpack/webpack.custom.js"
+            },
             "allowedCommonJsDependencies": [
               "sockjs-client",
               "hoist-non-react-statics",
@@ -48,7 +51,11 @@
               "webcola",
               "rfdc",
               "jszip",
-              "react-dom/client"
+              "react-dom/client",
+              "xterm",
+              "xterm-addon-fit",
+              "vscode-jsonrpc",
+              "vscode-languageserver-protocol"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -170,13 +177,13 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
             "browserTarget": "artemis:build:development",
             "proxyConfig": "proxy.conf.mjs",
             "port": 9000
           },
-          "configurations": {
+            "configurations": {
             "production": {
               "browserTarget": "artemis:build:production"
             },

@@ -6,6 +6,19 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
+        path: ':participationId/monaco-editor',
+        component: CodeEditorStudentContainerComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+            useMonacoEditor: true,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':participationId',
         component: CodeEditorStudentContainerComponent,
         data: {

@@ -216,6 +216,18 @@ public abstract class RepositoryResource {
     }
 
     /**
+     * Overloaded method, including the operation forward to a given Monaco server
+     *
+     * @param domainId        that serves as an abstract identifier for retrieving the repository.
+     * @param fileMove        defines current and new path in git repository.
+     * @param monacoServerUrl Url of the Monaco server to forward the operation to
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
+     */
+    public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove, String monacoServerUrl) {
+        return renameFile(domainId, fileMove);
+    }
+
+    /**
      * Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
@@ -230,6 +242,18 @@ public abstract class RepositoryResource {
             repositoryService.deleteFile(repository, filename);
             return new ResponseEntity<>(HttpStatus.OK);
         });
+    }
+
+    /**
+     * Overloaded method, including the operation forward to a given Monaco server
+     *
+     * @param domainId        that serves as an abstract identifier for retrieving the repository.
+     * @param filename        path of file or folder to delete.
+     * @param monacoServerUrl Url of the Monaco server to forward the operation to
+     * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
+     */
+    public ResponseEntity<Void> deleteFile(Long domainId, String filename, String monacoServerUrl) {
+        return deleteFile(domainId, filename);
     }
 
     /**

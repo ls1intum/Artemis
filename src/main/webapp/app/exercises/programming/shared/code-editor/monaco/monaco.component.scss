@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'codicon';
+    src: url('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/base/browser/ui/codiconLabel/codicon/codicon.ttf') format('truetype');
+}
+
+.monaco-editor {
+    height: 100%;
+}
+
+.refreshLspBtn {
+    border: 0 !important;
+}
