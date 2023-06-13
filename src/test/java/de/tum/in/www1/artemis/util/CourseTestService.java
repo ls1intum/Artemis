@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -1162,7 +1162,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllGroupsForAllCourses() throws Exception {
-        Set<String> allGroups = new HashSet<>(request.getList("/api/courses/groups", HttpStatus.OK, String.class));
+        Set<String> allGroups = new HashSet<>(request.getList("/api/admin/courses/groups", HttpStatus.OK, String.class));
         courseRepo.findAll().stream().findAny().ifPresent(course -> {
             assertThat(allGroups)
                     .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));

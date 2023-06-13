@@ -356,7 +356,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Mock again because we call the trigger request two times
         bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         verify(messagingTemplate).convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
@@ -373,7 +373,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
+        String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
     }
 
@@ -386,7 +386,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 
@@ -455,7 +455,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation = studentParticipationRepository.save(studentParticipation);
 
-        String url = "/api/programming-submissions/" + studentParticipation.getId();
+        String url = "/api/public/programming-submissions/" + studentParticipation.getId();
         request.post(url, "test", HttpStatus.NOT_FOUND);
     }
 
@@ -464,7 +464,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         doThrow(ContinuousIntegrationException.class).when(versionControlService).getLastCommitDetails(any());
-        String url = "/api/programming-submissions/" + participation.getId();
+        String url = "/api/public/programming-submissions/" + participation.getId();
         request.post(url, "test", HttpStatus.BAD_REQUEST);
     }
 
@@ -478,7 +478,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         doReturn("branch").when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("another-branch").when(mockCommit).getBranch();
 
-        String url = "/api/programming-submissions/" + participation.getId();
+        String url = "/api/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
     }
 
@@ -496,7 +496,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         doReturn(artemisGitEmail).when(mockCommit).getAuthorEmail();
         doReturn(SETUP_COMMIT_MESSAGE).when(mockCommit).getMessage();
 
-        String url = "/api/programming-submissions/" + participation.getId();
+        String url = "/api/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
 
     }

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -126,7 +124,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     void testCheckSubmissionAllowanceGroupCheck() {
         student1.setGroups(Collections.singleton("another-group"));
         userRepository.save(student1);
-        assertThrows(AccessForbiddenException.class, () -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
     }
 
     private void queryTestingBasics(Exercise exercise) {

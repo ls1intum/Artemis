@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 
@@ -1042,7 +1042,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     void testGetSolutionFilesShouldRedirect() throws Exception {
         programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
-            assertDoesNotThrow(() -> hestiaUtilTestService.setupSolution(files, exercise, localRepository));
+            assertThatNoException().isThrownBy(() -> hestiaUtilTestService.setupSolution(files, exercise, localRepository));
             return localRepository;
         });
     }
@@ -1052,7 +1052,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     void testGetTemplateFilesWithContentShouldRedirect() throws Exception {
         programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
-            assertDoesNotThrow(() -> hestiaUtilTestService.setupTemplate(files, exercise, localRepository));
+            assertThatNoException().isThrownBy(() -> hestiaUtilTestService.setupTemplate(files, exercise, localRepository));
             return localRepository;
         });
     }
