@@ -21,6 +21,8 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -107,5 +109,44 @@ describe('ResultComponent', () => {
         expect(component.resultIconClass).toEqual(faTimesCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.short');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
+    it.each([
+        // never show icon in long format, the text already contains the relevant information
+        { short: false, score: MIN_SCORE_ORANGE - 3, codeIssues: 1, iconShown: false },
+        { short: false, score: MIN_SCORE_ORANGE, codeIssues: 1, iconShown: false },
+        { short: false, score: MIN_SCORE_GREEN, codeIssues: 2, iconShown: false },
+        // show independent of score
+        { short: true, score: MIN_SCORE_ORANGE - 3, codeIssues: 1, iconShown: true },
+        { short: true, score: MIN_SCORE_ORANGE, codeIssues: 1, iconShown: true },
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: 2, iconShown: true },
+        // show only if code issues exist
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: undefined, iconShown: false },
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: 0, iconShown: false },
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: 10, iconShown: true },
+    ])('should show a warning icon if code issues exist (%s)', ({ short, score, codeIssues, iconShown }) => {
+        const submission: Submission = { id: 1 };
+        const result: Result = {
+            id: 3,
+            submission,
+            score,
+            testCaseCount: 2,
+            codeIssueCount: codeIssues,
+            completionDate: dayjs().subtract(2, 'minutes'),
+        };
+        const participation = cloneDeep(programmingParticipation);
+        result.participation = participation;
+        participation.results = [result];
+
+        component.short = short;
+        component.participation = participation;
+        fixture.detectChanges();
+
+        const warningIcon = fixture.debugElement.nativeElement.querySelector('#code-issue-warnings-icon');
+        if (iconShown) {
+            expect(warningIcon).toBeDefined();
+        } else {
+            expect(warningIcon).toBeNull();
+        }
     });
 });
