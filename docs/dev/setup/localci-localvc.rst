@@ -100,3 +100,6 @@ You can now test the setup:
 - Create a course and a programming exercise.
 - Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
 - Make sure that the result of your submission is displayed in the Artemis UI.
+
+.. HINT::
+   At the moment, the local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
