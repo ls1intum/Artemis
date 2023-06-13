@@ -42,6 +42,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -51,6 +53,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
@@ -164,6 +168,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private Course course1;
 
@@ -905,6 +915,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam examD = ModelFactory.generateExam(course1, "examD");
         examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
+
+        database.enableMessagingForCourse(course1);
         // Test examAccessService.
         Exam examE = ModelFactory.generateExam(course1, "examE");
         examE.setTitle("          Exam 123              ");
@@ -912,6 +924,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
         verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+
+        Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
+        assertThat(channelFromDB).isNotNull();
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 3; // only the instructors and tutors should be added to exam channel, not students (see @BeforeEach)
+        });
     }
 
     private List<Exam> createExamsWithInvalidDates(Course course) {
@@ -1555,11 +1577,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddAllRegisteredUsersToExam() throws Exception {
         Course course = database.addEmptyCourse();
+        database.enableMessagingForCourse(course);
         Exam exam = database.addExam(course);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
         exam = examRepository.save(exam);
         course.addExam(exam);
         course = courseRepo.save(course);
+
+        Channel channel = new Channel();
+        channel.setName("testchannel" + UUID.randomUUID().toString().substring(0, 8));
+        channel.setIsArchived(false);
+        channel.setIsPublic(false);
+        channel.setIsAnnouncementChannel(false);
+        channel.setExam(exam);
+        channel = channelRepository.save(channel);
 
         int numberOfStudentsInCourse = userRepo.findAllInGroup(course.getStudentGroupName()).size();
 
@@ -1586,6 +1617,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(exam.getExamUsers()).hasSize(numberOfStudentsInCourse + 1);
         assertThat(exam.getExamUsers()).contains(examUser99.get());
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
+
+        Channel channelFromDB = channelRepository.findChannelByExamId(exam.getId());
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getExam()).isEqualTo(exam);
+        assertThat(channelFromDB.getName()).isEqualTo(channel.getName());
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 5; // 4 students should be added (see @BeforeEach) + 1 new student = 5
+        });
     }
 
     @Test

@@ -414,6 +414,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport() throws Exception {
         Course course2 = this.database.addEmptyCourse();
+        database.enableMessagingForCourse(course2);
 
         Lecture lecture = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
 
@@ -423,5 +424,16 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         assertThat(lecture.getAttachments().stream().map(Attachment::getName).toList())
                 .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
+
+        Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo("change-imported-lecture-" + lecture.getId()); // default name of imported lecture channel
+
+        // Check that the conversation participants are added correctly to the lecture channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            return conversationParticipants.size() == 4; // 2 tutors, 1 instructor, 1 student (see @BeforeEach)
+        });
     }
 }
