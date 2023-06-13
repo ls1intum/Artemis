@@ -37,6 +37,9 @@ public abstract class Posting extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    @Column(name = "updated_date")
+    private ZonedDateTime updatedDate = null;
+
     // Note: this number should be the same as in posting-create-edit.directive.ts
     @Size(max = 5000)
     @Column(name = "content", length = 5000)
@@ -49,6 +52,11 @@ public abstract class Posting extends DomainObject {
 
     @Transient
     private UserRole authorRoleTransient;
+
+    @PreUpdate
+    public void onPreUpdate() {
+        setUpdatedDate(ZonedDateTime.now());
+    }
 
     public String getTokenizedContent() {
         return tokenizedContent;
@@ -69,6 +77,14 @@ public abstract class Posting extends DomainObject {
 
     public ZonedDateTime getCreationDate() {
         return creationDate;
+    }
+
+    public ZonedDateTime getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(ZonedDateTime updatedDate) {
+        this.updatedDate = updatedDate;
     }
 
     public void setCreationDate(ZonedDateTime creationDate) {
