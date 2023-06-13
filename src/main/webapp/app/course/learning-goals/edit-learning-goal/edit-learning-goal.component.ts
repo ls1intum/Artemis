@@ -81,6 +81,7 @@ export class EditLearningGoalComponent implements OnInit {
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                         taxonomy: this.learningGoal.taxonomy,
                         masteryThreshold: this.learningGoal.masteryThreshold,
+                        optional: this.learningGoal.optional,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

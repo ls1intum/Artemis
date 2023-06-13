@@ -52,8 +52,29 @@ describe('LearningGoalSelection', () => {
         jest.restoreAllMocks();
     });
 
-    it('should get learning goals from cache', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [new LearningGoal()] });
+    it('should get all learning goals from cache if include optionals true', () => {
+        const nonOptional = { id: 1, optional: false } as LearningGoal;
+        const optional = { id: 2, optional: true } as LearningGoal;
+        component.includeOptionals = true;
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
+
+        fixture.detectChanges();
+
+        const select = fixture.debugElement.query(By.css('select'));
+        expect(component.value).toBeUndefined();
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).not.toHaveBeenCalled();
+        expect(component.isLoading).toBeFalse();
+        expect(component.learningGoals).toBeArrayOfSize(2);
+        expect(select).not.toBeNull();
+    });
+
+    it('should get non optional learning goals from cache if include optionals false', () => {
+        const nonOptional = { id: 1, optional: false } as LearningGoal;
+        const optional = { id: 2, optional: true } as LearningGoal;
+        component.includeOptionals = false;
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 
         fixture.detectChanges();
@@ -67,9 +88,29 @@ describe('LearningGoalSelection', () => {
         expect(select).not.toBeNull();
     });
 
-    it('should get learning goals from service', () => {
+    it('should get all learning goals from service if include optionals true', () => {
+        const nonOptional = { id: 1, optional: false } as LearningGoal;
+        const optional = { id: 2, optional: true } as LearningGoal;
+        component.includeOptionals = true;
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new LearningGoal()] })));
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
+
+        fixture.detectChanges();
+
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(component.isLoading).toBeFalse();
+        expect(component.learningGoals).toBeArrayOfSize(2);
+        expect(component.learningGoals.first()?.course).toBeUndefined();
+        expect(component.learningGoals.first()?.userProgress).toBeUndefined();
+    });
+
+    it('should get non optional learning goals from service if include optionals false', () => {
+        const nonOptional = { id: 1, optional: false } as LearningGoal;
+        const optional = { id: 2, optional: true } as LearningGoal;
+        component.includeOptionals = false;
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
 
         fixture.detectChanges();
 

@@ -74,6 +74,7 @@ describe('CreateLearningGoal', () => {
         const formData: LearningGoalFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
+            optional: true,
             connectedLectureUnits: [textUnit],
         };
 
@@ -96,6 +97,7 @@ describe('CreateLearningGoal', () => {
             const learningGoal = new LearningGoal();
             learningGoal.title = formData.title;
             learningGoal.description = formData.description;
+            learningGoal.optional = formData.optional;
             learningGoal.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(learningGoal, 1);

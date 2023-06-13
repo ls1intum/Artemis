@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoal, LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
@@ -9,14 +9,14 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockModule } from 'ng-mocks';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
@@ -96,6 +96,60 @@ describe('LearningGoalFormComponent', () => {
         });
     }));
 
+    it('should detect invalid optional form', fakeAsync(() => {
+        // stubbing learning goal service for  validator
+        const learningGoalService = TestBed.inject(LearningGoalService);
+
+        const learningGoalOfGetAllForCourseResponse = new LearningGoal();
+        learningGoalOfGetAllForCourseResponse.id = 1;
+        learningGoalOfGetAllForCourseResponse.title = 'test';
+
+        const getAllForCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [learningGoalOfGetAllForCourseResponse],
+            status: 200,
+        });
+
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(getAllForCourseResponse));
+
+        learningGoalFormComponentFixture.detectChanges();
+
+        const exampleTitle = 'uniqueName';
+        learningGoalFormComponent.titleControl!.setValue(exampleTitle);
+        const exampleDescription = 'lorem ipsum';
+        learningGoalFormComponent.descriptionControl!.setValue(exampleDescription);
+        const exampleLectureUnit = new TextUnit();
+        exampleLectureUnit.id = 1;
+
+        const exampleLecture = new Lecture();
+        exampleLecture.id = 1;
+        exampleLecture.lectureUnits = [exampleLectureUnit];
+
+        const exercise = { id: 1, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY } as Exercise;
+
+        const learningGoalOfFindByIdResponse = new LearningGoal();
+        learningGoalOfGetAllForCourseResponse.id = 2;
+        learningGoalOfFindByIdResponse.exercises = [exercise];
+
+        const findByIdResponse: HttpResponse<LearningGoal> = new HttpResponse({
+            body: learningGoalOfFindByIdResponse,
+            status: 200,
+        });
+
+        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
+
+        const exampleOptional = true;
+        learningGoalFormComponent.optionalControl!.setValue(exampleOptional);
+
+        learningGoalFormComponentFixture.detectChanges();
+        tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
+        expect(learningGoalFormComponent.form.valid).toBeFalse();
+        expect(findByIdSpy).toHaveBeenCalledOnce();
+        const submitButton = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        learningGoalFormComponentFixture.whenStable().then(() => {
+            expect(submitButton.disabled).toBeTrue();
+        });
+    }));
+
     it('should correctly set form values in edit mode', () => {
         learningGoalFormComponent.isEditMode = true;
         const textUnit = new TextUnit();
@@ -106,6 +160,7 @@ describe('LearningGoalFormComponent', () => {
             description: 'lorem ipsum',
             connectedLectureUnits: [textUnit],
             taxonomy: LearningGoalTaxonomy.ANALYZE,
+            optional: true,
         };
         learningGoalFormComponentFixture.detectChanges();
         learningGoalFormComponent.formData = formData;
@@ -113,6 +168,7 @@ describe('LearningGoalFormComponent', () => {
 
         expect(learningGoalFormComponent.titleControl?.value).toEqual(formData.title);
         expect(learningGoalFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(learningGoalFormComponent.optionalControl?.value).toEqual(formData.optional);
         expect(learningGoalFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 

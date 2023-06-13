@@ -82,6 +82,7 @@ describe('EditLearningGoalComponent', () => {
         learningGoalOfResponse.id = 1;
         learningGoalOfResponse.title = 'test';
         learningGoalOfResponse.description = 'lorem ipsum';
+        learningGoalOfResponse.optional = true;
         learningGoalOfResponse.lectureUnits = [lectureUnit];
 
         const learningGoalResponse: HttpResponse<LearningGoal> = new HttpResponse({
@@ -119,6 +120,7 @@ describe('EditLearningGoalComponent', () => {
 
         expect(editLearningGoalComponent.formData.title).toEqual(learningGoalOfResponse.title);
         expect(editLearningGoalComponent.formData.description).toEqual(learningGoalOfResponse.description);
+        expect(editLearningGoalComponent.formData.optional).toEqual(learningGoalOfResponse.optional);
         expect(editLearningGoalComponent.formData.connectedLectureUnits).toEqual(learningGoalOfResponse.lectureUnits);
         expect(editLearningGoalComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
         expect(learningGoalFormStubComponent.formData).toEqual(editLearningGoalComponent.formData);
@@ -135,6 +137,7 @@ describe('EditLearningGoalComponent', () => {
         learningGoalDatabase.id = 1;
         learningGoalDatabase.title = 'test';
         learningGoalDatabase.description = 'lorem ipsum';
+        learningGoalDatabase.optional = true;
         learningGoalDatabase.lectureUnits = [textUnit];
 
         const findByIdResponse: HttpResponse<LearningGoal> = new HttpResponse({
@@ -165,6 +168,7 @@ describe('EditLearningGoalComponent', () => {
         const changedUnit: LearningGoal = {
             ...learningGoalDatabase,
             title: 'Changed',
+            optional: false,
         };
 
         const updateResponse: HttpResponse<LearningGoal> = new HttpResponse({
@@ -178,6 +182,7 @@ describe('EditLearningGoalComponent', () => {
         learningGoalForm.formSubmitted.emit({
             title: changedUnit.title,
             description: changedUnit.description,
+            optional: changedUnit.optional,
             connectedLectureUnits: changedUnit.lectureUnits,
         });
 

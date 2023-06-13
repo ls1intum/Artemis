@@ -7,6 +7,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { By } from '@angular/platform-browser';
 
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
@@ -67,5 +68,29 @@ describe('LearningGoalCardComponent', () => {
         expect(learningGoalCardComponent.confidence).toBe(100);
         expect(learningGoalCardComponent.mastery).toBe(100);
         expect(learningGoalCardComponent.isMastered).toBeTrue();
+    });
+
+    it('should display optional badge for optional competency', () => {
+        learningGoalCardComponent.learningGoal = {
+            id: 1,
+            optional: true,
+        } as LearningGoal;
+
+        learningGoalCardComponentFixture.detectChanges();
+
+        const badge = learningGoalCardComponentFixture.debugElement.query(By.css('#optional-badge'));
+        expect(badge).not.toBeNull();
+    });
+
+    it('should not display optional badge for non-optional competency', () => {
+        learningGoalCardComponent.learningGoal = {
+            id: 1,
+            optional: false,
+        } as LearningGoal;
+
+        learningGoalCardComponentFixture.detectChanges();
+
+        const badge = learningGoalCardComponentFixture.debugElement.query(By.css('#optional-badge'));
+        expect(badge).toBeNull();
     });
 });
