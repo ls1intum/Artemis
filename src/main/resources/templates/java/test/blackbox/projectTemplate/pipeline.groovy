@@ -2,9 +2,9 @@ MAIN_CLASS = "notFound" // default value, will be replaced in Build stage
 OUT_DIR = "target/surefire-reports"
 mavenFlags = "-B"
 
-testfiles_base_path = "./dejagnu/testfiles"
+testfiles_base_path = "./testsuite/testfiles"
 
-runDejagnuTests = fileExists("./dejagnu")
+runDejagnuTests = fileExists("./testsuite")
 tool = getToolName()
 hasSecretTestFiles = secretTestFilesFolderExists()
 
@@ -67,7 +67,7 @@ private void createSecretTestVolume() {
         docker.image(dockerImage).inside("-v ${secretTestVolume}:${secret_volume_mount_path}") { c ->
             sh """
             rm -rf ${secret_volume_mount_path}/*
-            cp dejagnu/${tool}.tests/secret.exp ${secret_volume_mount_path}/secret.exp
+            cp testsuite/${tool}.tests/secret.exp ${secret_volume_mount_path}/secret.exp
             """
 
             if (hasSecretTestFiles) {
@@ -137,19 +137,19 @@ private void runDejagnuTestStep(String step, int timeoutSeconds) {
     catchError() {
         timeout(time: timeoutSeconds, unit: 'SECONDS') {
             sh """
-            cd dejagnu || exit
+            cd testsuite || exit
             rm ${tool}.log || true
             runtest --tool ${tool} ${step}.exp || true
             """
         }
     }
-    sh("""pipeline-helper -o customFeedbacks -d "dejagnu[${step}]" dejagnu/${tool}.log""")
+    sh("""pipeline-helper -o customFeedbacks -d "dejagnu[${step}]" testsuite/${tool}.log""")
 }
 
 /**
  * Extracts the Dejagnu tool name from the folder names.
  * <p>
- * E.g., for a folder {@code dejagnu/ggt.tests/} the tool name is {@code ggt}.
+ * E.g., for a folder {@code testsuite/gcd.tests/} the tool name is {@code gcd}.
  *
  * @return The Dejagnu tool name.
  */
@@ -157,7 +157,7 @@ private String getToolName() {
     // Java Files API gets blocked by Jenkins sandbox
 
     return sh(
-        script: """find dejagnu -name "*.tests" -type d -printf "%f" | cut --delimiter=. -f 1""",
+        script: """find testsuite -name "*.tests" -type d -printf "%f" | cut --delimiter=. -f 1""",
         returnStdout: true
     ).trim()
 }
@@ -189,10 +189,10 @@ private void setMainClass() {
  */
 private void applyExpectScriptReplacements() {
     sh """
-    sed -i "s#CLASSPATH#../target/classes#" dejagnu/config/default.exp
-    sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" dejagnu/config/default.exp
+    sed -i "s#CLASSPATH#../target/classes#" testsuite/config/default.exp
+    sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" testsuite/config/default.exp
 
-    sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" dejagnu/${tool}.tests/*.exp
+    sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
     """
 }
 
@@ -203,7 +203,7 @@ private void applyExpectScriptReplacements() {
  * those files during the public tests.
  */
 private void removeSecretFiles() {
-    secretExp = "dejagnu/${tool}.tests/secret.exp"
+    secretExp = "testsuite/${tool}.tests/secret.exp"
     if (fileExists(secretExp)) {
         sh("rm ${secretExp}")
     }
@@ -218,7 +218,7 @@ private void removeSecretFiles() {
  */
 private void restoreSecretFiles() {
     if (runDejagnuTests) {
-        sh("cp ${secret_volume_mount_path}/secret.exp dejagnu/${tool}.tests/secret.exp")
+        sh("cp ${secret_volume_mount_path}/secret.exp testsuite/${tool}.tests/secret.exp")
     }
 
     if (hasSecretTestFiles) {
