@@ -32,15 +32,22 @@
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                     [includedInOverallScore]="exercise.includedInOverallScore"
-                ></jhi-included-in-score-badge></span
-            ><br />
-            <span *ngIf="exercise.submissionPolicy"
-                >{{ exercise.submissionPolicy.submissionLimit }} {{ 'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed' | artemisTranslate }}</span
-            >
-            <span *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}:
-                {{ exercise.submissionPolicy.exceedingPenalty }}P)</span
-            >
+                ></jhi-included-in-score-badge
+            ></span>
+        </div>
+        <div submissionPolicy *ngIf="exercise.submissionPolicy && numberOfSubmissionsForSubmissionPolicy !== undefined">
+            <br />
+            <span>
+                {{
+                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
+                        | artemisTranslate : { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                }}
+            </span>
+            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
+                {{
+                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate : { points: exercise.submissionPolicy.exceedingPenalty }
+                }}
+            </span>
         </div>
         <!-- prettier-ignore -->
         <div editorToolbar class="d-inline-flex align-items-center">
@@ -58,7 +65,7 @@
                 [showBadge]="true"
                 [participation]="participation"
                 [personalParticipation]="true"
-                (onParticipationChange)="loadStudentExerciseHints()"
+                (onParticipationChange)="receivedNewResult()"
                 class="me-2"
             ></jhi-updating-result>
             <jhi-programming-exercise-student-trigger-build-button

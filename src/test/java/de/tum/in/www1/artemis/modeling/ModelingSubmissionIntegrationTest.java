@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.modeling;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -645,9 +643,12 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllModelingSubmissions() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> modelingSubmissionRepo.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> modelingSubmissionRepo.findByIdElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackElseThrow(Long.MAX_VALUE));
 
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
