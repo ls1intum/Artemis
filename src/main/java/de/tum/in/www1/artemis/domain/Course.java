@@ -218,7 +218,7 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "iris_settings_id")
     private IrisSettings irisSettings;
 

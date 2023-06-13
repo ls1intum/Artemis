@@ -9,13 +9,12 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 
 /**
- * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
- * See {@link IrisChatSession} and {@link IrisHestiaSession} for concrete implementations.
+ * An IrisSubSettings object represents the settings for a specific feature of Iris.
+ * {@link IrisSettings} is the parent of this class.
  */
 @Entity
 @Table(name = "iris_sub_settings")
@@ -27,8 +26,8 @@ public class IrisSubSettings extends DomainObject {
     private boolean enabled = false;
 
     @Nullable
-    @Column(name = "externalTemplateId")
-    private Long externalTemplateId;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private IrisTemplate template;
 
     @Nullable
     @Column(name = "preferredModel")
@@ -44,12 +43,12 @@ public class IrisSubSettings extends DomainObject {
     }
 
     @Nullable
-    public Long getExternalTemplateId() {
-        return externalTemplateId;
+    public IrisTemplate getTemplate() {
+        return template;
     }
 
-    public void setExternalTemplateId(@Nullable Long externalTemplateId) {
-        this.externalTemplateId = externalTemplateId;
+    public void setTemplate(@Nullable IrisTemplate template) {
+        this.template = template;
     }
 
     @Nullable
