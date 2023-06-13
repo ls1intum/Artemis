@@ -159,7 +159,7 @@ describe('PageDiscussionSectionComponent', () => {
                 }),
             ),
         );
-        component.exercise = { ...metisCourse, course: metisCourse };
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.course).toEqual(metisCourse);
