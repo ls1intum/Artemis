@@ -2,7 +2,7 @@ Artemis supports an integrated version control (VC) and continuous integration (
 If you use this local VC and local CI, the :ref:`top_level_design`, the :ref:`deployment`, and the :ref:`server_architecture` above do not hold.
 Instead, the deployment (without using an external user management system) looks like this:
 
-.. figure:: ./LocalVC_LocalCI_Deployment.png
+.. figure:: system-design/localvc-localci/LocalVC_LocalCI_Deployment.png
    :align: center
    :alt: Local VC and Local CI Deployment
 
@@ -18,7 +18,7 @@ The local VC subsystem
 
 The following diagram shows an overview of the components in the local VC subsystem:
 
-.. figure:: ./LocalVC_Subsystem.png
+.. figure:: system-design/localvc-localci/LocalVC_Subsystem.png
    :align: center
    :alt: Local VC Subsystem
 
@@ -36,7 +36,7 @@ The local CI subsystem
 
 The following diagram shows an overview of the components in the local CI subsystem:
 
-.. figure:: ./LocalCI_Subsystem.png
+.. figure:: system-design/localvc-localci/LocalCI_Subsystem.png
    :align: center
    :alt: Local CI Subsystem
 
