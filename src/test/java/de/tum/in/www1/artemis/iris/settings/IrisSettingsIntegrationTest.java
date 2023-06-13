@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSubSettingsRepository;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 
-public class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
+class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissettingsintegration";
 

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -64,8 +62,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         gpt35RequestMockProvider.mockResponse("Hello World");
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
-        assertEquals(IrisMessageSender.USER, irisMessage.getSender());
-        assertNull(irisMessage.getHelpful());
+        assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
+        assertThat(irisMessage.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
@@ -106,8 +104,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend1.setSentAt(ZonedDateTime.now());
         messageToSend1.setContent(List.of(createMockContent(messageToSend1), createMockContent(messageToSend1), createMockContent(messageToSend1)));
         var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
-        assertEquals(IrisMessageSender.USER, irisMessage1.getSender());
-        assertNull(irisMessage1.getHelpful());
+        assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
+        assertThat(irisMessage1.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getTextContent).toList());
@@ -119,8 +117,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend2.setSentAt(ZonedDateTime.now());
         messageToSend2.setContent(List.of(createMockContent(messageToSend2), createMockContent(messageToSend2), createMockContent(messageToSend2)));
         var irisMessage2 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class, HttpStatus.CREATED);
-        assertEquals(IrisMessageSender.USER, irisMessage2.getSender());
-        assertNull(irisMessage2.getHelpful());
+        assertThat(irisMessage2.getSender()).isEqualTo(IrisMessageSender.USER);
+        assertThat(irisMessage2.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getTextContent).toList());
