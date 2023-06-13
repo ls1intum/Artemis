@@ -8,11 +8,11 @@ import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { FormBuilder } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -46,6 +46,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
+        private courseStorageService: CourseStorageService,
     ) {
         super(metisService);
     }
@@ -60,32 +61,16 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             queryParams: this.activatedRoute.parent!.parent!.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params, queryParams } = routeParams;
-            const courseId = params.courseId;
+            const courseId = +params.courseId;
             this.searchText = queryParams.searchText;
-            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
-                if (res.body !== undefined) {
-                    this.course = res.body!;
-                    if (this.course?.lectures) {
-                        this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
-                    }
-                    if (this.course?.exercises) {
-                        this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
-                    }
-                    this.metisService.setCourse(this.course!);
-                    this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({
-                        courseId: this.course!.id,
-                        searchText: this.searchText ? this.searchText : undefined,
-                        postSortCriterion: this.currentSortCriterion,
-                        sortingOrder: this.currentSortDirection,
-                        pagingEnabled: this.pagingEnabled,
-                        page: this.page - 1,
-                        pageSize: this.itemsPerPage,
-                    });
-                    this.resetCurrentFilter();
-                    this.createEmptyPost();
-                    this.resetFormGroup();
-                }
+
+            this.course = this.courseStorageService.getCourse(courseId);
+            if (this.course) {
+                this.onCourseLoad(this.course);
+            }
+
+            this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+                this.onCourseLoad(course);
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
@@ -95,6 +80,30 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
         });
+    }
+
+    onCourseLoad(course: Course) {
+        this.course = course;
+        if (this.course?.lectures) {
+            this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
+        }
+        if (this.course?.exercises) {
+            this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
+        }
+        this.metisService.setCourse(this.course!);
+        this.metisService.setPageType(this.pageType);
+        this.metisService.getFilteredPosts({
+            courseId: this.course!.id,
+            searchText: this.searchText ? this.searchText : undefined,
+            postSortCriterion: this.currentSortCriterion,
+            sortingOrder: this.currentSortDirection,
+            pagingEnabled: this.pagingEnabled,
+            page: this.page - 1,
+            pageSize: this.itemsPerPage,
+        });
+        this.resetCurrentFilter();
+        this.createEmptyPost();
+        this.resetFormGroup();
     }
 
     /**

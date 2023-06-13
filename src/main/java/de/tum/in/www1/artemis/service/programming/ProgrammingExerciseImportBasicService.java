@@ -141,14 +141,14 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        programmingExerciseRepository.save(newExercise);
+        ProgrammingExercise importedExercise = programmingExerciseRepository.save(newExercise);
 
         if (newExercise.getChannelName() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(newExercise, newExercise.getChannelName());
+            Channel createdChannel = channelService.createExerciseChannel(importedExercise, newExercise.getChannelName());
             channelService.registerUsersToChannelAsynchronously(true, newExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         }
 
-        return newExercise;
+        return importedExercise;
     }
 
     /**

@@ -107,7 +107,9 @@ public class ModelFactory {
     }
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
-        var quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
+        QuizExercise quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
+        quizExercise.setTitle("my cool quiz title");
+
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -122,14 +124,9 @@ public class ModelFactory {
         return quizExercise;
     }
 
-    public static QuizExercise generateQuizExerciseWithQuizBatches(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
-        var quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
-        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
-        return quizExercise;
-    }
-
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
         var quizExercise = (QuizExercise) populateExerciseForExam(new QuizExercise(), exerciseGroup);
+
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -149,6 +146,7 @@ public class ModelFactory {
             }
         }
         quizExercise.setRandomizeQuestionOrder(true);
+
         return quizExercise;
     }
 

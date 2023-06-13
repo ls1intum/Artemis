@@ -65,19 +65,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             params: this.activatedRoute.params,
             queryParams: this.activatedRoute.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
-            const { params, queryParams } = routeParams;
-            const courseId = params.courseId;
-            this.currentPostId = +queryParams.postId;
-            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
-                if (res.body !== undefined) {
-                    this.course = res.body!;
-                    this.metisService.setCourse(this.course!);
-                    this.metisService.setPageType(this.pageType);
-                    this.setChannel(courseId);
-                    this.createEmptyPost();
-                    this.resetFormGroup();
-                }
-            });
+            this.currentPostId = +routeParams.queryParams.postId;
+            this.course = this.exercise?.course ?? this.lecture?.course;
+            this.metisService.setCourse(this.course);
+            this.metisService.setPageType(this.pageType);
+            this.setChannel(routeParams.params.courseId);
+            this.createEmptyPost();
+            this.resetFormGroup();
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
             this.posts = posts;
