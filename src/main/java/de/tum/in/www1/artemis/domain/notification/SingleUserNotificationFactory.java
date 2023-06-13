@@ -211,7 +211,7 @@ public class SingleUserNotificationFactory {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        String conversationTitle = answerPost.getPost().getConversation().getHumanReadableName(answerPost.getAuthor());
+        String conversationTitle = answerPost.getPost().getConversation().getHumanReadableNameForReceiver(answerPost.getAuthor());
 
         String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
                 answerPost.getPost().getCreationDate().toString(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(),

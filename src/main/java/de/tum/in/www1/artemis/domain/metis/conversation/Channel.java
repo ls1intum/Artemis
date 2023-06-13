@@ -10,6 +10,8 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.User;
+
 @Entity
 @DiscriminatorValue("C")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -113,5 +115,10 @@ public class Channel extends Conversation {
 
     public void setIsAnnouncementChannel(Boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
+    }
+
+    @Override
+    public String getHumanReadableNameForReceiver(User sender) {
+        return name;
     }
 }

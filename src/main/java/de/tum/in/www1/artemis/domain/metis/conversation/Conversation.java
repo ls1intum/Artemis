@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.metis.conversation;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -102,23 +101,9 @@ public abstract class Conversation extends DomainObject {
         this.posts = posts;
     }
 
-    public String getHumanReadableName(User sender) {
-        if (this instanceof Channel channel) {
-            return channel.getName();
-        }
-        else if (this instanceof GroupChat groupChat) {
-            if (groupChat.getName() == null || groupChat.getName().isBlank()) {
-                return groupChat.getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
-            }
-            else {
-                return groupChat.getName();
-            }
-        }
-        else if (this instanceof OneToOneChat) {
-            return sender.getName();
-        }
-        else {
-            return "";
-        }
-    }
+    /**
+     * @param sender the sender of the message
+     * @return returns a human-readable name for this conversation, which can be used in notifications or emails.
+     */
+    public abstract String getHumanReadableNameForReceiver(User sender);
 }

@@ -44,7 +44,7 @@ public class ConversationNotificationService {
 
         String notificationText;
         String[] placeholders;
-        String conversationName = createdMessage.getConversation().getHumanReadableName(createdMessage.getAuthor());
+        String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
 
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
         if (createdMessage.getConversation() instanceof Channel channel) {

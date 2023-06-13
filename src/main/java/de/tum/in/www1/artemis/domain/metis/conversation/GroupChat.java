@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.metis.conversation;
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHAT_PARTICIPANTS;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -11,6 +12,7 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 
 @Entity
@@ -39,5 +41,15 @@ public class GroupChat extends Conversation {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String getHumanReadableNameForReceiver(User sender) {
+        if (getName() == null || getName().isBlank()) {
+            return getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
+        }
+        else {
+            return getName();
+        }
     }
 }
