@@ -544,6 +544,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
                 break;
+            case 'submissions':
+                // only a scores list exists, no special one for submissions
+                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                this.addTranslationAsCrumb(updatedLink, 'submissions');
+                break;
             default:
                 // Special cases:
                 if (this.lastRouteUrlSegment === 'user-management') {
