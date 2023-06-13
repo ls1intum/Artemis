@@ -18,5 +18,5 @@
             }
         }
     ],
-    "navigationUrls": ["!/**/*.*", "!/api/**", "!/login/**", "!/management/**", "!/public/**", "!/saml2/**", "!/time", "!/v2/**", "!/websocket/**"]
+    "navigationUrls": ["!/**/*.*", "!/api/**", "!/login/**", "!/management/**", "!/public/**", "!/saml2/**", "!/v2/**", "!/websocket/**"]
 }
