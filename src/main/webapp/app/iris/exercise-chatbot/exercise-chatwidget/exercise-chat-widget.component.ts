@@ -76,8 +76,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     }
 
     loadFirstMessage(): void {
-        if (this.messages == null) {
+        if (this.messages.length === 0) {
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(this.firstMessage));
+            console.log(this.stateStore.getState());
+            console.log(this.messages);
         }
     }
 
