@@ -426,7 +426,6 @@ describe('QuizQuestionListEditExistingComponent', () => {
             question2.correctMappings = [new DragAndDropMapping(dragItem, dropLocation)];
             const onQuestionsAddedSpy = jest.spyOn(component.onQuestionsAdded, 'emit').mockImplementation();
             const questions = [question0, question1, question2];
-            jest.spyOn(fileUploaderService, 'duplicateFile').mockReturnValue(Promise.resolve({ path: 'test' }));
             await component.addQuestions(questions);
             expect(onQuestionsAddedSpy).toHaveBeenCalledOnce();
         });

@@ -43,6 +43,8 @@ export class QuizQuestionListEditComponent {
 
     showExistingQuestions = false;
 
+    fileMap = new Map<string, File>();
+
     /**
      * Emit onQuestionUpdated if there is an update of the question.
      */
@@ -72,6 +74,40 @@ export class QuizQuestionListEditComponent {
         for (const quizQuestion of quizQuestions) {
             this.addQuestion(quizQuestion);
         }
+    }
+
+    /**
+     * Add the given file to the fileMap for later upload.
+     * @param event the event containing the file and its name. The name provided may be different from the actual file name but has to correspond to the name set in the entity object.
+     */
+    handleFileAdded(event: { fileName: string; file: File }) {
+        this.fileMap.set(event.fileName, event.file);
+    }
+
+    /**
+     * Remove the given file from the fileMap.
+     * @param fileName the name of the file to be removed
+     */
+    handleFileRemoved(fileName: string) {
+        this.fileMap.delete(fileName);
+    }
+
+    /**
+     * Add all files from the given map to the fileMap.
+     * @param filesMap the map of files to be added
+     */
+    handleFilesAdded(filesMap: Map<string, File>) {
+        filesMap.forEach((file, fileName) => {
+            this.fileMap.set(fileName, file);
+        });
+    }
+
+    /**
+     * Check if the given file name exists in the fileMap.
+     * @param fileName the name of the file to be checked
+     */
+    fileNameExists(fileName: string): boolean {
+        return this.fileMap.has(fileName);
     }
 
     /**

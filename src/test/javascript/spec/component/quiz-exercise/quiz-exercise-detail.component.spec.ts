@@ -1000,8 +1000,8 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
-                    comp.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
-                    jest.spyOn(comp.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
+                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent();
+                    jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
             };

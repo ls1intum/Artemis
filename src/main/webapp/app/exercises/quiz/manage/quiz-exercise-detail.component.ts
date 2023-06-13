@@ -44,7 +44,7 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 })
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')
-    quizQuestionsEditComponent: QuizQuestionListEditComponent;
+    quizQuestionListEditComponent: QuizQuestionListEditComponent;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -397,20 +397,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
 
         Exercise.sanitize(this.quizExercise);
-
-        const files: Map<string, File> = new Map();
-
-        this.quizQuestionsEditComponent.editDragAndDropQuestionComponents.forEach((component) => {
-            if (component.backgroundFile && component.question.backgroundFilePath) {
-                files.set(component.question.backgroundFilePath, component.backgroundFile);
-            }
-            component.newDragItemFiles.forEach((file, filePath) => {
-                files.set(filePath, file);
-            });
-        });
+        const files = this.quizQuestionListEditComponent.fileMap;
 
         this.isSaving = true;
-        this.quizQuestionsEditComponent.parseAllQuestions();
+        this.quizQuestionListEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
                 this.quizExerciseService.import(this.quizExercise, files).subscribe({
