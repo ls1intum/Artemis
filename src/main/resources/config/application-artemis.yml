@@ -100,3 +100,10 @@ artemis:
         token-validity-in-seconds: 10800
     apollon:
         conversion-service-url: http://localhost:8080
+
+    scheduling:  # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
+        programming-exercise-cleanup-time: 0 0 3 * * * # every day at 3am
+        data-export-creation-time: 0 0 4 * * * # every day at 4am
+
+    data-export:
+        days-between-data-exports: 14

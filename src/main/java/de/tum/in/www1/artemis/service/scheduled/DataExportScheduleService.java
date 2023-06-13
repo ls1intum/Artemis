@@ -24,6 +24,8 @@ public class DataExportScheduleService {
 
     private final DataExportCreationService dataExportCreationService;
 
+    private static final String DEFAULT_CREATION_TIME = "0 0 4 * * *"; // execute this every night at 4:00:00 am
+
     private final DataExportService dataExportService;
 
     private final ProfileService profileService;
@@ -44,7 +46,7 @@ public class DataExportScheduleService {
      * Deleted will be all data exports that have a creation date older than seven days
      */
     // TODO change the cron expression again once the testing is done.
-    // @Scheduled(cron = "0 0 4 * * *") // execute this every night at 4:00:00 am
+    // @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
     @Scheduled(cron = "0 0/2 * * * *") // execute this every 2 minutes
     public void createDataExportsAndDeleteOldOnes() {
         // if (profileService.isDev()) {
@@ -53,7 +55,7 @@ public class DataExportScheduleService {
         // return;
         // }
 
-        // checkSecurityUtils();
+        checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
         dataExportsToBeCreated.forEach(this::createDataExport);

@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,7 +21,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class DataExportService {
 
-    private static final int DAYS_BETWEEN_DATA_EXPORTS = 14;
+    @Value("${artemis.data-export.days-between-data-exports:14}")
+    private int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final UserRepository userRepository;
 

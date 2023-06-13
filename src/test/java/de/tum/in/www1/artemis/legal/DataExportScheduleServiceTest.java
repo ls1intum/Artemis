@@ -100,14 +100,14 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    void testCronDataExportCreationTaskScheduledEveryDayAt4AM() {
+    void testCronDataExportCreationTaskScheduledEveryDayAt4AMByDefault() {
         final String cronExpression = "0 0 4 * * *";
         final String cronTaskName = "de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
         Set<ScheduledTask> scheduledTasks = scheduledTaskHolder.getScheduledTasks();
         long scheduledCronTasksToCreateDataExportsAt4AM = scheduledTasks.stream().filter(scheduledTask -> scheduledTask.getTask() instanceof CronTask)
                 .map(scheduledTask -> (CronTask) scheduledTask.getTask()).filter(cronTask -> (cronExpression).equals(cronTask.getExpression()))
                 .filter(cronTask -> cronTaskName.equals(cronTask.toString())).count();
-        assertThat(scheduledCronTasksToCreateDataExportsAt4AM).isEqualTo(1);
+        assertThat(scheduledCronTasksToCreateDataExportsAt4AM).isOne();
     }
 
     @Test
