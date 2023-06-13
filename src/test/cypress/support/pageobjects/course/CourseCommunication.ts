@@ -34,6 +34,12 @@ export class CourseCommunicationPage {
         return cy.wait('@createPost');
     }
 
+    saveMessage() {
+        cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
+        cy.get('#save').click();
+        return cy.wait('@createMessage');
+    }
+
     searchForPost(search: string) {
         cy.get('#search').type(search);
         cy.get('#search-submit').click();
@@ -66,6 +72,13 @@ export class CourseCommunicationPage {
     reply(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
         cy.intercept(POST, BASE_API + 'courses/*/answer-posts').as('createReply');
+        this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
+        return cy.wait('@createReply');
+    }
+
+    replyWithMessage(postID: number, content: string) {
+        this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
+        cy.intercept(POST, BASE_API + 'courses/*/answer-messages').as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
         return cy.wait('@createReply');
     }
