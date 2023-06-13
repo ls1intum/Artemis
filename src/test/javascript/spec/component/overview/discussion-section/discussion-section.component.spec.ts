@@ -1,7 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -17,7 +14,6 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { SortDirection } from 'app/shared/metis/metis.util';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -52,7 +48,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
-    let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
 
@@ -91,8 +86,6 @@ describe('PageDiscussionSectionComponent', () => {
             })
             .compileComponents()
             .then(() => {
-                courseManagementService = TestBed.inject(CourseManagementService);
-                jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(DiscussionSectionComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
@@ -105,7 +98,7 @@ describe('PageDiscussionSectionComponent', () => {
     });
 
     it('should set course and posts for exercise on initialization', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.course).toEqual(metisCourse);
@@ -114,7 +107,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should set course and posts for lecture on initialization', fakeAsync(() => {
-        component.lecture = metisLecture;
+        component.lecture = { ...metisLecture, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.createdPost).toBeDefined();
@@ -177,7 +170,7 @@ describe('PageDiscussionSectionComponent', () => {
     });
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
@@ -189,7 +182,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should display an extra new post button on top of posts for user convenience', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -201,7 +194,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('extra new post button on top of posts should be hidden if there are less then 3 posts', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -211,7 +204,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should show search-bar and filters if not focused to a post', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -242,7 +235,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('triggering filters should invoke the metis service', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();

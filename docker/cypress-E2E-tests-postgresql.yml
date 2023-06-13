@@ -16,10 +16,8 @@ services:
             postgresql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/cypress-application-local.env
-            - ./artemis/config/cypress-application-postgres.env
-        environment:
-            SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker"
+            - ./artemis/config/cypress.env
+            - ./artemis/config/cypress-postgres.env
 
     nginx:
         extends:
@@ -34,7 +32,7 @@ services:
         ports:
             - "80:80"
             - "443:443"
-            # see comments in artemis/config/cypress-application-local.env why this port is necessary
+            # see comments in artemis/config/cypress.env why this port is necessary
             - "54321:54321"
 
     artemis-cypress:
