@@ -536,6 +536,7 @@ describe('Course communication', () => {
         it('other students should be able to react to an exercise post', () => {
             const title = 'My React Test Post';
             const content = 'Test React Post Content';
+            cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
@@ -606,6 +607,7 @@ describe('Course communication', () => {
         it('other students should be able to react to a lecture post', () => {
             const title = 'My React Test Post';
             const content = 'Test React Post Content';
+            cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
