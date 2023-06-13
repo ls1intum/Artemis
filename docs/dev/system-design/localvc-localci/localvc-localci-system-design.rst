@@ -1,10 +1,10 @@
 Artemis supports an integrated version control (VC) and continuous integration (CI) system.
 If you use this *local VC* and *local CI*, the architecture differs from the architecture with external VC and CI systems.
-The deployment with local VC and local CI in use (without using an external user management system) looks like this:
+The deployment with local VC and local CI (without using an external user management system) looks like this:
 
 .. figure:: system-design/localvc-localci/LocalVC_LocalCI_Deployment.png
    :align: center
-   :width: 600
+   :width: 800
    :alt: Local VC and Local CI Deployment
 
    Local VC and Local CI Deployment
@@ -23,14 +23,14 @@ The following diagram shows an overview of the components in the local VC subsys
 
 .. figure:: system-design/localvc-localci/LocalVC_Subsystem.png
    :align: center
-   :width: 600
+   :width: 800
    :alt: Local VC Subsystem
 
    Local VC Subsystem
 
 The ``Local VC Service`` implements the ``VersionControlService`` interface and thus contains methods that the exercise management subsystem and the exercise participation subsystem need to interact with the VC system. E.g. the ``createRepository()`` method creates a repository on the file system.
 For users to be able to access the repositories using their local Git client, the local VC subsystem contains a ``Git Server`` component.
-The``Git Server`` component of the local VC subsystem responds to ``fetch`` and ``push`` requests from Git clients, enabling instructors and students to interact with their repositories the way they are used to.
+It responds to ``fetch`` and ``push`` requests from Git clients, enabling instructors and students to interact with their repositories the way they are used to.
 It encompasses all the logic for implementing a Git server.
 This includes extracting the command and parameters from the client request and executing the Git commands on the server-side repository, provided the repository exists, and the user has the requisite permissions.
 It reads objects and refs from the repository, updates the repository for push requests, and formats the results of the Git commands it executes into a response that it sends back to the client.
@@ -52,20 +52,20 @@ The following diagram shows an overview of the components in the local CI subsys
 
 .. figure:: system-design/localvc-localci/LocalCI_Subsystem.png
    :align: center
-   :width: 600
+   :width: 800
    :alt: Local CI Subsystem
 
    Local CI Subsystem
 
-The local CIS provides a concrete implementation of the continuous integration trigger service interface for the local CIS.
-We do not consider the local CIS implementation of the continuous integration service interface here.
-As the version of the local CIS, that we implement in this thesis, does not plan for the persistence of build plan information, most of the methods in this service are empty.
-The local CI trigger service provides the ``triggerBuild`` method.
+The local CIS provides a concrete implementation of the ``ContinuousIntegrationTriggerService`` interface for the local CIS.
+We do not consider the local CIS implementation of the ``ContinuousIntegrationService`` interface here.
+As the version of the local CIS, that we implement in this thesis, does not plan for the persistence of build plan information, most of the methods in the implementation of the ``ContinuousIntegrationService`` are empty.
+The ``LocalCITriggerService`` provides the ``triggerBuild`` method.
 For instance, instructors can trigger builds for all student repositories from the Artemis user interface, when they changed the configuration of a programming exercise.
 This may be the case after adapting the test cases for the exercise, rendering the build results of all students invalid.
 Similarly, the student can manually trigger a build for their assignment repository from the Artemis user interface when there was an issue during the build process.
 
-For each call to the ``triggerBuild`` method, the local CI trigger service delegates a new build job to the local CI build system.
+For each call to the ``triggerBuild`` method, the ``LocalCITriggerService`` delegates a new build job to the local CI build system.
 We implemented the local CI build system in such a way that it restricts the amount of build jobs that can run concurrently and adds build jobs to a blocking queue in case it reaches the maximum amount of builds.
 
 The local CI build system consists of four main services, that provide the task of managing a queue of build jobs, executing build jobs, and returning the build results.
