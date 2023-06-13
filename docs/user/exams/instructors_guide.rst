@@ -600,6 +600,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |import_students| image:: instructor/buttons/import_students.png
 .. |import_students_button| image:: instructor/buttons/import_students_button.png
 .. |verify_attendance| image:: instructor/buttons/verify_attendance.png
+    :height: 20
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
