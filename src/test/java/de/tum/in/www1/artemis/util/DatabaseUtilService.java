@@ -1009,7 +1009,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String, boolean, boolean, int)}
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws Exception {
@@ -1022,7 +1022,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#addCompetencyToLectureUnits(Lecture, Set)}
      */
     public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<Competency> competencies) {
         Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
@@ -1034,7 +1034,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#addLectureUnitsToLecture(Lecture, List)}
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
         Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
@@ -1045,7 +1045,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#createExerciseUnit(Exercise)}
      */
     public ExerciseUnit createExerciseUnit(Exercise exercise) {
         ExerciseUnit exerciseUnit = new ExerciseUnit();
@@ -1054,7 +1054,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#createAttachmentUnit(Boolean)}
      */
     public AttachmentUnit createAttachmentUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
@@ -1069,7 +1069,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#createAttachmentUnitWithSlides(int)}
      */
     public AttachmentUnit createAttachmentUnitWithSlides(int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
@@ -1091,7 +1091,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#createTextUnit()}
      */
     public TextUnit createTextUnit() {
         TextUnit textUnit = new TextUnit();
@@ -1100,7 +1100,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#createVideoUnit()}
      */
     public VideoUnit createVideoUnit() {
         VideoUnit videoUnit = new VideoUnit();
@@ -1110,7 +1110,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureTestService#createOnlineUnit()}
      */
     public OnlineUnit createOnlineUnit() {
         OnlineUnit onlineUnit = new OnlineUnit();
@@ -1120,14 +1120,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#createCoursesWithExercisesAndLectures(String, boolean, int)}
      */
     public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
         return createCoursesWithExercisesAndLectures(prefix, withParticipations, false, numberOfTutorParticipations);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#createCoursesWithExercisesAndLectures(String, boolean, boolean, int)}
      */
     public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -1290,7 +1290,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createPostsWithinCourse(String)}
      */
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
@@ -1331,7 +1331,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createPostsWithAnswersAndReactionsAndConversation(Course, User, User, int, String)}
      */
     public List<Post> createPostsWithAnswersAndReactionsAndConversation(Course course, User student1, User student2, int numberOfPosts, String userPrefix) {
         var chat = new OneToOneChat();
@@ -1384,7 +1384,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createPostsWithAnswerPostsWithinCourse(String)}
      */
     public List<Post> createPostsWithAnswerPostsWithinCourse(String userPrefix) {
         List<Post> posts = createPostsWithinCourse(userPrefix);
@@ -1412,7 +1412,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicPosts(Exercise, String)}
      */
     private List<Post> createBasicPosts(Exercise exerciseContext, String userPrefix) {
         List<Post> posts = new ArrayList<>();
@@ -1426,7 +1426,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicPosts(Lecture, String)}
      */
     private List<Post> createBasicPosts(Lecture lectureContext, String userPrefix) {
         List<Post> posts = new ArrayList<>();
@@ -1440,7 +1440,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicPosts(Course, CourseWideContext[], String}
      */
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
@@ -1455,7 +1455,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicPost(PlagiarismCase, String}
      */
     private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = createBasicPost(0, userPrefix + "instructor");
@@ -1465,7 +1465,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicPost(Integer, String}
      */
     private Post createBasicPost(Integer i, String usernamePrefix) {
         Post post = new Post();
@@ -1485,7 +1485,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicPosts(Conversation, String}
      */
     private List<Post> createBasicPosts(Conversation conversation, String userPrefix) {
         List<Post> posts = new ArrayList<>();
@@ -1499,7 +1499,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicAnswers(Post, String)}
      */
     private Set<AnswerPost> createBasicAnswers(Post post, String userPrefix) {
         Set<AnswerPost> answerPosts = new HashSet<>();
@@ -1514,7 +1514,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#createBasicAnswersThatResolves(Post, String)}
      */
     private Set<AnswerPost> createBasicAnswersThatResolves(Post post, String userPrefix) {
         Set<AnswerPost> answerPosts = new HashSet<>();
@@ -1531,7 +1531,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#createMultipleCoursesWithAllExercisesAndLectures(String, int, int, int)}
      */
     public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures,
             int numberOfTutorParticipations) throws Exception {
@@ -1548,7 +1548,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String, boolean)}
      */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
@@ -1707,7 +1707,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.organisation.OrganisationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.organisation.OrganisationTestService#createOrganization(String, String, String, String, String, String)}
      */
     public Organization createOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Organization organization = ModelFactory.generateOrganization(name, shortName, url, description, logoUrl, emailPattern);
@@ -1715,7 +1715,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.organisation.OrganisationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.organisation.OrganisationTestService#createOrganization()}
      */
     public Organization createOrganization() {
         return createOrganization(UUID.randomUUID().toString().replace("-", ""), UUID.randomUUID().toString().replace("-", ""), UUID.randomUUID().toString().replace("-", ""),
@@ -1723,7 +1723,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#setupTestRunForExamWithExerciseGroupsForInstructor(Exam, User, List)}
      */
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
         List<Exercise> exercises = new ArrayList<>();
@@ -1733,7 +1733,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#generateTestRunForInstructor(Exam, User, List)}
      */
     public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
         var testRun = ModelFactory.generateExamTestRun(exam);
@@ -1767,7 +1767,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#setupSimpleExamWithExerciseGroupExercise(Course)}
      */
     public Exam setupSimpleExamWithExerciseGroupExercise(Course course) {
         var exam = ModelFactory.generateExam(course);
@@ -1799,7 +1799,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#setupExamWithExerciseGroupsExercisesRegisteredStudents(String, Course, int)}
      */
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course, int numberOfStudents) {
         Exam exam = ModelFactory.generateExam(course);
@@ -1852,14 +1852,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#registerUsersForExamAndSaveExam(Exam, String, int)}
      */
     public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
         return registerUsersForExamAndSaveExam(exam, userPrefix, 1, numberOfStudents);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#registerUsersForExamAndSaveExam(Exam, String, int, int)}
      * registers students for exam and saves the exam in the repository
      *
      * @param exam       exam to which students should be registered to
@@ -1882,7 +1882,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExam(Course)}
      */
     public Exam addExam(Course course) {
         Exam exam = ModelFactory.generateExam(course);
@@ -1890,7 +1890,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addTestExam(Course)}
      */
     public Exam addTestExam(Course course) {
         Exam exam = ModelFactory.generateTestExam(course);
@@ -1898,7 +1898,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addTestExamWithRegisteredUser(Course, User)}
      */
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
@@ -1913,7 +1913,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExam(Course, User, ZonedDateTime, ZonedDateTime, ZonedDateTime)}
      */
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
@@ -1932,7 +1932,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExamWithExerciseGroup(Course, boolean)}
      */
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
@@ -1942,7 +1942,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addTestExamWithExerciseGroup(Course, boolean)}
      */
     public Exam addTestExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateTestExam(course);
@@ -1952,7 +1952,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExam(Course, ZonedDateTime, ZonedDateTime, ZonedDateTime)}
      */
     public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
@@ -1966,7 +1966,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExam(Course, ZonedDateTime, ZonedDateTime, ZonedDateTime, ZonedDateTime)}
      */
     public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultDate) {
         Exam exam = ModelFactory.generateExam(course);
@@ -1981,7 +1981,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addActiveExamWithRegisteredUser(Course, User)}
      */
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateExam(course);
@@ -2006,7 +2006,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addActiveTestExamWithRegisteredUserWithoutStudentExam(Course, User)}
      */
     public Exam addActiveTestExamWithRegisteredUserWithoutStudentExam(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
@@ -2024,7 +2024,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course)}
      */
     public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
         Exam exam = addExam(course);
@@ -2059,7 +2059,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addStudentExam(Exam)}
      */
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
@@ -2068,14 +2068,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addStudentExamWithUser(Exam, String)}
      */
     public StudentExam addStudentExamWithUser(Exam exam, String user) {
         return addStudentExamWithUser(exam, userRepo.findOneByLogin(user).orElseThrow());
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addStudentExamWithUser(Exam, User)}
      */
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
@@ -2085,7 +2085,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addStudentExamForTestExam(Exam, User)}
      */
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ModelFactory.generateStudentExamForTestExam(exam);
@@ -2095,7 +2095,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addStudentExamWithUser(Exam, User, int)}
      */
     public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
@@ -2106,7 +2106,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExerciseGroupsAndExercisesToExam(Exam, boolean)}
      */
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         ModelFactory.generateExerciseGroup(true, exam); // text
@@ -2179,7 +2179,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addTextModelingProgrammingExercisesToExam(Exam, boolean, boolean)}
      */
     public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
@@ -2229,7 +2229,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#createAndSaveParticipationForExercise(Exercise, String)}
      * Stores participation of the user with the given login for the given exercise
      *
      * @param exercise the exercise for which the participation will be created
@@ -2253,7 +2253,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#createAndSaveParticipationForExerciseInTheFuture(Exercise, String)}
      */
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
         Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
@@ -2271,7 +2271,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addTeamParticipationForExercise(Exercise, long)}
      * Stores participation of the team with the given id for the given exercise
      *
      * @param exercise the exercise for which the participation will be created
@@ -2294,7 +2294,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addStudentParticipationForProgrammingExercise(ProgrammingExercise, String)}
      */
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
@@ -2310,7 +2310,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addTeamParticipationForProgrammingExercise(ProgrammingExercise, Team)}
      */
     public ProgrammingExerciseStudentParticipation addTeamParticipationForProgrammingExercise(ProgrammingExercise exercise, Team team) {
 
@@ -2327,7 +2327,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise, String, URI)}
      */
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URI localRepoPath) {
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
@@ -2343,7 +2343,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#configureIndividualParticipation(ProgrammingExercise, String)}
      */
     private ProgrammingExerciseStudentParticipation configureIndividualParticipation(ProgrammingExercise exercise, String login) {
         final var user = getUserByLogin(login);
@@ -2359,7 +2359,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#configureTeamParticipation(ProgrammingExercise, Team)}
      */
     private ProgrammingExerciseStudentParticipation configureTeamParticipation(ProgrammingExercise exercise, Team team) {
         var participation = new ProgrammingExerciseStudentParticipation();
@@ -2373,7 +2373,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addTemplateParticipationForProgrammingExercise(ProgrammingExercise)}
      */
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
@@ -2388,7 +2388,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addSolutionParticipationForProgrammingExercise(ProgrammingExercise)}
      */
     public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
@@ -2403,7 +2403,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToParticipation(AssessmentType, ZonedDateTime, Participation, boolean, boolean, double)}
      */
     public Result addResultToParticipation(AssessmentType type, ZonedDateTime completionDate, Participation participation, boolean successful, boolean rated, double score) {
         Result result = new Result().participation(participation).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
@@ -2411,7 +2412,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToParticipation(AssessmentType, ZonedDateTime, Participation)}
      */
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
         Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
@@ -2419,7 +2420,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToParticipation(AssessmentType, ZonedDateTime, Participation, String, List)}
      */
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String assessorLogin,
             List<Feedback> feedbacks) {
@@ -2429,7 +2430,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToParticipation(Participation, Submission)}
      */
     public Result addResultToParticipation(Participation participation, Submission submission) {
         Result result = new Result().participation(participation).successful(true).score(100D);
@@ -2442,7 +2443,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addSampleFeedbackToResults(Result)}
      */
     public Result addSampleFeedbackToResults(Result result) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
@@ -2456,7 +2457,7 @@ public class DatabaseUtilService {
 
     // @formatter:off
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addVariousFeedbackTypeFeedbacksToResult(Result)}
      */
     public Result addVariousFeedbackTypeFeedbacksToResult(Result result) {
         // The order of declaration here should be the same order as in FeedbackType for each enum type
@@ -2472,7 +2473,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addVariousVisibilityFeedbackToResult(Result)}
      */
     public Result addVariousVisibilityFeedbackToResult(Result result) {
         List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
@@ -2487,7 +2488,7 @@ public class DatabaseUtilService {
     // @formatter:on
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addFeedbackToResult(Feedback, Result)}
      */
     public Result addFeedbackToResult(Feedback feedback, Result result) {
         feedbackRepo.save(feedback);
@@ -2496,7 +2497,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addFeedbackToResults(Result)}
      */
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
@@ -2507,7 +2508,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToSubmission(Submission, AssessmentType, User, Double, boolean, ZonedDateTime)}
      */
     public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
         Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
@@ -2520,28 +2521,28 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToSubmission(Submission, AssessmentType)}
      */
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
         return addResultToSubmission(submission, assessmentType, null, 100D, true, null);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToSubmission(Submission, AssessmentType, User)}
      */
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
         return addResultToSubmission(submission, assessmentType, user, 100D, true, ZonedDateTime.now());
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addResultToSubmission(Submission, AssessmentType, User, Double, boolean)}
      */
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, score, rated, ZonedDateTime.now());
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addRatingToResult(Result, int)}
      */
     public void addRatingToResult(Result result, int score) {
         var rating = new Rating();
@@ -2551,7 +2552,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#addMaxScoreAndBonusPointsToExercise(Exercise)}
      */
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -2561,7 +2562,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#addGradingInstructionsToExercise(Exercise)}
      */
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
@@ -2589,7 +2590,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addCourseWithOneModelingExercise(String)}
      *
      * @param title The title of the to be added modeling exercise
      * @return A course with one specified modeling exercise
@@ -2608,14 +2609,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addCourseWithOneModelingExercise()}
      */
     public Course addCourseWithOneModelingExercise() {
         return addCourseWithOneModelingExercise("ClassDiagram");
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addCourseWithOneReleasedTextExercise(String)}
      *
      * @param title The title of the to be added text exercise
      * @return A course with one specified text exercise
@@ -2634,7 +2635,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addCourseWithOneReleasedModelExerciseWithKnowledge(String)}
      */
     public Course addCourseWithOneReleasedModelExerciseWithKnowledge(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2654,14 +2655,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addCourseWithOneReleasedTextExercise()}
      */
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#getFirstExerciseWithType(Course, Class)}
      */
     public <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
         var exercise = course.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().get();
@@ -2669,7 +2670,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#getFirstExerciseWithType(Exam, Class)}
      */
     public <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
         var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst().get();
@@ -2677,7 +2678,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases()}
      */
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
         ProgrammingExercise programmingExercise = addCourseExamExerciseGroupWithOneProgrammingExercise();
@@ -2686,7 +2687,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseExamExerciseGroupWithOneProgrammingExercise(String, String)}
      */
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
@@ -2702,14 +2703,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseExamExerciseGroupWithOneProgrammingExercise()}
      */
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
         return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM");
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingExerciseToExam(Exam, int)}
      */
     public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
@@ -2727,7 +2728,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addCourseExamExerciseGroupWithOneModelingExercise(String)}
      */
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
@@ -2738,14 +2739,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addCourseExamExerciseGroupWithOneModelingExercise()}
      */
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
         return addCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram");
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#createProgrammingSubmission(Participation, boolean, String)}
      */
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
@@ -2757,14 +2758,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#createProgrammingSubmission(Participation, boolean)}
      */
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
         return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addCourseExamExerciseGroupWithOneTextExercise(String)}
      */
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
@@ -2776,14 +2777,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addCourseExamExerciseGroupWithOneTextExercise()}
      */
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         return addCourseExamExerciseGroupWithOneTextExercise(null);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise()}
      */
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
@@ -2792,7 +2793,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#addCourseExamExerciseGroupWithOneFileUploadExercise()}
      */
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
@@ -2801,7 +2802,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExerciseGroupWithExamAndCourse(boolean)}
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2830,7 +2831,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#addExerciseGroupWithExamWithReviewDatesAndCourse(boolean)}
      */
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2859,7 +2860,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addCourseWithOneFinishedTextExercise()}
      */
     public Course addCourseWithOneFinishedTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2872,7 +2873,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String, String, int)}
      */
     public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int studentsAmount) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2908,7 +2909,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String, String, int, Course)}
      */
     public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int studentsAmount, Course course) {
         // Add text exercise to the course
@@ -2942,7 +2943,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addCourseWithDifferentModelingExercises()}
      */
     public Course addCourseWithDifferentModelingExercises() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3011,14 +3012,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#addCourseWithOneQuizExercise()}
      */
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#addCourseWithOneQuizExercise(String)}
      */
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3035,35 +3036,37 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExercise()}
      */
     public Course addCourseWithOneProgrammingExercise() {
         return addCourseWithOneProgrammingExercise(false);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExercise(boolean)}
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
         return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExercise(boolean, String, String)}
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, String title, String shortName) {
         return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA, title, shortName);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExercise(boolean, boolean, ProgrammingLanguage)}
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
         return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC");
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExercise(boolean, boolean, ProgrammingLanguage, String, String)}
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage,
             String title, String shortName) {
@@ -3075,14 +3078,15 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingExerciseToCourse(Course, boolean)}
      */
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
         return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingExerciseToCourse(Course, boolean, boolean, ProgrammingLanguage)}
      */
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
             ProgrammingLanguage programmingLanguage) {
@@ -3090,7 +3094,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingExerciseToCourse(Course, boolean, boolean, ProgrammingLanguage, String, String)}
      */
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
             ProgrammingLanguage programmingLanguage, String title, String shortName) {
@@ -3109,7 +3114,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addOnlineCourseConfigurationToCourse(Course)}
      */
     public OnlineCourseConfiguration addOnlineCourseConfigurationToCourse(Course course) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -3123,9 +3128,7 @@ public class DatabaseUtilService {
         return onlineCourseConfiguration;
     }
 
-    /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
-     */
+    /** Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithNamedProgrammingExercise(String, boolean)} */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle, boolean scaActive) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
@@ -3145,14 +3148,15 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#populateProgrammingExercise(ProgrammingExercise, String, String, boolean)}
      */
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
         populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#populateProgrammingExercise(ProgrammingExercise, String, String, boolean, boolean, ProgrammingLanguage)}
      */
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
             boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
@@ -3204,7 +3208,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addEmptyCourse(String, String, String, String)}
      */
     public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
@@ -3215,7 +3219,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addEmptyCourse()}
      *
      * @return An empty course
      */
@@ -3224,7 +3228,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#addTutorialCourse()}
      */
     public void addTutorialCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
@@ -3234,7 +3238,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addCourseInOtherInstructionGroupAndExercise(String)}
      *
      * @param title The title reflect the genre of exercise that will be added to the course
      */
@@ -3273,7 +3277,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExerciseAndSpecificTestCases()}
      */
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
@@ -3295,14 +3299,15 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories()}
      */
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
         return addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage)}
      */
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
         Course course = addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
@@ -3315,7 +3320,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise)}
      */
     public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
@@ -3329,7 +3334,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithOneProgrammingExerciseAndTestCases()}
      */
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
@@ -3339,14 +3344,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithNamedProgrammingExerciseAndTestCases(String)}
      */
     public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
         addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, false);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCourseWithNamedProgrammingExerciseAndTestCases(String, boolean)}
      *
      * @param programmingExerciseTitle The title of the programming exercise
      */
@@ -3360,7 +3365,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addTestCasesToProgrammingExercise(ProgrammingExercise)}
      */
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         // Clean up existing test cases
@@ -3380,7 +3385,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise, String)}
      */
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
         buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
@@ -3394,7 +3399,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addAuxiliaryRepositoryToExercise(ProgrammingExercise)}
      */
     public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
         AuxiliaryRepository repository = new AuxiliaryRepository();
@@ -3409,7 +3414,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addSubmissionPolicyToExercise(SubmissionPolicy, ProgrammingExercise)}
      */
     public void addSubmissionPolicyToExercise(SubmissionPolicy policy, ProgrammingExercise programmingExercise) {
         policy = submissionPolicyRepository.save(policy);
@@ -3418,7 +3423,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addCourseWithModelingAndTextExercise()}
      */
     public Course addCourseWithModelingAndTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3435,7 +3440,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addCourseWithModelingAndTextAndFileUploadExercise()}
      */
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3460,7 +3465,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#createFileUploadExercisesWithCourse()}
      */
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3484,7 +3489,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#addCourseWithThreeFileUploadExercise()}
      */
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
@@ -3499,7 +3504,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(String, String, String, String)}
      */
     public List<FileUploadExercise> createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(String studentGroupName, String teachingAssistantGroupName,
             String editorGroupName, String instructorGroupName) {
@@ -3528,7 +3534,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#addCourseWithFourFileUploadExercise()}
      */
     public Course addCourseWithFourFileUploadExercise() {
         var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment("tumuser", "tutor", "editor", "instructor");
@@ -3546,7 +3552,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#addFileUploadExercisesToCourse(List)}
      */
     private Course addFileUploadExercisesToCourse(List<FileUploadExercise> fileUploadExercises) {
         assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
@@ -3560,7 +3566,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#addCourseWithFileUploadExercise()}
      */
     public Course addCourseWithFileUploadExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3573,7 +3579,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#addCourseWithOneExerciseAndSubmissions(String, String, int)}
      * Generates a course with one specific exercise, and an arbitrare amount of submissions.
      *
      * @param exerciseType        - the type of exercise which should be generated: programming, file-pload or text
@@ -3585,7 +3591,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#addCourseWithOneExerciseAndSubmissions(String, String, int, Optional)}
      * Generates a course with one specific exercise, and an arbitrare amount of submissions.
      *
      * @param exerciseType             - the type of exercise which should be generated: modeling, programming, file-pload or text
@@ -3644,7 +3650,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#addAutomaticAssessmentToExercise(Exercise)}
      * Adds an automatic assessment to all submissions of an exercise
      *
      * @param exercise - the exercise of which the submissions are assessed
@@ -3665,7 +3671,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#addAssessmentToExercise(Exercise, User)}
      * Adds a result to all submissions of an exercise
      *
      * @param exercise - the exercise of which the submissions are assessed
@@ -3686,7 +3692,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#getAllSubmissionsOfExercise(Exercise)}
      */
     public List<Submission> getAllSubmissionsOfExercise(Exercise exercise) {
         var participations = studentParticipationRepo.findByExerciseId(exercise.getId());
@@ -3699,7 +3705,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#addCourseWithExercisesAndSubmissions(String, String, int, int, int, int, boolean, int, String)}
      * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
      * exercises in a cyclic manner.
      *
@@ -3789,7 +3795,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#saveResultInParticipation(Submission, Result)}
      */
     private void saveResultInParticipation(Submission submission, Result result) {
         submission.addResult(result);
@@ -3799,7 +3805,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#generateResult(Submission, User)}
      */
     public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
@@ -3813,7 +3819,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#generateComplaintAndResponses(String, int, int, int, boolean, Result, User)}
      */
     private void generateComplaintAndResponses(String userPrefix, int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
             User currentUser) {
@@ -3834,7 +3840,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingSubmissionWithEmptyResult(ModelingExercise, String, String)}
      * Stores for the given model a submission of the user and initiates the corresponding Result
      *
      * @param exercise exercise the submission belongs to
@@ -3859,7 +3865,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingSubmission(ModelingExercise, ModelingSubmission, String)}
      */
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -3871,7 +3877,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingTeamSubmission(ModelingExercise, ModelingSubmission, Team)}
      */
     public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
         StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
@@ -3883,7 +3889,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingSubmission(ProgrammingExercise, ProgrammingSubmission, String)}
      */
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
@@ -3893,7 +3900,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingSubmissionWithResult(ProgrammingExercise, ProgrammingSubmission, String)}
      * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or
      * create a new participation).
      * The method will make sure that all necessary entities are connected.
@@ -3917,7 +3925,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise, ProgrammingSubmission, String, String, AssessmentType, boolean)}
      */
     public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
             AssessmentType assessmentType, boolean hasCompletionDate) {
@@ -3948,7 +3957,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addProgrammingSubmissionToResultAndParticipation(Result, StudentParticipation, String)}
      */
     public ProgrammingSubmission addProgrammingSubmissionToResultAndParticipation(Result result, StudentParticipation participation, String commitHash) {
         ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
@@ -3962,7 +3972,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addSubmission(Exercise, Submission, String)}
      */
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -3974,7 +3984,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addSubmission(StudentParticipation, Submission)}
      */
     public Submission addSubmission(StudentParticipation participation, Submission submission) {
         participation.addSubmission(submission);
@@ -3985,7 +3995,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingSubmissionWithResultAndAssessor(ModelingExercise, ModelingSubmission, String, String)}
      */
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
 
@@ -4012,7 +4023,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise, ModelingSubmission, String, String)}
      */
     public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -4020,7 +4032,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addSubmissionWithTwoFinishedResultsWithAssessor(Exercise, Submission, String, String)}
      */
     public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -4030,7 +4042,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addSubmissionWithFinishedResultsWithAssessor(StudentParticipation, Submission, String)}
      */
     public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Submission submission, String assessorLogin) {
         Result result = new Result();
@@ -4046,7 +4058,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#saveSubmissionToRepo(Submission)}
      */
     private Submission saveSubmissionToRepo(Submission submission) {
         if (submission instanceof ModelingSubmission) {
@@ -4062,7 +4074,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#addFileUploadSubmission(FileUploadExercise, FileUploadSubmission, String)}
      */
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
@@ -4074,7 +4086,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise, FileUploadSubmission, String, String, List)}
      */
     public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
@@ -4109,7 +4122,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise, FileUploadSubmission, String, String)}
      */
     public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin) {
@@ -4117,7 +4131,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseTestService#saveFileUploadSubmission(FileUploadExercise, FileUploadSubmission, String)}
      */
     public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -4128,7 +4142,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#saveQuizSubmission(QuizExercise, QuizSubmission, String)}
      */
     public QuizSubmission saveQuizSubmission(QuizExercise exercise, QuizSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -4139,7 +4153,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#saveTextSubmission(TextExercise, TextSubmission, String)}
      */
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
@@ -4150,7 +4164,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#saveTextSubmissionWithResultAndAssessor(TextExercise, TextSubmission, String, Long, String)}
      */
     private TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId, String assessorLogin) {
         StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> createAndSaveParticipationForExercise(exercise, login))
@@ -4182,21 +4197,22 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#saveTextSubmissionWithResultAndAssessor(TextExercise, TextSubmission, String, String)}
      */
     public TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
         return saveTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#saveTextSubmissionWithResultAndAssessor(TextExercise, TextSubmission, long, String)}
      */
     public void saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, long teamId, String assessorLogin) {
         saveTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise, TextSubmission, String, String, List)}
      */
     public TextSubmission addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise exercise, TextSubmission submission, String studentLogin, String assessorLogin,
             List<Feedback> feedbacks) {
@@ -4220,7 +4236,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#addAndSaveTextBlocksToTextSubmission(Set, TextSubmission)}
      */
     public TextSubmission addAndSaveTextBlocksToTextSubmission(Set<TextBlock> blocks, TextSubmission submission) {
         blocks.forEach(block -> {
@@ -4234,7 +4250,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingSubmissionFromResources(ModelingExercise, String, String)}
      */
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
         String model = FileUtils.loadFileFromResources(path);
@@ -4245,7 +4261,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#checkModelingSubmissionCorrectlyStored(Long, String)}
      */
     public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
@@ -4254,7 +4270,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#checkModelsAreEqual(String, String)}
      */
     public void checkModelsAreEqual(String storedModel, String sentModel) {
         JsonObject sentModelObject = parseString(sentModel).getAsJsonObject();
@@ -4263,7 +4279,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingAssessmentForSubmission(ModelingExercise, ModelingSubmission, String, String, boolean)}
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = loadAssessmentFomResources(path);
@@ -4278,7 +4295,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#addModelingAssessmentForSubmission(ModelingExercise, ModelingSubmission, String, boolean)}
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
@@ -4298,7 +4316,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addExampleSubmission(ExampleSubmission)}
      */
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
         Submission submission;
@@ -4313,7 +4331,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#createInitialEmptyResponse(String, Complaint)}
      */
     public ComplaintResponse createInitialEmptyResponse(String loginOfTutor, Complaint complaint) {
         ComplaintResponse complaintResponse = new ComplaintResponse();
@@ -4325,7 +4343,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#loadAssessmentFomResources(String)}
      */
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = FileUtils.loadFileFromResources(path);
@@ -4333,7 +4351,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#getUserByLoginWithoutAuthorities(String)}
      * Gets a user from the database using the provided login but without the authorities.
      * <p>
      * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
@@ -4347,7 +4365,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#getUserByLogin(String)}
      */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case
@@ -4356,14 +4374,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#userExistsWithLogin(String)}
      */
     public boolean userExistsWithLogin(String login) {
         return userRepo.findOneByLogin(login).isPresent();
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#updateExerciseDueDate(long, ZonedDateTime)}
      */
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
@@ -4375,7 +4393,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#updateAssessmentDueDate(long, ZonedDateTime)}
      */
     public void updateAssessmentDueDate(long exerciseId, ZonedDateTime newDueDate) {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
@@ -4384,7 +4402,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#updateResultCompletionDate(long, ZonedDateTime)}
      */
     public void updateResultCompletionDate(long resultId, ZonedDateTime newCompletionDate) {
         Result result = resultRepo.findById(resultId).orElseThrow(() -> new IllegalArgumentException("Result with given ID " + resultId + " could not be found"));
@@ -4393,7 +4411,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addComplaints(String, Participation, int, ComplaintType)}
      */
     public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
@@ -4405,7 +4423,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addComplaintToSubmission(Submission, String, ComplaintType)}
      */
     public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType type) {
         Result result = submission.getLatestResult();
@@ -4418,7 +4436,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#addTeamComplaints(Team, Participation, int, ComplaintType)}
      */
     public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
@@ -4430,7 +4448,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addHintsToExercise(ProgrammingExercise)}
      */
     public void addHintsToExercise(ProgrammingExercise exercise) {
         ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
@@ -4449,7 +4467,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addTasksToProgrammingExercise(ProgrammingExercise)}
      */
     public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
         StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
@@ -4472,7 +4490,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addSolutionEntriesToProgrammingExercise(ProgrammingExercise)}
      */
     public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         for (ProgrammingExerciseTestCase testCase : programmingExercise.getTestCases()) {
@@ -4488,7 +4506,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#addCodeHintsToProgrammingExercise(ProgrammingExercise)}
      */
     public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
         for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
@@ -4510,14 +4528,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#loadProgrammingExerciseWithEagerReferences(ProgrammingExercise)}
      */
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#generateExampleSubmission(String, Exercise, boolean)}
      * Generates an example submission for a given model and exercise
      *
      * @param modelOrText             given uml model for the example submission
@@ -4530,7 +4548,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#generateExampleSubmission(String, Exercise, boolean, boolean)}
      * Generates an example submission for a given model and exercise
      *
      * @param modelOrText             given uml model for the example submission
@@ -4553,7 +4571,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#generateSubmittedAnswerFor(QuizQuestion, boolean)}
      * Generates a submitted answer for a given question.
      *
      * @param question given question, the answer is for
@@ -4634,7 +4652,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion)}
      */
     public SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
         if (question instanceof MultipleChoiceQuestion) {
@@ -4700,10 +4718,10 @@ public class DatabaseUtilService {
         return null;
     }
 
-    @NotNull
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createQuiz(Course, ZonedDateTime, ZonedDateTime, QuizMode)}
      */
+    @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
@@ -4711,7 +4729,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamTestService#createAndSaveActiveExerciseGroup(boolean)}
      * creates and saves an exam exercise group in a course that is currently active.
      *
      * @param mandatory if the exerciseGroup is mandatory
@@ -4727,7 +4745,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#emptyOutQuizExercise(QuizExercise)}
      * important quiz fields are emptied, so it can be imported,
      *
      * @param quizExercise to be emptied
@@ -4741,7 +4759,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createAndSaveQuiz(ZonedDateTime, ZonedDateTime, QuizMode)}
      * Creates a new quiz that gets saved in the QuizExercise repository.
      *
      * @param releaseDate release date of the quiz, is also used to set the start date of the course
@@ -4757,7 +4775,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createQuiz(ZonedDateTime, ZonedDateTime, QuizMode)}
      * Creates a new quiz
      *
      * @param releaseDate release date of the quiz, is also used to set the start date of the course
@@ -4775,7 +4793,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createAndSaveTeamQuiz(ZonedDateTime, ZonedDateTime, QuizMode, int, int)}
      * Creates a team quiz exercise with a team and saves it into the repository.
      *
      * @param releaseDate release date of the quiz
@@ -4798,7 +4816,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#setupTeamQuizExercise(QuizExercise, int, int)}
      * sets up a team quiz exercise.
      *
      * @param quiz        quiz exercise that should be a team exercise.
@@ -4815,7 +4833,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#createAndSaveCourse(Long, ZonedDateTime, ZonedDateTime, Set)}
      * Creates a new course that gets saved in the Course repository.
      *
      * @param id        the id of the course
@@ -4832,7 +4850,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createAndSaveExamQuiz(ZonedDateTime, ZonedDateTime)}
      * Creates a new exam quiz that gets saved in the QuizExercise repository.
      *
      * @param startDate start date of the exam, is also used to set the end date of the course the exam is in
@@ -4856,7 +4874,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#removeUserFromAllCourses(String)}
      * Removes a user from all courses they are currently in.
      *
      * @param login login to find user with
@@ -4868,7 +4886,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#renameAndSaveQuiz(QuizExercise, String)}
      * renames the quiz with the passed title, the quiz gets saved in the repository.
      *
      * @param quizExercise quiz to be renamed
@@ -4880,7 +4898,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#setQuizBatchExerciseAndSave(QuizBatch, QuizExercise)}
      * sets the quiz exercise of quiz batch and saves the batch into the repository
      *
      * @param batch        quiz batch that should get saved
@@ -4892,7 +4910,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createQuizForExam(ExerciseGroup)}
      */
     @NotNull
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
@@ -4903,7 +4921,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#initializeQuizExercise(QuizExercise)}
      * initializes a quiz with all different types of questions
      *
      * @param quizExercise to be initialized
@@ -4917,7 +4935,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createShortAnswerQuestion()}
      */
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
@@ -4973,7 +4991,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createDragAndDropQuestion()}
      */
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestion() {
@@ -5031,14 +5049,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#generateTempId()}
      */
     public Long generateTempId() {
         return ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#createMultipleChoiceQuestion()}
      */
     @NotNull
     public MultipleChoiceQuestion createMultipleChoiceQuestion() {
@@ -5053,7 +5071,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#generateSubmissionForThreeQuestions(QuizExercise, int, boolean, ZonedDateTime)}
      * Generate submissions for a student for an exercise. Results depend on the studentID.
      *
      * @param quizExercise   QuizExercise the submissions are for (we assume 3 questions here)
@@ -5076,7 +5094,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseTestService#generateSpecialSubmissionWithResult(QuizExercise, boolean, ZonedDateTime, boolean)}
      * Generate a submission with all or none options of a MultipleChoiceQuestion selected, if there is one in the exercise
      *
      * @param quizExercise     Exercise the submission is for
@@ -5112,7 +5130,7 @@ public class DatabaseUtilService {
     // TODO: find some generic solution for the following duplicated code
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#findFileUploadExerciseWithTitle(Collection, String)}
      */
     @NotNull
     public FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
@@ -5131,7 +5149,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#findModelingExerciseWithTitle(Collection, String)}
      */
     @NotNull
     public ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
@@ -5150,7 +5168,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#findTextExerciseWithTitle(Collection, String)}
      */
     @NotNull
     public TextExercise findTextExerciseWithTitle(Collection<Exercise> exercises, String title) {
@@ -5169,7 +5187,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseTestService#findProgrammingExerciseWithTitle(Collection, String)}
      */
     @NotNull
     public ProgrammingExercise findProgrammingExerciseWithTitle(Collection<Exercise> exercises, String title) {
@@ -5188,7 +5206,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#fooMethod}
      */
     public PageableSearchDTO<String> configureSearch(String searchTerm) {
         final var search = new PageableSearchDTO<String>();
@@ -5206,7 +5224,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#fooMethod}
      */
     public PageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
         final var search = new PageableSearchDTO<String>();
@@ -5224,7 +5242,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#fooMethod}
      */
     public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
         final var search = new PageableSearchDTO<String>();
@@ -5237,7 +5255,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.pageablesearch.PageableSearchTestService#fooMethod}
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
@@ -5250,7 +5268,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#fooMethod}
      */
     public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
         assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
@@ -5277,7 +5295,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#fooMethod}
      */
     public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
@@ -5301,7 +5319,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#fooMethod}
      */
     public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
         TextPlagiarismResult result = new TextPlagiarismResult();
@@ -5312,7 +5330,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseTestService#fooMethod}
      */
     public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
         ModelingPlagiarismResult result = new ModelingPlagiarismResult();
@@ -5323,7 +5341,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#fooMethod}
      */
     @NotNull
     public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
@@ -5331,7 +5349,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.plagiarism.PlagiarismTestService#fooMethod}
      */
     @NotNull
     public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
@@ -5344,7 +5362,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#fooMethod}
      */
     @NotNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
@@ -5381,7 +5399,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#fooMethod}
      */
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
             Course course, Integer presentationsNumber, Double presentationsWeight) {
@@ -5393,7 +5411,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#fooMethod}
      */
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {
         if (gradeStepCount != intervals.length - 1 || firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
@@ -5418,7 +5436,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#fooMethod}
      */
     public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
         // This method has a different signature from the one above to define intervals from sizes to be consistent with
@@ -5460,7 +5478,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.gradingscale.GradingScaleTestService#fooMethod}
      */
     public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
         try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
@@ -5475,7 +5493,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(String loginPrefix) throws Exception {
         Course course = addCourseWithModelingAndTextAndFileUploadExercise();
@@ -5499,7 +5517,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.fileupload.FileUploadTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.fileupload.FileUploadTestService#fooMethod}
      */
     public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
@@ -5517,7 +5535,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public Course createCourseWithExamAndExercises(String loginPrefix) throws IOException {
         var course = addEmptyCourse();
@@ -5559,7 +5577,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#fooMethod}
      */
     public StudentParticipation addAssessmentWithFeedbackWithGradingInstructionsForExercise(Exercise exercise, String login) {
         // add participation and submission for exercise
@@ -5592,21 +5610,21 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationTestService#fooMethod}
      */
     public List<Result> getResultsForExercise(Exercise exercise) {
         return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public Course createCourseWithTextExerciseAndTutor(String login) {
         Course course = this.createCourse();
@@ -5624,7 +5642,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public Course createCourseWithInstructorAndTextExercise(String userPrefix) {
         Course course = this.createCourse();
@@ -5637,7 +5655,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseTestService#fooMethod}
      */
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
@@ -5645,7 +5663,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      * Update the max complaint text limit of the course.
      *
      * @param course             course which is updated
@@ -5659,7 +5677,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      * Update the max complaint response text limit of the course.
      *
      * @param course                     course which is updated
@@ -5673,7 +5691,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#fooMethod}
      */
     public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
         for (Posting posting : postings) {
@@ -5682,7 +5700,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#fooMethod}
      */
     public void assertSensitiveInformationHidden(@NotNull Posting posting) {
         if (posting.getAuthor() != null) {
@@ -5693,7 +5711,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.post.PostTestService#fooMethod}
      */
     public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
         if (reaction.getUser() != null) {
@@ -5704,7 +5722,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#fooMethod}
      */
     public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end, Integer attendanceCount) {
         var tutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
@@ -5721,7 +5739,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#fooMethod}
      */
     public TutorialGroupFreePeriod addTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
         var tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
@@ -5738,7 +5756,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#fooMethod}
      */
     public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language,
             User teachingAssistant, Set<User> registeredStudents) {
@@ -5759,7 +5777,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupTestService#fooMethod}
      */
     public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, LocalDate start, LocalDate end) {
         var course = courseRepo.findByIdElseThrow(courseId);
@@ -5773,7 +5791,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.conversation.ConversationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.conversation.ConversationTestService#fooMethod}
      */
     public Conversation createOneToOneChat(Course course, String userPrefix) {
         Conversation conversation = new OneToOneChat();
@@ -5789,7 +5807,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.conversation.ConversationTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.conversation.ConversationTestService#fooMethod}
      */
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
         ConversationParticipant conversationParticipant = new ConversationParticipant();
@@ -5801,14 +5819,14 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public void updateCourseGroups(String userPrefix, List<Course> courses, String suffix) {
         courses.forEach(course -> updateCourseGroups(userPrefix, course, suffix));
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseTestService#fooMethod}
      */
     public void updateCourseGroups(String userPrefix, Course course, String suffix) {
         course.setStudentGroupName(userPrefix + "student" + suffix);
@@ -5819,7 +5837,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#foo()}
+     * Moved to {@link de.tum.in.www1.artemis.user.UserTestService#fooMethod}
      */
     public void adjustUserGroupsToCustomGroups(String userPrefix, String userSuffix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
         for (int i = 1; i <= numberOfStudents; i++) {

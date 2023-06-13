@@ -280,4 +280,38 @@ public class UserTestService {
             }
         }
     }
+
+    /**
+     * Gets a user from the database using the provided login but without the authorities.
+     * <p>
+     * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
+     * circumstances when this happens in still unknown.
+     *
+     * @param login login to find user with
+     * @return user with the provided logih
+     */
+    public User getUserByLoginWithoutAuthorities(String login) {
+        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+    }
+
+    public User getUserByLogin(String login) {
+        // we convert to lowercase for convenience, because logins have to be lower case
+        return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+    }
+
+    public boolean userExistsWithLogin(String login) {
+        return userRepo.findOneByLogin(login).isPresent();
+    }
+
+    /**
+     * Removes a user from all courses they are currently in.
+     *
+     * @param login login to find user with
+     */
+    public void removeUserFromAllCourses(String login) {
+        User user = getUserByLogin(login);
+        user.setGroups(Set.of());
+        userRepo.save(user);
+    }
 }
