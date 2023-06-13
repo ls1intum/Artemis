@@ -8,29 +8,43 @@ What is it?
 ===========
 The Artemis Exam Participation Checker iPad application is designed to streamline the process of checking student attendance during on-site exams conducted with the Artemis platform. The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier. The application includes features such as student identification, digital signing, and attendance tracking. The Artemis web platform was adapted to additionally support exam management tasks,  such as uploading seating arrangements and images for students.
 
-Requirements
-============
+Requirements and Web Functionality
+==================================
 
 .. note::
     For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in :ref:`exam configuration <exam_creation_and_configuration>`.
 
 To use the Artemis Exam Participation Checker iPad application, additional setup before the exam is required. This includes the following tasks on the *Students* page:
 
-- uploading images for the students. This can be done via the |upload_images| button. An exemplary file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
+- uploading images for the students. This can be done via the |upload_images| button. A new dialog is shown which can be inspected below. Upload the ``pdf`` file in this dialog. This file includes a box for each student with its image and two text boxes next to it. The upper text box needs to include the ``registrationNumber`` and the lower text box needs to include the ``login``. An exemplary file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
 - setting up the room and seating information via the bulk import.
 
 .. note::
     To upload the images each student needs to have a matriculation number assigned. This is used to match the image with the according student.
 
 .. note::
-    Seats and rooms can currently only be assigned via the bulk import of students, by defining the seat and room in the ``CSV`` file.
+    Seats and rooms can currently only be assigned via the bulk import of students, by defining the ``seat`` and ``room`` in the ``CSV`` file.
 
-Download
-========
+- You can also verify the attendance in the web application by pressing the |verify_attendance| button. This button opens a new view which shows which students have started the exam in Artemis but did not complete the check-in with a teaching assistant. 
+
+.. figure:: instructor/verify_attendance_verification_missing.png
+   :alt: Verify Attendance View: One student did not complete the check-in
+   :align: center
+
+   Verify Attendance View: One student did not complete the check-in
+
+.. figure:: instructor/verify_attendance_verification_successful.png
+   :alt: Verify Attendance View: All students have been successfully checked in
+   :align: center
+
+   Verify Attendance View: All students have been successfully checked in
+
+Download App
+============
 The App is currently only available via TestFlight. It can be downloaded via the following link: https://testflight.apple.com/join/hlwcUa0b 
 
-Usage
-=====
+App Usage
+=========
 
 1.1 Login
 ^^^^^^^^^

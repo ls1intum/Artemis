@@ -234,20 +234,6 @@ During the exam creation and configuration, you can create your exam and configu
 
    Register Students Page
 
-- If you are using the Exam Participation Checker, you can verify the attendance by pressing the |verify_attendance| button. This button opens a new view which shows which students have started the exam in Artemis but did not complete the check-in with a teaching assistant. 
-
-.. figure:: instructor/verify_attendance_verification_missing.png
-   :alt: Verify Attendance View: One student did not complete the check-in
-   :align: center
-
-   Verify Attendance View: One student did not complete the check-in
-
-.. figure:: instructor/verify_attendance_verification_successful.png
-   :alt: Verify Attendance View: All students have been successfully checked in
-   :align: center
-
-   Verify Attendance View: All students have been successfully checked in
-
 .. _student_exams:
 
 1.6 Manage Student Exams
