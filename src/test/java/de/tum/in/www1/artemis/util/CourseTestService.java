@@ -1162,7 +1162,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllGroupsForAllCourses() throws Exception {
-        Set<String> allGroups = new HashSet<>(request.getList("/api/courses/groups", HttpStatus.OK, String.class));
+        Set<String> allGroups = new HashSet<>(request.getList("/api/admin/courses/groups", HttpStatus.OK, String.class));
         courseRepo.findAll().stream().findAny().ifPresent(course -> {
             assertThat(allGroups)
                     .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));
