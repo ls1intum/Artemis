@@ -81,11 +81,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ChannelRepository channelRepository;
 
-    @Autowired
-    private ExerciseService exerciseService;
-
-    private QuizExercise quizExercise;
-
     // helper attributes for shorter code in assert statements
     private final PointCounter pc01 = pc(0, 1);
 
@@ -324,7 +319,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
-  
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateNotExistingQuizExercise() throws Exception {
@@ -1072,10 +1067,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Course course = database.addEmptyCourse();
         quizExercise.setCourse(course);
-        quizExercise.setChannelName("testchannel-quiz");
+        quizExercise.setChannelName("testchannel-quiz" + UUID.randomUUID().toString().substring(0, 8));
 
         QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course").isEqualTo(course);
+        Channel channelDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
+        assertThat(channelDB).isNotNull();
     }
 
     /**
@@ -1197,7 +1194,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(quizExercise.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).isEmpty();
     }
-  
+
     /**
      * test import quiz exercise with changed team mode
      */
@@ -1237,7 +1234,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setQuizMode(QuizMode.INDIVIDUAL);
-        changedQuiz.setReleaseDate(now);
         changedQuiz.setChannelName("testchannel-quiz");
 
         QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
@@ -1359,11 +1355,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = database.createQuiz(releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
+        quizExercise.setChannelName(CHANNEL_NAME + UUID.randomUUID().toString().substring(0, 8));
 
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
+        Channel channelDB = channelRepository.findChannelByExerciseId(quizExerciseDatabase.getId());
+        assertThat(channelDB).isNotNull();
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
@@ -1397,6 +1396,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
+
+        Channel channelDB = channelRepository.findChannelByExerciseId(quizExercise.getId());
+        assertThat(channelDB).isNull();
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);

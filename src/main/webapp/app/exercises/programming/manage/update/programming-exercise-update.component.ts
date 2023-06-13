@@ -631,14 +631,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
             errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
             disableTranslation = false;
-        } else { 
+        } else {
             if (error.error && error.error.title) {
-              this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.params);
+                this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.params);
             }
             errorMessage = error.headers.get('X-artemisApp-alert')!;
             disableTranslation = true;
         }
-      
+
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
