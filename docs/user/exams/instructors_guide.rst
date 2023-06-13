@@ -207,7 +207,7 @@ During the exam creation and configuration, you can create your exam and configu
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
     1. Add students manually by searching via the search bar.
-    2. Bulk import students using a ``CSV`` file. This imports multiple students which are defined in the file at once. You can do this by pressing the |import_students| button. A new dialog is shown which can be inspected below. Upload the file in this dialog. The ``CSV`` file has to include the ``registrationNumber`` and the ``login``. The ``email``, ``firstname``, ``lastname``, ``seat``, and ``room`` are optional. The ``room`` and ``seat`` are only required for the exam participaton check. An exemplary file can be found here: :download:`csv <instructor/example_import_students.csv>`. By pressing the |import_students_button| button the bulk import is started.
+    2. To import students, you can use a ``CSV`` file. This method allows you to import several students defined in the file all at once. To do so, simply click on the |import_students| button. A new dialog will appear, which can be inspected below. Within this dialog, upload your file. The required fields in the CSV file include the ``registrationNumber`` and the ``login``, while ``email``, ``firstname``, ``lastname``, ``seat``, and ``room`` are optional. Note that the ``room`` and ``seat`` fields are only necessary for the exam participation check. You can find an example file here: :download:`csv <instructor/example_import_students.csv>`. To begin the bulk import, press the |import_students_button| button.
 
     .. _figure_import_student:
     .. figure:: instructor/import_students_dialog.png
