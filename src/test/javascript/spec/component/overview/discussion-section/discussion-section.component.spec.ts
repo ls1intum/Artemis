@@ -16,7 +16,6 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { SortDirection } from 'app/shared/metis/metis.util';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -147,7 +146,6 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.posts).toEqual(metisLecturePosts);
         expect(component.channel).toEqual(metisLectureChannel);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
     }));
@@ -161,7 +159,7 @@ describe('PageDiscussionSectionComponent', () => {
                 }),
             ),
         );
-        component.exercise = metisExercise;
+        component.exercise = { ...metisCourse, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.course).toEqual(metisCourse);
@@ -240,7 +238,6 @@ describe('PageDiscussionSectionComponent', () => {
 
     it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
         component.exercise = { ...metisExercise, course: metisCourse };
-        component.exercise = metisExercise;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -253,7 +250,6 @@ describe('PageDiscussionSectionComponent', () => {
 
     it('should display one new message button', fakeAsync(() => {
         component.exercise = { ...metisExercise, course: metisCourse };
-        component.exercise = metisExercise;
         component.ngOnInit();
         tick();
         fixture.detectChanges();

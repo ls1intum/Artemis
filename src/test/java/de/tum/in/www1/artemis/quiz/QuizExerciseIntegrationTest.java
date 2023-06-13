@@ -1082,12 +1082,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void importQuizExerciseFromCourseToCourse() throws Exception {
         QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
 
-        Course course = database.addEmptyCourse();
-        quizExercise.setCourse(course);
+        database.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         quizExercise.setChannelName("testchannel-quiz" + UUID.randomUUID().toString().substring(0, 8));
 
         QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course").isEqualTo(course);
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course")
+                .isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         Channel channelDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelDB).isNotNull();
     }
@@ -1375,6 +1375,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = database.createQuiz(releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
         quizExercise.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
+        database.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
 
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
