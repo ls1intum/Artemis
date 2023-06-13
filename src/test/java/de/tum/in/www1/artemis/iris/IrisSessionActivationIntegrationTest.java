@@ -38,19 +38,18 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
-        activateIrisFor(exercise);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSessionUnauthorized() throws Exception {
-        request.post("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, HttpStatus.BAD_REQUEST);
+        request.post("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
-        request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.BAD_REQUEST, IrisSession.class);
+        request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.FORBIDDEN, IrisSession.class);
     }
 
     @Test
@@ -61,7 +60,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
         messageToSend.setContent(List.of(createMockContent(messageToSend)));
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -85,7 +84,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
         irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
 
-        request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.BAD_REQUEST, IrisMessage.class);
+        request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.FORBIDDEN, IrisMessage.class);
     }
 
     private IrisMessageContent createMockContent(IrisMessage message) {

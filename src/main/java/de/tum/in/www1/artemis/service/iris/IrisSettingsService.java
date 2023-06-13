@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.ws.rs.ForbiddenException;
 
@@ -17,8 +20,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSubSettingsRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -30,20 +32,13 @@ public class IrisSettingsService {
 
     private final CourseRepository courseRepository;
 
-    private final IrisTemplateRepository irisTemplateRepository;
-
     private final IrisSettingsRepository irisSettingsRepository;
-
-    private final IrisSubSettingsRepository irisSubSettingsRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public IrisSettingsService(CourseRepository courseRepository, IrisTemplateRepository irisTemplateRepository, IrisSettingsRepository irisSettingsRepository,
-            IrisSubSettingsRepository irisSubSettingsRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public IrisSettingsService(CourseRepository courseRepository, IrisSettingsRepository irisSettingsRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
-        this.irisTemplateRepository = irisTemplateRepository;
         this.irisSettingsRepository = irisSettingsRepository;
-        this.irisSubSettingsRepository = irisSubSettingsRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -83,7 +78,7 @@ public class IrisSettingsService {
      */
     public void checkIsIrisHestiaSessionEnabledElseThrow(ProgrammingExercise programmingExercise) {
         if (!isIrisHestiaSessionEnabled(programmingExercise)) {
-            throw new ForbiddenException("Iris Hestia feature is not enabled for programming exercise " + programmingExercise.getId());
+            throw new AccessForbiddenException("Iris Hestia feature is not enabled for programming exercise " + programmingExercise.getId());
         }
     }
 
@@ -95,7 +90,7 @@ public class IrisSettingsService {
      */
     public void checkIsIrisChatSessionEnabledElseThrow(ProgrammingExercise programmingExercise) {
         if (!isIrisChatSessionEnabled(programmingExercise)) {
-            throw new ForbiddenException("Iris Chat feature is not enabled for programming exercise " + programmingExercise.getId());
+            throw new AccessForbiddenException("Iris Chat feature is not enabled for programming exercise " + programmingExercise.getId());
         }
     }
 
