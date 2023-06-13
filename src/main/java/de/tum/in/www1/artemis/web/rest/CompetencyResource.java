@@ -165,7 +165,7 @@ public class CompetencyResource {
             throw new BadRequestException();
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var existingCompetency = this.competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+        var existingCompetency = this.competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competency.getId());
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, existingCompetency);
         if (competency.isOptional() && !competencyService.competencyCanBeOptional(existingCompetency)) {
             throw new BadRequestException();
@@ -240,11 +240,6 @@ public class CompetencyResource {
 
         if (competencyToImport.getCourse().getId().equals(courseId)) {
             throw new ConflictException("The competency is already added to this course", "Competency", "competencyCycle");
-        }
-
-        // This can only happen if someone manually altered the transferred data
-        if (competencyToImport.isOptional() && !competencyService.competencyCanBeOptional(competencyToImport)) {
-            throw new BadRequestException();
         }
 
         competencyToImport.setCourse(course);
