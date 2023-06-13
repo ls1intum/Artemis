@@ -1,13 +1,16 @@
 Artemis supports an integrated version control (VC) and continuous integration (CI) system.
-If you use this local VC and local CI, the :ref:`top_level_design`, the :ref:`deployment`, and the :ref:`server_architecture` above do not hold.
-Instead, the deployment (without using an external user management system) looks like this:
+If you use this *local VC* and *local CI*, the architecture differs from the architecture with external VC and CI systems.
+The deployment with local VC and local CI in use (without using an external user management system) looks like this:
 
 .. figure:: system-design/localvc-localci/LocalVC_LocalCI_Deployment.png
    :align: center
+   :width: 600
    :alt: Local VC and Local CI Deployment
 
    Local VC and Local CI Deployment
 
+This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
+Developers have fewer applications to run in parallel, which translates into decreased system requirements.
 See :ref:`Local CI and local VC Setup` on how to set the system up.
 
 .. HINT::
@@ -20,16 +23,27 @@ The following diagram shows an overview of the components in the local VC subsys
 
 .. figure:: system-design/localvc-localci/LocalVC_Subsystem.png
    :align: center
+   :width: 600
    :alt: Local VC Subsystem
 
    Local VC Subsystem
 
 The ``Local VC Service`` implements the ``VersionControlService`` interface and thus contains methods that the exercise management subsystem and the exercise participation subsystem need to interact with the VC system. E.g. the ``createRepository()`` method creates a repository on the file system.
 For users to be able to access the repositories using their local Git client, the local VC subsystem contains a ``Git Server`` component.
-It handles the implementation of the server-side Git HTTP protocol and delegates all logic connected to Artemis to the ``Local VC Servlet Service``.
+The``Git Server`` component of the local VC subsystem responds to ``fetch`` and ``push`` requests from Git clients, enabling instructors and students to interact with their repositories the way they are used to.
+It encompasses all the logic for implementing a Git server.
+This includes extracting the command and parameters from the client request and executing the Git commands on the server-side repository, provided the repository exists, and the user has the requisite permissions.
+It reads objects and refs from the repository, updates the repository for push requests, and formats the results of the Git commands it executes into a response that it sends back to the client.
+This could involve sending objects and refs to the client in a packfile, or transmitting error messages.
+The ``Git Server`` delegates all logic connected to Artemis to the ``Local VC Servlet Service``.
 This service resolves the repository from the file system depending on the repository URL. It also handles user authentication (only Basic Auth for now) and authorization.
 For authorization (e.g. "is the requesting user the owner of the repository?", "has the due date already passed?"), it uses the logic outsourced to the ``RepositoryAccessService`` that the existing online editor also uses.
+Combining the repository access checks into one service increases the robustness of the system's security as developers can focus on maintaining one service and setting up strong security mechanisms there that apply in all parts of the application.
 For push requests, the ``Local VC Servlet Service`` calls the ``processNewProgrammingSubmission()`` method of the ``Programming Submission Service`` to create a new submission and finally calls the local CI subsystem to trigger a new build.
+
+With the VC system operating as part of the Artemis spring application, performance is improved.
+For instance, when an instructor creates a new programming exercise, Artemis copies the template source code to the template repository.
+Artemis merely needs to communicate with the host file system, which is faster than communicating with the external VCS through the network.
 
 The local CI subsystem
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -38,24 +52,57 @@ The following diagram shows an overview of the components in the local CI subsys
 
 .. figure:: system-design/localvc-localci/LocalCI_Subsystem.png
    :align: center
+   :width: 600
    :alt: Local CI Subsystem
 
    Local CI Subsystem
 
-The ``Local CI Trigger Service`` contains the ``triggerBuild()`` method, that the exercise management subsystem, the exercise participation subsystem, and the local VC subsystem use to trigger builds in the CI system.
-The local CI subsystem uses an ``Executor Service`` to manage a blocking queue for build tasks and a thread pool to execute the tasks.
-The steps for running a build job are defined in the ``Local CI Build Job Execution Service`` and are as follows:
+The local CIS provides a concrete implementation of the continuous integration trigger service interface for the local CIS.
+We do not consider the local CIS implementation of the continuous integration service interface here.
+As the version of the local CIS, that we implement in this thesis, does not plan for the persistence of build plan information, most of the methods in this service are empty.
+The local CI trigger service provides the ``triggerBuild`` method.
+For instance, instructors can trigger builds for all student repositories from the Artemis user interface, when they changed the configuration of a programming exercise.
+This may be the case after adapting the test cases for the exercise, rendering the build results of all students invalid.
+Similarly, the student can manually trigger a build for their assignment repository from the Artemis user interface when there was an issue during the build process.
 
-- Start Docker container.
-- Run build script on the container.
+For each call to the ``triggerBuild`` method, the local CI trigger service delegates a new build job to the local CI build system.
+We implemented the local CI build system in such a way that it restricts the amount of build jobs that can run concurrently and adds build jobs to a blocking queue in case it reaches the maximum amount of builds.
 
-  - Checkout assignment repository and solution repository.
-  - Run tests.
+The local CI build system consists of four main services, that provide the task of managing a queue of build jobs, executing build jobs, and returning the build results.
+The ``LocalCIBuildJobManagementService`` contains the logic for managing build jobs.
+It prepares a build task in form of a lambda function and submits this task to the ``ExecutorService``.
+The ``ExecutorService`` encapsulates the low level logic for handling of the queue and the concurrency when running multiple build jobs at a time.
+As soon as a build job finishes, the ``ExecutorService`` returns the result of the task execution to the ``LocalCIBuildJobManagementService``.
+The ``ExecutorService`` makes sure that errors happening during the build job execution are propagated to the ``LocalCIBuildJobManagementService``, so it can handle all errors in one spot.
 
-- Retrieve build results from container.
-- Stop container.
-- Parse results.
+To improve the reliability of the system, the ``LocalCIBuildJobManagementService`` implements a timeout mechanism.
+Administrators can configure a maximum amount of time that build jobs can run.
+If a build job times out, the  ``LocalCIBuildJobManagementService`` interrupts the build job.
+This feature is crucial to prevent jobs that require an abnormally high amount of time from clogging up the system and reducing overall system performance \autocite{farley2010}.
+This ensures the efficient usage of resources and contributes to the reliability of the system.
 
-The ``Local CI Container Service`` handles all interaction with the Docker containers like starting the container and retrieving the test results.
-We use the *docker-java* library to interact with the Docker daemon.
+The ``LocalCIBuildJobExecutionService`` has the method ``runBuildJob``, that contains the actual logic for executing a build job.
+
+A basic build job for the purpose of providing automated assessment in Artemis consists of the following steps:
+
+- Start a Docker container for the build job.
+- Run the build script on the container. This involves:
+
+  - Check out the repository under test (e.g. the student assignment repository) and the test repository containing the test cases.
+  - Compile the source code of both the test repository and the repository under test.
+  - Execute the test cases.
+
+- Retrieve the test results from the container.
+- Stop the container.
+- Parse the test results.
+
+To address potential security risks associated with executing student code during automated assessment, we run the build job in a container, that the ``LocalCIContainerService`` creates and starts just for this purpose.
+This container functions as an isolated environment.
+If a student submits potentially malicious code, the container confines its execution, preventing it from directly affecting the host system or other containers.
+
+The ephemeral nature of Docker containers allows the ``LocalCIBuildJobExecutionService`` to quickly remove them and the data they produced during the build when a build job finishes.
+
+Finally, when the build ran through successfully, the local CI trigger service communicates the build result to the feedback subsystem, that makes it available to the instructor or student.
+If there were any errors, the ``LocalCIBuildJobManagementService`` sends an error message to the Artemis user interface, that enables the instructor or student to take further action.
+It also stops the container the build job runs in using the ``LocalCIContainerService``.
 
