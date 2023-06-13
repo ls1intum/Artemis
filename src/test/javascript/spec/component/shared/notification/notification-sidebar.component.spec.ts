@@ -134,7 +134,7 @@ describe('Notification Sidebar Component', () => {
 
         it('should subscribe to notification updates for user', () => {
             jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
-            jest.spyOn(notificationService, 'getUnreadCountForCurrentUserFilteredBySettings').mockReturnValue(0);
+            jest.spyOn(notificationService, 'getUnreadCountForCurrentUserFilteredBySettings').mockReturnValue(of(0));
             jest.spyOn(notificationSettingsService, 'isNotificationAllowedBySettings').mockReturnValue(true);
             notificationSidebarComponent.ngOnInit();
             expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
