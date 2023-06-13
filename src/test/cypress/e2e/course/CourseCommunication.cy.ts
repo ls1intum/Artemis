@@ -1,25 +1,25 @@
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
-import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { CourseWideContext } from '../../support/constants';
+import { courseCommunication, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
+import { BASE_API, CourseWideContext, POST } from '../../support/constants';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
-import { generateUUID, titleCaseWord } from '../../support/utils';
+import { generateUUID, titleCaseWord, titleLowercase } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
 import day from 'dayjs/esm';
-
-// Common primitives
-let courseName: string;
-let courseShortName: string;
+import { text } from 'stream/consumers';
+import { Channel } from '../../../../main/webapp/app/entities/metis/conversation/channel.model';
 
 describe('Course communication', () => {
     let course: Course;
+    let courseWithMessaging: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
+
+        let uid = generateUUID();
+        let courseName = 'Cypress course' + uid;
+        let courseShortName = 'cypress' + uid;
         courseManagementRequest
             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
             .then((response) => {
@@ -28,6 +28,19 @@ describe('Course communication', () => {
                 courseManagementRequest.addStudentToCourse(course, studentOne);
                 courseManagementRequest.addStudentToCourse(course, studentTwo);
                 courseManagementRequest.addStudentToCourse(course, studentThree);
+            });
+
+        uid = generateUUID();
+        courseName = 'Cypress course' + uid;
+        courseShortName = 'cypress' + uid;
+        courseManagementRequest
+            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
+            .then((response) => {
+                courseWithMessaging = convertCourseAfterMultiPart(response);
+                courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
+                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
+                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
+                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentThree);
             });
     });
 
@@ -79,7 +92,7 @@ describe('Course communication', () => {
                 .getNotifications()
                 .first()
                 .find('.notification-text')
-                .contains((`The course "` + courseName + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1));
+                .contains((`The course "` + course.title + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1));
         });
 
         it('instructor should be able to archive a post', () => {
@@ -232,7 +245,7 @@ describe('Course communication', () => {
         });
     });
 
-    describe('Exercise communication', () => {
+    describe('Exercise communication via posts', () => {
         let textExercise: TextExercise;
 
         before('Create exercise', () => {
@@ -348,7 +361,7 @@ describe('Course communication', () => {
         });
     });
 
-    describe('Lecture communication', () => {
+    describe('Lecture communication via posts', () => {
         let lecture: Lecture;
 
         before('Create lecture', () => {
@@ -464,10 +477,155 @@ describe('Course communication', () => {
         });
     });
 
+    describe('Exercise communication via channel', () => {
+        let textExercise: TextExercise;
+        let channel: Channel;
+
+        before('Create exercise', () => {
+            cy.login(admin);
+            courseManagementRequest.createTextExercise({ course: courseWithMessaging }).then((response) => {
+                textExercise = response.body;
+                textExercise.channelName = 'exercise-' + titleLowercase(textExercise.title!);
+                courseManagementRequest.getExerciseChannel(textExercise.course!.id!, textExercise.id!).then((response) => {
+                    channel = response.body;
+                });
+            });
+        });
+
+        it('students should be able to create messages within exercises', () => {
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+            courseCommunication.newPost();
+            cy.fixture('loremIpsum.txt').then((text) => {
+                courseCommunication.setContentInline(text);
+            });
+            courseCommunication.saveMessage();
+        });
+
+        it('students should be able to search for exercise posts', () => {
+            const title = 'Exercise Search Test Post';
+            const content = 'Exercise Search Test Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+            courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                cy.reload();
+                courseCommunication.searchForPost(title);
+                courseCommunication.checkSingleExercisePost(post.id, content);
+            });
+        });
+
+        it('other students should be able to reply to an exercise post', () => {
+            const title = 'My Reply Test Post';
+            const content = 'Test Reply Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+            courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                cy.reload();
+                const replyText = 'My Test reply';
+                courseCommunication.openReply(post.id);
+                courseCommunication.replyWithMessage(post.id, replyText).then((intercept) => {
+                    const reply = intercept.response?.body;
+                    cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                    courseCommunication.showReplies(post.id);
+                    courseCommunication.checkReply(reply.id, replyText);
+                });
+            });
+        });
+
+        it('other students should be able to react to an exercise post', () => {
+            const title = 'My React Test Post';
+            const content = 'Test React Post Content';
+            cy.login(studentOne, `/courses/${course.id}/discussion`);
+            courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                const emoji = 'tada';
+                courseCommunication.react(post.id, emoji);
+                cy.reload();
+                courseCommunication.checkReaction(post.id, emoji);
+            });
+        });
+    });
+
+    describe('Lecture communication via channel', () => {
+        let lecture: Lecture;
+        let channel: Channel;
+
+        before('Create lecture', () => {
+            cy.login(admin);
+            courseManagementRequest.createLecture(courseWithMessaging).then((response) => {
+                lecture = response.body;
+                lecture.channelName = 'lecture-' + titleLowercase(lecture.title!);
+                courseManagementRequest.getLectureChannel(lecture.course!.id!, lecture.id!).then((response) => {
+                    channel = response.body;
+                });
+            });
+        });
+
+        it('students should be able to create messages within lecture', () => {
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+            courseCommunication.newPost();
+            cy.fixture('loremIpsum.txt').then((text) => {
+                courseCommunication.setContentInline(text);
+            });
+            courseCommunication.saveMessage();
+        });
+
+        it('students should be able to search for lecture posts', () => {
+            const title = 'Lecture Search Test Post';
+            const content = 'Lecture Search Test Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+            courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                cy.reload();
+                courseCommunication.searchForPost(title);
+                courseCommunication.checkSingleExercisePost(post.id, content);
+            });
+        });
+
+        it('other students should be able to reply to a lecture post', () => {
+            const title = 'My Reply Test Post';
+            const content = 'Test Reply Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+            courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                cy.reload();
+                const replyText = 'My Test reply';
+                courseCommunication.openReply(post.id);
+                courseCommunication.replyWithMessage(post.id, replyText).then((intercept) => {
+                    const reply = intercept.response?.body;
+                    cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                    courseCommunication.showReplies(post.id);
+                    courseCommunication.checkReply(reply.id, replyText);
+                });
+            });
+        });
+
+        it('other students should be able to react to a lecture post', () => {
+            const title = 'My React Test Post';
+            const content = 'Test React Post Content';
+            cy.login(studentOne, `/courses/${course.id}/discussion`);
+            courseManagementRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                const emoji = 'tada';
+                courseCommunication.react(post.id, emoji);
+                cy.reload();
+                courseCommunication.checkReaction(post.id, emoji);
+            });
+        });
+    });
+
     after('Delete Course', () => {
         cy.login(admin);
         if (course.id) {
             courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
+        }
+        if (courseWithMessaging.id) {
+            courseManagementRequest.deleteCourse(courseWithMessaging.id).its('status').should('eq', 200);
         }
     });
 });
