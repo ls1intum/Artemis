@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
-import de.tum.in.www1.artemis.domain.PrivacyStatementLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
-import de.tum.in.www1.artemis.service.PrivacyStatementService;
+import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
  * REST controller for retrieving the Privacy Statement.
@@ -19,10 +19,10 @@ import de.tum.in.www1.artemis.service.PrivacyStatementService;
 @RequestMapping("api/public/")
 public class PublicPrivacyStatementResource {
 
-    private final PrivacyStatementService privacyStatementService;
+    private final LegalDocumentService legalDocumentService;
 
-    public PublicPrivacyStatementResource(PrivacyStatementService privacyStatementService) {
-        this.privacyStatementService = privacyStatementService;
+    public PublicPrivacyStatementResource(LegalDocumentService legalDocumentService) {
+        this.legalDocumentService = legalDocumentService;
     }
 
     /**
@@ -35,9 +35,9 @@ public class PublicPrivacyStatementResource {
     @EnforceNothing
     @GetMapping("privacy-statement")
     public PrivacyStatement getPrivacyStatement(@RequestParam("language") String language) {
-        if (!PrivacyStatementLanguage.isValidShortName(language)) {
+        if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
-        return privacyStatementService.getPrivacyStatement(PrivacyStatementLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getPrivacyStatement(Language.fromLanguageShortName(language));
     }
 }

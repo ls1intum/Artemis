@@ -28,21 +28,6 @@ public class ImprintResource {
     }
 
     /**
-     * GET /imprint : Returns the imprint if you want to view it.
-     * not secured as anybody should be able to see the imprint (even if not logged in)
-     *
-     * @param language the language of the imprint
-     * @return the imprint
-     */
-    @GetMapping("imprint")
-    public Imprint getImprint(@RequestParam("language") String language) {
-        if (!Language.isValidShortName(language)) {
-            throw new BadRequestException("Language not supported");
-        }
-        return legalDocumentService.getImprint(Language.fromLanguageShortName(language));
-    }
-
-    /**
      * GET /imprint-for-update : Returns the imprint if you want to update it.
      * only accessible for admins
      *

@@ -30,7 +30,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     void testGetImprint_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/imprint?language=fr", HttpStatus.BAD_REQUEST, Imprint.class);
+        request.get("/api/public/imprint?language=fr", HttpStatus.BAD_REQUEST, Imprint.class);
     }
 
     @Test
@@ -38,7 +38,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/imprint?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
+            request.get("/api/public/imprint?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
         }
     }
 
@@ -97,7 +97,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
             }
 
-            response = request.get("/api/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
+            response = request.get("/api/public/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
         if ("de".equals(language.getShortName())) {
             assertThat(response.getLanguage()).isEqualTo(Language.ENGLISH);
@@ -115,7 +115,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
 
-            request.get("/api/imprint?language=de", HttpStatus.BAD_REQUEST, Imprint.class);
+            request.get("/api/public/imprint?language=de", HttpStatus.BAD_REQUEST, Imprint.class);
         }
     }
 
@@ -155,7 +155,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             else {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
             }
-            response = request.get("/api/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
+            response = request.get("/api/public/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);

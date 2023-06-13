@@ -5,7 +5,9 @@ import javax.ws.rs.BadRequestException;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
  * REST controller for managing and retrieving the Privacy Statement.
@@ -18,21 +20,6 @@ public class PrivacyStatementResource {
 
     public PrivacyStatementResource(LegalDocumentService legalDocumentService) {
         this.legalDocumentService = legalDocumentService;
-    }
-
-    /**
-     * GET /privacy-statement : Returns the privacy statement if you want to view it.
-     * not secured as anybody should be able to see the privacy statement (even if not logged in)
-     *
-     * @param language the language of the privacy statement
-     * @return the privacy statement
-     */
-    @GetMapping("privacy-statement")
-    public PrivacyStatement getPrivacyStatement(@RequestParam("language") String language) {
-        if (!Language.isValidShortName(language)) {
-            throw new BadRequestException("Language not supported");
-        }
-        return legalDocumentService.getPrivacyStatement(Language.fromLanguageShortName(language));
     }
 
     /**
