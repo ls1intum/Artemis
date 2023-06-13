@@ -16,7 +16,7 @@ Requirements
 
 To use the Artemis Exam Participation Checker iPad application, additional setup before the exam is required. This includes the following tasks on the *Students* page:
 
-- uploading images for the students. This can be done via the |upload_images| button. An exemplatory file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
+- uploading images for the students. This can be done via the |upload_images| button. An exemplary file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
 - setting up the room and seating information via the bulk import.
 
 .. note::

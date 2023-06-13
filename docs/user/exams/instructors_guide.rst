@@ -207,7 +207,7 @@ During the exam creation and configuration, you can create your exam and configu
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
     1. Add students manually by searching via the search bar.
-    2. Bulk import students using a ``CSV`` file. You can do this by pressing the |import_students| button. An exemplatory file can be found here: :download:`csv <instructor/example_import_students.csv>`.
+    2. Bulk import students using a ``CSV`` file. This imports multiple students which are defined in the file at once. You can do this by pressing the |import_students| button. A new dialog is shown which can be inspected in :ref:`_figure_import_student`. Upload the file in this dialog. The ``CSV`` file has to include the ``registrationNumber`` and the ``login``. The ``email``, ``firstname``, ``lastname``, ``seat``, and ``room`` are optional. The ``room`` and ``seat`` are only required for the exam participaton check. An exemplary file can be found here: :download:`csv <instructor/example_import_students.csv>`. By pressing the |import_students_button| button the bulk import is started.
     3. Register every student in the course. You can do this by pressing the |register_course_students| button.
 
 .. note::
@@ -216,6 +216,11 @@ During the exam creation and configuration, you can create your exam and configu
 .. note::
     Artemis also supports validating participants signatures for on-site exams.
     For more information please see :ref:`Exam Participation Checker <exam_participation_checker>`.
+
+.. _figure_import_student:
+.. figure:: instructor/import_students_dialog.png
+   :alt: Import Students Dialog
+   :align: center
 
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
 
@@ -585,6 +590,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |view| image:: instructor/buttons/view.png
 .. |submissions| image:: instructor/buttons/submissions.png
 .. |import_students| image:: instructor/buttons/import_students.png
+.. |import_students_button| image:: instructor/buttons/import_students_button.png
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
