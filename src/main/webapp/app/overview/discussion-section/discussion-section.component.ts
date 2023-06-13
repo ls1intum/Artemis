@@ -3,7 +3,7 @@ import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { combineLatest, map } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';

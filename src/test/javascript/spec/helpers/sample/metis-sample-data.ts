@@ -12,7 +12,6 @@ import { ConversationParticipant } from 'app/entities/metis/conversation/convers
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
-import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
