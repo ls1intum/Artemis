@@ -4,10 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -46,27 +43,75 @@ public class IrisSettingsResource {
     }
 
     /**
-     * GET courses/{courseId}/iris/settings: Retrieve the iris settings for the course.
+     * GET iris/global-iris-settings: Retrieve the raw iris settings for the course.
      *
-     * @param courseId of the course
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings.
      */
-    @GetMapping("courses/{courseId}/iris/settings")
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<IrisSettings> getCourseSettings(@PathVariable Long courseId) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        var irisSettings = irisSettingsService.getIrisSettings(course);
+    @GetMapping("iris/global-iris-settings")
+    @PreAuthorize("hasRole('INSTUCTOR')")
+    public ResponseEntity<IrisSettings> getGlobalSettings() {
+        var irisSettings = irisSettingsService.getGlobalSettings();
         return ResponseEntity.ok(irisSettings);
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/iris/settings: Retrieve the iris settings for the programming exercise.
+     * GET courses/{courseId}/raw-iris-settings: Retrieve the raw iris settings for the course.
+     *
+     * @param courseId of the course
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
+     */
+    @GetMapping("courses/{courseId}/raw-iris-settings")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<IrisSettings> getRawCourseSettings(@PathVariable Long courseId) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        var irisSettings = irisSettingsService.getIrisSettingsOrDefault(course);
+        return ResponseEntity.ok(irisSettings);
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/raw-iris-settings: Retrieve the raw iris settings for the programming exercise.
      *
      * @param exerciseId of the programming exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
      */
-    @GetMapping("programming-exercises/{exerciseId}/iris/settings")
+    @GetMapping("programming-exercises/{exerciseId}/raw-iris-settings")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<IrisSettings> getRawProgrammingExerciseSettings(@PathVariable Long exerciseId) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+
+        var combinedIrisSettings = irisSettingsService.getIrisSettingsOrDefault(exercise);
+        return ResponseEntity.ok(combinedIrisSettings);
+    }
+
+    /**
+     * GET courses/{courseId}/iris-settings: Retrieve the actual iris settings for the course.
+     *
+     * @param courseId of the course
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
+     */
+    @GetMapping("courses/{courseId}/iris-settings")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<IrisSettings> getCourseSettings(@PathVariable Long courseId) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        // Editors can see the full settings, students only the reduced settings
+        var getReduced = !authCheckService.isAtLeastEditorInCourse(course, user);
+        var irisSettings = irisSettingsService.getCombinedIrisSettings(course, getReduced);
+        return ResponseEntity.ok(irisSettings);
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/iris-settings: Retrieve the actual iris settings for the programming exercise.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/iris-settings")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSettings> getProgrammingExerciseSettings(@PathVariable Long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -77,5 +122,52 @@ public class IrisSettingsResource {
         var getReduced = !authCheckService.isAtLeastEditorForExercise(exercise, user);
         var combinedIrisSettings = irisSettingsService.getCombinedIrisSettings(exercise, getReduced);
         return ResponseEntity.ok(combinedIrisSettings);
+    }
+
+    /**
+     * PUT iris/global-iris-settings: Update the global iris settings.
+     *
+     * @param settings the settings to update
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings.
+     */
+    @PutMapping("iris/global-iris-settings")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<IrisSettings> updateGlobalSettings(@RequestBody IrisSettings settings) {
+        var updatedSettings = irisSettingsService.saveGlobalIrisSettings(settings);
+        return ResponseEntity.ok(updatedSettings);
+    }
+
+    /**
+     * PUT courses/{courseId}/raw-iris-settings: Update the raw iris settings for the course.
+     *
+     * @param courseId of the course
+     * @param settings the settings to update
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings, or with status {@code 404 (Not Found)} if the course could not be found.
+     */
+    @PutMapping("courses/{courseId}/raw-iris-settings")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<IrisSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisSettings settings) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        var updatedSettings = irisSettingsService.saveIrisSettings(course, settings);
+        return ResponseEntity.ok(updatedSettings);
+    }
+
+    /**
+     * PUT programming-exercises/{exerciseId}/raw-iris-settings: Update the raw iris settings for the programming exercise.
+     *
+     * @param exerciseId of the programming exercise
+     * @param settings   the settings to update
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings, or with status {@code 404 (Not Found)} if the exercise could not be
+     *         found.
+     */
+    @PutMapping("programming-exercises/{exerciseId}/raw-iris-settings")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<IrisSettings> updateProgrammingExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisSettings settings) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
+        var updatedSettings = irisSettingsService.saveIrisSettings(exercise, settings);
+        return ResponseEntity.ok(updatedSettings);
     }
 }

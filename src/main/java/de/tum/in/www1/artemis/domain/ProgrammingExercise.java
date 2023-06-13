@@ -143,7 +143,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
     private IrisSettings irisSettings;
 

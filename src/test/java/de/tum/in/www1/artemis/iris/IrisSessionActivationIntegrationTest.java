@@ -10,18 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
-class IrisSessionActivationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissessionactivationintegration";
 
@@ -31,9 +29,6 @@ class IrisSessionActivationIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private IrisMessageService irisMessageService;
 
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -42,8 +37,8 @@ class IrisSessionActivationIntegrationTest extends AbstractSpringIntegrationBamb
 
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.setIrisActivated(false);
-        programmingExerciseRepository.save(exercise);
+        activateIrisFor(course);
+        activateIrisFor(exercise);
     }
 
     @Test
