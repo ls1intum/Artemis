@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -85,13 +84,19 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.ARTEMIS);
         irisMessageService.saveMessage(userMessage, irisSession, IrisMessageSender.USER);
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-
+        Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
+        var irisSettings = irisSettingsService.getCombinedIrisSettings(irisSession.getCodeHint().getExercise(), false);
+        if (irisSettings.getIrisHestiaSettings() == null || irisSettings.getIrisHestiaSettings().getExternalTemplateId() == null) {
+            log.error("Unable to generate description");
+            throw new InternalServerErrorException("Unable to generate description, there is no template set");
+        }
         try {
-            // what is the IrisModel for a HestiaSession since it has no ProgrammingExercise to fetch it from
-            var irisMessage1 = irisConnectorService.sendRequest(0, IrisModel.GPT3_5, Map.of()).get();
+            var irisMessage1 = irisConnectorService
+                    .sendRequest(irisSettings.getIrisHestiaSettings().getExternalTemplateId(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
             irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-            var irisMessage2 = irisConnectorService.sendRequest(0, IrisModel.GPT3_5, Map.of()).get();
+            var irisMessage2 = irisConnectorService
+                    .sendRequest(irisSettings.getIrisHestiaSettings().getExternalTemplateId(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
             irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
             codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
