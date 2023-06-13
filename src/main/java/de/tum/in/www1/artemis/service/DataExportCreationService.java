@@ -38,8 +38,10 @@ import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
@@ -108,12 +110,17 @@ public class DataExportCreationService {
 
     private final UserRepository userRepository;
 
+    private final MailService mailService;
+
+    private final UserService userService;
+
     public DataExportCreationService(CourseRepository courseRepository, ZipFileService zipFileService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExamService examService, QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService,
-            DataExportRepository dataExportRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
+            DataExportRepository dataExportRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, MailService mailService,
+            UserService userService) {
         this.courseRepository = courseRepository;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -133,6 +140,8 @@ public class DataExportCreationService {
         this.dataExportRepository = dataExportRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
+        this.mailService = mailService;
+        this.userService = userService;
     }
 
     /**
@@ -142,38 +151,39 @@ public class DataExportCreationService {
      * @param dataExport the data export to be created
      **/
     private void createDataExportWithContent(DataExport dataExport) throws IOException {
-        log.info("Creating data export for user {}", dataExport.getUser().getLogin());
-        var userId = dataExport.getUser().getId();
-        // we need to load the user with the authorities and groups to avoid lazy loading exception when passing the user to the authorization check service
-        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
-        var workingDirectory = prepareDataExport(dataExport);
-        // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
-        var posts = postRepository.findPostsByAuthorId(userId);
-        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
-        var reactions = reactionRepository.findReactionsByUserId(userId);
-        var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
-        for (var course : courses) {
-            Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
-                    userId);
-            Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
-            if (!exercises.isEmpty()) {
-                courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
-            }
-            for (var exercise : exercises) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    createProgrammingExerciseExport(programmingExercise, courseDir, userId);
-                }
-                else {
-                    createNonProgrammingExerciseExport(exercise, courseDir, userId);
-                }
-            }
-            createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
-            createExportForExams(user.getId(), course.getExams(), courseDir);
-        }
-        addGeneralUserInformation(user, workingDirectory);
-        var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
-        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
-        finishDataExportCreation(dataExport, dataExportPath);
+        throw new UnsupportedOperationException("Not yet implemented");
+        // log.info("Creating data export for user {}", dataExport.getUser().getLogin());
+        // var userId = dataExport.getUser().getId();
+        // // we need to load the user with the authorities and groups to avoid lazy loading exception when passing the user to the authorization check service
+        // var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        // var workingDirectory = prepareDataExport(dataExport);
+        // // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
+        // var posts = postRepository.findPostsByAuthorId(userId);
+        // var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
+        // var reactions = reactionRepository.findReactionsByUserId(userId);
+        // var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
+        // for (var course : courses) {
+        // Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
+        // userId);
+        // Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
+        // if (!exercises.isEmpty()) {
+        // courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
+        // }
+        // for (var exercise : exercises) {
+        // if (exercise instanceof ProgrammingExercise programmingExercise) {
+        // createProgrammingExerciseExport(programmingExercise, courseDir, userId);
+        // }
+        // else {
+        // createNonProgrammingExerciseExport(exercise, courseDir, userId);
+        // }
+        // }
+        // createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
+        // createExportForExams(user.getId(), course.getExams(), courseDir);
+        // }
+        // addGeneralUserInformation(user, workingDirectory);
+        // var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
+        // fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
+        // finishDataExportCreation(dataExport, dataExportPath);
     }
 
     /**
@@ -187,14 +197,20 @@ public class DataExportCreationService {
         }
         catch (Exception e) {
             log.error("Error while creating data export for user {}", dataExport.getUser().getLogin(), e);
-            handleCreationFailure(dataExport);
+            handleCreationFailure(dataExport, e);
         }
     }
 
-    private void handleCreationFailure(DataExport dataExport) {
+    private void handleCreationFailure(DataExport dataExport, Exception e) {
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExportRepository.save(dataExport);
         singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
+        Optional<User> admin = userService.findInternalAdminUser();
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot send email to admin about data export failure.");
+            return;
+        }
+        mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, e);
 
     }
 

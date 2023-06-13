@@ -54,7 +54,6 @@ public class DataExportService {
         dataExport.setDataExportState(DataExportState.REQUESTED);
         User user = userRepository.getUser();
         dataExport.setUser(user);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
         return dataExport;
     }
@@ -107,7 +106,7 @@ public class DataExportService {
                     || dataExport.getDataExportState().hasFailed()) {
                 return true;
             }
-            if (dataExport.getCreationDate() == null && (Duration.between(dataExport.getRequestDate(), ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS)
+            if (dataExport.getCreationDate() == null && (Duration.between(dataExport.getCreatedDate(), ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS)
                     || dataExport.getDataExportState().hasFailed()) {
                 return true;
             }

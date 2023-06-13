@@ -102,7 +102,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-        assertThat(dataExportFromDb.getRequestDate()).isNotNull();
+        assertThat(dataExportFromDb.getCreatedDate()).isNotNull();
         assertThat(dataExportFromDb.getCreationDate()).isNotNull();
         // extract zip file and check content
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
@@ -282,7 +282,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-        assertThat(dataExportFromDb.getRequestDate()).isNotNull();
+        assertThat(dataExportFromDb.getCreatedDate()).isNotNull();
         assertThat(dataExportFromDb.getCreationDate()).isNotNull();
         // extract zip file and check content
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
@@ -331,7 +331,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         DataExport dataExport = new DataExport();
         dataExport.setUser(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);
         return dataExport;

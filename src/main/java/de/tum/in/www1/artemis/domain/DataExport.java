@@ -13,18 +13,16 @@ import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 
 /**
  * A data export for user data
+ * We use the creation_date of the AbstractAuditingEntity as the date when the export was requested
  **/
 @Entity
 @Table(name = "data_export")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DataExport extends DomainObject {
+public class DataExport extends AbstractAuditingEntity {
 
     @Enumerated(EnumType.ORDINAL)
     private DataExportState dataExportState;
-
-    @Column(name = "request_date")
-    private ZonedDateTime requestDate;
 
     @Column(name = "creation_date")
     private ZonedDateTime creationDate;
@@ -38,14 +36,6 @@ public class DataExport extends DomainObject {
 
     @Column(name = "file_path")
     private String filePath;
-
-    public ZonedDateTime getRequestDate() {
-        return requestDate;
-    }
-
-    public void setRequestDate(ZonedDateTime requestDate) {
-        this.requestDate = requestDate;
-    }
 
     public ZonedDateTime getCreationDate() {
         return creationDate;
