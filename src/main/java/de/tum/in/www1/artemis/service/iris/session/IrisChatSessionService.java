@@ -108,10 +108,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         }
         parameters.put("session", fullSession);
         var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
-        if (irisSettings.getIrisChatSettings().getExternalTemplateId() == null) {
-            throw new BadRequestException("Problem with the iris settings for exercise " + exercise.getId());
-        }
-        irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getExternalTemplateId(), irisSettings.getIrisChatSettings().getPreferredModel(), parameters)
+        irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getTemplate(), irisSettings.getIrisChatSettings().getPreferredModel(), parameters)
                 .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);

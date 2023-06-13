@@ -86,17 +86,13 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
         var irisSettings = irisSettingsService.getCombinedIrisSettings(irisSession.getCodeHint().getExercise(), false);
-        if (irisSettings.getIrisHestiaSettings() == null || irisSettings.getIrisHestiaSettings().getExternalTemplateId() == null) {
-            log.error("Unable to generate description");
-            throw new InternalServerErrorException("Unable to generate description, there is no template set");
-        }
         try {
             var irisMessage1 = irisConnectorService
-                    .sendRequest(irisSettings.getIrisHestiaSettings().getExternalTemplateId(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
+                    .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
             irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
             var irisMessage2 = irisConnectorService
-                    .sendRequest(irisSettings.getIrisHestiaSettings().getExternalTemplateId(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
+                    .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
             irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
             codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
