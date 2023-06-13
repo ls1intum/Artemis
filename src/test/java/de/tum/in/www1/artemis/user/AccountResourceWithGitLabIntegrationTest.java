@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -33,10 +32,10 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     private UserRepository userRepo;
 
     @Autowired
-    private DatabaseUtilService database;
+    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
-    private GitlabRequestMockProvider gitlabRequestMockProvider;
+    private UserUtilService userUtilService;
 
     @BeforeEach
     void setUp() {
@@ -294,7 +293,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     }
 
     private void createAndSaveUser(String login, String email) {
-        if (!database.userExistsWithLogin(login)) {
+        if (!userUtilService.userExistsWithLogin(login)) {
             User user = ModelFactory.generateActivatedUser(login);
             user.setEmail(email);
             user.setActivated(false);

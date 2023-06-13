@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -47,12 +48,15 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -73,6 +77,18 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     private User user;
 
@@ -119,13 +135,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void setUp() {
         SecurityUtils.setAuthorizationObject();
 
-        course = database.createCourse();
+        course = courseUtilService.createCourse();
         course.setTitle(COURSE_TITLE);
 
-        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
-        user = database.getUserByLogin(TEST_PREFIX + "student1");
-        userTwo = database.getUserByLogin(TEST_PREFIX + "student2");
-        userThree = database.getUserByLogin(TEST_PREFIX + "student3");
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userTwo = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        userThree = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
 
         notificationRepository.deleteAllInBatch();
 
@@ -321,18 +337,19 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testNotifyUsersAboutAssessedExerciseSubmission() {
-        Course testCourse = database.addCourseWithFileUploadExercise();
+        Course testCourse = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
         Exercise testExercise = testCourse.getExercises().iterator().next();
 
-        User studentWithParticipationAndSubmissionAndAutomaticResult = database.getUserByLogin(TEST_PREFIX + "student1");
-        User studentWithParticipationAndSubmissionAndManualResult = database.getUserByLogin(TEST_PREFIX + "student2");
-        User studentWithParticipationButWithoutSubmission = database.getUserByLogin(TEST_PREFIX + "student3");
+        User studentWithParticipationAndSubmissionAndAutomaticResult = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User studentWithParticipationAndSubmissionAndManualResult = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User studentWithParticipationButWithoutSubmission = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
 
-        database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndAutomaticResult, 10.0, 10.0, 50, true);
-        Result manualResult = database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndManualResult, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndAutomaticResult, 10.0, 10.0, 50, true);
+        Result manualResult = participationUtilService.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndManualResult, 10.0,
+                10.0, 50, true);
         manualResult.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(manualResult);
-        database.createAndSaveParticipationForExercise(testExercise, studentWithParticipationButWithoutSubmission.getLogin());
+        participationUtilService.createAndSaveParticipationForExercise(testExercise, studentWithParticipationButWithoutSubmission.getLogin());
 
         testExercise = exerciseRepository.findAllExercisesByCourseId(testCourse.getId()).iterator().next();
 
@@ -353,7 +370,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void testNotifyUserAboutNewPossiblePlagiarismCase() throws MessagingException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         String exerciseTitle = "Test New Plagiarism";
         exercise.setTitle(exerciseTitle);
         post.setPlagiarismCase(plagiarismCase);
@@ -371,7 +388,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void testNotifyUserAboutFinalPlagiarismState() throws MessagingException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);

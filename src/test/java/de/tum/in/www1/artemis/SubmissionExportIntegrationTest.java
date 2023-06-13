@@ -13,20 +13,45 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "submissionexportintegration";
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private ModelingExercise modelingExercise;
 
@@ -56,19 +81,22 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        Course course1 = courseUtilService.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {
-            database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-            database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
-            database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
+            participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+            participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
 
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
                 try {
-                    modelingSubmission1 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
-                    modelingSubmission2 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json", TEST_PREFIX + "student2");
-                    modelingSubmission3 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json", TEST_PREFIX + "student3");
+                    modelingSubmission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json",
+                            TEST_PREFIX + "student1");
+                    modelingSubmission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json",
+                            TEST_PREFIX + "student2");
+                    modelingSubmission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json",
+                            TEST_PREFIX + "student3");
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -77,20 +105,22 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof TextExercise) {
                 textExercise = (TextExercise) exercise;
 
-                textSubmission1 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true), TEST_PREFIX + "student1");
-                textSubmission2 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true),
+                textSubmission1 = textExerciseUtilService.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true),
+                        TEST_PREFIX + "student1");
+                textSubmission2 = textExerciseUtilService.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true),
                         TEST_PREFIX + "student2");
-                textSubmission3 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true), TEST_PREFIX + "student3");
+                textSubmission3 = textExerciseUtilService.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true),
+                        TEST_PREFIX + "student3");
             }
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
-                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"),
-                        TEST_PREFIX + "student1");
-                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"),
-                        TEST_PREFIX + "student2");
-                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"),
-                        TEST_PREFIX + "student3");
+                fileUploadSubmission1 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
+                        ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
+                fileUploadSubmission2 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
+                        ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
+                fileUploadSubmission3 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
+                        ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
 
                 try {
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
@@ -128,7 +158,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     @AfterEach
     void tearDown() {
         // change back to instructor user
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
     }
 
     @Test
@@ -160,7 +190,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setInstructorGroupName("abc");
-        database.saveCourse(course);
+        courseUtilService.saveCourse(course);
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);

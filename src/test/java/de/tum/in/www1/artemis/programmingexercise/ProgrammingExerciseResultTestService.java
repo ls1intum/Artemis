@@ -26,13 +26,17 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 
 /**
@@ -45,9 +49,6 @@ public class ProgrammingExerciseResultTestService {
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
-
-    @Autowired
-    private DatabaseUtilService database;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -85,6 +86,18 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private RequestUtilService request;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
@@ -99,20 +112,20 @@ public class ProgrammingExerciseResultTestService {
 
     public void setup(String userPrefix) {
         this.userPrefix = userPrefix;
-        database.addUsers(userPrefix, 2, 2, 0, 2);
+        userUtilService.addUsers(userPrefix, 2, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-        Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
-        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis,
-                userPrefix + "student2");
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        programmingExerciseStudentParticipationStaticCodeAnalysis = participationUtilService
+                .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
     }
 
     public void tearDown() {
@@ -122,14 +135,14 @@ public class ProgrammingExerciseResultTestService {
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
         participationRepository.deleteAll(participationRepository.findByExerciseId(programmingExercise.getId()));
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
         // Add a student submission with two manual results and a semi automatic result
-        var submission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false, TestConstants.COMMIT_HASH_STRING);
-        var accessor = database.getUserByLogin(userPrefix + "instructor1");
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
-        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, accessor);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, TestConstants.COMMIT_HASH_STRING);
+        var accessor = userUtilService.getUserByLogin(userPrefix + "instructor1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, accessor);
 
         // Add a manual feedback to the semi automatic result
         var feedback = new Feedback();
@@ -139,7 +152,7 @@ public class ProgrammingExerciseResultTestService {
 
         var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         var semiAutoResult = resultsWithFeedback.get(2);
-        database.addFeedbackToResult(feedback, semiAutoResult);
+        participationUtilService.addFeedbackToResult(feedback, semiAutoResult);
 
         // Assert that the results have been created successfully.
         resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
@@ -149,7 +162,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // Re-trigger the build. We create a notification with feedback of a successful test
-        database.changeUser(userPrefix + "instructor1");
+        userUtilService.changeUser(userPrefix + "instructor1");
         postResult(buildResultNotification);
 
         // Retrieve updated results
@@ -184,7 +197,7 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification, boolean withFailedTest) {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases.add(createTest("test1", 1L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
@@ -310,9 +323,9 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
-        var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1", userPrefix + "tutor1",
-                AssessmentType.SEMI_AUTOMATIC, true);
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1",
+                userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ModelFactory.generateManualFeedback();
         feedback = feedbackRepository.saveAll(feedback);
@@ -343,7 +356,7 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         solutionProgrammingExerciseRepository.save(solutionParticipation);
-        database.createProgrammingSubmission(solutionParticipation, false);
+        programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
 
         // setup mocks
         doReturn(null).when(gitService).getOrCheckoutRepository(any(), eq(true));
@@ -405,7 +418,7 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, SimpMessageSendingOperations messagingTemplate)
             throws Exception {
-        var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
         programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
 

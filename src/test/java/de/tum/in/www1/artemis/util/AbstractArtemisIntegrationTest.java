@@ -127,9 +127,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected QuizScheduleService quizScheduleService;
 
     @Autowired
-    protected DatabaseUtilService database;
-
-    @Autowired
     protected RequestUtilService request;
 
     @Autowired

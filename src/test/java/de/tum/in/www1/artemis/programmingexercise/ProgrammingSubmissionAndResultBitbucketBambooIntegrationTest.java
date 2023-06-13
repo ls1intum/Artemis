@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -44,10 +45,15 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -103,6 +109,24 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Autowired
     private ProgrammingSubmissionAndResultIntegrationTestService testService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -118,13 +142,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
 
-        database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
         exerciseId = exercise.getId();
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
@@ -213,7 +237,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
-        var course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).get(0);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
@@ -221,7 +245,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student3");
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -249,7 +273,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommitForSolutionParticipation() throws Exception {
-        var course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).get(0);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
@@ -259,8 +283,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get();
         postSubmission(participation.getId(), HttpStatus.OK);
@@ -648,12 +672,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = TEST_PREFIX + "student1";
-        var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        var submission = database.createProgrammingSubmission(participation, false);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which includes build log entries
         final var buildLog = new BambooBuildLogDTO(ZonedDateTime.now().minusMinutes(1), "[ERROR] COMPILATION ERROR missing something",
@@ -674,12 +698,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which includes build log entries
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
@@ -703,11 +727,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldExtractBuildLogAnalytics_noSca() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = TEST_PREFIX + "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        database.createProgrammingSubmission(participation, false);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
 
@@ -725,12 +749,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = TEST_PREFIX + "student1";
-        Course course = database.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        database.createProgrammingSubmission(participation, false);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
 
@@ -748,11 +772,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = TEST_PREFIX + "student1";
-        Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
-        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
+        ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
 
@@ -768,9 +792,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @NotNull
     private StudentExam createEndedStudentExamWithGracePeriod(User user, Integer gracePeriod) {
-        var course = database.addEmptyCourse();
-        var exam = database.addActiveExamWithRegisteredUser(course, user);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        var course = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.addActiveExamWithRegisteredUser(course, user);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam = examRepository.save(exam);
         var examUser5 = new ExamUser();
@@ -800,7 +824,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
         // mock request for fetchCommitInfo()
         final String projectKey = "test201904bprogrammingexercise6";
@@ -851,7 +875,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
 
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
@@ -902,7 +926,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(programmingLanguage.equals(C) ? 8 : 7);
 
         // Assert that the build logs can be retrieved from the REST API
-        database.changeUser(userLogin);
+        userUtilService.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSameSizeAs(submissionWithLogs.getBuildLogEntries());

@@ -17,13 +17,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -44,16 +48,28 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private ResultRepository resultRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Exercise exercise;
 
     private User user;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        user = database.getUserByLogin(TEST_PREFIX + "student1");
-        final Course course = database.addCourseWithModelingAndTextExercise();
-        exercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        final Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         exercise.setReleaseDate(now().plus(500, ChronoUnit.MILLIS));
         exercise.setAssessmentDueDate(now().plus(2, ChronoUnit.SECONDS));
         exerciseRepository.save(exercise);
@@ -80,9 +96,10 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
-        database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
 
-        Result manualResult = database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1"), 10.0, 10.0, 50, true);
+        Result manualResult = participationUtilService.createParticipationSubmissionAndResult(exercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1"), 10.0,
+                10.0, 50, true);
         manualResult.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(manualResult);
 

@@ -46,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -57,8 +58,11 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -74,6 +78,7 @@ import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -94,9 +99,6 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
-
-    @Autowired
-    private DatabaseUtilService database;
 
     @Autowired
     private RequestUtilService request;
@@ -173,6 +175,21 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private ExamUserRepository examUserRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     public Course course;
 
     public ProgrammingExercise exercise;
@@ -220,7 +237,7 @@ public class ProgrammingExerciseTestService {
 
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
-        database.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
+        userUtilService.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
@@ -239,8 +256,8 @@ public class ProgrammingExerciseTestService {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
 
-        course = database.addEmptyCourse();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        course = courseUtilService.addEmptyCourse();
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         examExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
@@ -407,7 +424,7 @@ public class ProgrammingExerciseTestService {
         }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = database.addEmptyCourse();
+        var course = courseUtilService.addEmptyCourse();
         var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(importedExercise).isNotNull();
@@ -577,7 +594,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
-        AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
+        AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
         auxiliaryRepositoryRepository.save(repository);
@@ -590,13 +607,13 @@ public class ProgrammingExerciseTestService {
         exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
 
         // Setup exercises for import
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        database.addTasksToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addTasksToProgrammingExercise(sourceExercise);
         // Manually add task
         var task = new ProgrammingExerciseTask();
         task.setTaskName("Task 1");
@@ -605,12 +622,12 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setTasks(Collections.singletonList(task));
         programmingExerciseTaskRepository.save(task);
         programmingExerciseRepository.save(sourceExercise);
-        database.addHintsToExercise(sourceExercise);
+        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
 
         // Reset because we will add mocks for new requests
         mockDelegate.resetMockProvider();
 
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise, database.addEmptyCourse());
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise, courseUtilService.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
 
         // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
@@ -634,7 +651,7 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
+        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // Check that the tasks were imported correctly (see #5474)
         assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
@@ -644,12 +661,13 @@ public class ProgrammingExerciseTestService {
     void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        database.addHintsToExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         if (addAuxRepos) {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
@@ -667,7 +685,7 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
-        importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
+        importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         if (staticCodeAnalysisEnabled) {
             // Assert correct creation of static code analysis categories
@@ -698,10 +716,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void importExercise_enablePlanFails() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        // database.addTestCasesToProgrammingExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        // programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, true, true);
@@ -720,10 +739,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void importExercise_planDoesntExist() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        // database.addTestCasesToProgrammingExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        // programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, false, false);
@@ -742,16 +762,17 @@ public class ProgrammingExerciseTestService {
     // TEST
     void testImportProgrammingExercise_team_modeChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        database.addHintsToExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
-        database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
         exerciseToBeImported.setMode(TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exerciseToBeImported);
@@ -772,7 +793,7 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(sourceExercise.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
@@ -781,11 +802,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void testImportProgrammingExercise_individual_modeChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(TEAM);
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        database.addHintsToExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
@@ -796,9 +817,10 @@ public class ProgrammingExerciseTestService {
         var team = new Team();
         team.setShortName("testImportProgrammingExercise_individual_modeChange");
         teamRepository.save(sourceExercise, team);
-        database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
@@ -814,7 +836,7 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertThat(sourceExercise.getMode()).isEqualTo(TEAM);
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
     }
@@ -822,10 +844,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void testImportProgrammingExercise_scaChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
@@ -848,10 +871,11 @@ public class ProgrammingExerciseTestService {
 
     void testImportProgrammingExercise_scaChange_activated() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = (ProgrammingExercise) database.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(true);
         exerciseToBeImported.setMaxStaticCodeAnalysisPenalty(80);
 
@@ -882,13 +906,13 @@ public class ProgrammingExerciseTestService {
      */
     public void importProgrammingExerciseAsPartOfExamImport() throws Exception {
         // Setup existing exam and exercise
-        Exam sourceExam = database.addExamWithExerciseGroup(course, true);
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(course, true);
 
-        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToExam(sourceExam, 0);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         sourceExercise.setStaticCodeAnalysisEnabled(false);
-        database.addTestCasesToProgrammingExercise(sourceExercise);
-        database.addHintsToExercise(sourceExercise);
-        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         // Setup to be imported exam and exercise
         Exam targetExam = ModelFactory.generateExam(course);
@@ -913,7 +937,7 @@ public class ProgrammingExerciseTestService {
         // Extract the programming exercise from the exam
         Exercise exerciseReceived = received.getExerciseGroups().get(0).getExercises().stream().findFirst().get();
         // Additionally, get the programming exercise from the server
-        var importedExercise = database.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) exerciseReceived);
+        var importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) exerciseReceived);
 
         assertThat(importedExercise.getId()).isNotNull();
         assertThat(importedExercise.getTitle()).isEqualTo(exerciseReceived.getTitle());
@@ -992,7 +1016,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void startProgrammingExercise_correctInitializationState() throws Exception {
-        var user = database.createAndSaveUser("edx_student1");
+        var user = userUtilService.createAndSaveUser("edx_student1");
         user.setInternal(true);
         user = userRepo.save(user);
 
@@ -1032,8 +1056,8 @@ public class ProgrammingExerciseTestService {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(exerciseMode);
         programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         return course;
     }
 
@@ -1302,8 +1326,8 @@ public class ProgrammingExerciseTestService {
         Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
                 new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
     }
 
@@ -1325,13 +1349,13 @@ public class ProgrammingExerciseTestService {
 
         // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
-        database.addTestCasesToProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
@@ -1384,7 +1408,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(Exception exceptionToThrow) throws IOException, GitAPIException {
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userPrefix + "student2");
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + "student2");
 
         // Mock error when exporting a participation
         doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
@@ -1414,13 +1438,13 @@ public class ProgrammingExerciseTestService {
 
         // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
-        database.addTestCasesToProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
@@ -1454,9 +1478,9 @@ public class ProgrammingExerciseTestService {
             mockDelegate.mockUserExists(testPrefix + "student" + i);
         }
 
-        final var course = database.addEmptyCourse();
-        var exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        final var course = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register users
         Set<ExamUser> registeredExamUsers = new HashSet<>();
@@ -1568,12 +1592,12 @@ public class ProgrammingExerciseTestService {
         ProgrammingExerciseStudentParticipation participation;
         if (exerciseMode == TEAM) {
             var team = setupTeam(user);
-            participation = database.addTeamParticipationForProgrammingExercise(exercise, team);
+            participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
             participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentTeamRepo).getURI().toString());
         }
         else {
-            participation = database.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
+            participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
             participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentRepo).getURI().toString());
         }
@@ -1583,7 +1607,7 @@ public class ProgrammingExerciseTestService {
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
-        database.addSubmission(participation, submission);
+        participationUtilService.addSubmission(participation, submission);
 
         return participation;
     }
@@ -1607,7 +1631,7 @@ public class ProgrammingExerciseTestService {
         final var participation = createUserParticipation();
 
         // create a submission
-        database.createProgrammingSubmission(participation, false);
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
@@ -1633,7 +1657,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Add a new student to the team
-        User newStudent = database
+        User newStudent = userUtilService
                 .generateAndSaveActivatedUsers(userPrefix + "new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
@@ -1726,7 +1750,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // Create a team with students
-        var student1 = database.getUserByLogin(userPrefix + "student1");
+        var student1 = userUtilService.getUserByLogin(userPrefix + "student1");
         Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(Set.of(student1));
         team = teamRepository.save(exercise, team);
 
@@ -1741,8 +1765,8 @@ public class ProgrammingExerciseTestService {
     private void setupTeamExercise() {
         exercise.setMode(TEAM);
         programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
     }
 
     // TEST
@@ -1778,7 +1802,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void automaticCleanupBuildPlans() throws Exception {
         String testPrefix = "cleanup";
-        database.addUsers(userPrefix + testPrefix, 12, 0, 0, 0);
+        userUtilService.addUsers(userPrefix + testPrefix, 12, 0, 0, 0);
 
         exercise = programmingExerciseRepository.save(exercise);
         examExercise = programmingExerciseRepository.save(examExercise);
@@ -1875,9 +1899,9 @@ public class ProgrammingExerciseTestService {
     private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
             ZonedDateTime submissionDate, boolean withResult) {
         var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL);
-        programmingSubmission = database.addProgrammingSubmission(exercise, programmingSubmission, userPrefix + studentLogin);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, programmingSubmission, userPrefix + studentLogin);
         if (withResult) {
-            database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+            participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
         }
         return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
     }
@@ -1921,8 +1945,8 @@ public class ProgrammingExerciseTestService {
 
     private void persistProgrammingExercise() {
         programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
     }
 
     private ProgrammingExerciseStudentParticipation createUserParticipation() throws Exception {
@@ -1950,10 +1974,10 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
-        Course course1 = database.addEmptyCourse();
-        Course course2 = database.addEmptyCourse();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
 
-        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course1, false);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
 
         exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
@@ -2093,7 +2117,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void exportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         Exam exam = examExercise.getExerciseGroup().getExam();
-        database.addStudentExamWithUser(exam, userRepo.getUser());
+        examUtilService.addStudentExamWithUser(exam, userRepo.getUser());
         exercise = examExercise;
 
         // Test example solution publication date not set.
@@ -2148,8 +2172,8 @@ public class ProgrammingExerciseTestService {
     void buildLogStatistics() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
-        var submission1 = database.createProgrammingSubmission(participation, false);
-        var submission2 = database.createProgrammingSubmission(participation, false);
+        var submission1 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
 
         buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
         buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));

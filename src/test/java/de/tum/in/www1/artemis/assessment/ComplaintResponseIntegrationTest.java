@@ -16,12 +16,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -51,16 +53,22 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private ComplaintResponseRepository complaintResponseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private Complaint complaint;
 
     @BeforeEach
     void initTestCase() throws Exception {
         // creating the users student1, tutor1-tutor3 and instructor1
-        this.database.addUsers(TEST_PREFIX, 1, 3, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 3, 0, 1);
 
         // creating course
         // students: student1 | tutors: tutor1-tutor3 | instructors: instructor1
-        Course course = this.database.createCourse();
+        Course course = courseUtilService.createCourse();
         // creating text exercise
         TextExercise textExercise = ModelFactory.generateTextExercise(null, null, null, course);
         textExercise.setMaxPoints(10.0);

@@ -33,11 +33,17 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -82,6 +88,24 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private ModelingExercise classExercise;
 
     private ModelingExercise activityExercise;
@@ -110,15 +134,15 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        course = database.addCourseWithDifferentModelingExercises();
-        classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
-        objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
-        useCaseExercise = database.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
-        finishedExercise = database.findModelingExerciseWithTitle(course.getExercises(), "finished");
-        afterDueDateParticipation = database.createAndSaveParticipationForExercise(finishedExercise, TEST_PREFIX + "student3");
-        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student3");
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
+        classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        activityExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
+        objectExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
+        useCaseExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
+        finishedExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "finished");
+        afterDueDateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedExercise, TEST_PREFIX + "student3");
+        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student3");
 
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
@@ -126,13 +150,13 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
-        Course course2 = database.addCourseWithOneReleasedTextExercise();
+        Course course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).get(0);
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student4");
-        database.createAndSaveUser(TEST_PREFIX + "tutor2");
-        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student4");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @Test
@@ -153,7 +177,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_tooLarge() throws Exception {
-        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
         // should be ok
         char[] charsModel = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH)];
@@ -171,70 +195,70 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_classDiagram() throws Exception {
-        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
         checkDetailsHidden(returnedSubmission, true);
 
         returnedSubmission.setModel(validModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), returnedSubmission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_activityDiagram() throws Exception {
-        database.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student1");
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(activityExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
         checkDetailsHidden(returnedSubmission, true);
 
         String validActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
         returnedSubmission.setModel(validActivityModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), returnedSubmission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_objectDiagram() throws Exception {
-        database.createAndSaveParticipationForExercise(objectExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(objectExercise, TEST_PREFIX + "student1");
         String emptyObjectModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyObjectModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(objectExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
         checkDetailsHidden(returnedSubmission, true);
 
         String validObjectModel = FileUtils.loadFileFromResources("test-data/model-submission/object-model.json");
         returnedSubmission.setModel(validObjectModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), returnedSubmission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_useCaseDiagram() throws Exception {
-        database.createAndSaveParticipationForExercise(useCaseExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(useCaseExercise, TEST_PREFIX + "student1");
         String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
 
         String validUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/use-case-model.json");
         returnedSubmission.setModel(validUseCaseModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -251,14 +275,14 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         team.addStudents(userRepo.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
         teamRepository.save(useCaseExercise, team);
 
-        database.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
         String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         submission.setExplanationText("This is a use case diagram.");
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
 
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
@@ -267,15 +291,15 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(version.get().getCreatedDate()).isNotNull();
         assertThat(version.get().getLastModifiedDate()).isNotNull();
 
-        database.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(TEST_PREFIX + "student2");
         String validUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/use-case-model.json");
         returnedSubmission.setModel(validUseCaseModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        database.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(TEST_PREFIX + "student2");
         version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
@@ -283,7 +307,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
                 .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
-        database.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(TEST_PREFIX + "student2");
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
     }
@@ -291,16 +315,16 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2")
     void updateModelSubmission() throws Exception {
-        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
+        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
         returnedSubmission.setModel(validModel);
         returnedSubmission.setSubmitted(false);
         request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class, HttpStatus.OK);
 
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
 
         returnedSubmission.setSubmitted(true);
         returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class,
@@ -315,8 +339,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void injectResultOnSubmissionUpdate() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
-        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         Result result = new Result();
         result.setScore(100D);
@@ -326,7 +350,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class);
 
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).get();
         assertThat(storedSubmission.getLatestResult()).as("submission still unrated").isNull();
     }
@@ -334,8 +358,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllSubmissionsOfExercise() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
+        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
@@ -355,7 +379,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
                 ModelingSubmission.class);
         assertThat(submissions).as("does not have a modeling submission assessed by the tutor").isEmpty();
 
-        database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
         assertThat(submissions).as("has a modeling submission assessed by the tutor").hasSizeGreaterThanOrEqualTo(1);
     }
@@ -369,8 +393,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getAllSubmissionsOfExerciseAsStudent() throws Exception {
-        database.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
-        database.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
+        modelingExerciseUtilService.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
 
         request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
         request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.FORBIDDEN, ModelingSubmission.class);
@@ -379,9 +403,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllSubmittedSubmissionsOfExercise() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
-        database.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
-        ModelingSubmission submission3 = database.addModelingSubmission(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student3");
+        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmission(classExercise, submittedSubmission, TEST_PREFIX + "student1");
+        modelingExerciseUtilService.addModelingSubmission(classExercise, unsubmittedSubmission, TEST_PREFIX + "student2");
+        ModelingSubmission submission3 = modelingExerciseUtilService.addModelingSubmission(classExercise, generateSubmittedSubmission(), TEST_PREFIX + "student3");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -392,9 +416,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmission() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
         ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);
 
@@ -407,7 +431,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutResults() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
         ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId() + "?withoutResults=true", HttpStatus.OK, ModelingSubmission.class);
 
@@ -418,7 +442,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getModelSubmission_tutorNotInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
         request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
@@ -427,7 +451,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getModelSubmissionWithResult_involved_allowed() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
         PlagiarismComparison<ModelingSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         PlagiarismSubmission<ModelingSubmissionElement> submissionA = new PlagiarismSubmission<>();
         submissionA.setStudentLogin(TEST_PREFIX + "student1");
@@ -457,17 +481,17 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
     void getModelSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
         request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmission_lockLimitReached_success() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmissionWithResultAndAssessor(useCaseExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(useCaseExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);
 
@@ -481,7 +505,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void getModelSubmission_lockLimitReached_badRequest() throws Exception {
         createTenLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, submission, TEST_PREFIX + "student2");
+        modelingExerciseUtilService.addModelingSubmission(useCaseExercise, submission, TEST_PREFIX + "student2");
 
         request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
@@ -490,7 +514,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void getModelingSubmissionWithResultId() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = (ModelingSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        submission = (ModelingSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -505,7 +530,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelingSubmissionWithResultIdAsTutor_badRequest() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        submission = (ModelingSubmission) modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -516,9 +542,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -533,11 +559,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithSimilarElements() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
         ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validSameModel, true);
-        database.addModelingSubmission(classExercise, submission2, TEST_PREFIX + "student2");
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submission2, TEST_PREFIX + "student2");
 
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         compassService.build(classExercise);
 
@@ -558,10 +584,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutAssessment_lockSubmission() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -579,8 +605,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
-        database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         var response = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
         assertThat(response).isNull();
@@ -590,8 +616,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_null() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         var response = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
         assertThat(response).isNull();
@@ -601,7 +627,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
 
         request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
@@ -610,8 +636,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getModelSubmissionWithoutAssessment_notTutorInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
@@ -620,8 +646,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getModelSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
@@ -631,8 +657,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void getModelSubmissionWithoutAssessment_testLockLimit() throws Exception {
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, newSubmission, TEST_PREFIX + "student1");
-        database.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.addModelingSubmission(useCaseExercise, newSubmission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -652,8 +678,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
         createNineLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, newSubmission, TEST_PREFIX + "student1");
-        database.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.addModelingSubmission(useCaseExercise, newSubmission, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -665,7 +691,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getModelSubmissionForModelingEditor() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        submission = (ModelingSubmission) modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
 
         ModelingSubmission receivedSubmission = request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -679,14 +706,14 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // students can only see their own models
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student2");
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student2");
         request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionForModelingEditor_badRequest() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentParticipation participation = new StudentParticipation();
         participation.setParticipant(user);
         participation.setExercise(null);
@@ -702,7 +729,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getModelingResult_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
-        Exam exam = database.addExamWithExerciseGroup(course, true);
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(2));
         exam.setEndDate(ZonedDateTime.now().minusHours(1));
         exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
@@ -719,14 +746,15 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         examRepository.save(exam);
 
         ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission("Some text", true);
-        modelingSubmission = database.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         request.get("/api/participations/" + modelingSubmission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionForModelingEditor_emptySubmission() throws Exception {
-        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -736,8 +764,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
-        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
-        database.addModelingSubmissionWithEmptyResult(classExercise, "", TEST_PREFIX + "student1");
+        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        modelingExerciseUtilService.addModelingSubmissionWithEmptyResult(classExercise, "", TEST_PREFIX + "student1");
 
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -794,7 +822,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
 
@@ -832,28 +860,28 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private void createNineLockedSubmissionsForDifferentExercisesAndUsers(String assessor) {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student2", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student2", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student3", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, TEST_PREFIX + "student3", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(activityExercise, submission, TEST_PREFIX + "student1", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(activityExercise, submission, TEST_PREFIX + "student1", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(activityExercise, submission, TEST_PREFIX + "student2", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(activityExercise, submission, TEST_PREFIX + "student2", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(activityExercise, submission, TEST_PREFIX + "student3", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(activityExercise, submission, TEST_PREFIX + "student3", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(objectExercise, submission, TEST_PREFIX + "student1", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(objectExercise, submission, TEST_PREFIX + "student1", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(objectExercise, submission, TEST_PREFIX + "student2", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(objectExercise, submission, TEST_PREFIX + "student2", assessor);
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(objectExercise, submission, TEST_PREFIX + "student3", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(objectExercise, submission, TEST_PREFIX + "student3", assessor);
     }
 
     private void createTenLockedSubmissionsForDifferentExercisesAndUsers(String assessor) {
         createNineLockedSubmissionsForDifferentExercisesAndUsers(assessor);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmissionWithResultAndAssessor(useCaseExercise, submission, TEST_PREFIX + "student1", assessor);
+        modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(useCaseExercise, submission, TEST_PREFIX + "student1", assessor);
     }
 }

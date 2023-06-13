@@ -52,12 +52,18 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
@@ -98,6 +104,24 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private final String currentLocalFileName = "currentFileName";
@@ -130,9 +154,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
@@ -152,7 +176,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Files.createDirectory(folderPath);
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
-        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUrl.getURI());
+        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUrl.getURI());
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
@@ -170,7 +194,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(templateFolderPath);
 
-        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
@@ -320,7 +344,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Path solutionFolderPath = Path.of(solutionRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(solutionFolderPath);
 
-        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
@@ -360,7 +384,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
-        var textPlagiarismResult = database.createTextPlagiarismResultForExercise(programmingExercise);
+        var textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(programmingExercise);
         var plagiarismComparison = new PlagiarismComparison<TextSubmissionElement>();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison.setStatus(PlagiarismStatus.CONFIRMED);
@@ -381,7 +405,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         Post post = new Post();
-        post.setAuthor(database.getUserByLogin(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);
@@ -555,7 +579,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test
@@ -583,7 +607,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test
@@ -596,8 +620,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         LocalRepository instructorAssignmentRepository = new LocalRepository(defaultBranch);
         instructorAssignmentRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
         var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(instructorAssignmentRepository.localRepoFile);
-        ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise,
-                TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
+        ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
+                .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(instructorAssignmentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
@@ -618,7 +642,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
         lockRepositoryPolicy.setSubmissionLimit(0);
         lockRepositoryPolicy.setActive(true);
-        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
         request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
     }
 
@@ -736,17 +760,17 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
-        database.createProgrammingSubmission(participation, false);
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
         request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
-        var submission = database.createProgrammingSubmission(participation, true);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
         var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
         submission.setBuildLogEntries(buildLogEntries);
-        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
@@ -755,10 +779,10 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
-        var submission = database.createProgrammingSubmission(participation, true);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
         var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
         submission.setBuildLogEntries(buildLogEntries);
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
@@ -797,7 +821,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
         submission.setBuildLogEntries(buildLogEntries);
-        database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(3).isEqualTo(buildLogEntries);
@@ -819,8 +843,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
 
         submission1.setBuildLogEntries(submission1Logs);
-        database.addProgrammingSubmission(programmingExercise, submission1, TEST_PREFIX + "student1");
-        var result1 = database.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission1, TEST_PREFIX + "student1");
+        var result1 = participationUtilService.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
 
         // SECOND SUBMISSION
         var submission2 = new ProgrammingSubmission();
@@ -835,8 +859,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
 
         submission2.setBuildLogEntries(submission2Logs);
-        database.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
-        var result2 = database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
+        var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 
         // Specify to use result1
         var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
@@ -856,8 +880,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
-        var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "tutor1");
-        database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
+        var result = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "tutor1");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
 
         request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
@@ -958,7 +982,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private ProgrammingExercise createProgrammingExerciseForExam() {
         // Create an exam programming exercise
-        var programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseRepository.save(programmingExercise);
         participation.setExercise(programmingExercise);
         studentParticipationRepository.save(participation);
@@ -966,7 +990,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Exam exam = examRepository.findByIdElseThrow(programmingExercise.getExerciseGroup().getExam().getId());
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         examRepository.save(exam);
-        var studentExam = database.addStudentExam(exam);
+        var studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
         studentExam.setUser(participation.getStudent().get());
         studentExam.addExercise(programmingExercise);

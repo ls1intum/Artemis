@@ -15,13 +15,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
+import de.tum.in.www1.artemis.team.TeamUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
@@ -78,24 +84,42 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     @BeforeEach
     void setupTestScenario() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1, tutor1 and instructors1
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         // Instructors should only be part of "participantscoreinstructor"
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of("participantscoreinstructor"));
-        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor.setGroups(Set.of("participantscoretutor"));
-        var student = database.getUserByLogin(TEST_PREFIX + "student1");
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setGroups(Set.of("participantscorestudent"));
         userRepository.saveAll(List.of(instructor, tutor, student));
 
         // creating course
-        Course course = this.database.createCourse();
+        Course course = courseUtilService.createCourse();
         course.setInstructorGroupName("participantscoreinstructor");
         course.setTeachingAssistantGroupName("participantscoretutor");
         course.setStudentGroupName("participantscorestudent");
@@ -106,9 +130,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         lecture.setCourse(course);
         lecture = lectureRepository.saveAndFlush(lecture);
         courseId = course.getId();
-        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        database.addLectureUnitsToLecture(lecture, List.of(exerciseUnit));
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(exerciseUnit));
         lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
         idOfExerciseUnit = exerciseUnit.getId();
@@ -118,18 +142,18 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         competency.addExercise(textExercise);
         competencyRepository.saveAndFlush(competency);
         idOfIndividualTextExercise = textExercise.getId();
-        Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
+        idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
 
         // Creating result for student1
-        database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
         // Creating result for team1
         Team team = teamRepository.findById(idOfTeam1).get();
-        database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
 
         // setting up exam
         Exam exam = ModelFactory.generateExam(course);
@@ -143,7 +167,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         exam = examRepository.save(exam);
         idOfExam = exam.getId();
         var examTextExercise = createIndividualTextExerciseForExam();
-        database.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
 
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 1);
@@ -181,7 +205,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
         assertThat(participations).isNotEmpty();
         for (StudentParticipation studentParticipation : participations) {
-            database.createSubmissionAndResult(studentParticipation, 30, false);
+            participationUtilService.createSubmissionAndResult(studentParticipation, 30, false);
         }
         participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
         assertThat(participations).isNotEmpty();

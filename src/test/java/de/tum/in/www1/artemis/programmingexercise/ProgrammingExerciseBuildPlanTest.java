@@ -10,11 +10,19 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisebuildplantest";
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     private static final String BUILD_PLAN = """
             image: ubuntu:20.04
@@ -34,14 +42,14 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
     @BeforeEach
     void init() {
         // no users needed for this test
-        var course = database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     @Test
     void testGetBuildPlanSuccess() throws Exception {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        database.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
+        programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("secret", exercise.getBuildPlanAccessSecret());
 
@@ -53,7 +61,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
     @Test
     void testGetBuildPlanInvalidSecret() throws Exception {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        database.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
+        programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(exercise, BUILD_PLAN);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("secret", "invalid-secret");
 

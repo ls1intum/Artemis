@@ -30,12 +30,16 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
@@ -100,14 +104,14 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Test
     void testGetOrRetrieveDefaultBranch() throws GitLabApiException {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         programmingExercise.setBranch(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
         versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());

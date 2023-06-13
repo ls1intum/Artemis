@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -31,6 +32,9 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Autowired
     private CourseRepository courseRepo;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     private ApollonDiagram apollonDiagram;
 
     private Course course1;
@@ -39,9 +43,9 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        database.createAndSaveUser(TEST_PREFIX + "tutor2");
-        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
 
         apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 

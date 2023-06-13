@@ -23,7 +23,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        this.database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
             userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
         }

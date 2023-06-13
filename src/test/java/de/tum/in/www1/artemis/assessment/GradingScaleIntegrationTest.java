@@ -13,16 +13,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,6 +44,21 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     private GradingScale courseGradingScale;
 
     private GradingScale examGradingScale;
@@ -55,16 +74,16 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      */
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of("gradingscaleintegrationinstructors"));
         userRepository.save(instructor);
 
-        course = database.addEmptyCourse();
+        course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("gradingscaleintegrationinstructors");
         courseRepository.save(course);
 
-        exam = database.addExamWithExerciseGroup(course, true);
+        exam = examUtilService.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
         courseGradingScale.setCourse(course);
         examGradingScale = new GradingScale();
@@ -170,7 +189,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForCourseInvalidGradeSteps() throws Exception {
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, false);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
         request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
@@ -182,7 +201,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForCourse() throws Exception {
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
         GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
@@ -199,7 +218,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleWithSpecialGrades() throws Exception {
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
         courseGradingScale.setPlagiarismGrade("Plagiarism");
         courseGradingScale.setNoParticipationGrade("NoParticipation");
@@ -219,7 +238,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testSaveGradingScaleForExamInvalidGradeSteps() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
-        gradeSteps = database.generateGradeStepSet(examGradingScale, false);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
         request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
@@ -231,7 +250,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForExam() throws Exception {
-        gradeSteps = database.generateGradeStepSet(examGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -260,7 +279,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForCourseInvalidGradeSteps() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, false);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
         request.put("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
@@ -273,7 +292,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForCourse() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
         GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class, HttpStatus.OK);
@@ -301,7 +320,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
         gradingScaleRepository.save(examGradingScale);
-        gradeSteps = database.generateGradeStepSet(examGradingScale, false);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
@@ -314,7 +333,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForExam() throws Exception {
         gradingScaleRepository.save(examGradingScale);
-        gradeSteps = database.generateGradeStepSet(examGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -404,21 +423,21 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         examRepository.save(exam);
 
         String url = "/api/grading-scales";
-        var search = database.configureSearch("abcdefghijklmnop");
+        var search = pageableSearchUtilService.configureSearch("abcdefghijklmnop");
         search.setPageSize(100);
-        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -427,22 +446,22 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
 
         String url = "/api/grading-scales";
-        var search = database.configureSearch("");
+        var search = pageableSearchUtilService.configureSearch("");
         search.setPageSize(100);
         search.setSortingOrder(SortingOrder.DESCENDING);
-        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 

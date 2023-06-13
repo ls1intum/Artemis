@@ -18,11 +18,13 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -41,6 +43,12 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private User userWithActivatedWeeklySummaries;
 
     private User userWithDeactivatedWeeklySummaries;
@@ -56,16 +64,16 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @BeforeEach
     void setUp() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
-        this.userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        this.userWithDeactivatedWeeklySummaries = userUtilService.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
         NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
-        this.userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        this.userWithActivatedWeeklySummaries = userUtilService.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
         NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
@@ -74,7 +82,7 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         // preparation of test course with exercises for weekly summary testing
         ZonedDateTime now = ZonedDateTime.now();
 
-        Course course = database.createCourse();
+        Course course = courseUtilService.createCourse();
         Set<Exercise> allTestExercises = new HashSet<>();
 
         Exercise exerciseWithoutAReleaseDate = ModelFactory.generateTextExercise(null, null, null, course);
