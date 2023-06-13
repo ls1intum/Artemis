@@ -9,8 +9,12 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
@@ -21,10 +25,47 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class QuizExerciseTestService {
+public class QuizExerciseUtilService {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private CourseRepository courseRepo;
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private QuizSubmissionRepository quizSubmissionRepository;
+
+    @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    private TeamRepository teamRepo;
+
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
+    private QuizBatchRepository quizBatchRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");
@@ -45,7 +86,7 @@ public class QuizExerciseTestService {
     }
 
     public QuizSubmission saveQuizSubmission(QuizExercise exercise, QuizSubmission submission, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission = quizSubmissionRepository.save(submission);
@@ -240,7 +281,7 @@ public class QuizExerciseTestService {
      * @return quiz that was created
      */
     public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
+        Course course = courseUtilService.createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
@@ -295,7 +336,7 @@ public class QuizExerciseTestService {
      */
     @NotNull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
-        Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
+        Course course = courseUtilService.createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
 
         Exam exam = ModelFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);

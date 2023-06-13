@@ -1,11 +1,17 @@
 package de.tum.in.www1.artemis.post;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -13,10 +19,62 @@ import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.metis.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class PostTestService {
+public class ConversationUtilService {
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    private static int dayCount = 1;
+
+    @Autowired
+    private CourseRepository courseRepo;
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private LectureRepository lectureRepo;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private ReactionRepository reactionRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     public Course createCourseWithPostsDisabled() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -26,7 +84,7 @@ public class PostTestService {
 
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
-        Course course1 = createCourse();
+        Course course1 = courseUtilService.createCourse();
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         course1.addExercises(textExercise);
         textExercise = exerciseRepo.save(textExercise);
@@ -39,7 +97,7 @@ public class PostTestService {
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(textExercise);
-        plagiarismCase.setStudent(getUserByLogin(userPrefix + "student1"));
+        plagiarismCase.setStudent(userUtilService.getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
@@ -184,7 +242,7 @@ public class PostTestService {
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setAuthor(getUserByLoginWithoutAuthorities(String.format("%s%s", usernamePrefix, (i + 1))));
+        post.setAuthor(userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", usernamePrefix, (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
@@ -210,7 +268,7 @@ public class PostTestService {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(post.getContent() + " Answer");
-        answerPost.setAuthor(getUserByLoginWithoutAuthorities(userPrefix + "student1"));
+        answerPost.setAuthor(userUtilService.getUserByLoginWithoutAuthorities(userPrefix + "student1"));
         answerPost.setPost(post);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
@@ -222,7 +280,7 @@ public class PostTestService {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(post.getContent() + " Answer");
-        answerPost.setAuthor(getUserByLoginWithoutAuthorities(userPrefix + "student1"));
+        answerPost.setAuthor(userUtilService.getUserByLoginWithoutAuthorities(userPrefix + "student1"));
         answerPost.setPost(post);
         answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
@@ -230,5 +288,49 @@ public class PostTestService {
         post.setAnswerCount(post.getAnswerCount() + 1);
         post.setResolved(true);
         return answerPosts;
+    }
+
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+        for (Posting posting : postings) {
+            assertSensitiveInformationHidden(posting);
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Posting posting) {
+        if (posting.getAuthor() != null) {
+            assertThat(posting.getAuthor().getEmail()).isNull();
+            assertThat(posting.getAuthor().getLogin()).isNull();
+            assertThat(posting.getAuthor().getRegistrationNumber()).isNull();
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
+        if (reaction.getUser() != null) {
+            assertThat(reaction.getUser().getEmail()).isNull();
+            assertThat(reaction.getUser().getLogin()).isNull();
+            assertThat(reaction.getUser().getRegistrationNumber()).isNull();
+        }
+    }
+
+    public Conversation createOneToOneChat(Course course, String userPrefix) {
+        Conversation conversation = new OneToOneChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2"));
+
+        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
+    }
+
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        conversationParticipant.setUser(userUtilService.getUserByLogin(userName));
+
+        return conversationParticipantRepository.save(conversationParticipant);
     }
 }

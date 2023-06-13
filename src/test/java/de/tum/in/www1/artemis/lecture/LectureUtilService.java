@@ -3,14 +3,57 @@ package de.tum.in.www1.artemis.lecture;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class LectureTestService {
+public class LectureUtilService {
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private CourseRepository courseRepo;
+
+    @Autowired
+    private LectureRepository lectureRepo;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private SlideRepository slideRepository;
+
+    @Autowired
+    private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private VideoUnitRepository videoUnitRepository;
+
+    @Autowired
+    private OnlineUnitRepository onlineUnitRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -27,7 +70,7 @@ public class LectureTestService {
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
             throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {

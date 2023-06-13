@@ -10,6 +10,8 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -17,14 +19,16 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.user.UserTestService;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class ParticipationTestService {
+public class ParticipationUtilService {
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
@@ -33,13 +37,58 @@ public class ParticipationTestService {
     private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    private UserTestService userTestService;
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private TeamRepository teamRepo;
+
+    @Autowired
+    private ResultRepository resultRepo;
+
+    @Autowired
+    private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private RatingRepository ratingRepo;
+
+    @Autowired
+    private ComplaintRepository complaintRepo;
+
+    @Autowired
+    private ComplaintResponseRepository complaintResponseRepo;
+
+    @Autowired
+    private ModelingSubmissionRepository modelingSubmissionRepo;
+
+    @Autowired
+    private TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+
+    @Autowired
+    private ExampleSubmissionRepository exampleSubmissionRepo;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
+    private ParticipationService participationService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
         var storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         final StudentParticipation studentParticipation;
         if (storedParticipation.isEmpty()) {
-            final var user = userTestService.getUserByLogin(login);
+            final var user = userUtilService.getUserByLogin(login);
             final var participation = new ProgrammingExerciseStudentParticipation();
             final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
             final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
@@ -119,7 +168,7 @@ public class ParticipationTestService {
         Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
                 false);
         if (storedParticipation.isEmpty()) {
-            User user = getUserByLogin(login);
+            User user = userUtilService.getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setParticipant(user);
@@ -135,7 +184,7 @@ public class ParticipationTestService {
         Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
                 false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
-        User user = getUserByLogin(login);
+        User user = userUtilService.getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
         participation.setInitializationDate(ZonedDateTime.now().plusDays(2));
         participation.setParticipant(user);
@@ -209,7 +258,7 @@ public class ParticipationTestService {
     }
 
     private ProgrammingExerciseStudentParticipation configureIndividualParticipation(ProgrammingExercise exercise, String login) {
-        final var user = getUserByLogin(login);
+        final var user = userUtilService.getUserByLogin(login);
         var participation = new ProgrammingExerciseStudentParticipation();
         final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
         participation.setInitializationDate(ZonedDateTime.now());
@@ -245,7 +294,7 @@ public class ParticipationTestService {
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String assessorLogin,
             List<Feedback> feedbacks) {
         Result result = new Result().participation(participation).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
-        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         return resultRepo.save(result);
     }
 
@@ -348,7 +397,7 @@ public class ParticipationTestService {
         return allSubmissions;
     }
 
-    private void saveResultInParticipation(Submission submission, Result result) {
+    public void saveResultInParticipation(Submission submission, Result result) {
         submission.addResult(result);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         participation.addResult(result);
@@ -366,7 +415,7 @@ public class ParticipationTestService {
         return result;
     }
 
-    private void generateComplaintAndResponses(String userPrefix, int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
+    public void generateComplaintAndResponses(String userPrefix, int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
             User currentUser) {
         result = resultRepo.save(result);
         if (numberOfComplaints >= j) {
@@ -410,7 +459,7 @@ public class ParticipationTestService {
 
     public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Submission submission, String assessorLogin) {
         Result result = new Result();
-        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
         result.setSubmission(submission);
         submission.setParticipation(participation);
@@ -464,7 +513,7 @@ public class ParticipationTestService {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().participation(participation);
             dummyResult = resultRepo.save(dummyResult);
-            Complaint complaint = new Complaint().participant(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
+            Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
     }
@@ -475,7 +524,7 @@ public class ParticipationTestService {
             result.hasComplaint(true);
             resultRepo.save(result);
         }
-        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(result).complaintType(type);
+        Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(type);
         complaintRepo.save(complaint);
     }
 
@@ -520,5 +569,63 @@ public class ParticipationTestService {
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
+    }
+
+    public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
+        assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
+        Result storedFeedbackResult = new Result();
+        Result sentFeedbackResult = new Result();
+        storedFeedbackResult.setFeedbacks(storedFeedback);
+        sentFeedbackResult.setFeedbacks(sentFeedback);
+
+        Course course = new Course();
+        course.setAccuracyOfScores(1);
+        storedFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+        sentFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+
+        double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
+        double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
+        storedFeedbackResult.setScore(100.0 * totalPoints / 20.0);
+
+        double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
+        double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
+        sentFeedbackResult.setScore(100.0 * totalPoints2 / 20.0);
+
+        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
+        storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
+    }
+
+    public StudentParticipation addAssessmentWithFeedbackWithGradingInstructionsForExercise(Exercise exercise, String login) {
+        // add participation and submission for exercise
+        StudentParticipation studentParticipation = createAndSaveParticipationForExercise(exercise, login);
+        Submission submission = null;
+        if (exercise instanceof TextExercise) {
+            submission = ModelFactory.generateTextSubmission("test", Language.ENGLISH, true);
+        }
+        if (exercise instanceof FileUploadExercise) {
+            submission = ModelFactory.generateFileUploadSubmission(true);
+        }
+        if (exercise instanceof ModelingExercise) {
+            submission = ModelFactory.generateModelingSubmission(null, true);
+        }
+        if (exercise instanceof ProgrammingExercise) {
+            submission = ModelFactory.generateProgrammingSubmission(true);
+        }
+        Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
+        Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);
+        resultRepo.save(result);
+
+        assertThat(exercise.getGradingCriteria()).isNotNull();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+
+        // add feedback which is associated with structured grading instructions
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        addFeedbackToResult(feedback, result);
+        return studentParticipation;
+    }
+
+    public List<Result> getResultsForExercise(Exercise exercise) {
+        return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
     }
 }

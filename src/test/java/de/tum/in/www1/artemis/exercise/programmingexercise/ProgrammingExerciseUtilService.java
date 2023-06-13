@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -16,11 +17,90 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 @Service
-public class ProgrammingExerciseTestService {
+public class ProgrammingExerciseUtilService {
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
+
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private CourseRepository courseRepo;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
+    @Autowired
+    private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepo;
+
+    @Autowired
+    private ResultRepository resultRepo;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private ExerciseHintRepository exerciseHintRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
+
+    @Autowired
+    private CodeHintRepository codeHintRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
@@ -53,7 +133,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName) {
-        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
         populateProgrammingExercise(programmingExercise, shortName, title, false);
@@ -165,7 +245,7 @@ public class ProgrammingExerciseTestService {
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
-    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
+    public void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
         populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
@@ -220,7 +300,7 @@ public class ProgrammingExerciseTestService {
 
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
@@ -243,7 +323,7 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
         Course course = addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
-        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
@@ -264,7 +344,7 @@ public class ProgrammingExerciseTestService {
 
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         addTestCasesToProgrammingExercise(programmingExercise);
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
@@ -274,13 +354,11 @@ public class ProgrammingExerciseTestService {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService#fooMethod}
-     *
      * @param programmingExerciseTitle The title of the programming exercise
      */
     public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle, boolean scaActive) {
         Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle, scaActive);
-        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
+        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
 
         addTestCasesToProgrammingExercise(programmingExercise);
 
@@ -334,7 +412,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
-        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission.setParticipation(participation);
         submission = programmingSubmissionRepo.save(submission);
         return submission;
@@ -350,7 +428,7 @@ public class ProgrammingExerciseTestService {
      * @param login      of the user to identify the corresponding student participation.
      */
     public void addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
-        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
         Result result = resultRepo.save(new Result().participation(participation));
         participation.addSubmission(submission);
@@ -365,9 +443,9 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
             AssessmentType assessmentType, boolean hasCompletionDate) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         Result result = new Result();
-        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setAssessmentType(assessmentType);
         result.setScore(50D);
         if (hasCompletionDate) {

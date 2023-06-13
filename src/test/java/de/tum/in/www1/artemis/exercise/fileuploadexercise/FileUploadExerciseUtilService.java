@@ -2,23 +2,64 @@ package de.tum.in.www1.artemis.exercise.fileuploadexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class FileUploadExerciseTestService {
+public class FileUploadExerciseUtilService {
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private CourseRepository courseRepo;
+
+    @Autowired
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private ResultRepository resultRepo;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
-        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepo.save(fileUploadExercise);
     }
@@ -109,7 +150,7 @@ public class FileUploadExerciseTestService {
     }
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, login);
         participation.addSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepo.save(fileUploadSubmission);
@@ -119,13 +160,13 @@ public class FileUploadExerciseTestService {
 
     public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
 
         submissionRepository.save(fileUploadSubmission);
 
         participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
-        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
         result.setParticipation(participation);
         if (exercise.getReleaseDate() != null) {
@@ -155,10 +196,25 @@ public class FileUploadExerciseTestService {
     }
 
     public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         fileUploadSubmissionRepo.save(submission);
         return submission;
+    }
+
+    public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
+        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
+
+        // Create a dummy file
+        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
+        if (!Files.exists(uploadedFilePath)) {
+            Files.createDirectories(uploadedFileDir);
+            Files.createFile(uploadedFilePath);
+        }
+        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
     }
 }

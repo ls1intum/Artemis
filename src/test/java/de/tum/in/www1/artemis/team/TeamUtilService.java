@@ -9,13 +9,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.user.UserTestService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 @Service
-public class TeamTestService {
+public class TeamUtilService {
 
     @Autowired
-    private UserTestService userTestService;
+    private UserUtilService userUtilService;
 
     @Autowired
     private UserRepository userRepo;
@@ -38,7 +38,7 @@ public class TeamTestService {
      */
     public Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
             String registrationPrefix) {
-        List<User> students = userTestService.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
+        List<User> students = userUtilService.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
                 Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, registrationPrefix);
 
         Team team = new Team();
@@ -132,7 +132,7 @@ public class TeamTestService {
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
         List<Team> teams = generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
         var users = teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
-        users.forEach(userTestService::cleanUpRegistrationNumberForUser);
+        users.forEach(userUtilService::cleanUpRegistrationNumberForUser);
         userRepo.saveAll(users);
         return teamRepo.saveAll(teams);
     }
@@ -148,7 +148,7 @@ public class TeamTestService {
     public List<Team> addTeamsForExerciseFixedTeamSize(String userPrefix, String regNumberPrefix, Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
         List<Team> teams = generateTeamsForExerciseFixedTeamSize(exercise, userPrefix + "team", "student", numberOfTeams, owner, null, regNumberPrefix, noOfStudentsPerTeam);
         var users = teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
-        users.forEach(userTestService::cleanUpRegistrationNumberForUser);
+        users.forEach(userUtilService::cleanUpRegistrationNumberForUser);
         userRepo.saveAll(users);
         return teamRepo.saveAll(teams);
     }

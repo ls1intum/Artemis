@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.exercise.modelingexercise;
 import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
@@ -16,11 +18,113 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.service.AssessmentService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class ModelingExerciseTestService {
+public class ModelingExerciseUtilService {
+
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private CourseRepository courseRepo;
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    private ResultRepository resultRepo;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private ModelingSubmissionRepository modelingSubmissionRepo;
+
+    @Autowired
+    private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private PlagiarismResultRepository plagiarismResultRepo;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private AssessmentService assessmentService;
+
+    @Autowired
+    private ModelingSubmissionService modelSubmissionService;
+
+    /**
+     * Create modeling exercise for a given course
+     *
+     * @param courseId id of the given course
+     * @return created modeling exercise
+     */
+    public ModelingExercise createModelingExercise(Long courseId) {
+        return createModelingExercise(courseId, null);
+    }
+
+    /**
+     * Create modeling exercise with a given id for a given course
+     *
+     * @param courseId   id of the given course
+     * @param exerciseId id of modeling exercise
+     * @return created modeling exercise
+     */
+    public ModelingExercise createModelingExercise(Long courseId, Long exerciseId) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(courseId, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
+        modelingExercise.setGradingInstructions("Grading instructions");
+        modelingExercise.getCategories().add("Modeling");
+        modelingExercise.setId(exerciseId);
+        course1.addExercises(modelingExercise);
+
+        return modelingExercise;
+    }
+
+    /**
+     * Add example submission to modeling exercise
+     *
+     * @param modelingExercise modeling exercise for which the example submission should be added
+     * @return modeling exercise with example submission
+     * @throws Exception if the resources file is not found
+     */
+    public ModelingExercise addExampleSubmission(ModelingExercise modelingExercise) throws Exception {
+        Set<ExampleSubmission> exampleSubmissionSet = new HashSet<>();
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
+        exampleSubmission.assessmentExplanation("explanation");
+        exampleSubmissionSet.add(exampleSubmission);
+        modelingExercise.setExampleSubmissions(exampleSubmissionSet);
+        return modelingExercise;
+    }
 
     /**
      * @param title The title of the to be added modeling exercise
@@ -54,7 +158,7 @@ public class ModelingExerciseTestService {
     }
 
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
-        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise classExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         classExercise.setTitle(title);
         classExercise = modelingExerciseRepository.save(classExercise);
@@ -140,9 +244,9 @@ public class ModelingExerciseTestService {
      * @return submission stored in the modelingSubmissionRepository
      */
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
-        var user = getUserByLogin(login);
+        var user = userUtilService.getUserByLogin(login);
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
         result = resultRepo.save(result);
@@ -156,7 +260,7 @@ public class ModelingExerciseTestService {
     }
 
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
@@ -165,7 +269,7 @@ public class ModelingExerciseTestService {
     }
 
     public ModelingSubmission addModelingTeamSubmission(ModelingExercise exercise, ModelingSubmission submission, Team team) {
-        StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
+        StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
@@ -175,13 +279,13 @@ public class ModelingExerciseTestService {
 
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
 
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
 
         Result result = new Result();
 
-        result.setAssessor(getUserByLogin(assessorLogin));
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
         result = resultRepo.save(result);
         submission = modelingSubmissionRepo.save(submission);
@@ -198,8 +302,8 @@ public class ModelingExerciseTestService {
     }
 
     public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        return addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
+        return participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
     }
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
@@ -223,10 +327,10 @@ public class ModelingExerciseTestService {
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
-        List<Feedback> feedbackList = loadAssessmentFomResources(path);
+        List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, null);
         result.setParticipation(submission.getParticipation().results(null));
-        result.setAssessor(getUserByLogin(login));
+        result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
@@ -243,11 +347,19 @@ public class ModelingExerciseTestService {
 
         Result result = assessmentService.saveManualAssessment(submission, feedbacks, null);
         result.setParticipation(submission.getParticipation().results(null));
-        result.setAssessor(getUserByLogin(login));
+        result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
+    }
+
+    public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
+        ModelingPlagiarismResult result = new ModelingPlagiarismResult();
+        result.setExercise(exercise);
+        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        result.setDuration(4);
+        return plagiarismResultRepo.save(result);
     }
 }

@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class UserTestService {
+public class UserUtilService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -313,5 +313,28 @@ public class UserTestService {
         User user = getUserByLogin(login);
         user.setGroups(Set.of());
         userRepo.save(user);
+    }
+
+    public void adjustUserGroupsToCustomGroups(String userPrefix, String userSuffix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
+        for (int i = 1; i <= numberOfStudents; i++) {
+            var user = getUserByLogin(userPrefix + "student" + i);
+            user.setGroups(Set.of(userPrefix + "student" + userSuffix));
+            userRepo.save(user);
+        }
+        for (int i = 1; i <= numberOfTutors; i++) {
+            var user = getUserByLogin(userPrefix + "tutor" + i);
+            user.setGroups(Set.of(userPrefix + "tutor" + userSuffix));
+            userRepo.save(user);
+        }
+        for (int i = 1; i <= numberOfEditors; i++) {
+            var user = getUserByLogin(userPrefix + "editor" + i);
+            user.setGroups(Set.of(userPrefix + "editor" + userSuffix));
+            userRepo.save(user);
+        }
+        for (int i = 1; i <= numberOfInstructors; i++) {
+            var user = getUserByLogin(userPrefix + "instructor" + i);
+            user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
+            userRepo.save(user);
+        }
     }
 }

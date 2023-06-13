@@ -8,6 +8,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,10 +19,51 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class ExerciseTestService {
+public class ExerciseUtilService {
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private ResultRepository resultRepo;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ModelingSubmissionService modelSubmissionService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -89,42 +131,42 @@ public class ExerciseTestService {
         Exercise exercise;
         switch (exerciseType) {
             case "modeling" -> {
-                course = addCourseWithOneModelingExercise();
+                course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    StudentParticipation participation = createAndSaveParticipationForExercise(exercise, userPrefix + "student" + j);
+                    StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, userPrefix + "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
-                    var user = getUserByLogin(userPrefix + "student" + j);
+                    var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
                     modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
                     studentParticipationRepo.save(participation);
                 }
                 return course;
             }
             case "programming" -> {
-                course = addCourseWithOneProgrammingExercise();
+                course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
-                    addProgrammingSubmission((ProgrammingExercise) exercise, submission, userPrefix + "student" + j);
+                    programmingExerciseUtilService.addProgrammingSubmission((ProgrammingExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             }
             case "text" -> {
-                course = addCourseWithOneFinishedTextExercise();
+                course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     TextSubmission textSubmission = ModelFactory.generateTextSubmission("Text" + j + j, null, true);
-                    saveTextSubmission((TextExercise) exercise, textSubmission, userPrefix + "student" + j);
+                    textExerciseUtilService.saveTextSubmission((TextExercise) exercise, textSubmission, userPrefix + "student" + j);
                 }
                 return course;
             }
             case "file-upload" -> {
-                course = addCourseWithFileUploadExercise();
+                course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
+                    fileUploadExerciseUtilService.saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             }
@@ -145,7 +187,7 @@ public class ExerciseTestService {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
             submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
             participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
-            Result result = generateResult(submission, null);
+            Result result = participationUtilService.generateResult(submission, null);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             submission.addResult(result);
             participation.addResult(result);
@@ -166,7 +208,7 @@ public class ExerciseTestService {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
             submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
             participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
-            Result result = generateResult(submission, assessor);
+            Result result = participationUtilService.generateResult(submission, assessor);
             submission.addResult(result);
             participation.addResult(result);
             studentParticipationRepo.save(participation);
