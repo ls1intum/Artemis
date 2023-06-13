@@ -62,7 +62,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
             this.sessionId = Number(state.sessionId);
         });
         this.loadFirstMessage();
-        console.log(this.messages);
     }
 
     ngOnDestroy() {
@@ -78,8 +77,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     loadFirstMessage(): void {
         if (this.messages.length === 0) {
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(this.firstMessage));
-            console.log(this.stateStore.getState());
-            console.log(this.messages);
         }
     }
 
@@ -89,16 +86,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => this.scrollToBottom())
+                .then(() => this.scrollToBottom('smooth'))
                 .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!')));
             this.newMessageTextContent = '';
         }
-        this.scrollToBottom();
-        console.log(this.stateStore);
-        console.log(this.messages);
+        this.scrollToBottom('smooth');
     }
 
-    scrollToBottom(behavior: ScrollBehavior = 'smooth') {
+    scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
             const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
             chatBodyElement.scrollTo({
