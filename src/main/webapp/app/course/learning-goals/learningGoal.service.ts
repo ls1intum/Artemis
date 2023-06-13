@@ -24,12 +24,6 @@ export class LearningGoalService {
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
-    getAllNonOptionalForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/non-optional-competencies`, { observe: 'response' })
-            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
-    }
-
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
