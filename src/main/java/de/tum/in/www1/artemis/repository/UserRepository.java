@@ -62,10 +62,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findOneByLogin(String login);
 
-    default User findOneWithDataExportsByLoginElseThrow(String login) {
-        return findOneWithDataExportsByLogin(login).orElseThrow(() -> new EntityNotFoundException("User with login \"" + login + "\" not found"));
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber);
 
@@ -74,9 +70,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
-
-    @EntityGraph(type = LOAD, attributePaths = { "dataExports" })
-    Optional<User> findOneWithDataExportsByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
@@ -370,13 +363,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneByLogin(currentUserLogin);
-        return unwrapOptionalUser(user, currentUserLogin);
-    }
-
-    @NotNull
-    default User getUserWithDataExports() {
-        String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = findOneWithDataExportsByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 

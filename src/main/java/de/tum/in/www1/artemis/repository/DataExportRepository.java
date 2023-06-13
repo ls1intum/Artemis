@@ -45,7 +45,6 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
     /**
      * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days
      *
-     *
      * @return a set of data exports that need to be deleted
      */
     @Query("""
@@ -56,4 +55,10 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             """)
     Set<DataExport> findAllToBeDeleted();
 
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.user.id = :userId
+            """)
+    Set<DataExport> findAllDataExportsByUserId(long userId);
 }

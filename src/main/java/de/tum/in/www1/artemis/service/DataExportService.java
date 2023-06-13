@@ -90,14 +90,29 @@ public class DataExportService {
      * @return true if the user can request a new data export, false otherwise
      */
     public boolean canRequestDataExport() {
-        var user = userRepository.getUserWithDataExports();
-        var latestDataExport = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
-        if (latestDataExport.isEmpty()) {
+        var user = userRepository.getUser();
+        var dataExports = dataExportRepository.findAllDataExportsByUserId(user.getId());
+        if (dataExports.isEmpty()) {
             return true;
         }
-        var latestDataExportCreationDate = latestDataExport.get().getRequestDate();
-        // allow requesting a new data export if the latest data export is older than 14 days or its creation has failed
-        return Duration.between(latestDataExportCreationDate, ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS || latestDataExport.get().getDataExportState().hasFailed();
+        return checkAllDataExportsIfCurrentlyDataExportCanBeRequested(dataExports);
+
+    }
+
+    private boolean checkAllDataExportsIfCurrentlyDataExportCanBeRequested(Set<DataExport> dataExports) {
+        for (var dataExport : dataExports) {
+            // we need to distinguish between these two cases as the creation date might not have been set yet (if the export hasn't been created yet).
+            // allow requesting a new data export if the latest data export is older than the configured DAYS_BETWEEN_DATA_EXPORTS or its creation has failed
+            if (dataExport.getCreationDate() != null && (Duration.between(dataExport.getCreationDate(), ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS)
+                    || dataExport.getDataExportState().hasFailed()) {
+                return true;
+            }
+            if (dataExport.getCreationDate() == null && (Duration.between(dataExport.getRequestDate(), ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS)
+                    || dataExport.getDataExportState().hasFailed()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -107,19 +122,17 @@ public class DataExportService {
      */
     public DataExportDTO canDownloadAnyDataExport() {
         var noDataExport = new DataExportDTO(null, null);
-        var user = userRepository.getUserWithDataExports();
-        var latestDataExportOptional = user.getDataExports().stream().max(Comparator.comparing(DataExport::getRequestDate));
-        if (latestDataExportOptional.isEmpty()) {
+        var user = userRepository.getUser();
+        var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserId(user.getId());
+        if (dataExportsFromUser.isEmpty()) {
             return noDataExport;
         }
-        var latestDataExport = latestDataExportOptional.get();
-        // either the latest data export is downloadable or none of the data exports are
-        if (latestDataExport.getDataExportState().isDownloadable()) {
-            return new DataExportDTO(latestDataExport.getId(), latestDataExport.getDataExportState());
+        for (var dataExport : dataExportsFromUser) {
+            if (dataExport.getDataExportState().isDownloadable()) {
+                return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState());
+            }
         }
-        else {
-            return new DataExportDTO(null, latestDataExport.getDataExportState());
-        }
+        return noDataExport;
     }
 
     /**
