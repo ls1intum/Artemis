@@ -224,13 +224,21 @@ During the exam creation and configuration, you can create your exam and configu
 
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
 
-
-
 .. figure:: instructor/add_students.png
    :alt: Register Students
    :align: center
 
    Register Students Page
+
+- If you are using the Exam Participation Checker, you can verify the attendance by pressing the |verify_attendance| button. This button opens a new view which shows which students have started the exam in Artemis but did not complete the check-in with a teaching assistant. 
+
+.. figure:: instructor/verify_attendance_verification_missing.png
+   :alt: Verify Attendance View: One student did not complete the check-in
+   :align: center
+
+.. figure:: instructor/verify_attendance_verification_successful.png
+   :alt: Verify Attendance View: All students have been successfully checked in
+   :align: center
 
 .. _student_exams:
 
@@ -591,6 +599,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |submissions| image:: instructor/buttons/submissions.png
 .. |import_students| image:: instructor/buttons/import_students.png
 .. |import_students_button| image:: instructor/buttons/import_students_button.png
+.. |verify_attendance| image:: instructor/buttons/verify_attendance.png
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
