@@ -70,4 +70,35 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(component.newMessage).toBe('');
     });
+
+    it('should set isScrolledToBottom to true when scrolled to bottom', () => {
+        const component = fixture.componentInstance;
+        const chatBodyElement = {
+            scrollHeight: 200,
+            scrollTop: 150,
+            clientHeight: 50,
+        };
+
+        component.chatBody = { nativeElement: chatBodyElement };
+
+        component.onChatScroll();
+
+        expect(component.isScrolledToBottom).toBeTrue();
+    });
+
+    it('should set componentClass to chat-widget-fullscreen', () => {
+        const component = fixture.componentInstance;
+
+        component.maximizeScreen();
+
+        expect(component.componentClass).toBe('chat-widget-fullscreen');
+    });
+
+    it('should set componentClass to chat-widget', () => {
+        const component = fixture.componentInstance;
+
+        component.minimizeScreen();
+
+        expect(component.componentClass).toBe('chat-widget');
+    });
 });
