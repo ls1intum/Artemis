@@ -98,13 +98,12 @@ pre {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px;
+    padding: 7px;
     background-color: var(--iris-client-chat-input);
 }
 
 .chat-input textarea {
     flex: 1;
-    margin-right: 10px;
     padding: 5px 13px;
 }
 

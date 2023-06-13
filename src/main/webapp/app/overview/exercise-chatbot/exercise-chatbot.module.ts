@@ -7,10 +7,11 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AngularDraggableModule } from 'angular2-draggable';
 import { RouterModule } from '@angular/router';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     declarations: [ExerciseChatWidgetComponent],
-    imports: [MatDialogModule, FormsModule, CommonModule, FontAwesomeModule, ArtemisSharedModule, AngularDraggableModule, RouterModule],
+    imports: [MatDialogModule, FormsModule, CommonModule, FontAwesomeModule, ArtemisSharedModule, AngularDraggableModule, RouterModule, ArtemisSharedComponentModule],
     providers: [],
 })
 export class ExerciseChatbotModule {}

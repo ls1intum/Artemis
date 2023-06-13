@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -93,4 +94,21 @@ export class ExerciseChatWidgetComponent implements OnInit {
     minimizeScreen() {
         this.componentClass = 'chat-widget';
     }
+
+    handleKey(event: KeyboardEvent): void {
+        if (event.key === 'Enter') {
+            if (!event.shiftKey) {
+                event.preventDefault();
+                this.onSend();
+            } else {
+                const textArea = event.target as HTMLTextAreaElement;
+                const { selectionStart, selectionEnd } = textArea;
+                const value = textArea.value;
+                textArea.value = value.slice(0, selectionStart) + value.slice(selectionEnd);
+                textArea.selectionStart = textArea.selectionEnd = selectionStart + 1;
+            }
+        }
+    }
+
+    protected readonly ButtonType = ButtonType;
 }
