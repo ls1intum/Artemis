@@ -209,6 +209,34 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(entity.title).toBe('My Exercise');
         }));
+
+        it('should scale the similarity threshold before saving', fakeAsync(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            comp.plagiarismChecksSimilarityThresholdPercentage = 55;
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(entity.plagiarismChecksConfig!.similarityThreshold).toBe(0.55);
+        }));
     });
 
     describe('exam mode', () => {
