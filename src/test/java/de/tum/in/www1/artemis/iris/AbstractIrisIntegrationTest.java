@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.IrisGPT3_5RequestMockProvider;
+import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon", "iris-gpt3_5" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon", "iris" })
 public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -38,20 +38,20 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
     protected IrisTemplateRepository irisTemplateRepository;
 
     @Autowired
-    @Qualifier("irisGPT3_5RequestMockProvider")
-    protected IrisGPT3_5RequestMockProvider gpt35RequestMockProvider;
+    @Qualifier("irisRequestMockProvider")
+    protected IrisRequestMockProvider irisRequestMockProvider;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
 
     @BeforeEach
     void setup() {
-        gpt35RequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        gpt35RequestMockProvider.reset();
+        irisRequestMockProvider.reset();
     }
 
     protected void activateIrisGlobally() {

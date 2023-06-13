@@ -59,7 +59,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setSentAt(ZonedDateTime.now());
         messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
 
-        gpt35RequestMockProvider.mockResponse("Hello World");
+        irisRequestMockProvider.mockResponse("Hello World");
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);

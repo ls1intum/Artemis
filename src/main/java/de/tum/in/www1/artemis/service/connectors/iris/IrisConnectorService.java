@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.Async;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestDTO;
  * LLMs and handle messages with Microsoft Guidance
  */
 @Service
+@Profile("iris")
 public class IrisConnectorService {
 
     private final RestTemplate restTemplate;

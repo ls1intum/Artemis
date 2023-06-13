@@ -59,7 +59,7 @@ public class IrisSettingsService {
             return;
         }
 
-        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of("iris-gpt3_5"))) {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of("iris"))) {
             var settings = createDefaultIrisSettings(true);
             settings.setGlobal(true);
             settings.getIrisChatSettings().setEnabled(true);
