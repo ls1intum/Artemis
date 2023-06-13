@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -55,7 +54,6 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
-    let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let channelService: ChannelService;
@@ -98,8 +96,6 @@ describe('PageDiscussionSectionComponent', () => {
             })
             .compileComponents()
             .then(() => {
-                courseManagementService = TestBed.inject(CourseManagementService);
-                jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(DiscussionSectionComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
@@ -129,7 +125,7 @@ describe('PageDiscussionSectionComponent', () => {
     });
 
     it('should set course and posts for exercise on initialization', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.course).toEqual(metisCourse);
@@ -146,11 +142,12 @@ describe('PageDiscussionSectionComponent', () => {
                 }),
             ),
         );
-        component.lecture = metisLecture;
+        component.lecture = { ...metisLecture, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
+        expect(component.posts).toEqual(metisLecturePosts);
         expect(component.channel).toEqual(metisLectureChannel);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
     }));
@@ -230,7 +227,7 @@ describe('PageDiscussionSectionComponent', () => {
     });
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
@@ -242,6 +239,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.exercise = metisExercise;
         component.ngOnInit();
         tick();
@@ -254,6 +252,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should display one new message button', fakeAsync(() => {
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.exercise = metisExercise;
         component.ngOnInit();
         tick();
@@ -264,7 +263,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should show search-bar and filters if not focused to a post', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -279,8 +278,23 @@ describe('PageDiscussionSectionComponent', () => {
         expect(filterToAnsweredOrReacted).not.toBeNull();
     }));
 
+    it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+
+        expect(searchInput).toBeNull();
+        expect(filterResolvedCheckbox).toBeNull();
+        expect(filterOwnCheckbox).toBeNull();
+        expect(filterToAnsweredOrReacted).toBeNull();
+    }));
+
     it('triggering filters should invoke the metis service', fakeAsync(() => {
-        component.exercise = metisExercise;
+        component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();

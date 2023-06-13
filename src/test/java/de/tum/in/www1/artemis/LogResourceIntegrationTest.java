@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -8,20 +10,21 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
-class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LogResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetList() throws Exception {
-        request.get("/management/logs", HttpStatus.OK, List.class);
+        request.get("/api/admin/logs", HttpStatus.OK, List.class);
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testChangeLevel() throws Exception {
         LoggerVM logger = new LoggerVM();
-        logger.setLevel("1");
+        logger.setLevel("DEBUG");
         logger.setName("logger");
-        request.put("/management/logs", logger, HttpStatus.NO_CONTENT);
+        LoggerVM response = request.putWithResponseBody("/api/admin/logs", logger, LoggerVM.class, HttpStatus.OK);
+        assertThat(response).isEqualTo(logger);
     }
 }
