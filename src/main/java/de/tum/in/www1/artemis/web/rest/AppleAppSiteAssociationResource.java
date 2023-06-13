@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+
 /**
  * REST controller for the apple-app-site-association json
  */
@@ -27,6 +29,7 @@ public class AppleAppSiteAssociationResource {
      * @return apple-app-site-association as json
      */
     @GetMapping("/apple-app-site-association")
+    @ManualConfig
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         if (appId == null || appId.length() < 10) {
             log.debug("Apple AppID is not configured!");
