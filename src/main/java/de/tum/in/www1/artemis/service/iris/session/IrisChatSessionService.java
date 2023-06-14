@@ -1,22 +1,29 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 import javax.ws.rs.BadRequestException;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
@@ -45,9 +52,17 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final GitService gitService;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, GitService gitService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -55,6 +70,9 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.gitService = gitService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -107,6 +125,11 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             latestSubmission.ifPresent(submission -> parameters.put("latestSubmission", submission));
         }
         parameters.put("session", fullSession);
+        var diff = getDiffForStudentAndExercise(chatSession.getUser(), exercise);
+        if (diff != null) {
+            parameters.put("gitDiff", diff);
+        }
+
         var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
         irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getTemplate(), irisSettings.getIrisChatSettings().getPreferredModel(), parameters)
                 .handleAsync((irisMessage, throwable) -> {
@@ -122,5 +145,43 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                     }
                     return null;
                 });
+    }
+
+    private String getDiffForStudentAndExercise(User student, ProgrammingExercise exercise) {
+        var studentParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), student.getLogin());
+        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
+
+        if (studentParticipation.isEmpty() || templateParticipation.isEmpty()) {
+            return null;
+        }
+
+        Repository templateRepo;
+        Repository studentRepo;
+
+        try {
+            templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
+            studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
+        }
+        catch (GitAPIException e) {
+            log.error("Could not fetch repositories", e);
+            return null;
+        }
+
+        var oldTreeParser = new FileTreeIterator(templateRepo);
+        var newTreeParser = new FileTreeIterator(studentRepo);
+
+        gitService.resetToOriginHead(templateRepo);
+        gitService.pullIgnoreConflicts(templateRepo);
+        gitService.resetToOriginHead(studentRepo);
+        gitService.pullIgnoreConflicts(studentRepo);
+
+        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
+            git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
+            return diffOutputStream.toString();
+        }
+        catch (IOException | GitAPIException e) {
+            log.error("Could not generate diff", e);
+            return null;
+        }
     }
 }
