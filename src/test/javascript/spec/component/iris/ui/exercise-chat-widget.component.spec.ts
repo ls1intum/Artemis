@@ -221,7 +221,7 @@ describe('ExerciseChatWidgetComponent', () => {
         jest.spyOn(stateStore, 'dispatch');
         const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
             of(
-                new HttpResponse<IrisMessage[]>({
+                new HttpResponse<IrisMessage>({
                     status: 200,
                     body: [mockClientMessage, mockServerMessage],
                 }),
@@ -253,7 +253,7 @@ describe('ExerciseChatWidgetComponent', () => {
         jest.spyOn(stateStore, 'dispatch');
         const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
             of(
-                new HttpResponse<IrisMessage[]>({
+                new HttpResponse<IrisMessage>({
                     status: 200,
                     body: [mockClientMessage, mockServerMessage],
                 }),
