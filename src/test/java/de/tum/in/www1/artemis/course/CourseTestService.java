@@ -2518,7 +2518,7 @@ public class CourseTestService {
         course1.setInstructorGroupName(userPrefix + "instructor");
 
         /*
-         * We will duplicate the following submission and result configuration with course2. course1 contains additional submissions created by the DatabaseUtilService. These
+         * We will duplicate the following submission and result configuration with course2. course1 contains additional submissions created by the ParticipationUtilService. These
          * submissions would make the test of the active students distribution flaky but are necessary for other test statements to be meaningful. Thus, we test the actual test
          * distribution only for course2.
          */
