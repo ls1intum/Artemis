@@ -6,10 +6,10 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.channel.hide' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.channel.label">Communication</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label">Communication</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronRight"></fa-icon>
@@ -34,11 +34,11 @@
                     </div>
                     <!-- loading posts -->
                     <div class="post-result-information row mt-2" *ngIf="isLoading">
-                        <div class="col-12">{{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}</div>
+                        <div class="col-12">{{ 'artemisApp.metis.discussionSection.loadingMessages' | artemisTranslate }}</div>
                     </div>
                     <!-- no posts -->
                     <div class="post-result-information row mt-2" *ngIf="!isLoading && posts.length === 0">
-                        <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
+                        <div class="col-12">{{ 'artemisApp.metis.discussionSection.noMessages' | artemisTranslate }}</div>
                     </div>
                     <!-- new post button -->
                     <div class="row mt-2" *ngIf="createdPost && !isLoading">
@@ -144,9 +144,9 @@
     </div>
     <!-- collapsed posts -->
     <ng-template #collapsedPosts>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.channel.show' | artemisTranslate">
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.metis.channel.label"></span>
+            <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
         </div>
     </ng-template>

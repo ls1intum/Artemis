@@ -44,9 +44,6 @@
                 "lecture": "Lecture"
             },
             "channel": {
-                "label": "Channel",
-                "show": "Show channel",
-                "hide": "Hide channel",
                 "notAMember": "You are not a member of the channel.",
                 "noChannel": "There is no channel available."
             },
@@ -56,9 +53,11 @@
                 "hide": "Hide communication"
             },
             "discussionSection": {
-                "searchBarDefault": "Search for a post",
+                "searchBarDefault": "Search for a message",
                 "sortByDate": "Date:",
-                "defaultSortCriterion": "Default sorting"
+                "defaultSortCriterion": "Default sorting",
+                "noMessages": "No messages found",
+                "loadingMessages": "Loading messages..."
             },
             "overview": {
                 "title": "Posts",
