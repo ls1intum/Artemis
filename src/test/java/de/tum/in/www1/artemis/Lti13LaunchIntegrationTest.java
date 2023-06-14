@@ -5,9 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -18,6 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.web.rest.LtiResource;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 /**
  * LTI 1.3 Exercise Launch
@@ -32,42 +39,77 @@ import de.tum.in.www1.artemis.web.rest.LtiResource;
  */
 class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final Key SIGNING_KEY = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
+
+    private static final String VALID_ID_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().plusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
+            .setId("1234").signWith(SIGNING_KEY).compact();
+
+    private static final String OUTDATED_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().minusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
+            .setId("1234").signWith(SIGNING_KEY).compact();
+
+    private static final String VALID_STATE = "validState";
+
     @Test
     @WithAnonymousUser
     void redirectProxy() throws Exception {
-        String idToken = "some-token";
-        String state = "some-state";
         Map<String, Object> body = new HashMap<>();
-        body.put("id_token", idToken);
-        body.put("state", state);
+        body.put("id_token", VALID_ID_TOKEN);
+        body.put("state", VALID_STATE);
 
         URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
 
-        assertThat(header.getPath()).isEqualTo(LtiResource.LOGIN_REDIRECT_CLIENT_PATH);
-
-        List<NameValuePair> params = URLEncodedUtils.parse(header, StandardCharsets.UTF_8);
-        assertUriParamsContain(params, "id_token", idToken);
-        assertUriParamsContain(params, "state", state);
+        validateRedirect(header, VALID_ID_TOKEN);
     }
 
     @Test
     @WithAnonymousUser
     void redirectProxyNoState() throws Exception {
-        String idToken = "some-token";
         Map<String, Object> body = new HashMap<>();
-        body.put("id_token", idToken);
+        body.put("id_token", VALID_ID_TOKEN);
 
-        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithAnonymousUser
     void redirectProxyNoToken() throws Exception {
-        String state = "some-state";
         Map<String, Object> body = new HashMap<>();
-        body.put("state", state);
+        body.put("state", VALID_STATE);
 
-        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void redirectProxyInvalidToken() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("state", VALID_STATE);
+        body.put("id_token", "invalid-token");
+
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void redirectProxyOutdatedToken() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("state", VALID_STATE);
+        body.put("id_token", OUTDATED_TOKEN);
+
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void redirectProxyTokenInvalidSignature() throws Exception {
+        // We can't validate the signature, hence we ignore it.
+        String invalidSignatureToken = VALID_ID_TOKEN.substring(0, VALID_ID_TOKEN.lastIndexOf(".")) + OUTDATED_TOKEN.substring(OUTDATED_TOKEN.lastIndexOf("."));
+        Map<String, Object> body = new HashMap<>();
+        body.put("state", VALID_STATE);
+        body.put("id_token", invalidSignatureToken);
+
+        URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
+        validateRedirect(header, invalidSignatureToken);
     }
 
     @Test
@@ -75,5 +117,13 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     void oidcFlowFails_noRequestCached() throws Exception {
         String ltiLaunchUri = CustomLti13Configurer.LTI13_LOGIN_PATH + "?id_token=some-token&state=some-state";
         request.get(ltiLaunchUri, HttpStatus.INTERNAL_SERVER_ERROR, Object.class);
+    }
+
+    private void validateRedirect(URI locationHeader, String token) {
+        assertThat(locationHeader.getPath()).isEqualTo(LtiResource.LOGIN_REDIRECT_CLIENT_PATH);
+
+        List<NameValuePair> params = URLEncodedUtils.parse(locationHeader, StandardCharsets.UTF_8);
+        assertUriParamsContain(params, "id_token", token);
+        assertUriParamsContain(params, "state", VALID_STATE);
     }
 }
