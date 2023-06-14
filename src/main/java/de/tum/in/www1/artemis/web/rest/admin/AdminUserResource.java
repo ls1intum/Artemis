@@ -229,7 +229,7 @@ public class AdminUserResource {
         if (userRepository.isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
-        userService.deleteUser(login);
+        userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
     }
 
@@ -252,7 +252,7 @@ public class AdminUserResource {
         for (String login : logins) {
             try {
                 if (!userRepository.isCurrentUser(login)) {
-                    userService.deleteUser(login);
+                    userService.softDeleteUser(login);
                     deletedUsers.add(login);
                 }
             }

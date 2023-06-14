@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NgModel } from '@angular/forms';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
@@ -8,7 +8,7 @@ import { ParticipationComponent } from 'app/exercises/shared/participation/parti
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
@@ -444,6 +444,26 @@ describe('ParticipationComponent', () => {
             expect(component.checkBasicPresentationConfig()).toBeFalse();
             expect(component.checkGradedPresentationConfig()).toBeTrue();
         });
+
+        it('should not add a presentation score if student gave max number of presentations', fakeAsync(() => {
+            const errorResponse = new HttpErrorResponse({
+                error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
+                status: 400,
+            });
+            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(errorResponse));
+
+            component.exercise = exercise3;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
+            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
+
+            participation.presentationScore = 40;
+            component.addGradedPresentation(participation);
+            tick();
+
+            expect(participation.presentationScore).toBeUndefined();
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
+        }));
     });
 
     describe('getScoresRoute', () => {
