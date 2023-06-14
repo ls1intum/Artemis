@@ -97,7 +97,7 @@ describe('LearningGoalFormComponent', () => {
     }));
 
     it('should detect invalid optional form', fakeAsync(() => {
-        // stubbing learning goal service for  validator
+        // stubbing learning goal service for validator
         const learningGoalService = TestBed.inject(LearningGoalService);
 
         const learningGoalOfGetAllForCourseResponse = new LearningGoal();
