@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
@@ -31,6 +32,9 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -82,7 +86,8 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendTeamAssignmentUpdateOnRemoveStudentFromTeam() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
-        team = request.postWithResponseBody(teamResourceUrl(), team, Team.class, HttpStatus.CREATED);
+        team.setOwner(database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        teamRepository.save(team);
 
         User studentToRemoveFromTeam = students.iterator().next();
         Team updatedTeam = new Team(team).id(team.getId()).removeStudents(studentToRemoveFromTeam);
@@ -96,7 +101,8 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendTeamAssignmentUpdateOnAddStudentToTeam() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise);
-        team = request.postWithResponseBody(teamResourceUrl(), team, Team.class, HttpStatus.CREATED);
+        team.setOwner(database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        teamRepository.save(team);
 
         Team updatedTeam = new Team(team).id(team.getId()).students(students);
         updatedTeam = request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), updatedTeam, Team.class, HttpStatus.OK);
@@ -109,7 +115,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSendTeamAssignmentUpdateOnTeamDelete() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise);
-        team = request.postWithResponseBody(teamResourceUrl(), team, Team.class, HttpStatus.CREATED);
+        teamRepository.save(team);
 
         request.delete(teamResourceUrl() + "/" + team.getId(), HttpStatus.OK);
 
