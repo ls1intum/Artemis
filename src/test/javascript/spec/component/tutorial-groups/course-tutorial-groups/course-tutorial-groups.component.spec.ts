@@ -139,8 +139,8 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(getCourseSpy).toHaveBeenCalledTimes(2);
         expect(getCourseSpy).toHaveBeenCalledWith(1);
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(getAllOfCourseSpy).toHaveBeenCalledTimes(0);
-        expect(updateCourseSpy).toHaveBeenCalledTimes(0);
+        expect(getAllOfCourseSpy).not.toHaveBeenCalled();
+        expect(updateCourseSpy).not.toHaveBeenCalled();
     });
 
     it('should set the filter depending on the query param', () => {

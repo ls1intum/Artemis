@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -41,11 +43,18 @@ public class SubmissionPolicyResource {
 
     private final SubmissionPolicyService submissionPolicyService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
-            SubmissionPolicyService submissionPolicyService) {
+            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.submissionPolicyService = submissionPolicyService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.participationAuthCheckService = participationAuthCheckService;
     }
 
     /**
@@ -227,5 +236,23 @@ public class SubmissionPolicyResource {
 
         responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).body(submissionPolicy);
+    }
+
+    /**
+     * GET participations/:participationId/submission-count
+     * <br>
+     * <br>
+     * Retrieves the amount of submissions that are counted for the submission policy. These are all submissions that have at least one result.
+     *
+     * @param participationId of the participation for which the submission count should be retrieved
+     * @return the ResponseEntity with status 200 (OK) containing the number of submissions in its body.
+     */
+    @GetMapping("participations/{participationId}/submission-count")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Integer> getParticipationSubmissionCount(@PathVariable Long participationId) {
+        var programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseStudentParticipation);
+
+        return ResponseEntity.ok().body(submissionPolicyService.getParticipationSubmissionCount(programmingExerciseStudentParticipation, false));
     }
 }
