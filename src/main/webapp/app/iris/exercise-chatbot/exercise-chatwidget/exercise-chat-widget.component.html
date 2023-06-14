@@ -1,0 +1,46 @@
+<div class="container">
+    <!-- chat box -->
+    <div class="chat-widget" #chatWidget>
+        <!-- client -->
+        <div class="client">
+            <div class="chat-header">
+                <button class="header-icon">
+                    <fa-icon size="lg" [icon]="faExpand"></fa-icon>
+                </button>
+                <h2>Iris</h2>
+                <button (click)="closeChat()" class="header-icon">
+                    <fa-icon size="lg" [icon]="faXmark"></fa-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- main chat section -->
+        <div class="chat-body" #chatBody>
+            <div *ngFor="let message of messages">
+                <div *ngFor="let content of message.content">
+                    <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
+                        <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="client-chat" *ngIf="isLoading">
+                <div class="blinking-dots">
+                    <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
+                        <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                    </div>
+                </div>
+            </div>
+            <div class="client-chat-error" *ngIf="error">
+                {{ error }}
+            </div>
+        </div>
+
+        <!-- input field section -->
+        <div class="chat-input">
+            <input [(ngModel)]="newMessageTextContent" type="text" (keyup.enter)="onSend()" placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}" />
+            <button (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading">
+                <fa-icon [icon]="faPaperPlane"></fa-icon>
+            </button>
+        </div>
+    </div>
+</div>
