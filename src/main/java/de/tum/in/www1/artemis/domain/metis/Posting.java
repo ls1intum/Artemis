@@ -37,6 +37,9 @@ public abstract class Posting extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    /**
+     * Holds the time when the content of this posting has been updated the last time, or null if the content has never been updated.
+     */
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate = null;
 
@@ -52,14 +55,6 @@ public abstract class Posting extends DomainObject {
 
     @Transient
     private UserRole authorRoleTransient;
-
-    /**
-     * Called whenever this entity is updated, but not on the initial create.
-     */
-    @PreUpdate
-    public void onPreUpdate() {
-        setUpdatedDate(ZonedDateTime.now());
-    }
 
     public String getTokenizedContent() {
         return tokenizedContent;

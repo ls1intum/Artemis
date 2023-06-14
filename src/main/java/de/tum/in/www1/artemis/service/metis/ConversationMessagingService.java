@@ -161,11 +161,9 @@ public class ConversationMessagingService extends PostingService {
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
-
-        messagePost.setContent(messagePost.getContent());
-
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
+        existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
         updatedPost.setConversation(conversation);
