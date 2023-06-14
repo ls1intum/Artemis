@@ -174,7 +174,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     private initializeForm() {
-        console.log('init form');
         if (this.form) {
             return;
         }
@@ -191,7 +190,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
-            optional: [undefined, [(c: AbstractControl) => this.canBeOptional(c)]],
+            optional: [false, [this.canBeOptional()]],
         });
         this.selectedLectureUnitsInTable = [];
 
@@ -279,44 +278,52 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         });
     }
 
+    regexValidator(regex: RegExp): ValidatorFn {
+        return (control: AbstractControl): { [key: string]: any } | null => {
+            const allowed = regex.test(control.value);
+            return allowed ? null : { forbidden: { value: control.value } };
+        };
+    }
+
     /**
      * Validator to make sure that a competency can only be optional if no exercise is completely included in the score
      */
-    canBeOptional(control: AbstractControl): ValidationErrors | null {
-        if (!control) {
-            // console.log("early return 1");
-            return null;
-        }
+    canBeOptional(): ValidatorFn {
+        return (control: FormControl) => {
+            console.log('executed 1');
 
-        if (!this.form?.value.optional) {
-            // console.log("early return 2 " + this.form + this.form?.value + this.form?.value.optional);
-            return null;
-        }
+            if (!this.form?.value.optional) {
+                console.log('executed 1.1 ' + this.form?.value.optional);
+                return null;
+            }
 
-        if (!this.formData.id) {
-            // console.log("early return 3");
-            return null;
-        }
+            console.log('executed 2');
 
-        let requiredExerciseExists = false;
-        this.learningGoalService
-            .findById(this.formData.id, this.courseId)
-            .pipe(
-                map((res) => {
-                    if (res.body) {
-                        return res.body;
-                    }
-                    return null;
-                }),
-            )
-            .subscribe({
-                next: (learningGoal) => {
-                    if (learningGoal && learningGoal.exercises) {
-                        requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-        return requiredExerciseExists ? { canBeOptional: { valid: false } } : null;
+            if (!this.formData.id) {
+                return null;
+            }
+
+            let requiredExerciseExists = false;
+            console.log('executed 3');
+            this.learningGoalService
+                .findById(this.formData.id, this.courseId)
+                .pipe(
+                    map((res) => {
+                        if (res.body) {
+                            return res.body;
+                        }
+                        return null;
+                    }),
+                )
+                .subscribe({
+                    next: (learningGoal) => {
+                        if (learningGoal && learningGoal.exercises) {
+                            requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+                        }
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
+            return requiredExerciseExists ? { canBeOptional: false } : null;
+        };
     }
 }

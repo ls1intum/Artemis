@@ -137,14 +137,17 @@ describe('LearningGoalFormComponent', () => {
         const exampleOptional = true;
         learningGoalFormComponent.optionalControl!.setValue(exampleOptional);
 
+        console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
         learningGoalFormComponentFixture.detectChanges();
-
         // test validator alone (REMOVE LATER!)
-        console.log('before wait' + learningGoalFormComponent.form.valid);
-        //console.log(learningGoalFormComponent.optionalControl.valid);
+        console.log(learningGoalFormComponent.optionalControl.value);
+        console.log(learningGoalFormComponent.optionalControl.hasError());
+        console.log(learningGoalFormComponent.optionalControl.valid);
 
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        console.log('after wait' + learningGoalFormComponent.form.valid);
+        console.log(learningGoalFormComponent.optionalControl.value);
+        console.log(learningGoalFormComponent.optionalControl.hasError());
+        console.log(learningGoalFormComponent.optionalControl.valid);
         expect(learningGoalFormComponent.form.valid).toBeFalse();
         expect(findByIdSpy).toHaveBeenCalledOnce();
         const submitButton = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
