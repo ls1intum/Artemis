@@ -27,7 +27,7 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.programmingexercise.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ContinuousIntegrationTestService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 
