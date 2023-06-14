@@ -50,6 +50,9 @@ public class ModelFactory {
 
     public static final String DEFAULT_BRANCH = "main";
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureFactory#generateLecture(ZonedDateTime, ZonedDateTime, Course)}
+     */
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
         lecture.setStartDate(startDate);
@@ -61,6 +64,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureFactory#generateAttachment(ZonedDateTime)}
      * Create a dummy attachment for testing
      *
      * @param date The optional upload and release date to set on the attachment
@@ -79,6 +83,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.lecture.LectureFactory#generateAttachmentWithFile(ZonedDateTime)}
      * Create a dummy attachment for testing with a placeholder image file on disk
      *
      * @param startDate The release date to set on the attachment
@@ -98,6 +103,9 @@ public class ModelFactory {
         return attachment;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory#generateQuizBatch(QuizExercise, ZonedDateTime)}
+     */
     public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {
         var quizBatch = new QuizBatch();
         quizBatch.setQuizExercise(quizExercise);
@@ -105,6 +113,9 @@ public class ModelFactory {
         return quizBatch;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory#generateQuizExercise(ZonedDateTime, ZonedDateTime, QuizMode, Course)}
+     */
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
         QuizExercise quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
         quizExercise.setTitle("my cool quiz title");
@@ -123,6 +134,9 @@ public class ModelFactory {
         return quizExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory#generateQuizExerciseForExam(ExerciseGroup)}
+     */
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
         var quizExercise = (QuizExercise) populateExerciseForExam(new QuizExercise(), exerciseGroup);
 
@@ -149,26 +163,42 @@ public class ModelFactory {
         return quizExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateProgrammingExercise(ZonedDateTime, ZonedDateTime, Course)}
+     */
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         return generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateProgrammingExercise(ZonedDateTime, ZonedDateTime, Course, ProgrammingLanguage)}
+     */
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course, ProgrammingLanguage programmingLanguage) {
         var programmingExercise = (ProgrammingExercise) populateExercise(new ProgrammingExercise(), releaseDate, dueDate, null, course);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateProgrammingExerciseForExam(ExerciseGroup)}
+     */
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
         return generateProgrammingExerciseForExam(exerciseGroup, ProgrammingLanguage.JAVA);
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateProgrammingExerciseForExam(ExerciseGroup, ProgrammingLanguage)}
+     */
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
         var programmingExercise = (ProgrammingExercise) populateExerciseForExam(new ProgrammingExercise(), exerciseGroup);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#populateProgrammingExercise(ProgrammingExercise, ProgrammingLanguage)}
+     */
     private static void populateProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingLanguage programmingLanguage) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
@@ -192,6 +222,10 @@ public class ModelFactory {
         programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory#generateModelingExercise(ZonedDateTime, ZonedDateTime, ZonedDateTime, DiagramType, Course)}
+     */
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         var modelingExercise = (ModelingExercise) populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
@@ -201,6 +235,9 @@ public class ModelFactory {
         return modelingExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory#generateModelingExerciseForExam(DiagramType, ExerciseGroup)}
+     */
     public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
         var modelingExercise = (ModelingExercise) populateExerciseForExam(new ModelingExercise(), exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
@@ -209,18 +246,28 @@ public class ModelFactory {
         return modelingExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextExercise(ZonedDateTime, ZonedDateTime, ZonedDateTime, Course)}
+     */
     public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         var textExercise = (TextExercise) populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setExampleSolution("This is my example solution");
         return textExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextExerciseForExam(ExerciseGroup)}
+     */
     public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup) {
         var textExercise = (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup);
         textExercise.setExampleSolution("This is my example solution");
         return textExercise;
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory#generateFileUploadExercise(ZonedDateTime, ZonedDateTime, ZonedDateTime, String, Course)}
+     */
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
             Course course) {
         var fileUploadExercise = (FileUploadExercise) populateExercise(new FileUploadExercise(), releaseDate, dueDate, assessmentDueDate, course);
@@ -229,16 +276,25 @@ public class ModelFactory {
         return fileUploadExercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory#generateFileUploadExerciseForExam(String, ExerciseGroup)}
+     */
     public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#getMockFileRepositoryUrl(LocalRepository)}
+     */
     public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
         return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseFactory#populateExercise(Exercise, ZonedDateTime, ZonedDateTime, ZonedDateTime, Course)}
+     */
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -257,6 +313,9 @@ public class ModelFactory {
         return exercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseFactory#populateExerciseForExam(Exercise, ExerciseGroup)}
+     */
     private static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -279,6 +338,9 @@ public class ModelFactory {
         return exercise;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.user.UserFactory#generateActivatedUsers(String, String, String[], Set, int)}
+     */
     public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
@@ -292,11 +354,15 @@ public class ModelFactory {
         return generatedUsers;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.user.UserFactory#generateActivatedUsers(String, String[], Set, int)}
+     */
     public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
         return generateActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.user.UserFactory#generateActivatedUsersWithRegistrationNumber(String, String[], Set, int, String)}
      * Generate users that have registration numbers
      *
      * @param loginPrefix              prefix that will be added in front of every user's login
@@ -315,6 +381,9 @@ public class ModelFactory {
         return generatedUsers;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.user.UserFactory#generateActivatedUser(String, String)}
+     */
     public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
@@ -329,11 +398,15 @@ public class ModelFactory {
         return user;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.user.UserFactory#generateActivatedUser(String)}
+     */
     public static User generateActivatedUser(String login) {
         return generateActivatedUser(login, USER_PASSWORD);
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.team.TeamFactory#generateTeamForExercise(Exercise, String, String, String, int, User, String, String)}
      * Generate a team
      *
      * @param exercise           exercise of the team
@@ -367,6 +440,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.team.TeamFactory#generateTeamForExercise(Exercise, String, String, int, User)}
      * Generate a team
      *
      * @param exercise         exercise of the team
@@ -381,6 +455,7 @@ public class ModelFactory {
     }
 
     /**
+     * No usage -> not moved
      * Generate teams
      *
      * @param exercise        exercise of the teams
@@ -396,6 +471,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.team.TeamFactory#generateTeamsForExercise(Exercise, String, String, int, User, String, String)}
      * Generate teams
      *
      * @param exercise           exercise of the teams
@@ -418,6 +494,7 @@ public class ModelFactory {
     }
 
     /**
+     * No usage -> not moved
      * Generate teams
      *
      * @param exercise           exercise of the teams
@@ -439,10 +516,16 @@ public class ModelFactory {
         return teams;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseFactory#generateCourse(Long, ZonedDateTime, ZonedDateTime, Set)}
+     */
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         return generateCourse(id, startDate, endDate, exercises, null, null, null, null);
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateTextSubmission(String, Language, boolean)}
+     */
     public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text(text);
@@ -454,6 +537,9 @@ public class ModelFactory {
         return textSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateLateTextSubmission(String, Language)}
+     */
     public static TextSubmission generateLateTextSubmission(String text, Language language) {
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text(text);
@@ -463,6 +549,9 @@ public class ModelFactory {
         return textSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateProgrammingSubmission(boolean, String, SubmissionType)}
+     */
     public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted, String commitHash, SubmissionType type) {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
@@ -474,6 +563,9 @@ public class ModelFactory {
         return programmingSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateProgrammingSubmission(boolean)}
+     */
     public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
@@ -483,6 +575,9 @@ public class ModelFactory {
         return programmingSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateFileUploadSubmission(boolean)}
+     */
     public static FileUploadSubmission generateFileUploadSubmission(boolean submitted) {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(submitted);
@@ -492,6 +587,9 @@ public class ModelFactory {
         return fileUploadSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateFileUploadSubmissionWithFile(boolean, String)}
+     */
     public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
         FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
         fileUploadSubmission.setFilePath(filePath);
@@ -501,6 +599,9 @@ public class ModelFactory {
         return fileUploadSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateLateFileUploadSubmission()}
+     */
     public static FileUploadSubmission generateLateFileUploadSubmission() {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(true);
@@ -508,6 +609,9 @@ public class ModelFactory {
         return fileUploadSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateModelingSubmission(String, boolean)}
+     */
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
         ModelingSubmission submission = new ModelingSubmission();
         submission.setModel(model);
@@ -518,6 +622,9 @@ public class ModelFactory {
         return submission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateQuizSubmission(boolean)}
+     */
     public static QuizSubmission generateQuizSubmission(boolean submitted) {
         QuizSubmission submission = new QuizSubmission();
         submission.setSubmitted(submitted);
@@ -527,6 +634,9 @@ public class ModelFactory {
         return submission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateExampleSubmission(Submission, Exercise, boolean)}
+     */
     public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
         ExampleSubmission exampleSubmission = new ExampleSubmission();
         exampleSubmission.setSubmission(submission);
@@ -535,12 +645,19 @@ public class ModelFactory {
         return exampleSubmission;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseFactory#generateCourse(Long, ZonedDateTime, ZonedDateTime, Set, String, String, String, String)}
+     */
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
         return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
                 true, 7);
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.course.CourseFactory#generateCourse(Long, ZonedDateTime, ZonedDateTime, Set, String, String, String, String, Integer, Integer, Integer, int, int, boolean, boolean, int)}
+     */
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
             int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
@@ -583,6 +700,9 @@ public class ModelFactory {
         return course;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseFactory#generateOnlineCourseConfiguration(Course, String, String, String, String)}
+     */
     public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         updateOnlineCourseConfiguration(onlineCourseConfiguration, key, secret, userPrefix, originalUrl, UUID.randomUUID().toString());
@@ -590,6 +710,9 @@ public class ModelFactory {
         return onlineCourseConfiguration;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.course.CourseFactory#updateOnlineCourseConfiguration(OnlineCourseConfiguration, String, String, String, String, String)}
+     */
     public static void updateOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration, String key, String secret, String userPrefix, String originalUrl,
             String registrationId) {
         onlineCourseConfiguration.setLtiKey(key);
@@ -600,6 +723,8 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextAssessmentEvent(TextAssessmentEventType, FeedbackType, TextBlockType, Long, Long, Long, Long, Long)}
      * Generates a TextAssessment event with the given parameters
      *
      * @param eventType       the type of the event
@@ -628,6 +753,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateMultipleTextAssessmentEvents(Long, Long, Long, Long, Long)}
      * Generates a list of different combinations of assessment events based on the given parameters
      *
      * @param courseId        the course id of the event
@@ -663,6 +789,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateExamWithStudentReviewDates(Course)}
      * Generates a real exam with student review dates set
      *
      * @param course the associated course
@@ -679,6 +806,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateExam(Course)}
      * Generates a real exam without student review dates set
      *
      * @param course the associated course
@@ -689,6 +817,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateExam(Course, ZonedDateTime, ZonedDateTime, ZonedDateTime, boolean)}
      * Generates an exam
      *
      * @param course      the associated course
@@ -719,6 +848,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateTestExam(Course)}
      * Generates a test exam (test exams have no student review dates)
      *
      * @param course the associated course
@@ -729,6 +859,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateExamHelper(Course, boolean)}
      * Helper method to create an exam
      *
      * @param course   the associated course
@@ -740,6 +871,9 @@ public class ModelFactory {
         return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam);
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateExerciseGroup(boolean, Exam)}
+     */
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setTitle("Exercise group title");
@@ -748,6 +882,9 @@ public class ModelFactory {
         return exerciseGroup;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateStudentExam(Exam)}
+     */
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -756,6 +893,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateStudentExamForTestExam(Exam)}
      * Helper Method to generate a studentExam for a test exam
      *
      * @param exam the exam to be linked to the studentExam
@@ -769,6 +907,9 @@ public class ModelFactory {
         return studentExam;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exam.ExamFactory#generateExamTestRun(Exam)}
+     */
     public static StudentExam generateExamTestRun(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -776,12 +917,18 @@ public class ModelFactory {
         return studentExam;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseFactory#generateGradingCriterion(String)}
+     */
     public static GradingCriterion generateGradingCriterion(String title) {
         var criterion = new GradingCriterion();
         criterion.setTitle(title);
         return criterion;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.ExerciseFactory#generateGradingInstructions(GradingCriterion, int, int)}
+     */
     public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions, int usageCount) {
         var instructions = new ArrayList<GradingInstruction>();
         while (numberOfTestInstructions > 0) {
@@ -798,6 +945,9 @@ public class ModelFactory {
         return instructions;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateFeedback()}
+     */
     public static List<Feedback> generateFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
         Feedback positiveFeedback = createPositiveFeedback(FeedbackType.AUTOMATIC);
@@ -815,6 +965,9 @@ public class ModelFactory {
         return feedbacks;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateManualFeedback()}
+     */
     public static List<Feedback> generateManualFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
         Feedback positiveFeedback = createPositiveFeedback(FeedbackType.MANUAL);
@@ -829,6 +982,9 @@ public class ModelFactory {
         return feedbacks;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#createPositiveFeedback(FeedbackType)}
+     */
     @NotNull
     public static Feedback createPositiveFeedback(FeedbackType type) {
         Feedback positiveFeedback = new Feedback();
@@ -838,6 +994,9 @@ public class ModelFactory {
         return positiveFeedback;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#createNegativeFeedback(FeedbackType)}
+     */
     @NotNull
     public static Feedback createNegativeFeedback(FeedbackType type) {
         Feedback negativeFeedback = new Feedback();
@@ -847,6 +1006,9 @@ public class ModelFactory {
         return negativeFeedback;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#createManualTextFeedback(Double, String)}
+     */
     @NotNull
     public static Feedback createManualTextFeedback(Double credits, String textBlockReference) {
         Feedback feedback = new Feedback();
@@ -857,6 +1019,9 @@ public class ModelFactory {
         return feedback;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateStaticCodeAnalysisFeedbackList(int)}
+     */
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (int i = 0; i < numOfFeedback; i++) {
@@ -865,6 +1030,9 @@ public class ModelFactory {
         return feedbackList;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateStaticCodeAnalysisFeedback()}
+     */
     private static Feedback generateStaticCodeAnalysisFeedback() {
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
@@ -876,6 +1044,9 @@ public class ModelFactory {
         return feedback;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#applySGIonFeedback(Exercise)}
+     */
     public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) {
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
@@ -896,6 +1067,9 @@ public class ModelFactory {
         return feedbacks; // total score should be 3P
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateFeedbackConflictBetweenFeedbacks(Feedback, Feedback)}
+     */
     public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
         FeedbackConflict feedbackConflict = new FeedbackConflict();
         feedbackConflict.setConflict(true);
@@ -907,6 +1081,10 @@ public class ModelFactory {
         return feedbackConflict;
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateToBeImportedProgrammingExercise(String, String, ProgrammingExercise, Course)}
+     */
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
         toBeImported.setCourse(targetCourse);
@@ -956,6 +1134,9 @@ public class ModelFactory {
         return toBeImported;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateStudentParticipation(InitializationState, Exercise, User)}
+     */
     public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setInitializationState(initializationState);
@@ -966,6 +1147,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateStudentParticipationWithoutUser(InitializationState, Exercise)}
      * Generates a minimal student participation without a specific user attached.
      *
      * @param initializationState the state of the participation
@@ -980,6 +1162,9 @@ public class ModelFactory {
         return studentParticipation;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateProgrammingExerciseStudentParticipation(InitializationState, ProgrammingExercise, User)}
+     */
     public static ProgrammingExerciseStudentParticipation generateProgrammingExerciseStudentParticipation(InitializationState initializationState, ProgrammingExercise exercise,
             User user) {
         ProgrammingExerciseStudentParticipation studentParticipation = new ProgrammingExerciseStudentParticipation();
@@ -990,6 +1175,9 @@ public class ModelFactory {
         return studentParticipation;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateResult(boolean, double)}
+     */
     public static Result generateResult(boolean rated, double score) {
         Result result = new Result();
         result.setRated(rated);
@@ -997,6 +1185,9 @@ public class ModelFactory {
         return result;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextBlock(int, int, String)}
+     */
     public static TextBlock generateTextBlock(int startIndex, int endIndex, String text) {
         final TextBlock textBlock = new TextBlock();
         textBlock.setStartIndex(startIndex);
@@ -1006,10 +1197,16 @@ public class ModelFactory {
         return textBlock;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextBlock(int, int)}
+     */
     public static TextBlock generateTextBlock(int startIndex, int endIndex) {
         return generateTextBlock(startIndex, endIndex, "");
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.notification.NotificationFactory#generateSingleUserNotification(ZonedDateTime, User)}
+     */
     public static SingleUserNotification generateSingleUserNotification(ZonedDateTime notificationDate, User recipient) {
         SingleUserNotification singleUserNotification = new SingleUserNotification();
         singleUserNotification.setNotificationDate(notificationDate);
@@ -1017,6 +1214,9 @@ public class ModelFactory {
         return singleUserNotification;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.notification.NotificationFactory#generateGroupNotification(ZonedDateTime, Course, GroupNotificationType)}
+     */
     public static GroupNotification generateGroupNotification(ZonedDateTime notificationDate, Course course, GroupNotificationType type) {
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setNotificationDate(notificationDate);
@@ -1025,6 +1225,9 @@ public class ModelFactory {
         return groupNotification;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.notification.NotificationFactory#generateSystemNotification(ZonedDateTime, ZonedDateTime)}
+     */
     public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expireDate) {
         SystemNotification systemNotification = new SystemNotification();
         systemNotification.setNotificationDate(notificationDate);
@@ -1032,6 +1235,9 @@ public class ModelFactory {
         return systemNotification;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory#generateApollonDiagram(DiagramType, String)}
+     */
     public static ApollonDiagram generateApollonDiagram(DiagramType diagramType, String title) {
         ApollonDiagram apollonDiagram = new ApollonDiagram();
         apollonDiagram.setDiagramType(diagramType);
@@ -1040,6 +1246,8 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)}
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
      * @param fullName                    full name of the build (includes Folder, Job and Build number)
@@ -1072,6 +1280,8 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateTestResultsDTOWithCustomFeedback(String, List, List, ProgrammingLanguage, boolean)}
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
@@ -1126,11 +1336,19 @@ public class ModelFactory {
                 new ArrayList<>(), testSuite);
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooBuildResult(String, String, String, ZonedDateTime, List, List, List)}
+     */
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
             List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
         return generateBambooBuildResult(repoName, planKey, testSummaryDescription, buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, failedTestNames.isEmpty());
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooBuildResult(String, String, String, ZonedDateTime, List, List, List, boolean)}
+     */
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
             List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
 
@@ -1150,6 +1368,8 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooBuildResultWithLogs(String, String, List, List, ZonedDateTime, List)}
      * Generate a Bamboo notification with build logs of various sizes
      *
      * @param buildPlanKey        the key of the build plan
@@ -1165,6 +1385,10 @@ public class ModelFactory {
         return generateBambooBuildResultWithLogs(buildPlanKey, repoName, successfulTestNames, failedTestNames, buildCompletionDate, vcsDtos, failedTestNames.isEmpty());
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooBuildResultWithLogs(String, String, List, List, ZonedDateTime, List, boolean)}
+     */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
         var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, successful);
@@ -1188,6 +1412,10 @@ public class ModelFactory {
         return notification;
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooBuildResultWithAnalyticsLogs(String, String, List, List, ZonedDateTime, List, boolean)}
+     */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean sca) {
         var notification = generateBambooBuildResult(repoName, buildPlanKey, "Test executed", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, true);
@@ -1222,11 +1450,18 @@ public class ModelFactory {
         return notification;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#createSCAFeedbackWithInactiveCategory(Result)}
+     */
     public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
         return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooBuildResultWithStaticCodeAnalysisReport(String, List, List, ProgrammingLanguage)}
+     */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
         var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>(), true);
@@ -1235,10 +1470,16 @@ public class ModelFactory {
         return notification;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateStaticCodeAnalysisReports(ProgrammingLanguage)}
+     */
     public static List<StaticCodeAnalysisReportDTO> generateStaticCodeAnalysisReports(ProgrammingLanguage language) {
         return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).toList();
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateStaticCodeAnalysisReport(StaticCodeAnalysisTool)}
+     */
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
         var report = new StaticCodeAnalysisReportDTO();
         report.setTool(tool);
@@ -1246,6 +1487,9 @@ public class ModelFactory {
         return report;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateStaticCodeAnalysisIssue(StaticCodeAnalysisTool)}
+     */
     private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue(StaticCodeAnalysisTool tool) {
         // Use a category which is not invisible in the default configuration
         String category = switch (tool) {
@@ -1271,6 +1515,10 @@ public class ModelFactory {
         return issue;
     }
 
+    /**
+     * Moved to
+     * {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateStaticCodeAnalysisCategory(ProgrammingExercise, String, CategoryState, Double, Double)}
+     */
     public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise, String name, CategoryState state, Double penalty,
             Double maxPenalty) {
         var category = new StaticCodeAnalysisCategory();
@@ -1282,11 +1530,15 @@ public class ModelFactory {
         return category;
     }
 
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory#generateBambooTestJob(String, boolean)}
+     */
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
         return new BambooBuildResultNotificationDTO.BambooTestJobDTO(name, name, "SpringTestClass", successful ? List.of() : List.of("bad solution, did not work"));
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextSubmissions(int)}
      * Generates example TextSubmissions
      *
      * @param count How many submissions should be generated (max. 10)
@@ -1322,6 +1574,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.organisation.OrganizationFactory#generateOrganization(String, String, String, String, String, String)}
      * Generate an example organization entity
      *
      * @param name         of organization
@@ -1344,6 +1597,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupFactory#generateTutorialGroup(String, String, Integer, Boolean, String, String)}
      * Generates an example tutorial group
      *
      * @param title                 of tutorial group
@@ -1366,6 +1620,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.tutorialgroups.TutorialGroupFactory#generateTutorialGroupsConfiguration(LocalDate, LocalDate)}
      * Generates an example tutorial group configuration
      *
      * @param start of configuration
@@ -1382,6 +1637,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.bonus.BonusFactory#generateBonus(BonusStrategy, Double, long, long)}
      * Generates a Bonus instance with given arguments.
      *
      * @param bonusStrategy         of bonus
@@ -1406,5 +1662,22 @@ public class ModelFactory {
 
         return bonus;
 
+    }
+
+    /**
+     * Moved to {@link de.tum.in.www1.artemis.assessment.GradingScaleFactory#generateGradingScaleForCourse(Course, Integer, Double)}
+     * Generates a GradingScale instance with given arguments.
+     *
+     * @param course              of grading scale
+     * @param presentationsNumber the number of presentations a student can give
+     * @param presentationsWeight the combined weight of the presentations
+     * @return a new GradingScale instance.
+     */
+    public static GradingScale generateGradingScaleForCourse(Course course, Integer presentationsNumber, Double presentationsWeight) {
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setCourse(course);
+        gradingScale.setPresentationsNumber(presentationsNumber);
+        gradingScale.setPresentationsWeight(presentationsWeight);
+        return gradingScale;
     }
 }

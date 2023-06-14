@@ -374,27 +374,6 @@
                     >
                     </jhi-markdown-editor>
                 </div>
-                <div class="form-check">
-                    <input
-                        id="changePresentationScoreInput"
-                        type="checkbox"
-                        class="form-check-input"
-                        [checked]="course.presentationScore !== 0"
-                        (change)="this.changePresentationScoreInput()"
-                    />
-                    <label for="changePresentationScoreInput" class="form-control-label" jhiTranslate="artemisApp.course.presentationScoreEnabled.title"
-                        >Presentation Score Enabled</label
-                    >
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.course.presentationScoreEnabled.description' | artemisTranslate }}"
-                    ></fa-icon>
-                </div>
-                <div class="form-group" *ngIf="presentationScoreEnabled">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.presentationScore" for="field_presentationScore">Required Presentation Score for Bonus</label>
-                    <input type="number" class="form-control" [defaultValue]="0" name="presentationScore" id="field_presentationScore" formControlName="presentationScore" />
-                </div>
             </div>
             <!-- timezone -->
             <div *ngIf="tutorialGroupsFeatureActivated" class="col-auto border border-warning p-3">
