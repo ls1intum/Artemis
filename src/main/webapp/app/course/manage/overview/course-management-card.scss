@@ -1,5 +1,10 @@
 .card {
     height: 450px;
+    transition: transform 0.2s linear;
+
+    &:hover {
+        transform: scale(1.012);
+    }
 
     .card-title {
         font-size: 1.575rem;
