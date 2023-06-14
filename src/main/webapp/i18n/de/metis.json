@@ -44,11 +44,11 @@
                 "lecture": "Vortrag"
             },
             "channel": {
-                "label": "Kanäle",
-                "show": "Kanäle anzeigen",
-                "hide": "Kanäle einklappen",
-                "redirectToChannel": "Zum Kanäle gehen",
-                "notAMember": "Du bist kein Mitglied des Kanals."
+                "label": "Kanal",
+                "show": "Kanal anzeigen",
+                "hide": "Kanal einklappen",
+                "notAMember": "Du bist kein Mitglied des Kanals.",
+                "noChannel": "Es ist kein Kanal verfügbar."
             },
             "communication": {
                 "label": "Kommunikation",

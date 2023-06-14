@@ -15,7 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Router } from '@angular/router';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -38,6 +38,7 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     // Icons
     faSpinner = faSpinner;
