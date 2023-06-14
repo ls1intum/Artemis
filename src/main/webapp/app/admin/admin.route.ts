@@ -13,6 +13,7 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { IrisSettingsUpdateRoutingModule } from 'app/iris/settings/iris-settings-update-routing.module';
 
 export const adminState: Routes = [
     {
@@ -82,6 +83,10 @@ export const adminState: Routes = [
             {
                 path: 'privacy-statement',
                 loadChildren: () => import('./privacy-statement/privacy-statement-update/privacy-statement-update.module').then((module) => module.PrivacyStatementUpdateModule),
+            },
+            {
+                path: 'iris',
+                loadChildren: () => import('../iris/settings/iris-settings-update-routing.module').then((module) => module.IrisSettingsUpdateRoutingModule),
             },
             ...organizationMgmtRoute,
             ...userManagementRoute,

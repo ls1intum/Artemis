@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.ws.rs.ForbiddenException;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -32,12 +33,16 @@ public class IrisSettingsService {
 
     private final CourseRepository courseRepository;
 
+    private final ApplicationContext applicationContext;
+
     private final IrisSettingsRepository irisSettingsRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public IrisSettingsService(CourseRepository courseRepository, IrisSettingsRepository irisSettingsRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public IrisSettingsService(CourseRepository courseRepository, ApplicationContext applicationContext, IrisSettingsRepository irisSettingsRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
+        this.applicationContext = applicationContext;
         this.irisSettingsRepository = irisSettingsRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -218,7 +223,8 @@ public class IrisSettingsService {
 
         var combinedSettings = new IrisSubSettings();
 
-        var enabled = subSettings2 != null && subSettings2.isEnabled() && subSettings1 != null && subSettings1.isEnabled();
+        var enabled = subSettings2 != null && subSettings2.isEnabled() && subSettings1 != null && subSettings1.isEnabled()
+                && applicationContext.getEnvironment().acceptsProfiles(Profiles.of("iris-gpt3_5"));
         combinedSettings.setEnabled(enabled);
 
         if (!reduced) {
