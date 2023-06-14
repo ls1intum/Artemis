@@ -42,7 +42,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (this.learningGoals == undefined && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
-            if (course?.competencies) {
+            if (course?.competencies && !course.competencies.some((competency) => competency.exercises !== undefined)) {
                 this.setLearningGoals(course.competencies);
             } else {
                 this.isLoading = true;
