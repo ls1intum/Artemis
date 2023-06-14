@@ -52,7 +52,7 @@ export const titleUniqueValidator = (learningGoalService: LearningGoalService, c
  */
 export function canBeOptionalValidator(learningGoalService: LearningGoalService, courseId: number, competencyId?: number): ValidatorFn {
     return (control: FormControl<boolean>) => {
-        if (!control.value || !competencyId) {
+        if (!competencyId) {
             return null;
         }
 
@@ -175,6 +175,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     private initializeForm() {
         if (this.form) {
+            this.optionalControl.setValidators([this.canBeOptionalValidator(this.learningGoalService, this.courseId, this.formData.id)]);
+            this.optionalControl.updateValueAndValidity({ emitEvent: false });
             return;
         }
         let initialTitle: string | undefined = undefined;
@@ -190,7 +192,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
-            optional: [undefined, this.canBeOptionalValidator(this.learningGoalService, this.courseId, this.formData.id)],
+            optional: [undefined, [this.canBeOptionalValidator(this.learningGoalService, this.courseId, this.formData.id)]],
         });
         this.selectedLectureUnitsInTable = [];
 

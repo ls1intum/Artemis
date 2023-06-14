@@ -117,12 +117,6 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.titleControl!.setValue(exampleTitle);
         const exampleDescription = 'lorem ipsum';
         learningGoalFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleLectureUnit = new TextUnit();
-        exampleLectureUnit.id = 1;
-
-        const exampleLecture = new Lecture();
-        exampleLecture.id = 1;
-        exampleLecture.lectureUnits = [exampleLectureUnit];
 
         const exercise = { id: 1, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY } as Exercise;
 
@@ -134,6 +128,9 @@ describe('LearningGoalFormComponent', () => {
             body: learningGoalOfFindByIdResponse,
             status: 200,
         });
+
+        learningGoalFormComponent.courseId = 1;
+        learningGoalFormComponent.formData.id = 2;
 
         const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
 
@@ -162,6 +159,15 @@ describe('LearningGoalFormComponent', () => {
             taxonomy: LearningGoalTaxonomy.ANALYZE,
             optional: true,
         };
+
+        // stubbing learning goal service for validator
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const findByIdResponse: HttpResponse<LearningGoal> = new HttpResponse({
+            body: new LearningGoal(),
+            status: 200,
+        });
+        jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
+
         learningGoalFormComponentFixture.detectChanges();
         learningGoalFormComponent.formData = formData;
         learningGoalFormComponent.ngOnChanges();
