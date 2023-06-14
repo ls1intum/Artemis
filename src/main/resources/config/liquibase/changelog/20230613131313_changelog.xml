@@ -47,5 +47,7 @@
         <addForeignKeyConstraint baseColumnNames="iris_settings_id" baseTableName="programming_exercise_details"
                                  constraintName="FK_PROGRAMMING_EXERCISE_DETAILS_ON_IRIS_SETTINGS"
                                  referencedColumnNames="id" referencedTableName="iris_settings"/>
+
+        <dropColumn tableName="programming_exercise_details" columnName="iris_activated"/>
     </changeSet>
 </databaseChangeLog>
