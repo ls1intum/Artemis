@@ -10,7 +10,7 @@
         <div *ngIf="showContent">
             <jhi-posting-content-part *ngFor="let postingContentPart of postingContentParts" [postingContentPart]="postingContentPart"> </jhi-posting-content-part>
 
-            <span class="edited-text" *ngIf="isEdited">(edited)</span>
+            <span class="edited-text" *ngIf="isEdited">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
         </div>
     </div>
     <!-- not in preview mode: content always shown -->
