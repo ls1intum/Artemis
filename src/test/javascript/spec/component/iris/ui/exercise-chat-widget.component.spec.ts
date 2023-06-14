@@ -223,7 +223,7 @@ describe('ExerciseChatWidgetComponent', () => {
             of(
                 new HttpResponse<IrisMessage>({
                     status: 200,
-                    body: [mockClientMessage, mockServerMessage],
+                    body: mockServerMessage,
                 }),
             ),
         );
@@ -255,7 +255,7 @@ describe('ExerciseChatWidgetComponent', () => {
             of(
                 new HttpResponse<IrisMessage>({
                     status: 200,
-                    body: [mockClientMessage, mockServerMessage],
+                    body: mockServerMessage,
                 }),
             ),
         );
