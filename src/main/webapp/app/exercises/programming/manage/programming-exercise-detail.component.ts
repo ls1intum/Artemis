@@ -202,7 +202,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         }
                         this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris-gpt3_5');
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
                     }
                 });
 

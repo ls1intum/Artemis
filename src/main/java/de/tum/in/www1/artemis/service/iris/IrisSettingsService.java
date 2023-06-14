@@ -224,7 +224,7 @@ public class IrisSettingsService {
         var combinedSettings = new IrisSubSettings();
 
         var enabled = subSettings2 != null && subSettings2.isEnabled() && subSettings1 != null && subSettings1.isEnabled()
-                && applicationContext.getEnvironment().acceptsProfiles(Profiles.of("iris-gpt3_5"));
+                && applicationContext.getEnvironment().acceptsProfiles(Profiles.of("iris"));
         combinedSettings.setEnabled(enabled);
 
         if (!reduced) {
