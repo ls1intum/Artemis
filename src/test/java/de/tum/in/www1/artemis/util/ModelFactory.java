@@ -1538,7 +1538,7 @@ public class ModelFactory {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory#generateTextSubmissions(int)}
+     * Moved to {@link de.tum.in.www1.artemis.participation.ParticipationFactory#generateTextSubmissions(int)}
      * Generates example TextSubmissions
      *
      * @param count How many submissions should be generated (max. 10)
