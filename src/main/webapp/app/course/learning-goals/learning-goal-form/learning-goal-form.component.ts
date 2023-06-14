@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { merge, of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ValidatorFn } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
@@ -75,7 +76,6 @@ export function canBeOptionalValidator(learningGoalService: LearningGoalService,
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
-
         return requiredExerciseExists ? { canBeOptional: { valid: false } } : null;
     };
 }
@@ -125,7 +125,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
-    canBeOptionalValidator = canBeOptionalValidator;
     learningGoalTaxonomy = LearningGoalTaxonomy;
 
     @Output()
@@ -144,6 +143,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         private learningGoalService: LearningGoalService,
         private translateService: TranslateService,
         public lectureUnitService: LectureUnitService,
+        private alertService: AlertService,
     ) {}
 
     get titleControl() {
@@ -174,9 +174,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     private initializeForm() {
+        console.log('init form');
         if (this.form) {
-            this.optionalControl.setValidators([this.canBeOptionalValidator(this.learningGoalService, this.courseId, this.formData.id)]);
-            this.optionalControl.updateValueAndValidity({ emitEvent: false });
             return;
         }
         let initialTitle: string | undefined = undefined;
@@ -192,7 +191,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
-            optional: [undefined, [this.canBeOptionalValidator(this.learningGoalService, this.courseId, this.formData.id)]],
+            optional: [undefined, [(c: AbstractControl) => this.canBeOptional(c)]],
         });
         this.selectedLectureUnitsInTable = [];
 
@@ -278,5 +277,46 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             lectureTitle: lecture.title,
             noOfConnectedUnits: noOfSelectedUnitsInLecture,
         });
+    }
+
+    /**
+     * Validator to make sure that a competency can only be optional if no exercise is completely included in the score
+     */
+    canBeOptional(control: AbstractControl): ValidationErrors | null {
+        if (!control) {
+            // console.log("early return 1");
+            return null;
+        }
+
+        if (!this.form?.value.optional) {
+            // console.log("early return 2 " + this.form + this.form?.value + this.form?.value.optional);
+            return null;
+        }
+
+        if (!this.formData.id) {
+            // console.log("early return 3");
+            return null;
+        }
+
+        let requiredExerciseExists = false;
+        this.learningGoalService
+            .findById(this.formData.id, this.courseId)
+            .pipe(
+                map((res) => {
+                    if (res.body) {
+                        return res.body;
+                    }
+                    return null;
+                }),
+            )
+            .subscribe({
+                next: (learningGoal) => {
+                    if (learningGoal && learningGoal.exercises) {
+                        requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+        return requiredExerciseExists ? { canBeOptional: { valid: false } } : null;
     }
 }
