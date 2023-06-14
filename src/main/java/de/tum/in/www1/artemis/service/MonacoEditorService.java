@@ -80,6 +80,7 @@ public class MonacoEditorService {
      * by cloning its repository locally.
      *
      * @param participation to initialize
+     * @return The configuration parameters of the initialized LSP participation
      */
     public LspConfig initLsp(Participation participation) throws IOException, LspException {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -116,6 +117,7 @@ public class MonacoEditorService {
      * monaco integration server.
      *
      * @param participation the participation used to initialize the terminal with
+     * @param serverUrl     Url of the external server to send the initialization request to
      * @return The configuration parameters of the initialized terminal
      */
     public LspConfig initTerminal(Participation participation, String serverUrl) throws IOException {
@@ -155,6 +157,10 @@ public class MonacoEditorService {
 
     /**
      * Overloaded method retrieving the participation and calling the actual 'forwardFileUpdates" method
+     *
+     * @param participationId The ID of the participation
+     * @param fileUpdates     The list of files updates to forward
+     * @param serverUrl       Url of the LSP server to forward the updates to
      */
     public void forwardFileUpdates(long participationId, List<FileSubmission> fileUpdates, String serverUrl) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -335,6 +341,7 @@ public class MonacoEditorService {
     /**
      * Returns the status of all registered LSP servers
      *
+     * @param updateMetrics If set to true, the statuses of the LSP server is updated before retrieval
      * @return Map containing the LSP server's URL as Key and status as value
      */
     public List<LspServerStatus> getLspServersStatus(boolean updateMetrics) {

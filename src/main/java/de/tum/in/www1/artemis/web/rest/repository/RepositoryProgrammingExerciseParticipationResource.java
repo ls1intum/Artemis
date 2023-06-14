@@ -286,12 +286,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId id of participation to which the files belong
      * @param submissions     information about the file updates
      * @param commit          whether to commit after updating the files
+     * @param LSPServerUrl    optional URL of a LSP server to forward the changes to
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/repository/{participationId}/files")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam(defaultValue = "false") boolean commit, @RequestParam(required = false) String monacoServerUrl) {
+            @RequestParam(defaultValue = "false") boolean commit, @RequestParam(required = false) String LSPServerUrl) {
 
         // Git repository must be available to update a file
         Repository repository;
@@ -331,8 +332,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             }
         }
 
-        if (!monacoServerUrl.isEmpty()) {
-            this.monacoEditorService.forwardFileUpdates(participationId, submissions, monacoServerUrl);
+        if (!LSPServerUrl.isEmpty()) {
+            this.monacoEditorService.forwardFileUpdates(participationId, submissions, LSPServerUrl);
         }
 
         return ResponseEntity.ok(fileSaveResult);

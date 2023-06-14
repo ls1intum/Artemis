@@ -56,18 +56,35 @@ public class MonacoEditorResource {
         this.featureToggleService = featureToggleService;
     }
 
+    /**
+     * GET /monaco/list : Retrieve list of LSP servers
+     *
+     * @return A list of connected LSP servers
+     */
     @GetMapping("monaco/list")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<String>> getLspServers() {
         return ResponseEntity.ok(monacoEditorService.getLspServers());
     }
 
+    /**
+     * GET /monaco/status : Retrieval of statuses of connected LSP server
+     *
+     * @param updateMetrics If true, requests the status metrics to be updated before retrieval
+     * @return List of status metrics of each connected LSP server
+     */
     @GetMapping("monaco/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<LspServerStatus>> getLspServersStatus(@RequestParam("update") boolean updateMetrics) {
         return ResponseEntity.ok(monacoEditorService.getLspServersStatus(updateMetrics));
     }
 
+    /**
+     * POST /monaco/add : Adds a new LSP server to connect to
+     *
+     * @param monacoServerUrl URL pointing to the server to connect to
+     * @return The status metrics of the added server
+     */
     @PostMapping("monaco/add")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LspServerStatus> addLspServers(@RequestParam("monacoServerUrl") String monacoServerUrl) {
@@ -80,12 +97,26 @@ public class MonacoEditorResource {
         }
     }
 
+    /**
+     * PUT /monaco/pause : Requests the pausing of a given LSP server which won't be
+     * assigned any more user sessions until resumed.
+     *
+     * @param monacoServerUrl URL pointing to the server to pause
+     * @return A boolean value representing the paused state of the LSP server
+     */
     @PutMapping("monaco/pause")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Boolean> pauseLspServers(@RequestParam("monacoServerUrl") String monacoServerUrl) {
         return ResponseEntity.ok(monacoEditorService.pauseLspServer(monacoServerUrl));
     }
 
+    /**
+     * GET /monaco/init-lsp/:participationId : Requests the initialization of a new LSP session
+     * related to a given participation
+     *
+     * @param participationId The ID of the participation related to the LSP session to initialize
+     * @return The configuration parameters of the initialized LSP participation
+     */
     @GetMapping("monaco/init-lsp/{participationId}")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.LSP)
@@ -111,6 +142,13 @@ public class MonacoEditorResource {
         }
     }
 
+    /**
+     * GET /monaco/init-terminal/:participationId : Requests the initialization of a new terminal session
+     * related to a given participation
+     *
+     * @param participationId The ID of the participation related to the terminal session to initialize
+     * @return The configuration parameters of the initialized LSP server terminal session
+     */
     @GetMapping("monaco/init-terminal/{participationId}")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.EditorTerminal)
@@ -133,6 +171,15 @@ public class MonacoEditorResource {
         }
     }
 
+    /**
+     * PUT /monaco/update-files/:participationId : Forwards files changes to the LSP server
+     * managing the LSP session.
+     *
+     * @param fileUpdates     List of files changes to forward
+     * @param participationId The ID of the participation related to the LSP session
+     * @param monacoServerUrl URL pointing to the LSP server managing the LSP session
+     * @return
+     */
     @PutMapping("monaco/update-files/{participationId}")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.LSP)
