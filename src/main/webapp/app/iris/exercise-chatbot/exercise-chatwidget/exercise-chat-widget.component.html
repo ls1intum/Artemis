@@ -29,7 +29,7 @@
                         <div class="rate-message-buttons">
                             <fa-icon
                                 (click)="rateMessage(message.id, i, true)"
-                                [class]="message.helpful !== true ? 'clickable notClicked' : 'thumbsUpClicked'"
+                                [class]="message.helpful !== true ? 'clickable rate-button-not-clicked' : 'thumbs-up-clicked'"
                                 style="margin-right: 15px"
                                 [icon]="faThumbsUp"
                                 size="sm"
@@ -37,7 +37,7 @@
                             </fa-icon>
                             <fa-icon
                                 (click)="rateMessage(message.id, i, false)"
-                                [class]="message.helpful !== false ? 'clickable notClicked' : 'thumbsDownClicked'"
+                                [class]="message.helpful !== false ? 'clickable rate-button-not-clicked' : 'thumbs-down-clicked'"
                                 [icon]="faThumbsDown"
                                 size="sm"
                             >
