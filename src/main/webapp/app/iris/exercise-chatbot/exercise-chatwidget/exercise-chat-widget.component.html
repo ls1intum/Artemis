@@ -27,21 +27,17 @@
                             <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                         </div>
                         <div class="rate-message-buttons">
-                            <fa-icon
-                                (click)="rateMessage(message.id, i, true)"
-                                [class]="message.helpful !== true ? 'clickable rate-button-not-clicked' : 'thumbs-up-clicked'"
-                                style="margin-right: 15px"
-                                [icon]="faThumbsUp"
-                                size="sm"
-                            >
-                            </fa-icon>
-                            <fa-icon
-                                (click)="rateMessage(message.id, i, false)"
-                                [class]="message.helpful !== false ? 'clickable rate-button-not-clicked' : 'thumbs-down-clicked'"
-                                [icon]="faThumbsDown"
-                                size="sm"
-                            >
-                            </fa-icon>
+                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful === true">
+                                <fa-icon
+                                    [class]="message.helpful === true ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
+                                    style="margin-right: 15px"
+                                    [icon]="faThumbsUp"
+                                    size="sm"
+                                />
+                            </button>
+                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="message.helpful === false">
+                                <fa-icon [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'" [icon]="faThumbsDown" size="sm" />
+                            </button>
                         </div>
                     </div>
                 </div>
