@@ -201,7 +201,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForCourseInvalidBasicPresentationConfiguration() throws Exception {
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
         // The presentationsNumber and presentationsWeight must be null.
@@ -223,7 +223,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForCourseInvalidGradedPresentationConfiguration() throws Exception {
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
         // The presentationsNumber must be above 0. The presentationsWeight must be between 0 and 99.
@@ -245,7 +245,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForCourseWithChangedPresentationScore() throws Exception {
-        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
         course.setPresentationScore(5);
 

@@ -782,11 +782,11 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setPresentationScore(0);
 
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 1, 20.);
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 1, 20.);
         gradingScaleService.saveGradingScale(gradingScale);
 
         StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
-                database.getUserByLogin(TEST_PREFIX + "student1"));
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation1 = participationRepo.save(participation1);
 
         // SHOULD ADD FIRST PRESENTATION GRADE
@@ -806,7 +806,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // SHOULD NOT ADD SECOND PRESENTATION GRADE
         StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise,
-                database.getUserByLogin(TEST_PREFIX + "student1"));
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation2 = participationRepo.save(participation2);
 
         participation2.setPresentationScore(100.0);
