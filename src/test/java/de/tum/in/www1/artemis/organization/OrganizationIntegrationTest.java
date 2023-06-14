@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.organisation;
+package de.tum.in.www1.artemis.organization;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;

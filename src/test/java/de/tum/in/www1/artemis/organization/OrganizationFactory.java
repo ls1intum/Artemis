@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.organisation;
+package de.tum.in.www1.artemis.organization;
 
 import de.tum.in.www1.artemis.domain.Organization;
 

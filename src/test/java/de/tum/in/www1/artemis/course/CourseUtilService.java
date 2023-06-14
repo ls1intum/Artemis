@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtil
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.organisation.OrganisationUtilService;
+import de.tum.in.www1.artemis.organization.OrganizationUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
@@ -92,7 +92,7 @@ public class CourseUtilService {
     private ExamRepository examRepository;
 
     @Autowired
-    private OrganisationUtilService organizationTestService;
+    private OrganizationUtilService organizationTestService;
 
     @Autowired
     private LectureUtilService lectureUtilService;

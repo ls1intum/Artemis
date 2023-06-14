@@ -1574,7 +1574,7 @@ public class ModelFactory {
     }
 
     /**
-     * Moved to {@link de.tum.in.www1.artemis.organisation.OrganizationFactory#generateOrganization(String, String, String, String, String, String)}
+     * Moved to {@link de.tum.in.www1.artemis.organization.OrganizationFactory#generateOrganization(String, String, String, String, String, String)}
      * Generate an example organization entity
      *
      * @param name         of organization

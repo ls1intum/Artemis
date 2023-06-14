@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.organisation;
+package de.tum.in.www1.artemis.organization;
 
 import java.util.UUID;
 
@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
-public class OrganisationUtilService {
+public class OrganizationUtilService {
 
     @Autowired
     private OrganizationRepository organizationRepository;
