@@ -9,6 +9,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.BadRequestException;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -120,6 +122,7 @@ public class MonacoEditorService {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
+        validateServerUrl(serverUrl);
 
         String url = serverUrl + this.terminalInitEndpoint;
 
@@ -169,6 +172,7 @@ public class MonacoEditorService {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
+        validateServerUrl(serverUrl);
 
         String url = serverUrl + this.forwardUpdatesEndpoint;
 
@@ -195,6 +199,7 @@ public class MonacoEditorService {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
+        validateServerUrl(serverUrl);
 
         String url = serverUrl + this.forwardRenameEndpoint;
 
@@ -222,6 +227,7 @@ public class MonacoEditorService {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
+        validateServerUrl(serverUrl);
 
         String url = serverUrl + this.forwardRemovalEndpoint;
 
@@ -436,6 +442,19 @@ public class MonacoEditorService {
             unhealthyStatus.setPaused(serverStatus.isPaused());
             unhealthyStatus.setTimestamp(new Date());
             return unhealthyStatus;
+        }
+    }
+
+    /**
+     * Method validating a provided LSP server URL by checking
+     * if contained in the list of connected servers. If not,
+     * an exception is thrown.
+     *
+     * @param serverUrl The serverUrl to validate
+     */
+    private void validateServerUrl(String serverUrl) {
+        if (this.lspServersStatus.stream().noneMatch(lspServer -> lspServer.getUrl().equals(serverUrl))) {
+            throw new BadRequestException();
         }
     }
 }
