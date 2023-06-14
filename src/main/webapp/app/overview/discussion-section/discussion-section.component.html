@@ -17,8 +17,10 @@
                 </div>
             </div>
             <!-- body -->
-            <div *ngIf="isNotAChannelMember; else channelMessages" class="card-body" jhiTranslate="artemisApp.metis.channel.notAMember">Not a member.</div>
-            <ng-template #channelMessages>
+            <div *ngIf="isNotAChannelMember || noChannelAvailable; else postsOrMessages" class="card-body">
+                {{ (isNotAChannelMember ? 'artemisApp.metis.channel.notAMember' : 'artemisApp.metis.channel.noChannel') | artemisTranslate }}
+            </div>
+            <ng-template #postsOrMessages>
                 <div class="card-body pt-0">
                     <div class="my-2" *ngIf="currentPost !== undefined; else threadView">
                         <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>

@@ -32,6 +32,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     channel: Channel;
 
     isNotAChannelMember: boolean;
+    noChannelAvailable: boolean;
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
@@ -177,6 +178,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             return {
                 next: (channel: Channel) => {
                     this.channel = channel ?? undefined;
+
+                    if (!this.channel && this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.MESSAGING_ONLY) {
+                        this.noChannelAvailable = true;
+                        this.collapsed = true;
+                        return;
+                    }
+
                     const contextFilter = this.channel?.id
                         ? { conversationId: this.channel.id }
                         : {
