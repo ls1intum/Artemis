@@ -53,6 +53,9 @@ public abstract class Posting extends DomainObject {
     @Transient
     private UserRole authorRoleTransient;
 
+    /**
+     * Called whenever this entity is updated, but not on the initial create.
+     */
     @PreUpdate
     public void onPreUpdate() {
         setUpdatedDate(ZonedDateTime.now());
