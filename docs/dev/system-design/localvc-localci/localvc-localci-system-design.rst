@@ -9,6 +9,7 @@ The deployment with local VC and local CI (without using an external user manage
 
    Local VC and Local CI Deployment
 
+Employing the local VCS and local CIS, administrators can deploy the Artemis application server without the need for dedicated VCS and CIS installations.
 This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
 Developers have fewer applications to run in parallel, which translates into decreased system requirements.
 See :ref:`Local CI and local VC Setup` on how to set the system up.
@@ -28,22 +29,22 @@ The following diagram shows an overview of the components in the local VC subsys
 
    Local VC Subsystem
 
-The ``Local VC Service`` implements the ``VersionControlService`` interface and thus contains methods that the exercise management subsystem and the exercise participation subsystem need to interact with the VC system. E.g. the ``createRepository()`` method creates a repository on the file system.
+The ``Local VC Service`` implements the ``VersionControlService`` interface and thus contains methods that the exercise management subsystem and the exercise participation subsystem need to interact with the VC system.
+E.g. the ``createRepository()`` method creates a repository on the file system.
 For users to be able to access the repositories using their local Git client, the local VC subsystem contains a ``Git Server`` component.
 It responds to ``fetch`` and ``push`` requests from Git clients, enabling instructors and students to interact with their repositories the way they are used to.
-It encompasses all the logic for implementing a Git server.
+It encompasses all the logic for implementing the Git HTTP protocol server-side.
 This includes extracting the command and parameters from the client request and executing the Git commands on the server-side repository, provided the repository exists, and the user has the requisite permissions.
 It reads objects and refs from the repository, updates the repository for push requests, and formats the results of the Git commands it executes into a response that it sends back to the client.
 This could involve sending objects and refs to the client in a packfile, or transmitting error messages.
 The ``Git Server`` delegates all logic connected to Artemis to the ``Local VC Servlet Service``.
 This service resolves the repository from the file system depending on the repository URL. It also handles user authentication (only Basic Auth for now) and authorization.
 For authorization (e.g. "is the requesting user the owner of the repository?", "has the due date already passed?"), it uses the logic outsourced to the ``RepositoryAccessService`` that the existing online editor also uses.
-Combining the repository access checks into one service increases the robustness of the system's security as developers can focus on maintaining one service and setting up strong security mechanisms there that apply in all parts of the application.
 For push requests, the ``Local VC Servlet Service`` calls the ``processNewProgrammingSubmission()`` method of the ``Programming Submission Service`` to create a new submission and finally calls the local CI subsystem to trigger a new build.
 
-With the VC system operating as part of the Artemis spring application, performance is improved.
-For instance, when an instructor creates a new programming exercise, Artemis copies the template source code to the template repository.
-Artemis merely needs to communicate with the host file system, which is faster than communicating with the external VCS through the network.
+Integrating the VC system into the Artemis server application improves performance.
+For instance, when an instructor creates a new programming exercise, Artemis needs to copy the template source code to the template repository.
+Using the local VCS, Artemis merely needs to communicate with the host file system, copying the files from one location in the file system to another, which is faster than communicating with the external VCS through the network.
 
 The local CI subsystem
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -57,10 +58,7 @@ The following diagram shows an overview of the components in the local CI subsys
 
    Local CI Subsystem
 
-The local CIS provides a concrete implementation of the ``ContinuousIntegrationTriggerService`` interface for the local CIS.
-We do not consider the local CIS implementation of the ``ContinuousIntegrationService`` interface here.
-As the version of the local CIS, that we implement in this thesis, does not plan for the persistence of build plan information, most of the methods in the implementation of the ``ContinuousIntegrationService`` are empty.
-The ``LocalCITriggerService`` provides the ``triggerBuild`` method.
+The local CIS provides a concrete implementation of the ``ContinuousIntegrationTriggerService`` interface for the local CIS, the ``LocalCITriggerService``, providing a ``triggerBuild`` method.
 For instance, instructors can trigger builds for all student repositories from the Artemis user interface, when they changed the configuration of a programming exercise.
 This may be the case after adapting the test cases for the exercise, rendering the build results of all students invalid.
 Similarly, the student can manually trigger a build for their assignment repository from the Artemis user interface when there was an issue during the build process.
@@ -95,6 +93,11 @@ A basic build job for the purpose of providing automated assessment in Artemis c
 - Retrieve the test results from the container.
 - Stop the container.
 - Parse the test results.
+
+We designed the local CIS such that the process of scheduling and managing build jobs is decoupled from the process of actually running the builds and tests.
+Artemis only needs to create a new build job and add it to the queue.
+It does not need to know how or where the build job will be executed.
+This means that we can replace the mechanism for executing the build jobs without aﬀecting the rest of the application, which allows us to outsource the tasks to external build agents in the future.
 
 To address potential security risks associated with executing student code during automated assessment, we run the build job in a container, that the ``LocalCIContainerService`` creates and starts just for this purpose.
 This container functions as an isolated environment.

@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * This service connects the local VC system and the online editor to the local CI system.
  * It contains the {@link #processNewPush(String, Repository)} method that is called by the local VC system and the RepositoryResource and makes sure the correct build is
  * triggered.
- * TODO: It would be preferred to have the logic for processing the submission with the local VC subsystem instead of the local CI subsystem (here).
+ * TODO LOCALVC_CI: It would be preferred to have the logic for processing the submission with the local VC subsystem instead of the local CI subsystem (here).
  * Move all logic that depends on the {@link ProgrammingSubmissionService} into {@link LocalVCServletService#processNewPush(String, Repository)}
  * See <a href="https://github.com/ls1intum/Artemis/issues/6700">#6700</a> for more information.
  */
