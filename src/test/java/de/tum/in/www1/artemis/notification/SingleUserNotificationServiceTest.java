@@ -194,7 +194,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         groupChat.setCreator(userTwo);
         groupChat.setCreationDate(ZonedDateTime.now());
         ConversationParticipant conversationParticipant3 = new ConversationParticipant();
-        conversationParticipant1.setUser(userThree);
+        conversationParticipant3.setUser(userThree);
         groupChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
 
         channel = new Channel();
