@@ -9,7 +9,7 @@ The deployment with local VC and local CI (without using an external user manage
 
    Local VC and Local CI Deployment
 
-Employing the local VCS and local CIS, administrators can deploy the Artemis application server without the need for dedicated VCS and CIS installations.
+Employing the local VCS and local CIS, administrators and developers can set the Artemis application up without the need for dedicated VCS and CIS installations.
 This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
 Developers have fewer applications to run in parallel, which translates into decreased system requirements.
 See :ref:`Local CI and local VC Setup` on how to set the system up.
@@ -76,8 +76,7 @@ The ``ExecutorService`` makes sure that errors happening during the build job ex
 To improve the reliability of the system, the ``LocalCIBuildJobManagementService`` implements a timeout mechanism.
 Administrators can configure a maximum amount of time that build jobs can run.
 If a build job times out, the  ``LocalCIBuildJobManagementService`` interrupts the build job.
-This feature is crucial to prevent jobs that require an abnormally high amount of time from clogging up the system and reducing overall system performance \autocite{farley2010}.
-This ensures the efficient usage of resources and contributes to the reliability of the system.
+This is crucial to prevent jobs that require an abnormally high amount of time from clogging up the system and reducing overall system performance.
 
 The ``LocalCIBuildJobExecutionService`` has the method ``runBuildJob``, that contains the actual logic for executing a build job.
 
