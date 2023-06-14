@@ -7,34 +7,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LinkPreviewService } from 'app/shared/link-preview/service/link-preview.service';
-import { DEFAULT_CONFIG, LinkifyConfigToken, LinkifyModule } from 'app/shared/link-preview/linkify/linkify.module';
+import { LinkifyModule } from 'app/shared/link-preview/linkify/linkify.module';
 import { LinkifyService } from 'app/shared/link-preview/linkify/services/linkify.service';
 
 @NgModule({
     imports: [CommonModule, HttpClientModule, LinkifyModule, MatCardModule, MatButtonModule, MatProgressSpinnerModule],
-    exports: [
-        // LinkPreviewComponent,
-        // LinkPreviewContainerComponent,
-        LinkPreviewDirective,
-    ],
-    declarations: [
-        // LinkPreviewComponent,
-        // LinkPreviewContainerComponent,
-        LinkPreviewDirective,
-    ],
+    exports: [LinkPreviewDirective],
+    declarations: [LinkPreviewDirective],
 })
 export class LinkPreviewModule {
     static forRoot(): ModuleWithProviders<any> {
         return {
             ngModule: LinkPreviewModule,
-            providers: [
-                LinkPreviewService,
-                LinkifyService,
-                {
-                    provide: LinkifyConfigToken,
-                    useValue: DEFAULT_CONFIG,
-                },
-            ],
+            providers: [LinkPreviewService, LinkifyService],
         };
     }
 }

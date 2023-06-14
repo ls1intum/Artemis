@@ -24,15 +24,12 @@ export class LinkPreviewComponent implements OnInit, OnDestroy {
     constructor(public linkPreviewService: LinkPreviewService) {}
 
     ngOnInit(): void {
-        console.log('init LinkPreviewComponent  : ', this.link);
         if (this.link && !this.linkPreview) {
-            // this.loaded = false;
-            console.log('fetching LinkPreviewComponent  : ', this.link.href);
-            this._subscription = this.linkPreviewService.fetchLink(this.link.href).subscribe(
-                (value) => (this.linkPreview = value),
-                (error) => (this.hasError = true),
-                () => (this.loaded = true),
-            );
+            this._subscription = this.linkPreviewService.fetchLink(this.link.href).subscribe({
+                next: (value) => (this.linkPreview = value),
+                error: () => (this.hasError = true),
+                complete: () => (this.loaded = true),
+            });
         }
     }
 

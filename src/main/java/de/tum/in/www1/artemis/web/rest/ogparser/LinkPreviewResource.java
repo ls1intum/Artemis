@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.web.rest.ogparser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.service.linkpreview.LinkPreviewService;
 import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
@@ -26,8 +24,9 @@ public class LinkPreviewResource {
         this.linkPreviewService = linkPreviewService;
     }
 
-    @GetMapping("/link-preview")
+    @PostMapping("/link-preview")
     @PreAuthorize("hasRole('USER')")
+    @Cacheable(value = "linkPreview", key = "#url", unless = "#result == null")
     public LinkPreviewDTO getLinkPreview(@RequestBody String url) {
         log.debug("REST request to get link preview for url: {}", url);
         return linkPreviewService.getLinkPreview(url);

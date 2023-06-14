@@ -13,9 +13,7 @@ export class LinkPreviewContainerComponent {
     @Input() multiple: boolean;
     @Input() showLoadingsProgress = true;
 
-    constructor(public linkPreviewService: LinkPreviewService) {
-        console.log('fetching LinkPreviewContainerComponent  : ');
-    }
+    constructor(public linkPreviewService: LinkPreviewService) {}
 
     trackLinks(index: number, link: Link) {
         return link ? link.href : undefined;
