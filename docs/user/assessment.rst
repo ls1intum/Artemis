@@ -62,10 +62,7 @@ Double-blind Grading
 ^^^^^^^^^^^^^^^^^^^^
 
 The manual assessment begins after the deadline for an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are **blind** to each other's identities, ensuring that their expectations or biases do not influence the results. 
-    
-    .. figure:: assessment/double-blind.png
-            :alt: Double-blind grading
-            :align: center
+
    
 .. _exercise_complaints:
 
