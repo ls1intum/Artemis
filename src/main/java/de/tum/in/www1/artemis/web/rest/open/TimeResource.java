@@ -1,12 +1,16 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.open;
 
 import java.time.Instant;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+
 @RestController
+@RequestMapping("api/public/")
 public class TimeResource {
 
     /**
@@ -14,7 +18,8 @@ public class TimeResource {
      *
      * @return the current server time as Instant
      */
-    @GetMapping("/time")
+    @GetMapping("time")
+    @EnforceNothing
     public ResponseEntity<Instant> time() {
         return ResponseEntity.ok(Instant.now());
     }

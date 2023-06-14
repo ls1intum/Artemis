@@ -30,7 +30,7 @@
             "gradedPresentation": {
                 "label": "Benotete Präsentationen",
                 "number": "Anzahl",
-                "weight": "Gesamtgewichtung"
+                "weight": "Gesamtgewichtung (%)"
             },
             "csv": {
                 "importButton": "Importieren (.csv)",
@@ -92,7 +92,7 @@
                 "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss mindestens 100 sein!",
                 "invalidBasicPresentationIsEnabled": "Die Präsentationen sind für diesen Kurs schon definiert!",
                 "invalidPresentationsNumber": "Die Anzahl der Präsentationen muss ganzzahlig größer als 0 sein!",
-                "invalidPresentationsWeight": "Das Gesamtgewicht der Präsentationen muss zwischen 0 und 100 liegen!"
+                "invalidPresentationsWeight": "Das Gesamtgewicht der Präsentationen muss zwischen 0 und 99 liegen!"
             },
             "overview": {
                 "info": "Der Notenschlüssel basiert auf der erreichbaren Punktzahl. Er kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",

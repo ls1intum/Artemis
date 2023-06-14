@@ -17,19 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -75,21 +67,6 @@ public class UserTestService {
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
 
-    @Autowired
-    private SingleUserNotificationRepository singleUserNotificationRepository;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private ConversationRepository conversationRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
-
-    @Autowired
-    private OneToOneChatRepository oneToOneChatRepository;
-
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -125,131 +102,50 @@ public class UserTestService {
         return student;
     }
 
+    private void assertThatUserWasSoftDeleted(User originalUser, User deletedUser) throws Exception {
+        assertThat(deletedUser.isDeleted()).isTrue();
+        assertThat(deletedUser.getFirstName()).isEqualTo(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        assertThat(deletedUser.getLastName()).isEqualTo(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE);
+        assertThat(deletedUser.getLogin()).isNotEqualTo(originalUser.getLogin());
+        assertThat(deletedUser.getPassword()).isNotEqualTo(originalUser.getPassword());
+        assertThat(deletedUser.getEmail()).endsWith(Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
+        assertThat(deletedUser.getRegistrationNumber()).isEqualTo(null);
+        assertThat(deletedUser.getImageUrl()).isEqualTo(null);
+        assertThat(deletedUser.getActivated()).isFalse();
+    }
+
+    private void assertThatUserWasNotSoftDeleted(User originalUser, User deletedUser) throws Exception {
+        assertThat(deletedUser.isDeleted()).isFalse();
+        assertThat(deletedUser.getFirstName()).isEqualTo(originalUser.getFirstName());
+        assertThat(deletedUser.getLastName()).isEqualTo(originalUser.getLastName());
+        assertThat(deletedUser.getLogin()).isEqualTo(originalUser.getLogin());
+        assertThat(deletedUser.getPassword()).isEqualTo(originalUser.getPassword());
+        assertThat(deletedUser.getEmail()).isEqualTo(originalUser.getEmail());
+        assertThat(deletedUser.getRegistrationNumber()).isEqualTo(originalUser.getVisibleRegistrationNumber());
+        assertThat(deletedUser.getImageUrl()).isEqualTo(originalUser.getImageUrl());
+    }
+
     // Test
     public void deleteUser_isSuccessful() throws Exception {
-        student.setInternal(true);
+        student.setRegistrationNumber("123");
+        student.setImageUrl("https://www.somewebsite.com/image.jpg");
         userRepository.save(student);
-        mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
-        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text", false, null));
-
-        // Creating conversation-related objects
-        var post = new Post();
-        var post2 = new Post();
-        var oneToOneChatPost = new Post();
-        var conversationParticipant = new ConversationParticipant();
-        var conversationParticipant2 = new ConversationParticipant();
-        var conversationParticipant3 = new ConversationParticipant();
-        var conversation = new GroupChat();
-        var oneToOneChat = new OneToOneChat();
-
-        User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
-
-        conversationParticipant.setUser(student);
-        conversationParticipant2.setUser(student2);
-        conversationParticipant3.setUser(student);
-
-        conversation.setConversationParticipants(Collections.singleton(conversationParticipant));
-        conversation.setCreator(student);
-        oneToOneChat.setConversationParticipants(Set.of(conversationParticipant2, conversationParticipant3));
-        oneToOneChat.setCreator(student2);
-
-        conversationParticipant.setConversation(conversation);
-        conversationParticipant2.setConversation(oneToOneChat);
-        conversationParticipant3.setConversation(oneToOneChat);
-
-        post.setAuthor(student);
-        post.setConversation(conversation);
-        post2.setAuthor(student2);
-        post2.setConversation(conversation);
-        oneToOneChatPost.setAuthor(student2);
-        oneToOneChatPost.setConversation(oneToOneChat);
-
-        conversationRepository.save(conversation);
-        oneToOneChatRepository.save(oneToOneChat);
-        postRepository.save(post);
-        postRepository.save(post2);
-        postRepository.save(oneToOneChatPost);
-        conversationParticipantRepository.save(conversationParticipant);
-        conversationParticipantRepository.save(conversationParticipant2);
-        conversationParticipantRepository.save(conversationParticipant3);
-
-        // Sending delete request
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
-
-        // Assertions
-        var deletedUser = userRepository.findById(student.getId());
-        assertThat(deletedUser).isEmpty();
-        assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
-        assertThat(postRepository.findById(post.getId())).isEmpty();
-        assertThat(postRepository.findById(post2.getId())).isEmpty();
-        assertThat(conversationParticipantRepository.findById(conversationParticipant.getId())).isEmpty();
-        assertThat(conversationParticipantRepository.findById(conversationParticipant3.getId())).isEmpty();
-        assertThat(postRepository.findById(post.getId())).isEmpty();
-        assertThat(conversationRepository.findById(conversation.getId())).isEmpty();
-        assertThat(oneToOneChatRepository.findById(oneToOneChat.getId())).isEmpty();
-    }
-
-    // Test
-    public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, false, true, true);
 
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
-        var deletedUser = userRepository.findById(student.getId());
-        assertThat(deletedUser).isEmpty();
+        final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
+        assertThatUserWasSoftDeleted(student, deletedUser);
     }
 
     // Test
-    public void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, true, false, true);
-
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
-
-        var deletedUser = userRepository.findById(student.getId());
-        assertThat(deletedUser).isNotEmpty();
+    public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
+        request.delete("/api/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
+        final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
+        assertThatUserWasNotSoftDeleted(student, deletedUser);
     }
 
     // Test
-    public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, true, true, false);
-
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
-
-        var deletedUser = userRepository.findById(student.getId());
-        assertThat(deletedUser).isNotEmpty();
-    }
-
-    // Test
-    public void deleteUsers() throws Exception {
-        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-
-        var users = Set.of(database.getUserByLogin(TEST_PREFIX + "student1"), database.getUserByLogin(TEST_PREFIX + "tutor1"), database.getUserByLogin(TEST_PREFIX + "editor1"),
-                database.getUserByLogin(TEST_PREFIX + "instructor1"));
-
-        for (var user : users) {
-            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-            // not expecting to delete the admin user as current user
-            if (!"admin".equals(user.getLogin())) {
-                mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
-            }
-        }
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
-
-        request.delete("/api/admin/users", HttpStatus.OK, params);
-
-        for (var user : users) {
-            var deletedUser = userRepository.findById(user.getId());
-            if (deletedUser.isEmpty() || !"admin".equals(deletedUser.get().getLogin())) {
-                assertThat(deletedUser).isEmpty();
-            }
-        }
-    }
-
-    // Test
-    public void deleteUsersException() throws Exception {
+    public void deleteUsers(String currentUserLogin) throws Exception {
         userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
@@ -259,18 +155,17 @@ public class UserTestService {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
 
-        for (var user : users) {
-            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-            // not expecting to delete the admin user as current user
-            if (!"admin".equals(user.getLogin())) {
-                mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
-            }
-        }
-
         request.delete("/api/admin/users", HttpStatus.OK, params);
+
         for (var user : users) {
-            var receivedUser = userRepository.findById(user.getId());
-            assertThat(receivedUser).isPresent();
+            final var deletedUser = userRepository.findById(user.getId()).orElseThrow();
+
+            if (deletedUser.getLogin().equals(currentUserLogin)) {
+                assertThatUserWasNotSoftDeleted(user, deletedUser);
+            }
+            else {
+                assertThatUserWasSoftDeleted(user, deletedUser);
+            }
         }
     }
 

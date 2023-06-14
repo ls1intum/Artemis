@@ -24,10 +24,17 @@ public class ParticipantScoreService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
+    private final GradingScaleService gradingScaleService;
+
+    private final PresentationPointsCalculationService presentationPointsCalculationService;
+
+    public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
+        this.gradingScaleService = gradingScaleService;
+        this.presentationPointsCalculationService = presentationPointsCalculationService;
     }
 
     /**
@@ -53,7 +60,7 @@ public class ParticipantScoreService {
 
         Set<User> registeredUsers = exam.getRegisteredUsers();
 
-        return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints());
+        return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints(), 0.0, null);
     }
 
     /**
@@ -85,13 +92,19 @@ public class ParticipantScoreService {
                 .filter(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED).collect(Collectors.toSet());
 
         // this is the denominator when we calculate the achieved score of a student
-        Double regularAchievablePoints = exercisesToConsider.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
-                .map(Exercise::getMaxPoints).reduce(0.0, Double::sum);
+        double regularAchievablePoints = exercisesToConsider.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
+                .mapToDouble(Exercise::getMaxPoints).sum();
+        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
 
-        return calculateScores(exercisesToConsider, usersOfCourse, regularAchievablePoints);
+        // calculates the achievable presentation points that need to be added to the regular achievable points
+        double achievablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, regularAchievablePoints);
+        regularAchievablePoints += achievablePresentationPoints;
+
+        return calculateScores(exercisesToConsider, usersOfCourse, regularAchievablePoints, achievablePresentationPoints, gradingScale);
     }
 
-    private List<ScoreDTO> calculateScores(Set<Exercise> exercises, Set<User> users, Double scoreCalculationDenominator) {
+    private List<ScoreDTO> calculateScores(Set<Exercise> exercises, Set<User> users, Double scoreCalculationDenominator, double achievablePresentationPoints,
+            GradingScale gradingScale) {
         // 0.0 means we can not reasonably calculate the achieved points / scores
         if (scoreCalculationDenominator.equals(0.0)) {
             return List.of();
@@ -130,6 +143,9 @@ public class ParticipantScoreService {
                 }
             }
         }
+
+        // add presentationPoints to ScoreDTOs
+        presentationPointsCalculationService.addPresentationPointsToScoreDTOs(gradingScale, userIdToScores.values(), achievablePresentationPoints);
 
         // calculating achieved score
         for (ScoreDTO scoreDTO : userIdToScores.values()) {
