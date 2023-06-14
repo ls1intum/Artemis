@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -271,7 +272,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseRepository.save(modelingExercise);
 
         request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
@@ -283,9 +284,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
         {
-            final ModelingSubmission submission1 = ModelFactory.generateModelingSubmission("model1", true);
+            final ModelingSubmission submission1 = ParticipationFactory.generateModelingSubmission("model1", true);
             modelingExerciseUtilService.addModelingSubmission(classExercise, submission1, TEST_PREFIX + "student1");
-            final ModelingSubmission submission2 = ModelFactory.generateModelingSubmission("model2", false);
+            final ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission("model2", false);
             modelingExerciseUtilService.addModelingSubmission(classExercise, submission2, TEST_PREFIX + "student2");
 
             final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(classExercise.getId()));
@@ -361,8 +362,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
-        ModelingExercise modelingExerciseToImport = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
-                course1);
+        ModelingExercise modelingExerciseToImport = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1),
+                DiagramType.ClassDiagram, course1);
         modelingExerciseRepository.save(modelingExerciseToImport);
         modelingExerciseToImport.setCourse(course2);
 
@@ -379,7 +380,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
 
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         modelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
 
@@ -388,7 +390,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
-        participationUtilService.addFeedbackToResult(ModelFactory.generateFeedback().stream().findFirst().get(), Objects.requireNonNull(submission.getLatestResult()));
+        participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().get(), Objects.requireNonNull(submission.getLatestResult()));
 
         modelingExercise.setCourse(course2);
         var importedModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
@@ -408,7 +410,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         modelingExercise.setReleaseDate(null);
         modelingExercise.setDueDate(null);
         modelingExercise.setAssessmentDueDate(null);
@@ -425,7 +428,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
@@ -437,7 +441,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromExamToCourse() throws Exception {
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         Course course1 = courseUtilService.addEmptyCourse();
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
@@ -450,7 +454,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void importModelingExerciseFromExamToCourse_forbidden() throws Exception {
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         Course course1 = courseUtilService.addEmptyCourse();
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
@@ -464,7 +468,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     void importModelingExerciseFromExamToExam() throws Exception {
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ExerciseGroup exerciseGroup2 = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setExerciseGroup(exerciseGroup2);
 
@@ -476,7 +480,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     void importModelingExerciseFromCourseToCourse_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
 
@@ -489,7 +494,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
 
         modelingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
 
@@ -509,7 +515,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseForExam() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
         String title = "New Exam Modeling Exercise";
         DifficultyLevel difficulty = DifficultyLevel.HARD;
@@ -530,7 +536,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
         request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -539,7 +545,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.setCourse(exerciseGroup.getExam().getCourse());
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -547,7 +553,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -604,7 +610,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     private void testSearchTermMatchesTitle(String exerciseTitle) throws Exception {
         final Course course = courseUtilService.addEmptyCourse();
         final var now = ZonedDateTime.now();
-        ModelingExercise exercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        ModelingExercise exercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         exercise.setTitle(exerciseTitle);
         exercise = modelingExerciseRepository.save(exercise);
 
@@ -665,11 +671,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
-        ModelingExercise sourceExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
         sourceExercise = modelingExerciseRepository.save(sourceExercise);
 
-        var exerciseToBeImported = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
+        var exerciseToBeImported = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
         exerciseToBeImported.setMode(ExerciseMode.TEAM);
         exerciseToBeImported.setCourse(course2);
 
@@ -700,7 +707,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
-        ModelingExercise sourceExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         sourceExercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(sourceExercise);
@@ -714,7 +722,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         team.setShortName(TEST_PREFIX + "testImport_individual_modeChange");
         teamRepository.save(sourceExercise, team);
 
-        var exerciseToBeImported = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
+        var exerciseToBeImported = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
 
@@ -971,7 +979,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
 
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
         modelingExercise = modelingExerciseRepository.save(modelingExercise);
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
@@ -984,7 +993,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
 
-        Feedback feedback = ModelFactory.generateFeedback().get(0);
+        Feedback feedback = ParticipationFactory.generateFeedback().get(0);
         feedback.setGradingInstruction(gradingInstruction);
         participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
 

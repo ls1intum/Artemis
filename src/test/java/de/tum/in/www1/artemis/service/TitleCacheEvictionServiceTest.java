@@ -14,14 +14,14 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.organisation.OrganisationUtilService;
+import de.tum.in.www1.artemis.organization.OrganizationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.util.Tuple;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Test for {@link TitleCacheEvictionService} that should evict entity titles from the title caches if the titles are
@@ -66,7 +66,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private OrganisationUtilService organisationUtilService;
+    private OrganizationUtilService organizationUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -146,7 +146,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateNameOrDeleteOrganization() {
-        var org = organisationUtilService.createOrganization();
+        var org = organizationUtilService.createOrganization();
         testCacheEvicted("organizationTitle", () -> new Tuple<>(org.getId(), org.getName()), List.of(
                 // Should evict as we change the name
                 () -> {
@@ -169,7 +169,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram() {
-        var apollonDiagram = apollonDiagramRepository.save(ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
+        var apollonDiagram = apollonDiagramRepository.save(ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
         testCacheEvicted("diagramTitle", () -> new Tuple<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {

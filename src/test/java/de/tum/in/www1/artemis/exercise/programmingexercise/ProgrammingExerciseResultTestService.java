@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
@@ -326,7 +327,7 @@ public class ProgrammingExerciseResultTestService {
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1",
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
-        List<Feedback> feedback = ModelFactory.generateManualFeedback();
+        List<Feedback> feedback = ParticipationFactory.generateManualFeedback();
         feedback = feedbackRepository.saveAll(feedback);
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());

@@ -19,10 +19,10 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 
 class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -77,7 +77,7 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         studentParticipationRepository.save(studentParticipation);
 
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
 

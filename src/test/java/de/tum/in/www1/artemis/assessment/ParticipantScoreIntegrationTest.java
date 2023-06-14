@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -28,7 +30,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -159,8 +160,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
 
         // setting up exam
-        Exam exam = ModelFactory.generateExam(course);
-        ModelFactory.generateExerciseGroup(true, exam);
+        Exam exam = ExamFactory.generateExam(course);
+        ExamFactory.generateExerciseGroup(true, exam);
         exam = examRepository.save(exam);
         var examUser = new ExamUser();
         examUser.setExam(exam);
@@ -253,7 +254,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     void getCourseScores_asInstructorOfCourseWithGradedPresentations_shouldReturnCourseScores() throws Exception {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
 
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(exam.getCourse(), 2, 20.0);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(exam.getCourse(), 2, 20.0);
         gradingScaleRepository.save(gradingScale);
 
         User student = userRepository.findById(idOfStudent1).get();
@@ -289,7 +290,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         Exam exam;
         exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);

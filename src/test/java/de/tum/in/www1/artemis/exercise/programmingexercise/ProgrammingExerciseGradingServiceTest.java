@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
@@ -189,7 +188,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         private ProgrammingExercise newExamProgrammingExercise() {
             ExerciseGroup group = super.examUtilService.addExerciseGroupWithExamAndCourse(true);
-            ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(group);
+            ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(group);
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
@@ -1323,7 +1322,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
                     .type(FeedbackType.AUTOMATIC).positive(false));
         }
 
-        var feedbackForInactiveCategory = ModelFactory.createSCAFeedbackWithInactiveCategory(result);
+        var feedbackForInactiveCategory = ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
         result.addFeedback(feedbackForInactiveCategory);
 
         result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"CORRECTNESS\"}")

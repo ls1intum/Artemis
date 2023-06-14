@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
+import de.tum.in.www1.artemis.bonus.BonusFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -52,10 +53,14 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
@@ -68,6 +73,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -233,9 +239,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor10", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor10", passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         course1 = courseUtilService.addEmptyCourse();
         course2 = courseUtilService.addEmptyCourse();
@@ -316,7 +322,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         userUtilService.addStudents(TEST_PREFIX, 5, 10);
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        var exam = ModelFactory.generateExam(course1);
+        var exam = ExamFactory.generateExam(course1);
         var savedExam = examRepository.save(exam);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
@@ -527,7 +533,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // creating exercise
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().get(0);
 
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepo.save(textExercise);
@@ -584,7 +590,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam2.setVisibleDate(now().plusHours(1));
 
         // creating exercise
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
         exam2.getExerciseGroups().get(0).addExercise(modelingExercise);
         exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
         modelingExercise = exerciseRepo.save(modelingExercise);
@@ -893,7 +899,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
-        ModelFactory.generateExam(course1);
+        ExamFactory.generateExam(course1);
         request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
@@ -904,7 +910,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private void testAllPreAuthorize() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
+        Exam exam = ExamFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
@@ -918,7 +924,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
     void testCreateExam_checkCourseAccess_InstructorNotInCourse_forbidden() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
+        Exam exam = ExamFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
     }
 
@@ -926,15 +932,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_asInstructor() throws Exception {
         // Test for bad request when exam id is already set.
-        Exam examA = ModelFactory.generateExam(course1);
+        Exam examA = ExamFactory.generateExam(course1);
         examA.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
         // Test for bad request when course is null.
-        Exam examB = ModelFactory.generateExam(course1);
+        Exam examB = ExamFactory.generateExam(course1);
         examB.setCourse(null);
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
         // Test for bad request when course deviates from course specified in route.
-        Exam examC = ModelFactory.generateExam(course1);
+        Exam examC = ExamFactory.generateExam(course1);
         request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
         // Test invalid dates
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
@@ -942,11 +948,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         }
         // Test for conflict when user tries to create an exam with exercise groups.
-        Exam examD = ModelFactory.generateExam(course1);
-        examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
+        Exam examD = ExamFactory.generateExam(course1);
+        examD.addExerciseGroup(ExamFactory.generateExerciseGroup(true, exam1));
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
         // Test examAccessService.
-        Exam examE = ModelFactory.generateExam(course1);
+        Exam examE = ExamFactory.generateExam(course1);
         examE.setTitle("          Exam 123              ");
         URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
@@ -956,25 +962,25 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private List<Exam> createExamsWithInvalidDates(Course course) {
         // Test for bad request, visible date not set
-        Exam examA = ModelFactory.generateExam(course);
+        Exam examA = ExamFactory.generateExam(course);
         examA.setVisibleDate(null);
         // Test for bad request, start date not set
-        Exam examB = ModelFactory.generateExam(course);
+        Exam examB = ExamFactory.generateExam(course);
         examB.setStartDate(null);
         // Test for bad request, end date not set
-        Exam examC = ModelFactory.generateExam(course);
+        Exam examC = ExamFactory.generateExam(course);
         examC.setEndDate(null);
         // Test for bad request, start date not after visible date
-        Exam examD = ModelFactory.generateExam(course);
+        Exam examD = ExamFactory.generateExam(course);
         examD.setStartDate(examD.getVisibleDate());
         // Test for bad request, end date not after start date
-        Exam examE = ModelFactory.generateExam(course);
+        Exam examE = ExamFactory.generateExam(course);
         examE.setEndDate(examE.getStartDate());
         // Test for bad request, when visibleDate equals the startDate
-        Exam examF = ModelFactory.generateExam(course);
+        Exam examF = ExamFactory.generateExam(course);
         examF.setVisibleDate(examF.getStartDate());
         // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
-        Exam examG = ModelFactory.generateExam(course);
+        Exam examG = ExamFactory.generateExam(course);
         examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
         return List.of(examA, examB, examC, examD, examE, examF, examG);
     }
@@ -983,7 +989,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor() throws Exception {
         // Test the creation of a test exam
-        Exam examA = ModelFactory.generateTestExam(course1);
+        Exam examA = ExamFactory.generateTestExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
 
         verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
@@ -993,7 +999,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
         // Test the creation of a test exam, where visibleDate equals StartDate
-        Exam examB = ModelFactory.generateTestExam(course1);
+        Exam examB = ExamFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
 
@@ -1004,7 +1010,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_badRequestWithWorkingTimeGreaterThanWorkingWindow() throws Exception {
         // Test for bad request, where workingTime is greater than difference between StartDate and EndDate
-        Exam examC = ModelFactory.generateTestExam(course1);
+        Exam examC = ExamFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
         request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
     }
@@ -1013,7 +1019,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_badRequestWithWorkingTimeSetToZero() throws Exception {
         // Test for bad request, if the working time is 0
-        Exam examD = ModelFactory.generateTestExam(course1);
+        Exam examD = ExamFactory.generateTestExam(course1);
         examD.setWorkingTime(0);
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
 
@@ -1022,7 +1028,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_testExam_CorrectionRoundViolation() throws Exception {
-        Exam exam = ModelFactory.generateTestExam(course1);
+        Exam exam = ExamFactory.generateTestExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(1);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
     }
@@ -1030,7 +1036,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_realExam_CorrectionRoundViolation() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
+        Exam exam = ExamFactory.generateExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(0);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
 
@@ -1044,14 +1050,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testUpdateTestExam_asInstructor_withExamModeChanged() throws Exception {
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
         // Case 1: test exam should be updated to real exam
-        Exam examA = ModelFactory.generateTestExam(course1);
+        Exam examA = ExamFactory.generateTestExam(course1);
         Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
         createdExamA.setNumberOfCorrectionRoundsInExam(1);
         createdExamA.setTestExam(false);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
 
         // Case 2: real exam should be updated to test exam
-        Exam examB = ModelFactory.generateTestExam(course1);
+        Exam examB = ExamFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
         Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
@@ -1065,7 +1071,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_asInstructor() throws Exception {
         // Create instead of update if no id was set
-        Exam exam = ModelFactory.generateExam(course1);
+        Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Over 9000!");
         long examCountBefore = examRepository.count();
         Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
@@ -1076,12 +1082,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
         // No course is set -> bad request
-        exam = ModelFactory.generateExam(course1);
+        exam = ExamFactory.generateExam(course1);
         exam.setId(1L);
         exam.setCourse(null);
         request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         // Course id in the updated exam and in the REST resource url do not match -> bad request
-        exam = ModelFactory.generateExam(course1);
+        exam = ExamFactory.generateExam(course1);
         exam.setId(1L);
         request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         // Dates in the updated exam are not valid -> bad request
@@ -1290,7 +1296,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
@@ -1312,7 +1318,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
@@ -1327,7 +1333,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetExamWithQuizExercise_asInstructor() throws Exception {
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exam2.getExerciseGroups().get(0));
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exam2.getExerciseGroups().get(0));
         quizExercise = exerciseRepo.save(quizExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
         quizExercise = (QuizExercise) exerciseRepo.findByIdElseThrow(quizExercise.getId());
@@ -1653,12 +1659,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
         exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
 
-        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
-        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
-        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
-        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
-        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
-        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise1_1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise1_2 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise2_1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup2);
+        TextExercise exercise3_1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_2 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_3 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup3);
         exercise1_1 = textExerciseRepository.save(exercise1_1);
         exercise1_2 = textExerciseRepository.save(exercise1_2);
         exercise2_1 = textExerciseRepository.save(exercise2_1);
@@ -1711,7 +1717,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         orderedExerciseGroups = new ArrayList<>();
         orderedExerciseGroups.add(exerciseGroup2);
         orderedExerciseGroups.add(exerciseGroup3);
-        orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
+        orderedExerciseGroups.add(ExamFactory.generateExerciseGroup(true, exam));
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
     }
 
@@ -1740,11 +1746,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
 
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseGroup1.addExercise(programmingExercise);
 
-        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         exerciseGroup1.addExercise(programmingExercise2);
 
@@ -1787,11 +1793,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = exam.getExerciseGroups().get(0);
 
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseGroup1.addExercise(programmingExercise);
 
-        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         exerciseGroup1.addExercise(programmingExercise2);
 
@@ -1977,7 +1983,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         sourceGradingScale.setCourse(course);
         gradingScaleRepository.save(sourceGradingScale);
 
-        var bonus = ModelFactory.generateBonus(bonusStrategy, -1.0, sourceGradingScale.getId(), bonusToGradingScale.getId());
+        var bonus = BonusFactory.generateBonus(bonusStrategy, -1.0, sourceGradingScale.getId(), bonusToGradingScale.getId());
         bonusRepository.save(bonus);
 
         course.setMaxPoints(100);
@@ -2111,7 +2117,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        final var exerciseWithNoUsers = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
         exerciseRepo.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
@@ -2989,7 +2995,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private void testGetExamTitle() throws Exception {
         Course course = courseUtilService.createCourse();
-        Exam exam = ModelFactory.generateExam(course);
+        Exam exam = ExamFactory.generateExam(course);
         exam.setTitle("Test Exam");
         exam = examRepository.save(exam);
         course.addExam(exam);
@@ -3039,7 +3045,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_successfulRegistration() {
-        Exam testExam = ModelFactory.generateTestExam(course1);
+        Exam testExam = ExamFactory.generateTestExam(course1);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         testExam = examRepository.save(testExam);
         var examUser = new ExamUser();
@@ -3123,7 +3129,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllExamsOnPage_WithoutExercises_instructor_successful() throws Exception {
         var title = "My fancy search title for the exam which is not used somewhere else";
-        var exam = ModelFactory.generateExam(course1);
+        var exam = ExamFactory.generateExam(course1);
         exam.setTitle(title);
         examRepository.save(exam);
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
@@ -3204,7 +3210,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_idExists() throws Exception {
-        final Exam exam = ModelFactory.generateExam(course1);
+        final Exam exam = ExamFactory.generateExam(course1);
         exam.setId(2L);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
     }
@@ -3213,12 +3219,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_courseMismatch() throws Exception {
         // No Course
-        final Exam examA = ModelFactory.generateExam(course1);
+        final Exam examA = ExamFactory.generateExam(course1);
         examA.setCourse(null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
 
         // Exam Course and REST-Course mismatch
-        final Exam examB = ModelFactory.generateExam(course1);
+        final Exam examB = ExamFactory.generateExam(course1);
         examB.setCourse(course2);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
     }
@@ -3227,22 +3233,22 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_dateConflict() throws Exception {
         // Visible Date after Started Date
-        final Exam examA = ModelFactory.generateExam(course1);
+        final Exam examA = ExamFactory.generateExam(course1);
         examA.setVisibleDate(ZonedDateTime.now().plusHours(2));
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
 
         // Visible Date missing
-        final Exam examB = ModelFactory.generateExam(course1);
+        final Exam examB = ExamFactory.generateExam(course1);
         examB.setVisibleDate(null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
 
         // Started Date after End Date
-        final Exam examC = ModelFactory.generateExam(course1);
+        final Exam examC = ExamFactory.generateExam(course1);
         examC.setStartDate(ZonedDateTime.now().plusHours(2));
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
 
         // Started Date missing
-        final Exam examD = ModelFactory.generateExam(course1);
+        final Exam examD = ExamFactory.generateExam(course1);
         examD.setStartDate(null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examD, HttpStatus.BAD_REQUEST, null);
     }
@@ -3251,12 +3257,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_dateConflictTestExam() throws Exception {
         // Working Time larger than Working window
-        final Exam examA = ModelFactory.generateTestExam(course1);
+        final Exam examA = ExamFactory.generateTestExam(course1);
         examA.setWorkingTime(3 * 60 * 60);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
 
         // Working Time larger than Working window
-        final Exam examB = ModelFactory.generateTestExam(course1);
+        final Exam examB = ExamFactory.generateTestExam(course1);
         examB.setWorkingTime(0);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
     }
@@ -3264,7 +3270,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_pointConflict() throws Exception {
-        final Exam examA = ModelFactory.generateExam(course1);
+        final Exam examA = ExamFactory.generateExam(course1);
         examA.setExamMaxPoints(-5);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
     }
@@ -3273,17 +3279,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_correctionRoundConflict() throws Exception {
         // Correction round <= 0
-        final Exam examA = ModelFactory.generateExam(course1);
+        final Exam examA = ExamFactory.generateExam(course1);
         examA.setNumberOfCorrectionRoundsInExam(0);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
 
         // Correction round >= 2
-        final Exam examB = ModelFactory.generateExam(course1);
+        final Exam examB = ExamFactory.generateExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(3);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
 
         // Correction round != 0 for test exam
-        final Exam examC = ModelFactory.generateTestExam(course1);
+        final Exam examC = ExamFactory.generateTestExam(course1);
         examC.setNumberOfCorrectionRoundsInExam(1);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
     }
@@ -3356,11 +3362,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_preCheckFailed() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
-        ExerciseGroup programmingGroup = ModelFactory.generateExerciseGroup(false, exam);
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);
         exam = examRepository.save(exam);
         exam.setId(null);
-        ProgrammingExercise programming = ModelFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
+        ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
         exerciseRepo.save(programming);
 

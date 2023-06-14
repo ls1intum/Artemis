@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.tutorialgroups.TutorialGroupUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -46,16 +46,16 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
         }
         if (userRepository.findOneByLogin(testPrefix + "tutor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "tutor42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "tutor42"));
         }
         if (userRepository.findOneByLogin(testPrefix + "editor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "editor42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "editor42"));
         }
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "instructor42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
     }
 

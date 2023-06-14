@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -49,7 +50,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -152,8 +152,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String login = TEST_PREFIX + "student1";
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"),
-                true);
+        ModelingSubmission modelingSubmission = ParticipationFactory
+                .generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
         String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
@@ -454,8 +454,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String login = TEST_PREFIX + "student1";
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"),
-                true);
+        ModelingSubmission modelingSubmission = ParticipationFactory
+                .generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
         String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-failed-build";
@@ -525,7 +525,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
         final var submissions = new ArrayList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
-            final var submission = ModelFactory.generateProgrammingSubmission(true);
+            final var submission = ParticipationFactory.generateProgrammingSubmission(true);
             submissions.add(submission);
             programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student" + i);
         }
@@ -539,8 +539,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllProgrammingSubmissionsAssessedByTutorAllSubmissionsReturned() throws Exception {
-        programmingExerciseUtilService.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
-        var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
+        programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
+        var assessedSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         assessedSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, assessedSubmission, TEST_PREFIX + "student2");
         final var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         participationUtilService.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, null);
@@ -564,7 +564,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
-        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), login);
+        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), login);
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
@@ -580,7 +580,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
 
-        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, login);
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
@@ -611,7 +611,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 
-        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
@@ -636,7 +636,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithAutomaticResult() throws Exception {
 
-        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
@@ -690,7 +690,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
         String login = TEST_PREFIX + "student1";
-        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, login);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -751,7 +751,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void getProgrammingSubmissionWithoutAssessmentDueDateNotPassedYet() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
-        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
+        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true),
+                TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
@@ -772,7 +773,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
 
-        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
+        final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true),
+                TEST_PREFIX + "student1");
         if (isIndividualDueDateInFuture) {
             submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         }
@@ -801,7 +803,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
-        var submission = ModelFactory.generateProgrammingSubmission(true);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
         final var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
@@ -815,7 +817,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private void createTenLockedSubmissionsForExercise(String assessor) {
         ProgrammingSubmission submission;
         for (int i = 1; i < 11; i++) {
-            submission = ModelFactory.generateProgrammingSubmission(true);
+            submission = ParticipationFactory.generateProgrammingSubmission(true);
             programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, TEST_PREFIX + "student" + i, assessor, AssessmentType.SEMI_AUTOMATIC,
                     false);
         }

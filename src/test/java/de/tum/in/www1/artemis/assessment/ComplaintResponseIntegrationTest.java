@@ -21,10 +21,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -70,7 +71,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         // students: student1 | tutors: tutor1-tutor3 | instructors: instructor1
         Course course = courseUtilService.createCourse();
         // creating text exercise
-        TextExercise textExercise = ModelFactory.generateTextExercise(null, null, null, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.saveAndFlush(textExercise);
@@ -88,7 +89,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.saveAndFlush(submission);
         // creating assessment by tutor1
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        Result result = ModelFactory.generateResult(true, 50D);
+        Result result = ParticipationFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
         result.setParticipation(studentParticipation);

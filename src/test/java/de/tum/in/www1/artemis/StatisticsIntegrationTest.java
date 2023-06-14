@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
@@ -41,7 +43,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
@@ -106,7 +107,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
-        exercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
+        exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(exercise);
         textExerciseRepository.save(exercise);
         Post post = new Post();
@@ -200,7 +201,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         TextExercise earlierTextExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1),
                 pastTimestamp.minusDays(1));
 
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 2, 20.0);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 2, 20.0);
         gradingScaleRepository.save(gradingScale);
 
         var laterTextExerciseId = laterTextExercise.getId();

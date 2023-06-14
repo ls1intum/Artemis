@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasic
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -195,7 +194,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private void testSearchTermMatchesId() throws Exception {
         final Course course = courseUtilService.addEmptyCourse();
         final var now = ZonedDateTime.now();
-        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
+        ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
         exercise = programmingExerciseRepository.save(exercise);
         var exerciseId = exercise.getId();
@@ -286,7 +285,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     private ProgrammingExercise createToBeImported() {
-        return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
+        return ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
     }
 
 }

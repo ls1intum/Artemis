@@ -18,10 +18,10 @@ import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -75,12 +75,12 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     private List<TextSubmission> generateTextSubmissions(int size) {
-        var textSubmissions = ModelFactory.generateTextSubmissions(size);
+        var textSubmissions = ParticipationFactory.generateTextSubmissions(size);
         for (var i = 0; i < size; i++) {
             var textSubmission = textSubmissions.get(i);
             textSubmission.setId(null);
             var student = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
+            var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
             participation = participationRepository.save(participation);
             textSubmission.setParticipation(participation);
             textSubmission.setSubmitted(true);

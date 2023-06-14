@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ConfigUtil;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.AccountResource;
 import de.tum.in.www1.artemis.web.rest.open.PublicAccountResource;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
@@ -81,7 +80,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String login = "ab123cde";
         String password = getValidPassword();
         // setup user
-        User user = ModelFactory.generateActivatedUser(login);
+        User user = UserFactory.generateActivatedUser(login);
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword(password);
 
@@ -96,7 +95,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     void registerAccountTooLongPassword() throws Exception {
         // setup user
-        User user = ModelFactory.generateActivatedUser("ab123cdf");
+        User user = UserFactory.generateActivatedUser("ab123cdf");
         ManagedUserVM userVM = new ManagedUserVM(user);
         assertThat(Constants.PASSWORD_MAX_LENGTH).isPositive();
         userVM.setPassword("e".repeat(Constants.PASSWORD_MAX_LENGTH + 1));
@@ -108,7 +107,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     void registerAccountTooShortPassword() throws Exception {
         // setup user
-        User user = ModelFactory.generateActivatedUser("ab123cdg");
+        User user = UserFactory.generateActivatedUser("ab123cdg");
         ManagedUserVM userVM = new ManagedUserVM(user);
         assertThat(Constants.PASSWORD_MIN_LENGTH).isNotNegative();
         if (Constants.PASSWORD_MIN_LENGTH == 0) {
@@ -124,7 +123,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     void registerAccountEmptyPassword() throws Exception {
         // setup user
-        User user = ModelFactory.generateActivatedUser("ab123cdh");
+        User user = UserFactory.generateActivatedUser("ab123cdh");
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword("");
 
@@ -136,7 +135,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void registerAccountRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // setup user
-            User user = ModelFactory.generateActivatedUser("ab123cdi");
+            User user = UserFactory.generateActivatedUser("ab123cdi");
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
 
@@ -149,7 +148,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void registerAccountRegistrationConfigEmpty() throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.empty(), () -> {
             // setup user
-            User user = ModelFactory.generateActivatedUser("ab123cdj");
+            User user = UserFactory.generateActivatedUser("ab123cdj");
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
 
@@ -163,7 +162,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // Inject email-pattern to be independent of the config
         ConfigUtil.testWithChangedConfig(publicAccountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
             // setup user
-            User user = ModelFactory.generateActivatedUser("ab123cdk");
+            User user = UserFactory.generateActivatedUser("ab123cdk");
             user.setEmail("-");
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
@@ -177,7 +176,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void registerAccountEmptyEmailPattern() throws Throwable {
         ConfigUtil.testWithChangedConfig(publicAccountResource, "allowedEmailPattern", Optional.empty(), () -> {
             // setup user
-            User user = ModelFactory.generateActivatedUser("ab123cdl");
+            User user = UserFactory.generateActivatedUser("ab123cdl");
             user.setEmail("-");
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
@@ -191,7 +190,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void activateAccount() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
-        User user = ModelFactory.generateActivatedUser("ab123cdm");
+        User user = UserFactory.generateActivatedUser("ab123cdm");
         user.setActivated(false);
         user.setActivationKey(testActivationKey);
         user = userRepository.save(user);
@@ -265,7 +264,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         bitbucketRequestMockProvider.mockUserExists(AUTHENTICATEDUSER);
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), updatedFirstName + " " + user.getLastName());
-        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), ModelFactory.USER_PASSWORD, true, true);
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), UserFactory.USER_PASSWORD, true, true);
 
         // update FirstName
         user.setFirstName(updatedFirstName);
@@ -316,12 +315,12 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // Password Data
         String updatedPassword = "12345678";
         // create user in repo
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(ModelFactory.USER_PASSWORD));
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
         bitbucketRequestMockProvider.mockUserExists(AUTHENTICATEDUSER);
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
         bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), updatedPassword, true, true);
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
@@ -346,7 +345,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // Password Data
         String updatedPassword = "12345678";
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
@@ -357,7 +356,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         bitbucketRequestMockProvider.mockUserExists(AUTHENTICATEDUSER);
         String updatedPassword = "";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
@@ -367,7 +366,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void changePasswordSamePassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         bitbucketRequestMockProvider.mockUserExists(AUTHENTICATEDUSER);
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, ModelFactory.USER_PASSWORD);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }

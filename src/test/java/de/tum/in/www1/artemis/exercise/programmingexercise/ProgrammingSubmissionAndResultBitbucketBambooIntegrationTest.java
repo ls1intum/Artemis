@@ -53,7 +53,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -290,8 +289,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         final var commit = new BambooBuildResultNotificationDTO.BambooCommitDTO("First commit", "asdf");
         var vcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(commit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(commit));
-        var notificationCommit = ModelFactory.generateBambooBuildResultWithLogs(participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(),
-                ZonedDateTime.now(), List.of(vcsDTO));
+        var notificationCommit = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(),
+                List.of(), ZonedDateTime.now(), List.of(vcsDTO));
 
         postResult(notificationCommit, HttpStatus.OK, false);
 
@@ -651,15 +650,15 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
         var firstVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(firstCommit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(firstCommit));
-        var notificationFirstCommit = ModelFactory.generateBambooBuildResultWithLogs(testService.participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(),
-                List.of(), firstBuildCompleteDate, List.of(firstVcsDTO));
+        var notificationFirstCommit = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(testService.participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME,
+                List.of(), List.of(), firstBuildCompleteDate, List.of(firstVcsDTO));
         postResult(notificationFirstCommit, HttpStatus.OK, false);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
         var secondVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(secondCommit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(firstCommit, secondCommit));
-        var notificationSecondCommit = ModelFactory.generateBambooBuildResultWithLogs(testService.participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(),
-                List.of(), secondBuildCompleteDate, List.of(secondVcsDTO));
+        var notificationSecondCommit = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(testService.participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME,
+                List.of(), List.of(), secondBuildCompleteDate, List.of(secondVcsDTO));
         postResult(notificationSecondCommit, HttpStatus.OK, false);
 
         testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
@@ -993,14 +992,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit, boolean successful) throws Exception {
-        var bambooBuildResultNotification = ModelFactory.generateBambooBuildResultWithLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(), null,
-                new ArrayList<>(), successful);
+        var bambooBuildResultNotification = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(),
+                null, new ArrayList<>(), successful);
         postResult(bambooBuildResultNotification, expectedStatus, additionalCommit);
     }
 
     private void postResultWithBuildAnalyticsLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit, boolean sca) throws Exception {
-        var bambooBuildResultNotification = ModelFactory.generateBambooBuildResultWithAnalyticsLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(), null,
-                new ArrayList<>(), sca);
+        var bambooBuildResultNotification = ProgrammingExerciseFactory.generateBambooBuildResultWithAnalyticsLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(),
+                List.of(), null, new ArrayList<>(), sca);
         postResult(bambooBuildResultNotification, expectedStatus, additionalCommit);
     }
 

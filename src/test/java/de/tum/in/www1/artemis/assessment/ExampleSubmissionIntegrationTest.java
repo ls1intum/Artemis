@@ -27,11 +27,11 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -294,7 +294,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
                 HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
-        List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
+        List<Feedback> feedbacks = ParticipationFactory.generateManualFeedback();
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         long randomId = 1233;
@@ -313,7 +313,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
                 HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
-        List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
+        List<Feedback> feedbacks = ParticipationFactory.generateManualFeedback();
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         long randomId = 1233;
@@ -329,7 +329,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExampleSubmissionWithTextSubmission() throws Exception {
-        TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
 
         TextBlock textBlock = new TextBlock();
@@ -365,7 +365,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExampleSubmissionWithModelingSubmission() throws Exception {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, submission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL);
 
@@ -421,7 +421,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExampleSubmissionWithTextSubmission_exerciseIdNotMatched() throws Exception {
-        TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
 
         Exercise textExerciseToBeConflicted = new TextExercise();
@@ -434,7 +434,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExampleSubmissionWithModelingSubmission_exerciseIdNotMatched() throws Exception {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, submission, TEST_PREFIX + "student1");
 
         Exercise modelingExerciseToBeConflicted = new ModelingExercise();

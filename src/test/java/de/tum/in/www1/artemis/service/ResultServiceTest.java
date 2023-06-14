@@ -24,12 +24,12 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -174,7 +174,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExerciseRepository.save(programmingExercise);
         Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-        result = participationUtilService.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).toList();
@@ -190,7 +190,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExerciseRepository.save(programmingExercise);
         Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-        result = participationUtilService.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
@@ -205,7 +205,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExerciseRepository.save(programmingExercise);
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-        result = participationUtilService.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
@@ -226,7 +226,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         Result result = participationUtilService.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-        result = participationUtilService.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
         if (AssessmentType.AUTOMATIC == assessmentType) {
@@ -254,7 +254,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         Result result = participationUtilService.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-        result = participationUtilService.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
         expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();

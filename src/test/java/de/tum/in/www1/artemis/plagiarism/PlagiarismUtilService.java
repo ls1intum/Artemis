@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -17,9 +18,11 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 @Service
 public class PlagiarismUtilService {
@@ -46,11 +49,11 @@ public class PlagiarismUtilService {
     private UserUtilService userUtilService;
 
     public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int studentsAmount) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         userUtilService.addUsers(userPrefix, studentsAmount, 1, 1, 1);
 
         // Add text exercise to the course
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle("Finished");
         textExercise.getCategories().add("Text");
         course.addExercises(textExercise);
@@ -61,9 +64,9 @@ public class PlagiarismUtilService {
 
         for (int i = 0; i < studentsAmount; i++) {
             User participant = userUtilService.getUserByLogin(userPrefix + "student" + (i + 1));
-            StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, participant);
+            StudentParticipation participation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, participant);
             participation.setParticipant(participant);
-            TextSubmission submission = ModelFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
+            TextSubmission submission = ParticipationFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
             participation = studentParticipationRepo.save(participation);
             submission.setParticipation(participation);
             submissionRepository.save(submission);
@@ -80,7 +83,7 @@ public class PlagiarismUtilService {
 
     public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int studentsAmount, Course course) {
         // Add text exercise to the course
-        ModelingExercise exercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+        ModelingExercise exercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
         exercise.setTitle("finished");
         exercise.getCategories().add("Model");
         course.addExercises(exercise);
@@ -92,9 +95,9 @@ public class PlagiarismUtilService {
 
         for (int i = 0; i < studentsAmount; i++) {
             User participant = userUtilService.getUserByLogin(userPrefix + "student" + (i + 1));
-            StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
+            StudentParticipation participation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
             participation.setParticipant(participant);
-            ModelingSubmission submission = ModelFactory.generateModelingSubmission(similarSubmissionModel, true);
+            ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(similarSubmissionModel, true);
             participation = studentParticipationRepo.save(participation);
             submission.setParticipation(participation);
             submissionRepository.save(submission);

@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -54,7 +53,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
-        attachment = ModelFactory.generateAttachment(null);
+        attachment = LectureFactory.generateAttachment(null);
         attachment.setLink("files/temp/example.txt");
 
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();

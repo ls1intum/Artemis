@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
@@ -57,7 +58,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -310,7 +310,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
-        exercise = ModelFactory.generateTextExercise(null, null, null, course);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         verify(singleUserNotificationService, times(1)).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
     }
@@ -320,7 +320,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
-        exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         assertThat(notificationRepository.findAll()).as("One new notification should have been created").hasSize(1);
     }
@@ -330,7 +330,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
-        exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         assertThat(notificationRepository.findAll()).as("No new notification should have been created").isEmpty();
     }

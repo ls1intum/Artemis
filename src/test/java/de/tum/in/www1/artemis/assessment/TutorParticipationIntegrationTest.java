@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
@@ -32,7 +34,6 @@ import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -126,7 +127,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -146,7 +147,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -167,7 +168,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -187,7 +188,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -216,11 +217,11 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
             result.setExampleResult(true);
 
-            var feedback = ModelFactory.createManualTextFeedback(1D, textBlockIds.get(0));
-            var gradingCriterion = ModelFactory.generateGradingCriterion("criterion");
+            var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(0));
+            var gradingCriterion = ExerciseFactory.generateGradingCriterion("criterion");
             gradingCriterionRepository.save(gradingCriterion);
 
-            var instructions = ModelFactory.generateGradingInstructions(gradingCriterion, 1, 1);
+            var instructions = ExerciseFactory.generateGradingInstructions(gradingCriterion, 1, 1);
             gradingInstructionRepository.saveAll(instructions);
             instructions.forEach(feedback::setGradingInstruction);
             result.addFeedback(feedback);

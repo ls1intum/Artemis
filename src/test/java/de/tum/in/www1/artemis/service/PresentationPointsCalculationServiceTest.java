@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -21,7 +22,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class PresentationPointsCalculationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -76,7 +76,7 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void calculateReachableAndAchievedPresentationPointsWithoutBaseReachablePoints() {
         // GIVEN
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 2, 20.0);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 2, 20.0);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // WHEN
@@ -109,7 +109,7 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void calculateReachableAndAchievedPresentationPoints() {
         // GIVEN
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 1, 20.0);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 1, 20.0);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         studentParticipation.setPresentationScore(50.0);
         studentParticipationRepository.save(studentParticipation);
@@ -127,7 +127,7 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void calculateAchievedPresentationPointsWithoutPresentations() {
         // GIVEN
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 1, 20.0);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 1, 20.0);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // WHEN

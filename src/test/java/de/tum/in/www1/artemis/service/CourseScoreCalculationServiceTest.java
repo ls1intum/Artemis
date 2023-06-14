@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -22,7 +23,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseScoresDTO;
@@ -229,7 +229,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         pastCourse.setPresentationScore(null);
 
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(pastCourse, 5, 37.5);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(pastCourse, 5, 37.5);
         gradingScaleRepository.save(gradingScale);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

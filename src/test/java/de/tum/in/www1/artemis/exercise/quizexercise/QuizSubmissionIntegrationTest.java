@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -301,7 +300,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         int numberOfParticipants = 10;
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
+            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
             for (int i = 1; i <= numberOfParticipants; i++) {
                 joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student" + i);
             }
@@ -348,7 +347,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExercise = quizExerciseService.save(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
+            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
             joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student4");
         }
 
@@ -367,7 +366,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExercise = quizExerciseService.save(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
             joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student5");
         }
 
@@ -409,7 +408,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExerciseService.save(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
             joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student7");
         }
 
@@ -844,7 +843,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS);
         Course course = courses.get(0);
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED,
+                course);
         quizExercise.addQuestions(quizExerciseUtilService.createShortAnswerQuestion());
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);

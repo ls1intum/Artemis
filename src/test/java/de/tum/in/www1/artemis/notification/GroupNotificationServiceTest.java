@@ -28,10 +28,10 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -160,9 +160,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         lecture.setCourse(course);
         lecture.setTitle(LECTURE_TITLE);
 
-        exercise = ModelFactory.generateTextExercise(null, null, null, course);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(exercise);
-        updatedExercise = ModelFactory.generateTextExercise(null, null, null, course);
+        updatedExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(updatedExercise);
 
         attachment = new Attachment();

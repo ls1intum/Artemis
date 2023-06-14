@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -54,14 +53,14 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
         var loginName = TEST_PREFIX + "student1";
         var planKey = (programmingExerciseResultTestService.getProgrammingExercise().getProjectKey() + "-" + loginName).toUpperCase();
-        var notification = ModelFactory.generateBambooBuildResult("assignment", planKey, null, null, List.of("test1"), List.of(), new ArrayList<>());
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult("assignment", planKey, null, null, List.of("test1"), List.of(), new ArrayList<>());
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws JsonProcessingException {
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of(),
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of(),
                 new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -71,8 +70,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTest() throws JsonProcessingException {
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of("test3"),
-                new ArrayList<>());
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"),
+                List.of("test3"), new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
@@ -83,7 +82,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) throws JsonProcessingException {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
-        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage);
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                programmingLanguage);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExerciseWithStaticCodeAnalysis().getProjectKey(),
                 TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now());
         var scaReports = notification.getBuild().jobs().get(0).staticCodeAnalysisReports();
@@ -106,7 +106,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotSaveBuildLogsForSuccessfulBuildInBuildLogRepository() throws JsonProcessingException {
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null, new ArrayList<>(), true);
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null,
+                new ArrayList<>(), true);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldNotSaveBuildLogsInBuildLogRepository(resultNotification);
@@ -116,8 +117,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotSaveBuildLogsForUnsuccessfulBuildInBuildLogRepository() throws JsonProcessingException {
         // The build did not fail, but also did not succeed -> Don't store
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"), null, new ArrayList<>(),
-                false);
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"), null,
+                new ArrayList<>(), false);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldNotSaveBuildLogsInBuildLogRepository(resultNotification);
@@ -126,7 +127,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSaveBuildLogsForFailedBuildInBuildLogRepository() throws JsonProcessingException {
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of(), List.of(), null, new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of(), List.of(), null, new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldSaveBuildLogsInBuildLogRepository(resultNotification);
@@ -135,7 +136,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldGenerateNewManualResultIfManualAssessmentExists() {
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of(),
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of(),
                 new ArrayList<>());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
@@ -153,8 +154,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"), List.of("test3", "test4"),
-                List.of());
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"),
+                List.of("test3", "test4"), List.of());
         programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, messagingTemplate);
     }
 }

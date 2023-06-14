@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtil
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -105,22 +104,22 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof TextExercise) {
                 textExercise = (TextExercise) exercise;
 
-                textSubmission1 = textExerciseUtilService.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true),
+                textSubmission1 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true),
                         TEST_PREFIX + "student1");
-                textSubmission2 = textExerciseUtilService.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true),
+                textSubmission2 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("some other text", Language.ENGLISH, true),
                         TEST_PREFIX + "student2");
-                textSubmission3 = textExerciseUtilService.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true),
+                textSubmission3 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("a third text", Language.ENGLISH, true),
                         TEST_PREFIX + "student3");
             }
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
                 fileUploadSubmission1 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
+                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
                 fileUploadSubmission2 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
+                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
                 fileUploadSubmission3 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
+                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
 
                 try {
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);

@@ -29,11 +29,11 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -103,7 +103,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
@@ -119,9 +119,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // Set submission of newResult
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
-        manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
+        manualResult = ParticipationFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
@@ -132,7 +132,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
-        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
         Result programmingAssessment = programmingSubmission.getLatestResult();
@@ -580,7 +580,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         var result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();
         result.setScore(75D);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         result.setCompletionDate(ZonedDateTime.now());
         result.setFeedbacks(feedbacks);
@@ -619,7 +619,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
-        ProgrammingExercise exercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
@@ -676,7 +676,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
@@ -804,11 +804,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
 
         // Starting participation
-        StudentParticipation participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        StudentParticipation participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
         studentParticipationRepository.save(participation);
 
         // Creating submission
-        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission.setType(SubmissionType.MANUAL);
         programmingSubmission.setParticipation(participation);
         programmingSubmission.setSubmitted(Boolean.TRUE);
@@ -817,7 +817,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // assess this submission
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElse(null);
-        Result initialResult = ModelFactory.generateResult(true, 50);
+        Result initialResult = ParticipationFactory.generateResult(true, 50);
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

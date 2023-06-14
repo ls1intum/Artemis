@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
@@ -21,7 +22,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -39,7 +39,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private OrganizationRepository organizationRepo;
 
     @Autowired
-    private OrganisationUtilService organisationUtilService;
+    private OrganizationUtilService organizationUtilService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -65,7 +65,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetCoursesToRegisterWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         Set<Organization> organizations = new HashSet<>();
         organizations.add(organization);
 
@@ -75,8 +75,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
         course2.setEnrollmentEnabled(true);
         course1.setOrganizations(organizations);
@@ -95,11 +95,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testRegisterForCourseWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         Set<Organization> organizations = new HashSet<>();
         organizations.add(organization);
 
-        Organization otherOrganization = organisationUtilService.createOrganization();
+        Organization otherOrganization = organizationUtilService.createOrganization();
         Set<Organization> otherOrganizations = new HashSet<>();
         otherOrganizations.add(otherOrganization);
 
@@ -109,9 +109,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course3 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
 
         course1.setEnrollmentEnabled(true);
         course2.setEnrollmentEnabled(true);
@@ -149,10 +149,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testAddCourseToOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
         request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
@@ -169,10 +169,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testRemoveCourseToOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization.getCourses().add(course1);
         organization = organizationRepo.save(organization);
 
@@ -192,7 +192,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testAddUserToOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testAddUserToOrganization");
 
@@ -209,7 +209,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testRemoveUserFromOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testRemoveUser_");
 
         organization.getUsers().add(student);
@@ -235,7 +235,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
 
         Organization updatedOrganization = request.postWithResponseBody("/api/admin/organizations", organization, Organization.class, HttpStatus.OK);
         Organization updatedOrganization2 = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
@@ -251,7 +251,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUpdateOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization.setName("UpdatedName");
 
         Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
@@ -266,7 +266,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUpdateOrganization_idInBodyNull() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization initialOrganization = organisationUtilService.createOrganization();
+        Organization initialOrganization = organizationUtilService.createOrganization();
         long initialOrganizationId = initialOrganization.getId();
         organizationRepo.save(initialOrganization);
         initialOrganization.setId(null);
@@ -284,7 +284,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testUpdateOrganization_IdInPathWrong() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organizationRepo.save(organization);
         String initialName = organization.getName();
         organization.setName("UpdatedName");
@@ -301,10 +301,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOrganization() throws Exception {
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
@@ -319,8 +319,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllOrganizations() throws Exception {
-        Organization organization = organisationUtilService.createOrganization();
-        Organization organization2 = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
+        Organization organization2 = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
         organization2 = organizationRepo.save(organization2);
 
@@ -334,10 +334,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetNumberOfUsersAndCoursesOfAllOrganizations() throws Exception {
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
@@ -359,10 +359,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetNumberOfUsersAndCoursesOfOrganization() throws Exception {
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
@@ -384,10 +384,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetOrganizationById() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
@@ -417,10 +417,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetAllOrganizationByCourse() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
@@ -437,7 +437,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetAllOrganizationByUser() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetAllOrganizationByUser");
 
@@ -456,7 +456,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testOrganizationIndexing() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testOrganizationIndexing");
 
         organization.getUsers().add(student);
@@ -477,7 +477,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetOrganizationTitle() throws Exception {
-        Organization organization = organisationUtilService.createOrganization();
+        Organization organization = organizationUtilService.createOrganization();
         organization.setName("Test Organization");
         organization = organizationRepo.save(organization);
 

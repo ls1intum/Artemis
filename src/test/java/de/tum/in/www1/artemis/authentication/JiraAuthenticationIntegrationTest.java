@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL;
 import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL_UPPER_CASE;
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;

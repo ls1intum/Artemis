@@ -16,11 +16,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -58,7 +58,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
-        TextSubmission submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(exercise, submission, student1.getLogin());
         submission = (TextSubmission) participationUtilService.addResultToSubmission(submission, null, null, 0D, true);
         result = submission.getLatestResult();

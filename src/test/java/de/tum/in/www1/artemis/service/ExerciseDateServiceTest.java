@@ -20,7 +20,9 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
@@ -28,7 +30,6 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -77,7 +78,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         for (int i = 1; i <= 3; ++i) {
-            var submission = ModelFactory.generateModelingSubmission(String.format("model%d", i), true);
+            var submission = ParticipationFactory.generateModelingSubmission(String.format("model%d", i), true);
             modelingExerciseUtilService.addModelingSubmission(exercise, submission, TEST_PREFIX + "student1");
         }
 
@@ -177,7 +178,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         @BeforeEach
         void init() {
             exam = examUtilService.addExamWithExerciseGroup(course, true);
-            exercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().get(0));
+            exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().get(0));
             exercise = exerciseRepository.save(exercise);
         }
 
@@ -228,7 +229,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         @BeforeEach
         void init() {
             testExam = examUtilService.addTestExamWithExerciseGroup(course, true);
-            exercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, testExam.getExerciseGroups().get(0));
+            exercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, testExam.getExerciseGroups().get(0));
             exercise = exerciseRepository.save(exercise);
         }
 

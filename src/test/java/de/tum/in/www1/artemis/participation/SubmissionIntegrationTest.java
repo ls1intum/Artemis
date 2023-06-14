@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -159,7 +158,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
-        TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");

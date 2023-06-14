@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -297,7 +296,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // If user with given registration number does not exist, the request should fail
         List<Team> teams = new ArrayList<>();
-        Team team = ModelFactory.generateTeamForExercise(destinationExercise, TEST_PREFIX + "failTeam", TEST_PREFIX + "fail", 1, null);
+        Team team = TeamFactory.generateTeamForExercise(destinationExercise, TEST_PREFIX + "failTeam", TEST_PREFIX + "fail", 1, null);
         // If students not added with user repo then they do not exist so it should fail
         teams.add(team);
         request.put(importFromListUrl(), getTeamsIntoRegistrationNumberOnlyTeams(teams), HttpStatus.BAD_REQUEST);

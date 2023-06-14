@@ -20,10 +20,10 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -69,7 +69,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         ZonedDateTime date = ZonedDateTime.now().minusWeeks(weeks);
         SecurityUtils.setAuthorizationObject();
         var course = courseUtilService.addEmptyCourse();
-        var exercise = ModelFactory.generateTextExercise(date, date, date, course);
+        var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 
@@ -130,7 +130,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         ZonedDateTime date = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, ZonedDateTime.now().getZone());
         SecurityUtils.setAuthorizationObject();
         var course = courseUtilService.addEmptyCourse();
-        var exercise = ModelFactory.generateTextExercise(date, date, date, course);
+        var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 

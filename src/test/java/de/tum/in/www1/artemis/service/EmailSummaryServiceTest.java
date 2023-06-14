@@ -21,11 +21,11 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -85,24 +85,24 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         Course course = courseUtilService.createCourse();
         Set<Exercise> allTestExercises = new HashSet<>();
 
-        Exercise exerciseWithoutAReleaseDate = ModelFactory.generateTextExercise(null, null, null, course);
+        Exercise exerciseWithoutAReleaseDate = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseWithoutAReleaseDate.setTitle("exerciseWithoutAReleaseDate");
         allTestExercises.add(exerciseWithoutAReleaseDate);
 
-        exerciseReleasedYesterdayAndNotYetDue = ModelFactory.generateTextExercise(now.minusDays(1), null, null, course);
+        exerciseReleasedYesterdayAndNotYetDue = TextExerciseFactory.generateTextExercise(now.minusDays(1), null, null, course);
         exerciseReleasedYesterdayAndNotYetDue.setTitle("exerciseReleasedYesterdayAndNotYetDue");
         exerciseReleasedYesterdayAndNotYetDue.setDifficulty(DifficultyLevel.EASY);
         allTestExercises.add(exerciseReleasedYesterdayAndNotYetDue);
 
-        Exercise exerciseReleasedYesterdayButAlreadyClosed = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
+        Exercise exerciseReleasedYesterdayButAlreadyClosed = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
         exerciseReleasedYesterdayButAlreadyClosed.setTitle("exerciseReleasedYesterdayButAlreadyClosed");
         allTestExercises.add(exerciseReleasedYesterdayButAlreadyClosed);
 
-        Exercise exerciseReleasedTomorrow = ModelFactory.generateTextExercise(now.plusDays(1), null, null, course);
+        Exercise exerciseReleasedTomorrow = TextExerciseFactory.generateTextExercise(now.plusDays(1), null, null, course);
         exerciseReleasedTomorrow.setTitle("exerciseReleasedTomorrow");
         allTestExercises.add(exerciseReleasedTomorrow);
 
-        Exercise exerciseReleasedAMonthAgo = ModelFactory.generateTextExercise(now.minusMonths(1), null, null, course);
+        Exercise exerciseReleasedAMonthAgo = TextExerciseFactory.generateTextExercise(now.minusMonths(1), null, null, course);
         exerciseReleasedAMonthAgo.setTitle("exerciseReleasedAMonthAgo");
         allTestExercises.add(exerciseReleasedAMonthAgo);
 

@@ -23,11 +23,11 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -551,7 +551,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Submission and Result should be present for Team of which the user is the Team Owner
         final String submissionText = "Hello World";
-        TextSubmission submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
 
         Course course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
@@ -562,7 +562,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(participation.getResults()).as("Latest result is present").hasSize(1);
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
-        submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
+        submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), TEST_PREFIX + "tutor2");
 
         Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);

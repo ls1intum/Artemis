@@ -21,13 +21,13 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -68,7 +68,7 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
         userUtilService.addUsers(TEST_PREFIX, numberOfStudents, 0, 0, 0);
         final var course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
         final var exercise = (TextExercise) course.getExercises().iterator().next();
-        final var textSubmissions = ModelFactory.generateTextSubmissions(numberOfStudents);
+        final var textSubmissions = ParticipationFactory.generateTextSubmissions(numberOfStudents);
         for (int i = 0; i < textSubmissions.size(); i++) {
             final var submission = textSubmissions.get(i);
             submission.setId(null);
