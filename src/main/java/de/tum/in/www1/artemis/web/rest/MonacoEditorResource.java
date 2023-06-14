@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.http.conn.HttpHostConnectException;
@@ -147,6 +143,7 @@ public class MonacoEditorResource {
      * related to a given participation
      *
      * @param participationId The ID of the participation related to the terminal session to initialize
+     * @param monacoServerUrl URL pointing to the LSP server managing the related LSP session
      * @return The configuration parameters of the initialized LSP server terminal session
      */
     @GetMapping("monaco/init-terminal/{participationId}")
@@ -178,7 +175,7 @@ public class MonacoEditorResource {
      * @param fileUpdates     List of files changes to forward
      * @param participationId The ID of the participation related to the LSP session
      * @param monacoServerUrl URL pointing to the LSP server managing the LSP session
-     * @return
+     * @return HTTP 200 acknowledging the correct updates forwarding
      */
     @PutMapping("monaco/update-files/{participationId}")
     @PreAuthorize("hasRole('USER')")
@@ -194,20 +191,4 @@ public class MonacoEditorResource {
         monacoEditorService.forwardFileUpdates(participation, fileUpdates, monacoServerUrl);
         return ResponseEntity.ok().build();
     }
-
-    // This is just a temporary endpoint to retrieve metrics about the users' editor choice
-    @PostMapping("monaco/log-editor-choice/{choice}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> logEditorChoice(@PathVariable("choice") int choice) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("log-editor-choice.txt", true));
-            writer.write(new Timestamp(new Date().getTime()) + " - " + choice + "\n");
-            writer.close();
-        }
-        catch (IOException e) {
-            log.warn("An error occurred while logging the user's editor choice.");
-        }
-        return ResponseEntity.ok().build();
-    }
-
 }
