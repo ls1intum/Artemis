@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
 import java.util.List;
@@ -404,13 +404,13 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
         gitlabRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
-        assertDoesNotThrow(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
+        assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
 
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, true);
-        assertDoesNotThrow(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
+        assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
 
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, false);
-        assertDoesNotThrow(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
+        assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
     }
 
     @Test

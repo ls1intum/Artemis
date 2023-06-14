@@ -592,6 +592,13 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public <T> void delete(String path, HttpStatus expectedStatus, T body) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
+        restoreSecurityContext();
+    }
+
     /**
      * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder

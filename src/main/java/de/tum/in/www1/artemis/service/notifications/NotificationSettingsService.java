@@ -45,6 +45,8 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL = "notification.exercise-notification.file-submission-successful";
 
+    public static final String NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER = "notification.exercise-notification.quiz_start_reminder";
+
     // lecture notification settings group
     public static final String NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES = "notification.lecture-notification.attachment-changes";
 
@@ -77,35 +79,36 @@ public class NotificationSettingsService {
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public static final Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
             // weekly summary
-            new NotificationSetting(false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
+            new NotificationSetting(false, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
             // course wide discussion notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
-            new NotificationSetting(true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
+            new NotificationSetting(true, true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
             // exercise notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
-            new NotificationSetting(false, false, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
+            new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST),
+            new NotificationSetting(false, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER),
             // lecture notification settings group
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
-            new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
+            new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
             // tutorial group notification settings group
-            new NotificationSetting(true, false, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
-            new NotificationSetting(true, false, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
+            new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
+            new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
             // tutor notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
+            new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
             // editor notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
+            new NotificationSetting(true, false, true, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
             // instructor notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
-            new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
+            new NotificationSetting(true, false, true, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
+            new NotificationSetting(true, false, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
             // user new message notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
-            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE)));
+            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
+            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -118,6 +121,7 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, new NotificationType[] { NEW_EXERCISE_POST }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST, new NotificationType[] { NEW_REPLY_FOR_EXERCISE_POST }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL, new NotificationType[] { FILE_SUBMISSION_SUCCESSFUL }),
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER, new NotificationType[] { QUIZ_EXERCISE_STARTED }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
@@ -138,10 +142,18 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
-    private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
-            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
+    // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
+    // Please adapt the above docs if you change the supported notification types
+    private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
+            NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
             TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
-            TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED);
+            TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST,
+            NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED);
+
+    // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
+    // Please adapt the above docs if you change the supported notification types
+    private static final Set<NotificationType> INSTANT_NOTIFICATION_TYPES_WITHOUT_EMAIL_SUPPORT = Set.of(QUIZ_EXERCISE_STARTED, NEW_EXERCISE_POST, NEW_LECTURE_POST,
+            NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
@@ -152,35 +164,67 @@ public class NotificationSettingsService {
      *
      * @param notification         which type (based on title) should be checked
      * @param user                 whose notification settings will be used for checking
-     * @param communicationChannel which channel to use (e.g. email or webapp)
+     * @param communicationChannel which channel to use (e.g. email or webapp or push)
      * @return true if the type is allowed else false
      */
-    public boolean checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(Notification notification, User user, NotificationSettingsCommunicationChannel communicationChannel) {
-        NotificationType type = findCorrespondingNotificationType(notification.getTitle());
-
-        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
-        Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
-
-        // for those notification types that are not explicitly set by the user, we use the default settings
-        Set<String> decidedIds = decidedNotificationSettings.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet());
-        for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
-            if (!decidedIds.contains(defaultSetting.getSettingId())) {
-                notificationSettings.add(defaultSetting);
-            }
-        }
-        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
-        return !deactivatedTypes.contains(type);
+    public boolean checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(Notification notification, User user,
+            NotificationSettingsCommunicationChannel communicationChannel) {
+        List<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Collections.singletonList(user), communicationChannel);
+        return !users.isEmpty();
     }
 
     /**
-     * Checks if the notification type has email support (per default not for an individual user!)
-     * For some types there is no need for email support so they will be filtered out here.
+     * Filters the given user array based on if the notification (i.e. its type based on title) is allowed by the respective notification settings
+     *
+     * @param notification         which type (based on title) should be checked
+     * @param users                whose notification settings will be used for checking
+     * @param communicationChannel which channel to use (e.g. email or webapp or push)
+     * @return filtered user list
+     */
+    public List<User> filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(Notification notification, List<User> users,
+            NotificationSettingsCommunicationChannel communicationChannel) {
+        NotificationType type = findCorrespondingNotificationType(notification.getTitle());
+
+        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
+                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(user -> user.getId()).toList());
+        Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
+
+        return users.stream().filter(user -> {
+            // for those notification types that are not explicitly set by the user, we use the default settings
+            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().equals(user))
+                    .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
+            for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
+                if (!decidedIds.contains(defaultSetting.getSettingId())) {
+                    notificationSettings
+                            .add(new NotificationSetting(user, defaultSetting.isWebapp(), defaultSetting.isEmail(), defaultSetting.isPush(), defaultSetting.getSettingId()));
+                }
+            }
+
+            Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
+            return !deactivatedTypes.contains(type);
+        }).toList();
+    }
+
+    /**
+     * Checks if the notification type has instant notification support (per default not for an individual user!)
+     * For some types there is no need for instant notification support so they will be filtered out here.
+     *
+     * @param type of the notification
+     * @return true if the type has instant notification support else false
+     */
+    public boolean checkNotificationTypeForInstantNotificationSupport(NotificationType type) {
+        return NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT.contains(type);
+    }
+
+    /**
+     * Checks if the notification type has email notification support (per default not for an individual user!)
+     * For some types there is no need for email notification support so they will be filtered out here.
      *
      * @param type of the notification
      * @return true if the type has email support else false
      */
     public boolean checkNotificationTypeForEmailSupport(NotificationType type) {
-        return NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT.contains(type);
+        return !INSTANT_NOTIFICATION_TYPES_WITHOUT_EMAIL_SUPPORT.contains(type);
     }
 
     /**
@@ -227,6 +271,7 @@ public class NotificationSettingsService {
             switch (communicationChannel) {
                 case WEBAPP -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isWebapp()));
                 case EMAIL -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isEmail()));
+                case PUSH -> Arrays.stream(tmpNotificationTypes).forEach(type -> resultingMap.put(type, setting.isPush()));
             }
         }
         return resultingMap;

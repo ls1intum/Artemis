@@ -40,8 +40,7 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(long exerciseId) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         return checkConsistencyOfProgrammingExercise(programmingExercise);
     }
 
@@ -87,6 +86,11 @@ public class ConsistencyCheckService {
             }
             if (!versionControlService.get().repositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
+            }
+            for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
+                if (!versionControlService.get().repositoryUrlIsValid(auxiliaryRepository.getVcsRepositoryUrl())) {
+                    result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.AUXILIARY_REPO_MISSING));
+                }
             }
         }
         return result;

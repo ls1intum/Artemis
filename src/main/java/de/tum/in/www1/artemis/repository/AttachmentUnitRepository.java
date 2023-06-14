@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.Set;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
@@ -21,23 +21,29 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
 
     @Query("""
             SELECT attachmentUnit
-            FROM AttachmentUnit attachmentUnit
-            WHERE attachmentUnit.lecture.id = :#{#lectureId}
-            AND attachmentUnit.attachment.attachmentType = :#{#attachmentType}
+            FROM Lecture lecture
+                LEFT JOIN TREAT(lecture.lectureUnits as AttachmentUnit) attachmentUnit
+                LEFT JOIN FETCH attachmentUnit.attachment attachment
+            WHERE lecture.id = :lectureId
+                AND attachment.attachmentType = :attachmentType
+            ORDER BY INDEX(attachmentUnit)
             """)
-    Set<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+    // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
+    List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
     /**
      * Find all attachment units by lecture id and attachment type or throw if ist is empty.
+     * The list is sorted according to the order of units in the lecture.
      *
      * @param lectureId      the id of the lecture
      * @param attachmentType the attachment type
      * @return the list of all attachment units with the given lecture id and attachment type
      * @throws EntityNotFoundException if no results are found
      */
-    default Set<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType)
+    @NotNull
+    default List<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType)
             throws EntityNotFoundException {
-        Set<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
+        List<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
         if (attachmentUnits.isEmpty()) {
             throw new EntityNotFoundException("AttachmentUnit");
         }

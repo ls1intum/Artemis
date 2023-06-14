@@ -6,7 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject, of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
