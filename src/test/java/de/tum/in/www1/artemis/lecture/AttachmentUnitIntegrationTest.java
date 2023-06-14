@@ -175,7 +175,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(persistedAttachment.getId()).isNotNull();
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
-        await().until(() -> slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId()).size() == SLIDE_COUNT);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
     }
@@ -208,13 +208,13 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var attachment = attachmentUnit.getAttachment();
         attachmentUnit.setDescription("Changed");
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
-        await().until(() -> slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId()).size() == SLIDE_COUNT);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT));
         List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
         var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File")).andExpect(status().isOk()).andReturn();
         AttachmentUnit attachmentUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(attachmentUnit1.getDescription()).isEqualTo("Changed");
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
-        await().until(() -> slideRepository.findAllByAttachmentUnitId(attachmentUnit1.getId()).size() == SLIDE_COUNT);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit1.getId())).hasSize(SLIDE_COUNT));
         List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit1.getId());
         assertThat(oldSlides).isNotEqualTo(updatedSlides);
         // testing if bidirectional relationship is kept
