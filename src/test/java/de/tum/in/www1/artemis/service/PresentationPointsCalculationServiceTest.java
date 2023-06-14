@@ -9,7 +9,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
-import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
@@ -47,9 +46,6 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private GradingScaleUtilService gradingScaleUtilService;
 
     private Course course;
 

@@ -23,11 +23,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -70,21 +68,6 @@ public class UserTestService {
 
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
-
-    @Autowired
-    private SingleUserNotificationRepository singleUserNotificationRepository;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private ConversationRepository conversationRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
-
-    @Autowired
-    private OneToOneChatRepository oneToOneChatRepository;
 
     @Autowired
     private UserUtilService userUtilService;
