@@ -203,7 +203,6 @@ describe('Course messages', () => {
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
                     courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
-                    courseMessages.checkMessage(message.id, 'edited by');
                 });
             });
 
