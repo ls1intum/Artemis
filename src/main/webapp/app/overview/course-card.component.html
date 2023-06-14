@@ -1,5 +1,5 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
-    <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="hoverEffectForBackground">
+    <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
             <div class="row d-flex">

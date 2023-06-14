@@ -92,6 +92,12 @@ a.disabled {
     color: $colored-btn-font !important;
 }
 
+.hover-effect:hover {
+    transition: transform 0.2s linear;
+    transform: scale(1.012);
+    background-color: var(--hover-slightly-darker-body-bg);
+}
+
 a.btn {
     -webkit-appearance: none !important;
 }

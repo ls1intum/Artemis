@@ -39,6 +39,8 @@ export class CourseCardComponent implements OnChanges {
     totalReachableScore: number;
     totalAbsoluteScore: number;
 
+    courseColor: string;
+
     // ngx
     ngxDoughnutData: any[] = [
         { name: 'achievedPointsLabel', value: 0 },
@@ -89,6 +91,8 @@ export class CourseCardComponent implements OnChanges {
         if (this.course.exams) {
             this.examCount = this.course.exams.length;
         }
+
+        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**
@@ -108,14 +112,5 @@ export class CourseCardComponent implements OnChanges {
             }
         }
         this.nextExerciseDueDate = nextExerciseDueDate;
-    }
-
-    /**
-     * Returns the background color of the course as a variable
-     */
-    get hoverEffectForBackground(): Record<string, string> {
-        return {
-            '--background-color-for-hover': this.course.color || this.ARTEMIS_DEFAULT_COLOR,
-        };
     }
 }
