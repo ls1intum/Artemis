@@ -8,11 +8,13 @@ export class StudentScores {
 export class CourseScores {
     maxPoints: number;
     reachablePoints: number;
+    reachablePresentationPoints: number;
     studentScores: StudentScores;
 
-    constructor(maxPoints: number, reachablePoints: number, studentScores: StudentScores) {
+    constructor(maxPoints: number, reachablePoints: number, reachablePresentationPoints: number, studentScores: StudentScores) {
         this.maxPoints = maxPoints;
         this.reachablePoints = reachablePoints;
+        this.reachablePresentationPoints = reachablePresentationPoints;
         this.studentScores = studentScores;
     }
 }
