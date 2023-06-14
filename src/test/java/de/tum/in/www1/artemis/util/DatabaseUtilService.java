@@ -564,7 +564,8 @@ public class DatabaseUtilService {
     /**
      * Adds the provided number of students and tutors into the user repository. Students login is a concatenation of the prefix "student" and a number counting from 1 to
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
-     * the "tumuser" group
+     * the "tumuser" group.
+     * To avoid accumulating a high number of users per course, this method also removes existing users from courses before adding new users.
      *
      * @param prefix              the prefix for the user login
      * @param numberOfStudents    the number of students that will be added to the database
@@ -605,11 +606,16 @@ public class DatabaseUtilService {
             log.debug("Generate admin done");
         }
 
+        // Before adding new users, existing users are removed from courses.
+        // Otherwise, the amount users per course constantly increases while running the tests,
+        // even though the old users are not needed anymore.
         if (usersToAdd.size() > 0) {
-            log.debug("Save {} users to database...", usersToAdd.size());
             Set<User> currentUsers = userRepo.findAllInAnyGroup();
+            log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));
             userRepo.saveAll(currentUsers);
+            log.debug("Removing {} users from all courses. Done", currentUsers.size());
+            log.debug("Save {} users to database...", usersToAdd.size());
             usersToAdd = userRepo.saveAll(usersToAdd);
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
