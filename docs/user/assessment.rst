@@ -26,16 +26,16 @@ Manual assessment in Artemis involves the following steps:
 
 1. Submission: Students submit their assignments through Artemis.
 2. Review: Reviewers access the submitted work and put a **lock** on the submission, preventing inconsistency and ambiguity the other reviewer evaluations can cause. Then they review it carefully, considering the objectives, requirements, and criteria established for the assessment.
-3. Evaluation: Based on their assessment, reviewers assign scores, provide feedback, or grade the student's work keeping the grading criteria in mind to ensure consistency and fairness. In the end, reviewers submit or cancel their evaluation, which revokes the lock for use by the other reviewers.
+3. Evaluation: Based on their assessment, reviewers assign scores, provide feedback, or grade the student's work, keeping the grading criteria in mind to ensure consistency and fairness. In the end, reviewers submit or cancel their evaluation, which revokes the lock for use by the other reviewers.
 4. Student feedback: Students rate the quality of the feedback to motivate the reviewers to provide high-quality feedback to improve understanding and prevent misconceptions.
             
 
 Assessment Dashboard
 ^^^^^^^^^^^^^^^^^^^^
 
-To keep track of the manual assessments, Artemis offers the assessment dashboard.
-It represents the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
-It also shows the average rating the students have given to each exercise.
+To keep track of manual assessments, Artemis offers an assessment dashboard.
+It represents the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and feedback requests.
+It also shows the average rating the students have given each exercise.
 
     .. figure:: assessment/assessment-dashboard.png
             :alt: A picture of the assessment dashboard (of an exam)
@@ -46,22 +46,22 @@ Each exercise also has its own assessment dashboard that shows all of this infor
 Structured Grading Criteria
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To ensure consistency, fairness, transparency, and to simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
+To ensure consistency, fairness, and transparency, as well as to simplify the grading process, Artemis provides structured grading instructions (comparable to grading rubrics) that can be dragged and dropped, making it easier and faster to provide feedback. They include predefined feedback and points so that different reviewers can follow the same criteria when assessing student work. Additionally, they provide transparency to students, allowing them to understand how reviewers evaluate their submissions.
 
     .. figure:: assessment/grading-criteria.png
-            :alt: A picture of the assessment user interface with grading criteria, student submission and example solution
+            :alt: A picture of the assessment user interface with grading criteria, student submission, and example solution
             :align: center
 
 
 Integrated Training Process
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Instructors can use the assessment training process to make the grading more consistent. An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to properly assess submissions and provide feedback. They define a series of example submissions and assessments that the tutors must first read through.
+Instructors can use the assessment training process to make the grading more consistent. An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to assess submissions and provide feedback properly. They define a series of example submissions and assessments that the tutors must first read through.
 
 Double-blind Grading
 ^^^^^^^^^^^^^^^^^^^^
 
-The manual assessment begins after the deadline of an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are **blind** to the identity of each other, ensuring that their expectations or biases do not influence the results. 
+The manual assessment begins after the deadline for an exercise has passed for all students and is **double-blind**. It means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors. The double-blind grading aims to minimize bias and increase the objectivity of the assessment. It implies that both the students and the tutors are **blind** to each other's identities, ensuring that their expectations or biases do not influence the results. 
     
     .. figure:: assessment/double-blind.png
             :alt: Double-blind grading
@@ -92,14 +92,14 @@ The complaint process is as follows:
     +---------------------------------------------------------+--------------------------------------------------+
 
 
-3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assess students' submissions. 
+3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assesses students' submissions. 
    Upon evaluation, the reviewer puts a lock expiring automatically in 24 hours in addition to an option of unlocking manually.
 
     .. figure:: assessment/exercise-dashboard.png
             :alt: Exercise Dashboard
             :align: center
 
-4. For each submission, the reviewer decides on the student's complaint.
+4. The reviewer decides on the student's complaint for each submission.
 
     +------------------------------------+---------------------------------------------+
     || In case of a justification, the   | .. figure:: assessment/accept-complaint.png |
@@ -161,7 +161,7 @@ Automatic Assessment
 --------------------
 
 Automatic assessment is available for programming and quiz exercises.
-For quiz exercises this is the only mode of assessment available. Artemis automatically grades students' submissions after the quiz deadline has passed. See the section about :ref:`quiz` for more information about this.
+For quiz exercises, this is the only mode of assessment available. Artemis automatically grades students' submissions after the quiz deadline has passed. See the section about :ref:`quiz` for more information about this.
 
 For programming exercises, this is done via instructor-written test cases that are run for each submission either during or after the deadline. See the section about :ref:`programming` for detailed information about this.
 Instructors can enable complaints for automatically graded programming exercises.
