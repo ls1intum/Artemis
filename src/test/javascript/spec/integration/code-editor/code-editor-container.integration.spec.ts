@@ -466,7 +466,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // saving before commit
         expect(saveFilesStub).toHaveBeenCalledOnce();
-        expect(saveFilesStub).toHaveBeenCalledWith([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }], true);
+        expect(saveFilesStub).toHaveBeenCalledWith([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }], true, undefined);
         expect(container.editorState).toBe(EditorState.SAVING);
         expect(container.fileBrowser.status.editorState).toBe(EditorState.SAVING);
         // committing

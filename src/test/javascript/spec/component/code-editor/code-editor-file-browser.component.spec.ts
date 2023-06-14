@@ -539,7 +539,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         expect(renameFileStub).toHaveBeenCalledOnce();
-        expect(renameFileStub).toHaveBeenCalledWith(fileName, afterRename);
+        expect(renameFileStub).toHaveBeenCalledWith(fileName, afterRename, undefined);
         expect(comp.renamingFile).toBeUndefined();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
         expect(comp.repositoryFiles).toEqual({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
@@ -612,7 +612,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
 
         expect(renameFileStub).toHaveBeenCalledOnce();
-        expect(renameFileStub).toHaveBeenCalledWith(folderName, afterRename);
+        expect(renameFileStub).toHaveBeenCalledWith(folderName, afterRename, undefined);
         expect(comp.renamingFile).toBeUndefined();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
         expect(comp.repositoryFiles).toEqual({
