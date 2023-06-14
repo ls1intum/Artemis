@@ -119,9 +119,30 @@
                             </a>
                         </div>
                     </div>
-                    <div *ngIf="course.presentationScore !== 0">
-                        <h3>{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate : { number: overallPresentationScore } }}</h3>
-                        <h3>{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate : { number: course.presentationScore } }}</h3>
+                    <div *ngIf="course?.presentationScore">
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate : { number: overallPresentationScore } }}
+                        </h5>
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate : { number: course?.presentationScore } }}
+                        </h5>
+                    </div>
+                    <div *ngIf="reachablePresentationPoints">
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.totalPresentationPoints' | artemisTranslate : { number: overallPresentationScore } }}
+                        </h5>
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.achievablePresentationPoints' | artemisTranslate : { number: reachablePresentationPoints } }}
+                        </h5>
+                        <h6>
+                            {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
+                            <fa-icon
+                                id="reachable-help"
+                                class="me-1"
+                                [icon]="faQuestionCircle"
+                                ngbTooltip="{{ 'artemisApp.courseOverview.statistics.presentationHelp' | artemisTranslate }}"
+                            ></fa-icon>
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -231,7 +252,7 @@
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h5>
-                    <h5 *ngIf="exerciseGroup.value[0].presentationScoreEnabled && course.presentationScore !== 0" class="fw-bolder" id="presentation-score">
+                    <h5 *ngIf="exerciseGroup.value[0].presentationScoreEnabled && course?.presentationScore" class="fw-bolder" id="presentation-score">
                         {{ 'artemisApp.courseOverview.statistics.presentationScore' | artemisTranslate : { number: exerciseGroup.value[0].presentationScore } }}
                     </h5>
                 </div>
