@@ -79,7 +79,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.organisation.OrganisationUtilService;
+import de.tum.in.www1.artemis.organization.OrganizationUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
@@ -1725,7 +1725,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link OrganisationUtilService#createOrganization(String, String, String, String, String, String)}
+     * Moved to {@link OrganizationUtilService#createOrganization(String, String, String, String, String, String)}
      */
     public Organization createOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Organization organization = ModelFactory.generateOrganization(name, shortName, url, description, logoUrl, emailPattern);
@@ -1733,7 +1733,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Moved to {@link OrganisationUtilService#createOrganization()}
+     * Moved to {@link OrganizationUtilService#createOrganization()}
      */
     public Organization createOrganization() {
         return createOrganization(UUID.randomUUID().toString().replace("-", ""), UUID.randomUUID().toString().replace("-", ""), UUID.randomUUID().toString().replace("-", ""),
