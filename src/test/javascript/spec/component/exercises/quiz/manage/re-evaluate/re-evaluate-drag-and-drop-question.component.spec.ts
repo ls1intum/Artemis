@@ -9,6 +9,13 @@ describe('ReEvaluateDragAndDropQuestionComponent', () => {
     let fixture: ComponentFixture<ReEvaluateDragAndDropQuestionComponent>;
     let component: ReEvaluateDragAndDropQuestionComponent;
 
+    const fileName1 = 'test1.jpg';
+    const file1 = new File([], fileName1);
+    const fileName2 = 'test2.jpg';
+    const file2 = new File([], fileName2);
+    const fileName3 = 'test3.png';
+    const file3 = new File([], fileName3);
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -26,22 +33,37 @@ describe('ReEvaluateDragAndDropQuestionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should return files', () => {
-        fixture.detectChanges();
-        component.dragAndDropQuestionEditComponent = {
-            newDragItemFiles: new Map<string, File>([
-                ['path/to/dIFile/test1.jpg', new File([], 'test1.jpg')],
-                ['path/to/dIFile/test2.jpg', new File([], 'test2.jpg')],
-            ]),
-            question: { backgroundFilePath: 'path/to/bGfile/test3.png' },
-            backgroundFile: new File([], 'test3.png'),
-        } as DragAndDropQuestionEditComponent;
-        expect(component.getFiles()).toEqual(
+    it('should add file', () => {
+        component.handleAddFile({ fileName: fileName1, file: file1 });
+        component.handleAddFile({ fileName: fileName2, file: file2 });
+
+        expect(component.fileMap).toEqual(
             new Map<string, File>([
-                ['path/to/dIFile/test1.jpg', new File([], 'test1.jpg')],
-                ['path/to/dIFile/test2.jpg', new File([], 'test2.jpg')],
-                ['path/to/bGfile/test3.png', new File([], 'test3.png')],
+                [fileName1, file1],
+                [fileName2, file2],
             ]),
         );
+    });
+
+    it('should remove file', () => {
+        component.fileMap = new Map<string, File>([
+            [fileName1, file1],
+            [fileName2, file2],
+            [fileName3, file3],
+        ]);
+        component.handleRemoveFile(fileName2);
+        expect(component.fileMap).toEqual(
+            new Map<string, File>([
+                [fileName1, file1],
+                [fileName3, file3],
+            ]),
+        );
+    });
+
+    it('should check if file exists', () => {
+        component.fileMap = new Map<string, File>([[fileName2, file2]]);
+        expect(component.fileNameExists(fileName2)).toBeTrue();
+        expect(component.fileNameExists(fileName1)).toBeFalse();
+        expect(component.fileNameExists(fileName3)).toBeFalse();
     });
 });

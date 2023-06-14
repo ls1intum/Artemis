@@ -82,7 +82,7 @@ export class FileService {
         let name;
         do {
             name = uuid() + '.' + extension;
-        } while (!checkCallback || checkCallback(name));
+        } while (checkCallback && checkCallback(name));
         return name;
     }
 }

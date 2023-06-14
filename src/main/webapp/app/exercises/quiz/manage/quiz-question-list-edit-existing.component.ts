@@ -327,9 +327,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                     // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
                     const correctMappingDragItem = correctMapping.dragItem!;
                     if (correctMappingDragItem.pictureFilePath) {
-                        const mappingDragItemFile = await this.fileService.getFile(correctMappingDragItem.pictureFilePath, this.fileCheckCallback);
-                        files.set(mappingDragItemFile.name, mappingDragItemFile);
-                        correctMappingDragItem.pictureFilePath = mappingDragItemFile.name;
+                        correctMappingDragItem.pictureFilePath = dndQuestion.dragItems?.filter((dragItem) => dragItem.tempID === correctMappingDragItem.id)?.[0].pictureFilePath;
                     }
                     correctMappingDragItem.tempID = correctMappingDragItem?.id;
                     correctMapping.dragItem!.id = undefined;

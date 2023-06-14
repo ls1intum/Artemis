@@ -85,18 +85,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     questionEditorText = '';
 
     backupQuestion: DragAndDropQuestion;
-    backgroundFilePath: string;
-    dragItemFileName: string;
-
-    newDragItemFiles: Map<string, File> = new Map<string, File>();
+    backgroundFilePath = '';
     dragItemFilesPreviewPath: Map<string, string> = new Map<string, string>();
-
     dropAllowed = false;
-
-    showPreview: boolean;
+    showPreview = false;
 
     /** Status boolean for collapse status **/
-    isQuestionCollapsed: boolean;
+    isQuestionCollapsed = false;
 
     /**
      * Keep track of what the current drag action is doing
@@ -157,12 +152,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     ngOnInit(): void {
         // create deep copy as backup
         this.backupQuestion = cloneDeep(this.question);
-
-        /** Assign status booleans and strings **/
-        this.showPreview = false;
-        this.backgroundFilePath = '';
-        this.dragItemFileName = '';
-        this.isQuestionCollapsed = false;
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();

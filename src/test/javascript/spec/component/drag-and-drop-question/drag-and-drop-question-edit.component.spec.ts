@@ -36,6 +36,8 @@ describe('DragAndDropQuestionEditComponent', () => {
     let modalService: NgbModal;
     let createObjectURLStub: jest.SpyInstance;
     let questionUpdatedSpy: jest.SpyInstance;
+    let addFileSpy: jest.SpyInstance;
+    let removeFileSpy: jest.SpyInstance;
 
     const question1 = new DragAndDropQuestion();
     question1.id = 1;
@@ -93,6 +95,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         createObjectURLStub = jest.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
             return 'some/client/dependent/path/' + file.name;
         });
+        addFileSpy = jest.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = jest.spyOn(component.removeFile, 'emit');
     });
 
     beforeEach(fakeAsync(() => {
@@ -113,8 +117,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should initialize', () => {
-        expect(component.isQuestionCollapsed).toBeFalse();
-        expect(component.newDragItemFiles).toEqual(new Map<string, File>());
+        expect(component.backupQuestion).toEqual(question1);
         expect(component.dragItemFilesPreviewPath).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
     });
@@ -149,7 +152,6 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.setBackgroundFile(event);
 
-        expect(component.backgroundFile).toEqual(file1);
         expect(component.backgroundFilePath).toEndWith(file1.name);
         expect(component.question.backgroundFilePath).toEndWith('.jpg');
         expect(createObjectURLStub).toHaveBeenCalledOnceWith(file1);
@@ -334,7 +336,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(newDragItemOfQuestion.text).toBe('Text');
         expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
         expect(component.dragItemFilesPreviewPath.size).toBe(0);
-        expect(component.newDragItemFiles.size).toBe(0);
+        expect(addFileSpy).not.toHaveBeenCalled();
+        expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
     it('should create image item', () => {
@@ -345,7 +348,6 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.createImageDragItem({ target: { files: [file] } });
 
-        // expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.question.dragItems).toBeArrayOfSize(1);
         const newDragItemOfQuestion = component.question.dragItems![0];
         expect(newDragItemOfQuestion.text).toBeUndefined();
@@ -354,8 +356,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         const filePath = newDragItemOfQuestion.pictureFilePath!;
         expect(component.dragItemFilesPreviewPath.size).toBe(1);
         expect(component.dragItemFilesPreviewPath.get(filePath)).toBe(expectedPath);
-        expect(component.newDragItemFiles.size).toBe(1);
-        expect(component.newDragItemFiles.get(filePath)).toBe(file);
+        expect(addFileSpy).toHaveBeenCalledOnceWith({ file, fileName: filePath });
+        expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
     it('should delete drag item', () => {
@@ -444,7 +446,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should change picture drag item to text drag item', () => {
-        component.question = question3;
+        component.question = clone(question3);
         component.ngOnInit();
         component.ngAfterViewInit();
 
@@ -452,7 +454,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.dragItemFilesPreviewPath.size).toBe(2);
-        expect(component.newDragItemFiles.size).toBe(0);
+        expect(addFileSpy).not.toHaveBeenCalled();
+        expect(removeFileSpy).toHaveBeenCalledOnceWith('this/is/a/fake/path/3/image.jpg');
         expect(component.question.dragItems![0]).toContainAllEntries([
             ['id', 1],
             ['pictureFilePath', 'this/is/a/fake/path/2/image.jpg'],
@@ -499,8 +502,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         const filePath = component.question.dragItems![1].pictureFilePath!;
         expect(component.dragItemFilesPreviewPath.size).toBe(1);
         expect(component.dragItemFilesPreviewPath.get(filePath)).toBe(expectedPath);
-        expect(component.newDragItemFiles.size).toBe(1);
-        expect(component.newDragItemFiles.get(filePath)).toBe(file);
+        expect(addFileSpy).toHaveBeenCalledOnceWith({ file, fileName: filePath });
+        expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
     it('should change question title', () => {
