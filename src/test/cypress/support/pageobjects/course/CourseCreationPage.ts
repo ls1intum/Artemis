@@ -221,26 +221,6 @@ export class CourseCreationPage {
     }
 
     /**
-     * Sets if presentation score is enabled for this course
-     * @param presentationScore if presentationScore should be enabled
-     */
-    setPresentationScoreEnabled(presentationScore: boolean) {
-        if (presentationScore) {
-            cy.get('#changePresentationScoreInput').check();
-        } else {
-            cy.get('#changePresentationScoreInput').uncheck();
-        }
-    }
-
-    /**
-     * Sets the maximal request more feedback time in days
-     * @param presentationScore maximal request more feedback time in days
-     */
-    setPresentationScore(presentationScore: number) {
-        cy.get('#field_presentationScore').clear().type(presentationScore.toString());
-    }
-
-    /**
      * Submits the created exam.
      * @returns the query chainable if a test needs to access the response
      */
