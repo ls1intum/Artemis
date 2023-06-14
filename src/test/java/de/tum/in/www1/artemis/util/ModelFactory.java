@@ -1665,6 +1665,7 @@ public class ModelFactory {
     }
 
     /**
+     * Moved to {@link de.tum.in.www1.artemis.assessment.GradingScaleFactory#generateGradingScaleForCourse(Course, Integer, Double)}
      * Generates a GradingScale instance with given arguments.
      *
      * @param course              of grading scale
