@@ -464,7 +464,7 @@
                 "created": "The submission policy was created successfully!",
                 "updated": "The submission policy was updated successfully!",
                 "deleted": "The submission policy was deleted successfully!",
-                "submissionsAllowed": "allowed Submissions",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} allowed Submissions",
                 "none": {
                     "optionLabel": "None"
                 },
