@@ -15,6 +15,7 @@ export const EXAM_SUBMITTED = 'Submitted';
 export const EXAM_PASSED = 'Passed';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
+export const PRESENTATION_POINTS_KEY = 'Presentation Points';
 export const POINTS_KEY = 'Points';
 export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
