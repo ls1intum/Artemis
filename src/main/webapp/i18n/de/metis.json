@@ -44,9 +44,6 @@
                 "lecture": "Vortrag"
             },
             "channel": {
-                "label": "Kanal",
-                "show": "Kanal anzeigen",
-                "hide": "Kanal einklappen",
                 "notAMember": "Du bist kein Mitglied des Kanals.",
                 "noChannel": "Es ist kein Kanal verfügbar."
             },
@@ -56,9 +53,11 @@
                 "hide": "Kommunikation einklappen"
             },
             "discussionSection": {
-                "searchBarDefault": "Suche nach Beiträgen",
+                "searchBarDefault": "Suche nach Nachrichten",
                 "sortByDate": "Datum:",
-                "defaultSortCriterion": "Standard-Sortierung"
+                "defaultSortCriterion": "Standard-Sortierung",
+                "noMessages": "Keine Nachrichten gefunden",
+                "loadingMessages": "Nachrichten laden..."
             },
             "overview": {
                 "title": "Beiträge",
