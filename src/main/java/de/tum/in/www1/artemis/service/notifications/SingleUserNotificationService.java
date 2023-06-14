@@ -85,7 +85,7 @@ public class SingleUserNotificationService {
                     ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(singleUserNotification, notificationSubject);
+        saveAndSend(singleUserNotification, notificationSubject, author);
     }
 
     /**
@@ -350,7 +350,7 @@ public class SingleUserNotificationService {
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
         // do not save notifications that are not relevant for the user
         if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
@@ -362,7 +362,7 @@ public class SingleUserNotificationService {
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
         }
 
-        prepareSingleUserInstantNotification(notification, notificationSubject);
+        prepareSingleUserInstantNotification(notification, notificationSubject, author);
     }
 
     private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
@@ -386,10 +386,14 @@ public class SingleUserNotificationService {
      * @param notification        that should be checked
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject) {
+    private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject, User author) {
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
+
+        // If the notification is about a reply and the author is also the recipient, we skip send. Do not the sender of the message about their own message!
+        boolean skipSend = type == CONVERSATION_NEW_REPLY_MESSAGE && Objects.equals(notification.getRecipient().getId(), author.getId());
+
         // checks if this notification type has email support
-        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
+        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type) && !skipSend) {
             notificationService.sendNotification(notification, notification.getRecipient(), notificationSubject);
         }
     }

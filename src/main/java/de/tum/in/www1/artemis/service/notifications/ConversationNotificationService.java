@@ -69,7 +69,9 @@ public class ConversationNotificationService {
         conversationNotificationRepository.save(notification);
         sendNotificationViaWebSocket(notification);
 
-        final List<User> users = notification.getConversation().getConversationParticipants().stream().map((u) -> u.getUser()).toList();
+        final Long notificationAuthorId = notification.getAuthor().getId();
+        final List<User> users = notification.getConversation().getConversationParticipants().stream().map((u) -> u.getUser()).filter((u) -> u.getId() != notificationAuthorId)
+                .toList();
         generalInstantNotificationService.sendNotification(notification, users, null);
     }
 
