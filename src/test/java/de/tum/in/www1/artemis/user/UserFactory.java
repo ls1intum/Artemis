@@ -4,7 +4,6 @@ import java.util.*;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class UserFactory {
 
@@ -13,7 +12,7 @@ public class UserFactory {
     public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
-            User user = ModelFactory.generateActivatedUser(loginPrefix + i, commonPasswordHash);
+            User user = generateActivatedUser(loginPrefix + i, commonPasswordHash);
             if (groups != null) {
                 user.setGroups(Set.of(groups));
                 user.setAuthorities(authorities);
@@ -39,7 +38,7 @@ public class UserFactory {
      */
     public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount,
             String registrationNumberPrefix) {
-        List<User> generatedUsers = ModelFactory.generateActivatedUsers(loginPrefix, groups, authorities, amount);
+        List<User> generatedUsers = generateActivatedUsers(loginPrefix, groups, authorities, amount);
         for (int i = 0; i < amount; i++) {
             generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
         }

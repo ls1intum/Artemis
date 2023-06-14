@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ParticipationFactory {
 
@@ -195,7 +194,7 @@ public class ParticipationFactory {
     }
 
     public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) {
-        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        List<Feedback> feedbacks = generateFeedback();
 
         var gradingInstructionWithNoLimit = receivedExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
         var gradingInstructionWithLimit = receivedExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);

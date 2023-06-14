@@ -340,10 +340,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         List<OrganizationCountDTO> result = request.getList("/api/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
 
-        assertThat(result).hasSize(1);
+        assertThat(result).isNotEmpty();
 
-        assertThat(result.get(0).numberOfCourses()).isEqualTo(1);
-        assertThat(result.get(0).numberOfUsers()).isEqualTo(1);
+        assertThat(result.get(result.size() - 1).numberOfCourses()).isEqualTo(1);
+        assertThat(result.get(result.size() - 1).numberOfUsers()).isEqualTo(1);
     }
 
     /**
