@@ -40,7 +40,7 @@ describe('PrivacyStatementService', () => {
         const expected = new PrivacyStatement(lang);
         expected.text = 'text';
         service.getPrivacyStatement(lang).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `api/privacy-statement?language=${lang}` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/public/privacy-statement?language=${lang}` });
         req.flush(expected);
         tick();
     }));
