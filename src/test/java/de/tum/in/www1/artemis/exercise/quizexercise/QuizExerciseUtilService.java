@@ -12,6 +12,9 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -28,6 +31,8 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 @Service
 public class QuizExerciseUtilService {
@@ -66,6 +71,32 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private RequestUtilService requestUtilService;
+
+    /**
+     * Create, join and start a batch for student by tutor
+     */
+    public void prepareBatchForSubmitting(QuizExercise quizExercise, Authentication tutor, Authentication student) throws Exception {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        switch (quizExercise.getQuizMode()) {
+            case SYNCHRONIZED -> {
+            }
+            case BATCHED -> {
+                SecurityContextHolder.getContext().setAuthentication(tutor);
+                var batch = requestUtilService.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
+                requestUtilService.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
+                SecurityContextHolder.getContext().setAuthentication(student);
+                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), HttpStatus.OK, null);
+            }
+            case INDIVIDUAL -> {
+                SecurityContextHolder.getContext().setAuthentication(student);
+                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(null), HttpStatus.OK, null);
+            }
+        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
 
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");
