@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -54,13 +55,15 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final GitService gitService;
 
+    private final RepositoryService repositoryService;
+
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            StudentParticipationRepository studentParticipationRepository, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, GitService gitService, RepositoryService repositoryService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.irisConnectorService = irisConnectorService;
@@ -71,6 +74,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         this.irisSessionRepository = irisSessionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.gitService = gitService;
+        this.repositoryService = repositoryService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
@@ -120,15 +124,12 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         parameters.put("exercise", exercise);
         parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
         var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), chatSession.getUser().getId());
-        if (participations.size() == 1) {
+        if (participations.size() >= 1) {
             var latestSubmission = participations.get(0).getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
             latestSubmission.ifPresent(submission -> parameters.put("latestSubmission", submission));
         }
         parameters.put("session", fullSession);
-        var diff = getDiffForStudentAndExercise(chatSession.getUser(), exercise);
-        if (diff != null) {
-            parameters.put("gitDiff", diff);
-        }
+        addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, parameters);
 
         var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
         irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getTemplate(), irisSettings.getIrisChatSettings().getPreferredModel(), parameters)
@@ -147,16 +148,42 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 });
     }
 
-    private String getDiffForStudentAndExercise(User student, ProgrammingExercise exercise) {
+    private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, Map<String, Object> parameters) {
+        parameters.put("gitDiff", "");
+        parameters.put("studentRepository", Map.of());
+        parameters.put("templateRepository", Map.of());
+
         var studentParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), student.getLogin());
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
 
-        if (studentParticipation.isEmpty() || templateParticipation.isEmpty()) {
-            return null;
-        }
-
         Repository templateRepo;
         Repository studentRepo;
+
+        if (studentParticipation.isEmpty() && templateParticipation.isEmpty()) {
+            return;
+        }
+        else if (studentParticipation.isEmpty()) {
+            try {
+                templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
+            }
+            catch (GitAPIException e) {
+                log.error("Could not checkout template repository", e);
+                return;
+            }
+            parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
+            return;
+        }
+        else if (templateParticipation.isEmpty()) {
+            try {
+                studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
+            }
+            catch (GitAPIException e) {
+                log.error("Could not checkout student repository", e);
+                return;
+            }
+            parameters.put("studentRepository", repositoryService.getFilesWithContent(studentRepo));
+            return;
+        }
 
         try {
             templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
@@ -164,8 +191,10 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         }
         catch (GitAPIException e) {
             log.error("Could not fetch repositories", e);
-            return null;
+            return;
         }
+        parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
+        parameters.put("studentRepository", repositoryService.getFilesWithContent(studentRepo));
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(studentRepo);
@@ -177,11 +206,10 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
         try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
-            return diffOutputStream.toString();
+            parameters.put("gitDiff", diffOutputStream.toString());
         }
         catch (IOException | GitAPIException e) {
             log.error("Could not generate diff", e);
-            return null;
         }
     }
 }
