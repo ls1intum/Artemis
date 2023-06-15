@@ -25,6 +25,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     isScrolledToBottom = true;
     componentClass = 'chat-widget';
     rows = 1;
+    fullSize = false;
 
     constructor(private dialog: MatDialog, private route: ActivatedRoute, private localStorage: LocalStorageService, private accountService: AccountService) {}
 
@@ -91,11 +92,15 @@ export class ExerciseChatWidgetComponent implements OnInit {
     }
 
     maximizeScreen() {
-        this.componentClass = 'chat-widget-fullscreen';
+        this.chatWidget.nativeElement.style.width = '95vw';
+        this.chatWidget.nativeElement.style.height = '85vh';
+        this.fullSize = true;
     }
 
     minimizeScreen() {
-        this.componentClass = 'chat-widget';
+        this.chatWidget.nativeElement.style.width = '330px';
+        this.chatWidget.nativeElement.style.height = '430px';
+        this.fullSize = false;
     }
 
     handleKey(event: KeyboardEvent): void {

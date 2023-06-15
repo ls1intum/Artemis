@@ -1,6 +1,6 @@
 <div class="container">
     <!-- chat box -->
-    <div [class]="componentClass" ngDraggable [handle]="chatBody" ngResizable rzHandles="all" [rzMinWidth]="250" [rzMinHeight]="200">
+    <div class="chat-widget" #chatWidget ngDraggable [handle]="chatBody" ngResizable rzHandles="all" [rzMinWidth]="250" [rzMinHeight]="200" [rzMaxWidth]="950" [rzMaxHeight]="700">
         <!-- client -->
         <div class="client">
             <div class="chat-header">
@@ -12,12 +12,13 @@
                     </a>
                 </h3>
                 <div class="button-container">
-                    <button *ngIf="componentClass === 'chat-widget'" (click)="maximizeScreen()" class="header-icon">
-                        <fa-icon [icon]="faExpand"></fa-icon>
-                    </button>
-                    <button *ngIf="componentClass === 'chat-widget-fullscreen'" (click)="minimizeScreen()" class="header-icon">
-                        <fa-icon [icon]="faCompress"></fa-icon>
-                    </button>
+                    <button *ngIf="!fullSize; else compressButton" (click)="maximizeScreen()" class="header-icon">
+                        <fa-icon [icon]="faExpand"></fa-icon></button
+                    ><ng-template #compressButton>
+                        <button (click)="minimizeScreen()" class="header-icon">
+                            <fa-icon [icon]="faCompress"></fa-icon>
+                        </button>
+                    </ng-template>
                     <button (click)="closeChat()" class="header-icon">
                         <fa-icon [icon]="faXmark"></fa-icon>
                     </button>
