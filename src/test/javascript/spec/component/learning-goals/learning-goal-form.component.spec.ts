@@ -133,7 +133,7 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.courseId = 1;
         learningGoalFormComponent.formData.id = 2;
         learningGoalFormComponent.isEditMode = true;
-        learningGoalFormComponent.ngOnChanges();
+        //learningGoalFormComponent.ngOnChanges();
 
         learningGoalFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!

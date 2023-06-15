@@ -102,7 +102,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
     suggestedTaxonomies: string[] = [];
-    canBeOptional = false;
+    canBeOptional = true;
 
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
@@ -139,11 +139,11 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit(): void {
+        this.checkCanBeOptional();
         this.initializeForm();
     }
 
     private initializeForm() {
-        this.canBeOptional = this.checkCanBeOptional();
         if (this.form) {
             return;
         }
@@ -248,12 +248,12 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         });
     }
 
-    private checkCanBeOptional(): boolean {
+    private checkCanBeOptional(): void {
         if (!this.isEditMode || !this.formData.id) {
-            return true;
+            this.canBeOptional = true;
+            return;
         }
 
-        let requiredExerciseExists = false;
         this.learningGoalService
             .findById(this.formData.id, this.courseId)
             .pipe(
@@ -266,13 +266,19 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             )
             .subscribe({
                 next: (learningGoal) => {
+                    console.log(learningGoal);
+                    console.log(learningGoal?.exercises);
                     if (learningGoal && learningGoal.exercises) {
-                        requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+                        console.log(learningGoal.exercises);
+                        this.canBeOptional = !learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+                    }
+                    if (!this.canBeOptional) {
+                        this.optionalControl?.disable();
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
-        return !requiredExerciseExists;
+        //console.log(this.canBeOptional);
     }
 
     getCanBeOptional(): boolean {
