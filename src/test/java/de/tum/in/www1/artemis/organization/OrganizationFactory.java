@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.organization;
 
 import de.tum.in.www1.artemis.domain.Organization;
 
+/**
+ * Factory for creating Organizations and related objects.
+ */
 public class OrganizationFactory {
 
     /**

@@ -35,6 +35,9 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
+ */
 @Service
 public class QuizExerciseUtilService {
 

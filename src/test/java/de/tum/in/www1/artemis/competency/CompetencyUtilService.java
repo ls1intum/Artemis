@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.domain.Competency;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to competencies for use in integration tests.
+ */
 @Service
 public class CompetencyUtilService {
 

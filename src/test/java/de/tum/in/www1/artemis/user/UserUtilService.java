@@ -26,6 +26,9 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to users for use in integration tests.
+ */
 @Service
 public class UserUtilService {
 

@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
+/**
+ * Factory for creating ModelingExercises and related objects.
+ */
 public class ModelingExerciseFactory {
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
