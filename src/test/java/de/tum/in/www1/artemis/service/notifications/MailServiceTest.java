@@ -1,10 +1,10 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.notifications;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 
 import javax.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -14,6 +14,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
+import de.tum.in.www1.artemis.service.TimeService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -95,6 +96,6 @@ class MailServiceTest {
     @Test
     void testThrowException() {
         doThrow(new org.springframework.mail.MailSendException("Some error occurred")).when(javaMailSender).send(any(MimeMessage.class));
-        Assertions.assertThrows(ArtemisMailException.class, () -> mailService.sendEmail(student1, subject, content, false, true));
+        assertThatExceptionOfType(ArtemisMailException.class).isThrownBy(() -> mailService.sendEmail(student1, subject, content, false, true));
     }
 }

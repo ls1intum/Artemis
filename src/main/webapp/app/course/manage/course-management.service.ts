@@ -160,7 +160,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request
+     * Finds one course using a GET request.
+     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */

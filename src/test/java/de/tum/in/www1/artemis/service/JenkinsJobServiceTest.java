@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -85,19 +86,19 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new FolderJob());
-        assertThrows(JenkinsException.class, () -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
+        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateJobThrowIOExceptionOnXmlError() {
-        assertThrows(IOException.class, () -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
+        assertThatIOException().isThrownBy(() -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateFolderJobThrowIOExceptionOnXmlError() {
-        assertThrows(IOException.class, () -> jenkinsJobService.updateFolderJob("JenkinsFolder", invalidDocument));
+        assertThatIOException().isThrownBy(() -> jenkinsJobService.updateFolderJob("JenkinsFolder", invalidDocument));
     }
 
     private Document createEmptyDOMDocument() throws ParserConfigurationException {

@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -163,11 +162,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
         // Assert that the repository folders do not exist anymore.
         LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isFalse();
+        assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isFalse();
+        assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isFalse();
+        assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
     }
 
     @Test
