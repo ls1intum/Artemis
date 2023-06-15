@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -979,4 +980,76 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
+
+    /**
+     * Gets the sum of all presentation scores for the given course and student.
+     *
+     * @param courseId  the id of the course
+     * @param studentId the id of the student
+     * @return the sum of all presentation scores for the given course and student
+     */
+    @Query("""
+            SELECT COALESCE(SUM(p.presentationScore), 0)
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                 AND p.presentationScore IS NOT NULL
+                 AND (p.student.id = :studentId OR ts.id = :studentId)
+            """)
+    double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
+
+    /**
+     * Maps all given studentIds to their presentation score sum for the given course.
+     *
+     * @param courseId   the id of the course
+     * @param studentIds the ids of the students
+     * @return a set of id to presentation score sum mappings
+     */
+    @Query("""
+            SELECT COALESCE(p.student.id, ts.id) AS id, COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                 AND p.presentationScore IS NOT NULL
+                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
+            GROUP BY COALESCE(p.student.id, ts.id)
+            """)
+    Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
+
+    /**
+     * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
+     */
+    interface IdToPresentationScoreSum {
+
+        long getId();
+
+        double getPresentationScoreSum();
+    }
+
+    /**
+     * Maps all given studentIds to their presentation score sum for the given course.
+     *
+     * @param courseId   the id of the course
+     * @param studentIds the ids of the students
+     * @return a map of studentId to presentation score sum
+     */
+    default Map<Long, Double> mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(long courseId, Set<Long> studentIds) {
+        return sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds).stream()
+                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
+    }
+
+    /**
+     * Gets the average presentation score for all participations of the given course.
+     *
+     * @param courseId the id of the course
+     * @return the average presentation score
+     */
+    @Query("""
+            SELECT COALESCE(AVG(p.presentationScore), 0)
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                 AND p.presentationScore IS NOT NULL
+            """)
+    double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 }
