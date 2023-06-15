@@ -31,7 +31,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     dots = 1;
 
     readonly firstMessageContent = {
-        textContent: 'Hey! What can I help you?',
+        textContent: "Hi, I'm Iris! I can help you with your programming exercise.You can know more about me here.",
         type: IrisMessageContentType.TEXT,
     } as IrisMessageContent;
 
