@@ -53,7 +53,7 @@ public class XmlFileUtils {
             return parseDocument(configXmlText);
         }
         catch (IOException e) {
-            final var errorMessage = "Error loading template Jenins build XML: " + e.getMessage();
+            final var errorMessage = "Error loading template Jenkins build XML: " + e.getMessage();
             log.error(errorMessage, e);
             throw new IllegalStateException(errorMessage, e);
         }
