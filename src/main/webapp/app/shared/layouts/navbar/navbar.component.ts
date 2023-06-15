@@ -281,6 +281,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         quiz_statistic: 'artemisApp.quizExercise.statistics',
         quiz_point_statistic: 'artemisApp.quizExercise.statistics',
         import: 'artemisApp.exercise.import.table.doImport',
+        import_from_file: 'artemisApp.programmingExercise.importFromFile.title',
         plagiarism: 'artemisApp.plagiarism.plagiarismDetection',
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
@@ -329,6 +330,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
         privacy_statement: 'artemisApp.legal.privacyStatement.title',
         imprint: 'artemisApp.legal.imprint.title',
+        edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
     };
 
     studentPathBreadcrumbTranslations = {
