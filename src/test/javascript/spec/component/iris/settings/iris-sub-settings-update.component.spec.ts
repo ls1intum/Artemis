@@ -1,5 +1,6 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-sub-settings-update/iris-sub-settings-update.component';
@@ -21,7 +22,7 @@ describe('IrisSubSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [IrisSubSettingsUpdateComponent],
         }).compileComponents();
         fixture = TestBed.createComponent(IrisSubSettingsUpdateComponent);
