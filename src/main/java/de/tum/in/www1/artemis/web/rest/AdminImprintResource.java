@@ -15,15 +15,15 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
- * REST controller for managing and retrieving the imprint.
+ * REST controller for editing the imprint as an admin.
  */
 @RestController
-@RequestMapping("api/")
-public class ImprintResource {
+@RequestMapping("api/admin")
+public class AdminImprintResource {
 
     private final LegalDocumentService legalDocumentService;
 
-    public ImprintResource(LegalDocumentService legalDocumentService) {
+    public AdminImprintResource(LegalDocumentService legalDocumentService) {
         this.legalDocumentService = legalDocumentService;
     }
 

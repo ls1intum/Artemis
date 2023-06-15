@@ -10,11 +10,11 @@ import { Imprint } from 'app/entities/imprint.model';
 })
 export class LegalDocumentService {
     private resourceUrlPublicPrivacyStatement = 'api/public/privacy-statement';
-    private resourceUrlPrivacyStatementForUpdate = 'api/privacy-statement-for-update';
     private resourceUrlPublicImprint = 'api/public/imprint';
-    private resourceUrlImprintForUpdate = 'api/imprint-for-update';
-    private resourceUrlImprintUpdate = 'api/imprint';
-    private resourceUrlPrivacyStatementUpdate = 'api/privacy-statement';
+    private resourceUrlImprintForUpdate = 'api/admin/imprint-for-update';
+    private resourceUrlPrivacyStatementForUpdate = 'api/admin/privacy-statement-for-update';
+    private resourceUrlImprintUpdate = 'api/admin/imprint';
+    private resourceUrlPrivacyStatementUpdate = 'api/admin/privacy-statement';
 
     constructor(private http: HttpClient) {}
 

@@ -48,7 +48,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/imprint-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
+            request.get("/api/admin/imprint-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
         }
     }
 
@@ -60,7 +60,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             mockedFiles.when(
                     () -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE), eq(StandardOpenOption.TRUNCATE_EXISTING)))
                     .thenThrow(new IOException());
-            request.putWithResponseBody("/api/imprint", new Imprint("text", Language.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            request.putWithResponseBody("/api/admin/imprint", new Imprint("text", Language.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -71,7 +71,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
 
-            response = request.putWithResponseBody("/api/imprint", new Imprint("updatedText", Language.GERMAN), Imprint.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/imprint", new Imprint("updatedText", Language.GERMAN), Imprint.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.createDirectories(any()));
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
@@ -122,13 +122,13 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetImprintForUpdate_instructorAccessForbidden() throws Exception {
-        request.get("/api/imprint-for-update?language=de", HttpStatus.FORBIDDEN, Imprint.class);
+        request.get("/api/admin/imprint-for-update?language=de", HttpStatus.FORBIDDEN, Imprint.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetImprintForUpdate_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/imprint-for-update?language=fr", HttpStatus.BAD_REQUEST, Imprint.class);
+        request.get("/api/admin/imprint-for-update?language=fr", HttpStatus.BAD_REQUEST, Imprint.class);
     }
 
     @Test
@@ -137,7 +137,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/imprint-for-update?language=de", HttpStatus.OK, Imprint.class);
+            response = request.get("/api/admin/imprint-for-update?language=de", HttpStatus.OK, Imprint.class);
         }
         assertThat(response.getText()).isEqualTo("");
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
@@ -180,7 +180,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             else {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
             }
-            response = request.get("/api/imprint-for-update?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
+            response = request.get("/api/admin/imprint-for-update?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
@@ -195,7 +195,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateImprint_instructorAccessForbidden() throws Exception {
-        request.put("/api/imprint", new Imprint(Language.GERMAN), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/imprint", new Imprint(Language.GERMAN), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -206,7 +206,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         requestBody.setText("Impressum");
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            response = request.putWithResponseBody("/api/imprint", requestBody, Imprint.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/imprint", requestBody, Imprint.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
 
@@ -222,7 +222,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         JSONObject body = new JSONObject();
         body.put("text", "test");
         body.put("language", "FRENCH");
-        request.put("/api/imprint", body, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/imprint", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -230,7 +230,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void testUpdateImprint_blankTextBadRequest() throws Exception {
         Imprint requestBody = new Imprint(Language.GERMAN);
         requestBody.setText("           ");
-        request.put("/api/imprint", requestBody, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/imprint", requestBody, HttpStatus.BAD_REQUEST);
     }
 
 }

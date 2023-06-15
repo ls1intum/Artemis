@@ -31,10 +31,10 @@ describe('LegalDocumentService', () => {
             let req;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
                 service.updatePrivacyStatement(update).subscribe((resp) => expect(resp).toEqual(update));
-                req = httpMock.expectOne({ method: 'PUT', url: 'api/privacy-statement' });
+                req = httpMock.expectOne({ method: 'PUT', url: 'api/admin/privacy-statement' });
             } else {
                 service.updateImprint(update).subscribe((resp) => expect(resp).toEqual(update));
-                req = httpMock.expectOne({ method: 'PUT', url: 'api/imprint' });
+                req = httpMock.expectOne({ method: 'PUT', url: 'api/admin/imprint' });
             }
             req.flush(update);
             tick();
@@ -55,10 +55,10 @@ describe('LegalDocumentService', () => {
             let req;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
                 service.getPrivacyStatementForUpdate(lang).subscribe((resp) => expect(resp).toEqual(expected));
-                req = httpMock.expectOne({ method: 'GET', url: `api/privacy-statement-for-update?language=${lang}` });
+                req = httpMock.expectOne({ method: 'GET', url: `api/admin/privacy-statement-for-update?language=${lang}` });
             } else {
                 service.getImprintForUpdate(lang).subscribe((resp) => expect(resp).toEqual(expected));
-                req = httpMock.expectOne({ method: 'GET', url: `api/imprint-for-update?language=${lang}` });
+                req = httpMock.expectOne({ method: 'GET', url: `api/admin/imprint-for-update?language=${lang}` });
             }
             req.flush(expected);
             tick();

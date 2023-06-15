@@ -10,15 +10,15 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
- * REST controller for managing and retrieving the Privacy Statement.
+ * REST controller for editing the Privacy Statement as an admin.
  */
 @RestController
-@RequestMapping("api/")
-public class PrivacyStatementResource {
+@RequestMapping("api/admin/")
+public class AdminPrivacyStatementResource {
 
     private final LegalDocumentService legalDocumentService;
 
-    public PrivacyStatementResource(LegalDocumentService legalDocumentService) {
+    public AdminPrivacyStatementResource(LegalDocumentService legalDocumentService) {
         this.legalDocumentService = legalDocumentService;
     }
 
