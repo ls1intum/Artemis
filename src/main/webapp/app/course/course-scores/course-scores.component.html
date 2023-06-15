@@ -129,6 +129,9 @@
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                     </ng-container>
+                    <th *ngIf="maxNumberOfPresentationPoints > 0" jhiSortBy="presentationPoints">
+                        <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints">Presentation Points (%)</span> <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th jhiSortBy="overallPoints">
                         <span jhiTranslate="artemisApp.instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort"></fa-icon>
                     </th>
@@ -151,6 +154,7 @@
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
                     </ng-container>
+                    <th *ngIf="maxNumberOfPresentationPoints > 0">{{ maxNumberOfPresentationPoints }}</th>
                     <th>{{ maxNumberOfOverallPoints }}</th>
                     <th *ngIf="gradingScaleExists">{{ maxGrade }}</th>
                 </tr>
@@ -186,6 +190,10 @@
                             }}%)
                         </th>
                     </ng-container>
+                    <th *ngIf="maxNumberOfPresentationPoints > 0">
+                        {{ localize(averageNumberOfPresentationPoints) }}
+                        ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfPresentationPoints / maxNumberOfPresentationPoints, course)) }}%)
+                    </th>
                     <th>
                         {{ localize(averageNumberOfOverallPoints) }}
                         ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfOverallPoints / maxNumberOfOverallPoints, course)) }}%)
@@ -231,6 +239,10 @@
                             }}%)
                         </td>
                     </ng-container>
+                    <td *ngIf="maxNumberOfPresentationPoints > 0">
+                        {{ localize(student.presentationPoints) }}
+                        ({{ localize(roundScorePercentSpecifiedByCourseSettings(student.presentationPoints / maxNumberOfPresentationPoints, course)) }}%)
+                    </td>
                     <td>
                         {{ localize(student.overallPoints) }}
                         ({{ localize(roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxNumberOfOverallPoints, course)) }}%)
