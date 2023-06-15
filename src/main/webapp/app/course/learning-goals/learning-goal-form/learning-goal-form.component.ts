@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { merge, of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -11,7 +11,6 @@ import { intersection } from 'lodash-es';
 import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ValidatorFn } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
