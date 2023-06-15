@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -22,6 +21,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -89,7 +91,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
      */
     @GetMapping("exercises/{exerciseId}/results-with-points-per-criterion")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceInstructor
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "true") boolean withSubmissions) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -113,7 +115,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("participations/{participationId}/results/{resultId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceTutor
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
@@ -131,7 +133,7 @@ public class ResultResource {
      *         permissions to access the participation.
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceStudent
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
@@ -154,7 +156,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("participations/{participationId}/results/{resultId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceTutor
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
@@ -173,7 +175,7 @@ public class ResultResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("exercises/{exerciseId}/external-submission-results")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceInstructor
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
