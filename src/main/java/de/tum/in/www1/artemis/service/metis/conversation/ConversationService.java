@@ -269,11 +269,11 @@ public class ConversationService {
      * @return conversation if the user is a member
      */
     public Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
-        Optional<Conversation> conversation = conversationRepository.findById(conversationId);
-        if (conversation.isEmpty() || !isMember(conversationId, user.getId())) {
+        Conversation conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(conversationId);
+        if (conversation.getConversationParticipants().stream().map(ConversationParticipant::getUser).noneMatch(user::equals)) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
-        return conversation.get();
+        return conversation;
     }
 
     /**

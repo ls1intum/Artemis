@@ -234,8 +234,4 @@ public class ConversationMessagingService extends PostingService {
     public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
     }
-
-    public void loadAllParticipants(Post post) {
-        post.getConversation().setConversationParticipants(conversationParticipantRepository.findConversationParticipantByConversationId(post.getConversation().getId()));
-    }
 }

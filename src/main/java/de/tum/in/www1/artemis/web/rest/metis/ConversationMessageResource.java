@@ -58,7 +58,6 @@ public class ConversationMessageResource {
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
         // creation of message posts should not trigger entity creation alert
 
-        conversationMessagingService.loadAllParticipants(createdMessage);
         conversationNotificationService.notifyAboutNewMessage(createdMessage);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
     }
