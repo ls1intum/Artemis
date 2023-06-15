@@ -14,10 +14,10 @@ Requirements and Web Functionality
 .. note::
     For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in :ref:`exam configuration <exam_creation_and_configuration>`.
 
-To use the Artemis Exam Participation Checker iPad application, additional setup before the exam is required. This includes the following tasks on the *Students* page:
+To use the Artemis Exam Participation Checker iPad application requires additional setup on the *Students* page before the exam.
 
-- uploading images for the students. This can be done via the |upload_images| button. A new dialog is shown which can be inspected below. Upload the ``pdf`` file in this dialog. This file includes a box for each student with its image and two text boxes next to it. The upper text box needs to include the ``registrationNumber`` and the lower text box needs to include the ``login``. An exemplary file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
-- setting up the room and seating information via the ``CSV`` import. Fore more information see: :ref:`register students <register_students>`. 
+1. To upload images, click on the |upload_images| button and provide a ``pdf`` file in the Upload Images dialog. This ``pdf`` file  should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the ``registrationNumber`` and the lower text box needs to include the ``login``. An exemplary file can be found here: :download:`pdf <instructor/example_upload_images.pdf>`.
+2. Setting up the room and seating information via the ``CSV`` import. Fore more information see: :ref:`register students <register_students>`. 
 
 .. note::
     To upload the images each student needs to have a matriculation number assigned. This is used to match the image with the according student.
@@ -25,7 +25,7 @@ To use the Artemis Exam Participation Checker iPad application, additional setup
 .. note::
     Seats and rooms can currently only be assigned via the ``CSV`` import of students, by defining the ``seat`` and ``room`` in the ``CSV`` file.
 
-- You can also verify the attendance in the web application by pressing the |verify_attendance| button. This button opens a new view which shows which students have started the exam in Artemis but did not complete the check-in with a teaching assistant. 
+You can also verify the attendance in the web application by pressing the |verify_attendance| button. This button opens a new view which shows which students have started the exam in Artemis but did not complete the check-in with a teaching assistant. 
 
 .. figure:: instructor/verify_attendance_verification_missing.png
    :alt: Verify Attendance View: One student did not complete the check-in
@@ -65,7 +65,7 @@ The sidebar hosts a list of all registered students. The list can easily be filt
 
 1.4 Student Detail View
 ^^^^^^^^^^^^^^^^^^^^^
-The detail view contains all the given information about the student. This information is displayed in the upper part of the screen. The student image is shown on the left side, while all other information is displayed right next to it. Clicking the small pen icon edits the room and seat. In this case, the user can choose between all the available rooms through a picker. The user can change the seat by typing in the respective seat in the text field. 
+The detail view contains all given information about the student. These information are displayed in the upper part of the screen. The left side shows the student image, while the right side of the screen displays all other information. Clicking the small pen icon allows the user to edit the room and seat. In this case, the user can choose between all the available rooms through a picker. The user can change the seat by typing in the respective seat in the text field. 
 
 The options below the information section allow the user to verify the given information via toggles. 
 
@@ -79,3 +79,5 @@ The lower part of the screen is a large canvas that supports signing with the he
 .. |student_list_view_export_signatures| image:: exam-participation-checker/student_list_view_export_signatures.png
 .. |student_detail_view| image:: exam-participation-checker/student_detail_view.png
 .. |upload_images| image:: exam-participation-checker/upload_images.png
+.. |verify_attendance| image:: instructor/buttons/verify_attendance.png
+    :height: 40
