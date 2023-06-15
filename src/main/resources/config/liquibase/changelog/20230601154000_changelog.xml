@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet author="baboci" id="20230601154000">
         <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
-        <comment>Step 1: Create channels for lectures that do not have a channel and update post</comment>
+        <comment>Step 1: Create channels for lectures that do not have a channel and update posts</comment>
         <sql>
             INSERT INTO conversation (course_id, lecture_id, name, description,discriminator, is_public, is_announcement, creation_date)
             SELECT l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), CONCAT('Description of lecture: ', l.title), 'C', true, false, NOW()
@@ -27,12 +27,16 @@
                 FROM conversation c
                          LEFT JOIN lecture l ON l.id = c.lecture_id
                 WHERE p.lecture_id = l.id
-            ),
-                lecture_id = NULL
+            )
             WHERE p.lecture_id IS NOT NULL
               AND p.conversation_id IS NULL;
         </sql>
-        <comment>Step 2: Create channels for exercises that do not have a channel</comment>
+        <sql>
+            UPDATE post
+            SET lecture_id = NULL
+            WHERE conversation_id IS NOT NULL;
+        </sql>
+        <comment>Step 2: Create channels for exercises that do not have a channel and update posts</comment>
         <sql>
             INSERT INTO conversation (course_id, exercise_id, name, description,discriminator, is_public, is_announcement, creation_date)
             SELECT e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), CONCAT('Description of exercise: ', e.title), 'C', true, false, NOW()
@@ -55,10 +59,14 @@
                 FROM conversation c
                          LEFT JOIN exercise e ON e.id = c.exercise_id
                 WHERE p.exercise_id = e.id
-            ),
-                exercise_id = NULL
+            )
             WHERE p.exercise_id IS NOT NULL
               AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post
+            SET exercise_id = NULL
+            WHERE conversation_id IS NOT NULL;
         </sql>
         <comment>
             For the next step, we need the user_groups table, which contains a column called "groups".
