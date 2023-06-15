@@ -35,11 +35,6 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
-export class NotificationsUpdateDTO {
-    tutorialGroupIds: number[];
-    conversationIds: number[];
-}
-
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = 'api/notifications';
@@ -176,59 +171,35 @@ export class NotificationService {
      * @returns {ReplaySubject<Notification>}
      */
     subscribeToNotificationUpdates(): ReplaySubject<Notification> {
-        this.subscribeToSingleUserNotificationUpdates();
         this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
             if (courses) {
                 this.subscribeToGroupNotificationUpdates(courses);
                 this.subscribeToQuizUpdates(courses);
             }
         });
-        this.getIdsForNotifications().subscribe((relevantIds) => {
-            this.subscribeToTutorialGroupNotificationUpdates(relevantIds.tutorialGroupIds);
-            this.subscribeToConversationNotificationUpdates(relevantIds.conversationIds);
+        this.accountService.identity().then((user: User | undefined) => {
+            if (user) {
+                this.subscribeToSingleUserNotificationUpdates(user);
+                this.subscribeToTutorialGroupNotificationUpdates(user);
+                this.subscribeToConversationNotificationUpdates(user);
+            }
         });
         return this.notificationObserver;
     }
 
-    private getIdsForNotifications(): Observable<NotificationsUpdateDTO> {
-        return this.http.get<NotificationsUpdateDTO>(`${this.resourceUrl}/for-updates`);
-    }
-
-    private subscribeToSingleUserNotificationUpdates(): void {
-        this.accountService.identity().then((user: User | undefined) => {
-            if (user) {
-                const userTopic = `/topic/user/${user.id}/notifications`;
-                if (!this.subscribedTopics.includes(userTopic)) {
-                    this.subscribedTopics.push(userTopic);
-                    this.jhiWebsocketService.subscribe(userTopic);
-                    this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                        // Do not add notification to observer if it is a one-to-one conversation creation notification
-                        // and if the author is the current user
-                        if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
-                            this.addNotificationToObserver(notification);
-                        }
-                        if (notification.target) {
-                            const target = JSON.parse(notification.target);
-                            const message = target.message;
-
-                            // subscribe to newly created conversation topic
-                            if (message === 'conversation-creation') {
-                                const conversationId = target.conversation;
-                                const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
-                                this.subscribeToNewlyCreatedConversation(conversationTopic);
-                            }
-
-                            // unsubscribe from deleted conversation topic
-                            if (message === 'conversation-deletion') {
-                                const conversationId = target.conversation;
-                                const conversationTopic = '/topic/conversation/' + conversationId + '/notifications';
-                                this.unsubscribeFromDeletedConversation(conversationTopic);
-                            }
-                        }
-                    });
+    private subscribeToSingleUserNotificationUpdates(user: User): void {
+        const userTopic = `/topic/user/${user.id}/notifications`;
+        if (!this.subscribedTopics.includes(userTopic)) {
+            this.subscribedTopics.push(userTopic);
+            this.jhiWebsocketService.subscribe(userTopic);
+            this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+                // Do not add notification to observer if it is a one-to-one conversation creation notification
+                // and if the author is the current user
+                if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
+                    this.addNotificationToObserver(notification);
                 }
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -239,40 +210,14 @@ export class NotificationService {
         return this.router.url.includes(`courses/${targetCourseId}/messages`);
     }
 
-    /**
-     * Unsubscribe from deleted conversation topic (e.g. when user deletes a conversation or when user is removed from conversation)
-     */
-    private unsubscribeFromDeletedConversation(conversationTopic: string): void {
-        this.jhiWebsocketService.unsubscribe(conversationTopic);
-        this.subscribedTopics = this.subscribedTopics.filter((topic) => topic !== conversationTopic);
-    }
-
-    /**
-     * Subscribe to newly created conversation topic (e.g. when user is added to a new conversation)
-     */
-    private subscribeToNewlyCreatedConversation(conversationTopic: string): void {
-        this.subscribedTopics.push(conversationTopic);
-        this.jhiWebsocketService.subscribe(conversationTopic);
-        this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
-            if (notification.target) {
-                const target = JSON.parse(notification.target);
-                const targetCourseId = target.course;
-                // Do not add if under messages tab of specific course
-                if (!this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
-                    this.addNotificationToObserver(notification);
-                }
-            }
-        });
-    }
-
     private subscribeToGroupNotificationUpdates(courses: Course[]): void {
         courses.forEach((course) => {
             let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
-            if (this.accountService.isAtLeastInstructorInCourse(course)) {
+            if (course.isAtLeastInstructor) {
                 courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
-            } else if (this.accountService.isAtLeastEditorInCourse(course)) {
+            } else if (course.isAtLeastEditor) {
                 courseTopic = `/topic/course/${course.id}/${GroupNotificationType.EDITOR}`;
-            } else if (this.accountService.isAtLeastTutorInCourse(course)) {
+            } else if (course.isAtLeastTutor) {
                 courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
             }
             if (!this.subscribedTopics.includes(courseTopic)) {
@@ -285,37 +230,33 @@ export class NotificationService {
         });
     }
 
-    private subscribeToTutorialGroupNotificationUpdates(tutorialGroupIds: number[]): void {
-        tutorialGroupIds.forEach((tutorialGroupId) => {
-            const tutorialGroupTopic = `/topic/tutorial-group/${tutorialGroupId}/notifications`;
-            if (!this.subscribedTopics.includes(tutorialGroupTopic)) {
-                this.subscribedTopics.push(tutorialGroupTopic);
-                this.jhiWebsocketService.subscribe(tutorialGroupTopic);
-                this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
-                    this.addNotificationToObserver(notification);
-                });
-            }
-        });
+    private subscribeToTutorialGroupNotificationUpdates(user: User): void {
+        const tutorialGroupTopic = `/topic/user/${user.id}/notifications/tutorial-groups`;
+        if (!this.subscribedTopics.includes(tutorialGroupTopic)) {
+            this.subscribedTopics.push(tutorialGroupTopic);
+            this.jhiWebsocketService.subscribe(tutorialGroupTopic);
+            this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
+                this.addNotificationToObserver(notification);
+            });
+        }
     }
 
-    private subscribeToConversationNotificationUpdates(conversationIds: number[]): void {
-        conversationIds.forEach((conversationId) => {
-            const conversationTopic = `/topic/conversation/${conversationId}/notifications`;
-            if (!this.subscribedTopics.includes(conversationTopic)) {
-                this.subscribedTopics.push(conversationTopic);
-                this.jhiWebsocketService.subscribe(conversationTopic);
-                this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
-                    if (notification.target) {
-                        const target = JSON.parse(notification.target);
-                        const targetCourseId = target.course;
-                        // Only add notification if it is not from the current user and the user is not already in the messages tab
-                        if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
-                            this.addNotificationToObserver(notification);
-                        }
+    private subscribeToConversationNotificationUpdates(user: User): void {
+        const conversationTopic = `/topic/user/${user.id}/notifications/conversations`;
+        if (!this.subscribedTopics.includes(conversationTopic)) {
+            this.subscribedTopics.push(conversationTopic);
+            this.jhiWebsocketService.subscribe(conversationTopic);
+            this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
+                if (notification.target) {
+                    const target = JSON.parse(notification.target);
+                    const targetCourseId = target.course;
+                    // Only add notification if it is not from the current user and the user is not already in the messages tab
+                    if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                        this.addNotificationToObserver(notification);
                     }
-                });
-            }
-        });
+                }
+            });
+        }
     }
 
     private subscribeToQuizUpdates(courses: Course[]): void {

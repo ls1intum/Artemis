@@ -10,7 +10,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -49,6 +49,7 @@ describe('Notification Service', () => {
     let cmCoursesSubject: Subject<[Course] | undefined>;
     const course: Course = new Course();
     course.id = 42;
+    course.isAtLeastTutor = true;
 
     const quizExercise: QuizExercise = { course, title: 'test quiz', quizStarted: true, visibleToStudents: true, id: 27 } as QuizExercise;
 
@@ -123,8 +124,6 @@ describe('Notification Service', () => {
         generatedNotification.notificationDate = dayjs();
         return generatedNotification;
     };
-
-    const conversationDeletionNotification = generateConversationsDeletionNotification();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -220,56 +219,6 @@ describe('Notification Service', () => {
             tick();
         }));
 
-        it('should subscribe to newly created conversation and receive new single user notification', fakeAsync(() => {
-            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
-                expect(notification).toEqual(conversationCreationNotification);
-            });
-            tick(); // position of tick is very important here !
-            const userId = 99; // based on MockAccountService
-            const notificationTopic = `/topic/user/${userId}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledOnce();
-            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
-            // websocket correctly subscribed to the topic
-            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
-            // websocket "receive" called
-
-            // add new single user notification
-            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
-            wsNotificationSubject.next(conversationCreationNotification);
-
-            // websocket subscribe and receive called again for the new conversation
-            const conversationId = groupChat.id;
-            const conversationNotificationTopic = `/topic/conversation/${conversationId}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
-            expect(wsSubscribeStub).toHaveBeenCalledWith(conversationNotificationTopic);
-            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(2);
-
-            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
-        }));
-
-        it('should unsubscribe from deleted conversation', fakeAsync(() => {
-            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
-                expect(notification).toEqual(conversationDeletionNotification);
-            });
-            tick(); // position of tick is very important here !
-            const userId = 99; // based on MockAccountService
-            const notificationTopic = `/topic/user/${userId}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledOnce();
-            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
-            // websocket correctly subscribed to the topic
-            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
-            // websocket "receive" called
-
-            // add new single user notification
-            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
-            wsNotificationSubject.next(conversationDeletionNotification);
-
-            // websocket unsubscribe called for the deleted conversation
-            expect(wsUnSubscribeStub).toHaveBeenCalledOnce();
-
-            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
-        }));
-
         it('should subscribe to single user notification updates and receive new single user notification', fakeAsync(() => {
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
                 expect(notification).toEqual(singleUserNotification);
@@ -279,18 +228,16 @@ describe('Notification Service', () => {
 
             const userId = 99; // based on MockAccountService
             const notificationTopic = `/topic/user/${userId}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(3);
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
             // websocket correctly subscribed to the topic
 
-            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(3);
             // websocket "receive" called
 
             // add new single user notification
             wsNotificationSubject.next(singleUserNotification);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
-
-            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
 
         it('should subscribe to tutorial group notification updates and receive new tutorial group notifications', fakeAsync(() => {
@@ -298,13 +245,12 @@ describe('Notification Service', () => {
                 expect(notification).toEqual(tutorialGroupNotification);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
-            req.flush({ tutorialGroupIds: [tutorialGroup.id], conversationIds: [] });
+            tick();
 
-            const notificationTopic = `/topic/tutorial-group/${tutorialGroup.id}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            const notificationTopic = `/topic/user/${99}/notifications/tutorial-groups`;
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(3);
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
-            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(3);
             wsNotificationSubject.next(tutorialGroupNotification);
         }));
 
@@ -313,13 +259,12 @@ describe('Notification Service', () => {
                 expect(notification).toEqual(conversationNotification);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
-            req.flush({ tutorialGroupIds: [], conversationIds: [conversation.id] });
+            tick();
 
-            const notificationTopic = `/topic/conversation/${tutorialGroup.id}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            const notificationTopic = `/topic/user/${99}/notifications/conversations`;
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(3);
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
-            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(3);
             wsNotificationSubject.next(conversationNotification);
         }));
 
@@ -337,18 +282,16 @@ describe('Notification Service', () => {
             cmCoursesSubject.next([course]);
 
             const notificationTopic = `/topic/course/${course.id}/TA`;
-            expect(wsSubscribeStub).toHaveBeenCalledTimes(3);
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(5);
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
             // websocket correctly subscribed to the topic
 
-            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(3);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(5);
             // websocket "receive" called
 
             // add new single user notification
             wsNotificationSubject.next(groupNotification);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
-
-            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
 
         it('should subscribe to quiz notification updates and receive a new quiz exercise and create a new quiz notification from it', fakeAsync(() => {
@@ -371,19 +314,17 @@ describe('Notification Service', () => {
             cmCoursesSubject.next([course]);
 
             const notificationTopic = `/topic/course/${course.id}/TA`;
-            expect(wsSubscribeStub).toHaveBeenCalledTimes(3);
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(5);
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
             // websocket correctly subscribed to the topic
 
-            expect(wsReceiveQuizExerciseStub).toHaveBeenCalledTimes(3);
+            expect(wsReceiveQuizExerciseStub).toHaveBeenCalledTimes(5);
             // websocket "receive" called
 
             // pushes new quizExercise
             wsQuizExerciseSubject.next(quizExercise);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
             tick();
-
-            httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-updates` });
         }));
     });
 });

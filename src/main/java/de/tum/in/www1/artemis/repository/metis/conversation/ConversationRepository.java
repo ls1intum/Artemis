@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -36,18 +35,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     default Conversation findByIdElseThrow(long conversationId) {
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
-
-    @Query("""
-            SELECT DISTINCT c.id
-            FROM Conversation c
-                LEFT JOIN c.conversationParticipants cp
-                LEFT JOIN cp.user user
-                LEFT JOIN c.course course
-            WHERE user.id = :userId
-                AND (course.startDate <= :now OR course.startDate IS NULL)
-                AND (course.endDate >= :now OR course.endDate IS NULL)
-            """)
-    List<Long> findAllIdsWhereUserIsParticipant(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
     @Query("""
              SELECT COUNT(c.id) > 0

@@ -288,10 +288,6 @@ public class TutorialGroupService {
                 .flatMap(course -> course.getTutorialGroups().stream()).toList();
     }
 
-    public List<Long> findAllTutorialGroupIdsForNotifications(User user) {
-        return tutorialGroupRepository.findAllIdsOfActiveCoursesWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
-    }
-
     /**
      * Import registrations
      * <p>

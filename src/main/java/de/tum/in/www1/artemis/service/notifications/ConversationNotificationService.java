@@ -7,6 +7,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
@@ -34,7 +35,6 @@ public class ConversationNotificationService {
      * @param createdMessage the new message
      */
     public void notifyAboutNewMessage(Post createdMessage) {
-
         String notificationText;
         String[] placeholders;
         if (createdMessage.getConversation() instanceof Channel channel) {
@@ -61,6 +61,9 @@ public class ConversationNotificationService {
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification) {
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        notification.getConversation().getConversationParticipants().stream().map(ConversationParticipant::getUser).filter(user -> !user.equals(notification.getAuthor()))
+                .forEach(user -> {
+                    messagingTemplate.convertAndSend(notification.getTopic(user.getId()), notification);
+                });
     }
 }

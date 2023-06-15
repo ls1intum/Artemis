@@ -388,14 +388,4 @@ public class ConversationService {
         }
         return users;
     }
-
-    /**
-     * Find all Ids of conversations that the user is part of. Additionally, the course has to be active, i.e. after end date and before start date
-     *
-     * @param user the user for which the relevant ids should be retrieved
-     * @return list of all relevant ids of conversations
-     */
-    public List<Long> findAllConversationIdsForNotifications(User user) {
-        return conversationRepository.findAllIdsWhereUserIsParticipant(ZonedDateTime.now(), user.getId());
-    }
 }
