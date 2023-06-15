@@ -63,7 +63,7 @@ class ArchitectureTest {
 
     @Test
     void testNoCollectorsToList() {
-        ArchRule foo = noClasses().should().callMethod(Collectors.class, "toList").because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
-        foo.check(allClasses);
+        ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList").because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
+        toListUsage.check(allClasses);
     }
 }
