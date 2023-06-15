@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -395,6 +397,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         request.get(getTutorialGroupsPath(exampleCourseId) + persistedTutorialGroup.getId(), HttpStatus.NOT_FOUND, TutorialGroup.class);
         assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
+        persistedTutorialGroup.getRegistrations().forEach(registration -> {
+            verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any());
+        });
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + persistedTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"),
+                (Object) any());
+
     }
 
     @Test
@@ -435,6 +443,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
         assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
         asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
+
+        existingTutorialGroup.getRegistrations().forEach(registration -> {
+            verify(messagingTemplate, times(2)).convertAndSend(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any());
+        });
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + existingTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"),
+                (Object) any());
     }
 
     @Test

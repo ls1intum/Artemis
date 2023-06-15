@@ -54,12 +54,14 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     private User user1;
 
+    private User user2;
+
     @BeforeEach
     void setUp() {
         this.database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = this.database.createCourse();
         user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        User user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
 
         oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
@@ -83,7 +85,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void notifyAboutNewMessageInConversation() {
         Post post = new Post();
         post.setAuthor(user1);
@@ -94,7 +96,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         post = conversationMessageRepository.save(post);
 
         conversationNotificationService.notifyAboutNewMessage(post);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         // make sure that objects can be deleted after notification is saved
