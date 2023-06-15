@@ -15,6 +15,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 export class ExerciseChatWidgetComponent implements OnInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
+    @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef;
     messages: string[] = [];
     irisMessages: string[] = [];
     userMessages: string[] = [];
@@ -23,6 +24,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     public firstName: string | undefined;
     isScrolledToBottom = true;
     componentClass = 'chat-widget';
+    rows = 1;
 
     constructor(private dialog: MatDialog, private route: ActivatedRoute, private localStorage: LocalStorageService, private accountService: AccountService) {}
 
@@ -49,6 +51,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
             this.newMessage = '';
         }
         this.scrollToBottom();
+        this.resetChatBodyHeight();
     }
 
     scrollToBottom() {
@@ -111,4 +114,31 @@ export class ExerciseChatWidgetComponent implements OnInit {
     }
 
     protected readonly ButtonType = ButtonType;
+
+    onRowChange() {
+        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const newRows = textarea.value.split('\n').length;
+        if (newRows != this.rows) {
+            if (newRows <= 3) {
+                textarea.rows = newRows;
+                this.adjustChatBodyHeight(newRows);
+                this.rows = newRows;
+            }
+        }
+    }
+
+    adjustChatBodyHeight(newRows: number) {
+        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const chatBody: HTMLElement = this.chatBody.nativeElement;
+        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
+        const rowHeight = lineHeight * newRows;
+        chatBody.style.height = `calc(100% - ${rowHeight}px - 78px)`;
+    }
+
+    resetChatBodyHeight() {
+        const chatBody: HTMLElement = this.chatBody.nativeElement;
+        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        textarea.rows = 1;
+        chatBody.style.height = `calc(100% - 100px)`;
+    }
 }

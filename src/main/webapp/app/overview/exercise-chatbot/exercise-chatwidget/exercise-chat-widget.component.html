@@ -49,13 +49,16 @@
         <div class="chat-input">
             <textarea
                 [(ngModel)]="newMessage"
+                (ngModelChange)="onRowChange()"
                 type="text"
                 rows="1"
+                maxRows="3"
                 class="form-control"
                 (keydown)="handleKey($event)"
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                #messageTextarea
             ></textarea>
-            <jhi-button [disabled]="!userAccepted" [btnType]="ButtonType.SECONDARY" [icon]="faPaperPlane" (onClick)="onSend()"></jhi-button>
+            <jhi-button [disabled]="!userAccepted" [btnType]="ButtonType.SECONDARY" [icon]="faPaperPlane" (onClick)="onSend()" style="margin-bottom: auto"></jhi-button>
         </div>
     </div>
 </div>
