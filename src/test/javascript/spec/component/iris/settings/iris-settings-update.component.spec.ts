@@ -9,6 +9,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { IrisSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-sub-settings-update/iris-sub-settings-update.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { HttpResponse } from '@angular/common/http';
 
 function baseSettings() {
     const mockTemplate = new IrisTemplate();
@@ -82,5 +83,43 @@ describe('IrisSettingsUpdateComponent Component', () => {
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
         expect(comp.irisSettings).toEqual(irisSettings);
         expect(fixture.debugElement.nativeElement.querySelector('#inheritHestia')).toBeTruthy();
+    });
+
+    it('Saves global settings correctly', () => {
+        const irisSettings = baseSettings();
+        irisSettings.id = undefined;
+        const irisSettingsSaved = baseSettings();
+        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setGlobalSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
+        comp.settingType = IrisSettingsType.GLOBAL;
+        comp.irisSettings = irisSettings;
+        comp.saveIrisSettings();
+        expect(setSettingsSpy).toHaveBeenCalledWith(irisSettings);
+        expect(comp.irisSettings).toEqual(irisSettingsSaved);
+    });
+
+    it('Saves course settings correctly', () => {
+        const irisSettings = baseSettings();
+        irisSettings.id = undefined;
+        const irisSettingsSaved = baseSettings();
+        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
+        comp.settingType = IrisSettingsType.COURSE;
+        comp.courseId = 1;
+        comp.irisSettings = irisSettings;
+        comp.saveIrisSettings();
+        expect(setSettingsSpy).toHaveBeenCalledWith(1, irisSettings);
+        expect(comp.irisSettings).toEqual(irisSettingsSaved);
+    });
+
+    it('Saves programming exercise settings correctly', () => {
+        const irisSettings = baseSettings();
+        irisSettings.id = undefined;
+        const irisSettingsSaved = baseSettings();
+        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setProgrammingExerciseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
+        comp.settingType = IrisSettingsType.PROGRAMMING_EXERCISE;
+        comp.programmingExerciseId = 1;
+        comp.irisSettings = irisSettings;
+        comp.saveIrisSettings();
+        expect(setSettingsSpy).toHaveBeenCalledWith(1, irisSettings);
+        expect(comp.irisSettings).toEqual(irisSettingsSaved);
     });
 });
