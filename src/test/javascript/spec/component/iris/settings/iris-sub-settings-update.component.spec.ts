@@ -63,6 +63,7 @@ describe('IrisSubSettingsUpdateComponent Component', () => {
         comp.templateOptional = true;
         fixture.detectChanges();
         comp.onInheritTemplateChanged();
+        fixture.detectChanges();
         expect(comp.subSettings.template).toBeUndefined();
         expect(fixture.debugElement.nativeElement.querySelector('#inheritTemplate')).toBeTruthy();
         expect(fixture.debugElement.nativeElement.querySelector('#template-editor')).toBeFalsy();
@@ -75,6 +76,7 @@ describe('IrisSubSettingsUpdateComponent Component', () => {
         comp.templateOptional = true;
         fixture.detectChanges();
         comp.onInheritTemplateChanged();
+        fixture.detectChanges();
         expect(comp.subSettings.template).toBeDefined();
         expect(fixture.debugElement.nativeElement.querySelector('#inheritTemplate')).toBeTruthy();
         expect(fixture.debugElement.nativeElement.querySelector('#template-editor')).toBeTruthy();
