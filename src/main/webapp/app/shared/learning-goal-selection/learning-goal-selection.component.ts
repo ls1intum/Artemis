@@ -60,6 +60,8 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
                     },
                 });
             }
+        } else {
+            this.setLearningGoals(this.learningGoals);
         }
     }
 
@@ -92,7 +94,6 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
     }
 
     updateField(newValue: LearningGoal[]) {
-        console.log('updateField');
         this.value = newValue;
         this._onChange(this.value);
         this.valueChange.emit();
