@@ -265,7 +265,6 @@ public class DataExportService {
     }
 
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
-
         var studentExamGrade = examService.getStudentExamGradeForDataExport(studentExam);
         var studentResult = studentExamGrade.studentResult();
         List<String> headers = new ArrayList<>();
