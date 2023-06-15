@@ -1,7 +1,7 @@
 import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SimpleChanges } from '@angular/core';
+import { SimpleChange, SimpleChanges } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -166,7 +166,7 @@ describe('LearningGoalSelection', () => {
         fixture.detectChanges();
         expect(component.selectableLearningGoals).toEqual([nonOptional]);
         component.includeOptionals = true;
-        component.ngOnChanges({ includeOptionals: { currentValue: true, previousValue: false } } as SimpleChanges);
+        component.ngOnChanges({ includeOptionals: new SimpleChange(false, true, false) } as SimpleChanges);
         expect(component.selectableLearningGoals).toEqual([optional, nonOptional]);
     });
 
@@ -180,7 +180,7 @@ describe('LearningGoalSelection', () => {
         fixture.detectChanges();
         expect(component.selectableLearningGoals).toEqual([optional, nonOptional]);
         component.includeOptionals = false;
-        component.ngOnChanges({ includeOptionals: { currentValue: false, previousValue: true } } as SimpleChanges);
+        component.ngOnChanges({ includeOptionals: new SimpleChange(true, false, false) } as SimpleChanges);
         expect(component.selectableLearningGoals).toEqual([nonOptional]);
     });
 });
