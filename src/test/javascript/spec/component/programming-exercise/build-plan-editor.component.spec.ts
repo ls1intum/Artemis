@@ -40,9 +40,7 @@ describe('Build Plan Editor', () => {
         })
             .compileComponents()
             .then(() => {
-                console.log('pre-init');
                 fixture = TestBed.createComponent(BuildPlanEditorComponent);
-                console.log('post-init');
                 comp = fixture.componentInstance;
 
                 activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
