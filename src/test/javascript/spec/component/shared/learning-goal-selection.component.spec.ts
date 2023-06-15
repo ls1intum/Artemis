@@ -1,6 +1,6 @@
 import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, SimpleChanges, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -66,7 +66,7 @@ describe('LearningGoalSelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeArrayOfSize(2);
+        expect(component.selectableLearningGoals).toBeArrayOfSize(2);
         expect(select).not.toBeNull();
     });
 
@@ -154,5 +154,32 @@ describe('LearningGoalSelection', () => {
         component.writeValue([{ id: 1, title: 'other' } as LearningGoal]);
         expect(component.value).toBeArrayOfSize(1);
         expect(component.value.first()?.title).toBe('test');
+    });
+
+    it('should show optional competencies on change', () => {
+        const optional = { id: 1, optional: true } as LearningGoal;
+        const nonOptional = { id: 2, optional: false } as LearningGoal;
+        component.learningGoals = [optional, nonOptional];
+        component.includeOptionals = false;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(component.selectableLearningGoals).toEqual([nonOptional]);
+        component.includeOptionals = true;
+        component.ngOnChanges({ includeOptionals: { currentValue: true, previousValue: false } } as SimpleChanges);
+        expect(component.selectableLearningGoals).toEqual([optional, nonOptional]);
+    });
+
+    it('should show non optional competencies on change', () => {
+        const optional = { id: 1, optional: true } as LearningGoal;
+        const nonOptional = { id: 2, optional: false } as LearningGoal;
+        component.learningGoals = [optional, nonOptional];
+        component.includeOptionals = true;
+        component.value = [];
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(component.selectableLearningGoals).toEqual([optional, nonOptional]);
+        component.includeOptionals = false;
+        component.ngOnChanges({ includeOptionals: { currentValue: false, previousValue: true } } as SimpleChanges);
+        expect(component.selectableLearningGoals).toEqual([nonOptional]);
     });
 });
