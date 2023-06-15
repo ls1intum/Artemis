@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 
+/**
+ * Factory for creating Courses and related objects.
+ */
 public class CourseFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {

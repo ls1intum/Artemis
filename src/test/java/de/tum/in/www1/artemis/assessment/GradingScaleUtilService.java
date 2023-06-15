@@ -15,6 +15,9 @@ import com.opencsv.CSVReader;
 
 import de.tum.in.www1.artemis.domain.*;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.
+ */
 @Service
 public class GradingScaleUtilService {
 

@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.assessment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 
+/**
+ * Factory for creating GradingScales and related objects.
+ */
 public class GradingScaleFactory {
 
     /**

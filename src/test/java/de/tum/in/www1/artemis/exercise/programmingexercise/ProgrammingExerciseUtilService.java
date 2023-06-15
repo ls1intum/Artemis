@@ -27,6 +27,9 @@ import de.tum.in.www1.artemis.repository.hestia.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to programming exercises for use in integration tests.
+ */
 @Service
 public class ProgrammingExerciseUtilService {
 
@@ -386,7 +389,7 @@ public class ProgrammingExerciseUtilService {
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
         buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
         programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         assertThat(buildPlanOptional).isPresent();

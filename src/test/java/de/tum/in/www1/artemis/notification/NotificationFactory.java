@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 
+/**
+ * Factory for creating Notifications and related objects.
+ */
 public class NotificationFactory {
 
     public static SingleUserNotification generateSingleUserNotification(ZonedDateTime notificationDate, User recipient) {

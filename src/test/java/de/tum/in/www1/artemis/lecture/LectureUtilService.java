@@ -12,6 +12,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
+ */
 @Service
 public class LectureUtilService {
 

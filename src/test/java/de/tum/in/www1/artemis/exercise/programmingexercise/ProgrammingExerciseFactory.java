@@ -19,6 +19,9 @@ import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
+/**
+ * Factory for creating ProgrammingExercises and related objects.
+ */
 public class ProgrammingExerciseFactory {
 
     public static final String DEFAULT_BRANCH = "main";

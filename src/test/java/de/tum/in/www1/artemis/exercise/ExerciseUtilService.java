@@ -29,6 +29,9 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to exercises for use in integration tests.
+ */
 @Service
 public class ExerciseUtilService {
 

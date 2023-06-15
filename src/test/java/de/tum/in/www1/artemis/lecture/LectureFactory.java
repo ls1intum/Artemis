@@ -18,6 +18,9 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
+/**
+ * Factory for creating Lectures and related objects.
+ */
 public class LectureFactory {
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {

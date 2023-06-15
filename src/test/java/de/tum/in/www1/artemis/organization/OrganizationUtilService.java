@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to organizations for use in integration tests.
+ */
 @Service
 public class OrganizationUtilService {
 

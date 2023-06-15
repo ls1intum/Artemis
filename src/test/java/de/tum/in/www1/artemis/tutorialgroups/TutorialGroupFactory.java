@@ -6,6 +6,9 @@ import java.time.format.DateTimeFormatter;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 
+/**
+ * Factory for creating TutorialGroups and related objects.
+ */
 public class TutorialGroupFactory {
 
     /**

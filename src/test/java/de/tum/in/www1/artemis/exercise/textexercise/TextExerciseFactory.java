@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
+/**
+ * Factory for creating TextExercises and related objects.
+ */
 public class TextExerciseFactory {
 
     public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {

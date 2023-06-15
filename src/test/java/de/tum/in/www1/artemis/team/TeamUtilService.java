@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to teams for use in integration tests.
+ */
 @Service
 public class TeamUtilService {
 
