@@ -92,7 +92,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"
-                    (includedInOverallScoreChange)="validateDate()"
+                    (includedInOverallScoreChange)="validateDate(); updateLearningGoalSelection()"
                     [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
@@ -183,6 +183,7 @@
         </div>
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-learning-goal-selection
+                #learningGoalSelectionComponent
                 id="learning-goals"
                 [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"

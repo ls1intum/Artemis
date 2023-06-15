@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { LearningGoal, getIcon } from 'app/entities/learningGoal.model';
@@ -17,13 +17,15 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
         },
     ],
 })
-export class LearningGoalSelectionComponent implements OnInit, ControlValueAccessor {
+export class LearningGoalSelectionComponent implements OnInit, OnChanges, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() learningGoals: LearningGoal[];
+    nonOptionalLearningGoals: LearningGoal[];
+    selectableLearningGoals: LearningGoal[];
     @Input() includeOptionals: boolean;
 
     @Output() valueChange = new EventEmitter();
@@ -40,10 +42,10 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (this.learningGoals == undefined && courseId) {
+        if (this.learningGoals === undefined && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
-            if (course?.competencies && !course.competencies.some((competency) => competency.exercises !== undefined)) {
-                this.setLearningGoals(course.competencies);
+            if (course?.competencies) {
+                this.setLearningGoals(course.competencies!);
             } else {
                 this.isLoading = true;
                 this.learningGoalService.getAllForCourse(courseId).subscribe({
@@ -61,24 +63,36 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
         }
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.includeOptionals.currentValue !== changes.includeOptionals.previousValue) {
+            if (changes.includeOptionals.currentValue) {
+                this.selectableLearningGoals = this.learningGoals;
+            } else {
+                this.selectableLearningGoals = this.nonOptionalLearningGoals;
+                this.value = this.value.filter((learningGoal: LearningGoal) => !learningGoal.optional);
+                this.valueChange.emit();
+            }
+        }
+    }
+
     /**
      * Set the available competencies for selection
      * @param learningGoals The competencies of the course
      */
     setLearningGoals(learningGoals: LearningGoal[]) {
-        let filtered = learningGoals;
-        if (!this.includeOptionals) {
-            filtered = learningGoals.filter((learningGoal) => !learningGoal.optional);
-        }
-        this.learningGoals = filtered.map((learningGoal) => {
+        this.learningGoals = learningGoals.map((learningGoal) => {
             // Remove unnecessary properties
             learningGoal.course = undefined;
             learningGoal.userProgress = undefined;
             return learningGoal;
         });
+
+        this.nonOptionalLearningGoals = this.learningGoals.filter((learningGoal) => !learningGoal.optional);
+        this.selectableLearningGoals = this.includeOptionals ? this.learningGoals : this.nonOptionalLearningGoals;
     }
 
     updateField(newValue: LearningGoal[]) {
+        console.log('updateField');
         this.value = newValue;
         this._onChange(this.value);
         this.valueChange.emit();

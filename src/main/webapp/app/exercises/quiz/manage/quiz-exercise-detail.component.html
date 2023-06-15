@@ -199,6 +199,7 @@
             <div class="row">
                 <div class="form-group" *ngIf="!isExamMode">
                     <jhi-learning-goal-selection
+                        #learningGoalSelectionComponent
                         id="learning-goals"
                         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
                         [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"

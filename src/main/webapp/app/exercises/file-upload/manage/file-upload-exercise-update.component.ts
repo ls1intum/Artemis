@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -20,6 +20,7 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -28,6 +29,8 @@ import { switchMap, tap } from 'rxjs/operators';
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    @ViewChild('learningGoalSelectionComponent') learningGoalSelectionComponent: LearningGoalSelectionComponent;
 
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
@@ -170,6 +173,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     this.isSaving = false;
                 },
             });
+    }
+
+    /**
+     * Updates selection of LearningGoalSelectionComponent
+     */
+    updateLearningGoalSelection() {
+        this.learningGoalSelectionComponent.includeOptionals = this.fileUploadExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
     }
 
     /**
