@@ -5,6 +5,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ public class OAuth2JWKSService {
         List<JWK> keys = new ArrayList<>(jwkSet.getKeys());
 
         if (jwkToRemove != null) {
-            keys = keys.stream().filter(jwk -> jwk != jwkToRemove).toList();
+            keys = keys.stream().filter(jwk -> jwk != jwkToRemove).collect(Collectors.toCollection(ArrayList::new));
         }
 
         generateAndAddKey(clientRegistration, keys);
