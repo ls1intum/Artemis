@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
+package de.tum.in.www1.artemis.service.connectors.jenkins.build_plan;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -42,6 +41,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -64,6 +66,8 @@ public class JenkinsBuildPlanService {
 
     private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
+    private final JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
+
     private final JenkinsJobService jenkinsJobService;
 
     private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -76,7 +80,7 @@ public class JenkinsBuildPlanService {
 
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -85,6 +89,7 @@ public class JenkinsBuildPlanService {
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
+        this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
     }
 
     /**
@@ -94,22 +99,23 @@ public class JenkinsBuildPlanService {
      * @param planKey       the name of the plan
      * @param repositoryURL the url of the vcs repository
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
-        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        boolean staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
-        boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
-        var isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
-        var testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
-
+        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, staticCodeAnalysisEnabled,
-                isSequentialTestRuns, testwiseCoverageAnalysisEnabled);
+        final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
+        final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+                buildPlanUrl);
 
-        String jobFolder = exercise.getProjectKey();
-        String job = jobFolder + "-" + planKey;
+        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+
+        final String jobFolder = exercise.getProjectKey();
+        final String job = jobFolder + "-" + planKey;
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
+
         givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
     }
