@@ -1,6 +1,6 @@
-Artemis supports an integrated version control (VC) and continuous integration (CI) system.
-If you use this *local VC* and *local CI*, the architecture differs from the architecture with external VC and CI systems.
-The deployment with local VC and local CI (without using an external user management system) looks like this:
+Artemis supports an integrated version control system (VCS) and continuous integration system (CIS).
+If you use this *local VCS* and *local CIS*, the architecture differs from the architecture with external VC and CI systems.
+The deployment with the local VCS and local CIS (without using an external user management system) looks like this:
 
 .. figure:: system-design/localvc-localci/LocalVC_LocalCI_Deployment.png
    :align: center
@@ -74,7 +74,7 @@ As soon as a build job finishes, the ``ExecutorService`` returns the result of t
 The ``ExecutorService`` makes sure that errors happening during the build job execution are propagated to the ``LocalCIBuildJobManagementService``, so it can handle all errors in one spot.
 
 To improve the reliability of the system, the ``LocalCIBuildJobManagementService`` implements a timeout mechanism.
-Administrators can configure a maximum amount of time that build jobs can run.
+Administrators can configure a maximum amount of time that build jobs can run by setting the ``artemis.continuous-integration.timeout-seconds`` environment variable. The default value is 120 seconds.
 If a build job times out, the  ``LocalCIBuildJobManagementService`` interrupts the build job.
 This is crucial to prevent jobs that require an abnormally high amount of time from clogging up the system and reducing overall system performance.
 
