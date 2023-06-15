@@ -28,7 +28,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
-        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 1, 1+, NUMBER_OF_TUTORS);
+        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 1, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
