@@ -9,10 +9,12 @@ import { Imprint } from 'app/entities/imprint.model';
     providedIn: 'root',
 })
 export class LegalDocumentService {
-    private resourceUrlPrivacyStatement = 'api/privacy-statement';
+    private resourceUrlPublicPrivacyStatement = 'api/public/privacy-statement';
     private resourceUrlPrivacyStatementForUpdate = 'api/privacy-statement-for-update';
-    private resourceUrlImprint = 'api/imprint';
+    private resourceUrlPublicImprint = 'api/public/imprint';
     private resourceUrlImprintForUpdate = 'api/imprint-for-update';
+    private resourceUrlImprintUpdate = 'api/imprint';
+    private resourceUrlPrivacyStatementUpdate = 'api/privacy-statement';
 
     constructor(private http: HttpClient) {}
 
@@ -41,9 +43,9 @@ export class LegalDocumentService {
     }
 
     private getRequestToResource(language: LegalDocumentLanguage, type: LegalDocumentType): Observable<LegalDocument> {
-        let resourceUrl = this.resourceUrlPrivacyStatement;
+        let resourceUrl = this.resourceUrlPublicPrivacyStatement;
         if (type === LegalDocumentType.IMPRINT) {
-            resourceUrl = this.resourceUrlImprint;
+            resourceUrl = this.resourceUrlPublicImprint;
         }
         return this.http.get<LegalDocument>(resourceUrl, {
             params: new HttpParams().set('language', language),
@@ -61,10 +63,10 @@ export class LegalDocumentService {
     }
 
     private putRequestToResource(legalDocument: LegalDocument, type: LegalDocumentType): Observable<LegalDocument> {
-        let resourceUrl = this.resourceUrlPrivacyStatement;
+        let resourceUrl = this.resourceUrlPrivacyStatementUpdate;
         if (type === LegalDocumentType.IMPRINT) {
-            resourceUrl = this.resourceUrlImprint;
+            resourceUrl = this.resourceUrlImprintUpdate;
         }
-        return this.http.put(resourceUrl, legalDocument) as Observable<LegalDocument>;
+        return this.http.put<LegalDocument>(resourceUrl, legalDocument);
     }
 }
