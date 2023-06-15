@@ -48,7 +48,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings.
      */
     @GetMapping("iris/global-iris-settings")
-    @PreAuthorize("hasRole('INSTUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<IrisSettings> getGlobalSettings() {
         var irisSettings = irisSettingsService.getGlobalSettings();
         return ResponseEntity.ok(irisSettings);

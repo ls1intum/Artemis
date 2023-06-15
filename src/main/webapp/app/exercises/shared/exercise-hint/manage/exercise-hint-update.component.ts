@@ -18,6 +18,8 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { onError } from 'app/shared/util/global.utils';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
@@ -37,6 +39,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     tasks: ProgrammingExerciseServerSideTask[];
+    irisSettings?: IrisSettings;
 
     isSaving: boolean;
     isGeneratingDescription: boolean;
@@ -58,6 +61,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         protected exerciseHintService: ExerciseHintService,
         private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        protected irisSettingsService: IrisSettingsService,
     ) {}
 
     /**
@@ -84,6 +88,10 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                 } else if (tasks.length) {
                     this.exerciseHint.programmingExerciseTask = this.tasks[0];
                 }
+            });
+
+            this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise.id!).subscribe((settings) => {
+                this.irisSettings = settings;
             });
         });
     }

@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "iris": {
+            "settings": {
+                "success": "Iris Einträge erfolgreich gespeichert",
+                "error": {
+                    "save": "Fehler beim Speichern der Iris Einstellungen",
+                    "noSettings": "Iris Einstellungen konnten nicht geladen werden. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht."
+                },
+                "button": {
+                    "reload": "Einstellungen neu laden",
+                    "save": "Einstellungen speichern",
+                    "programmingExercise": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Programmieraufgabe"
+                    },
+                    "course": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diesen Kurs"
+                    }
+                },
+                "subSettings": {
+                    "chatSettings": "Chat Einstellungen",
+                    "hestiaSettings": "Hestia Einstellungen",
+                    "inheritChatSettings": "Vererbe Chat Einstellungen",
+                    "inheritHestiaSettings": "Vererbe Hestia Einstellungen",
+                    "enabled-disabled": "Aktiviert/Deaktiviert",
+                    "preferredModel": "Präferiertes Modell",
+                    "template": {
+                        "title": "Template",
+                        "inherit": "Inherit Template"
+                    }
+                },
+                "title": {
+                    "global": "Globale Iris Einstellungen",
+                    "course": "Kurs Iris Einstellungen",
+                    "programmingExercise": "Programmieraufgabe Iris Einstellungen"
+                }
+            }
+        }
+    }
+}

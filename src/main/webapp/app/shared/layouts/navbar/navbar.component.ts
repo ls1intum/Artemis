@@ -37,6 +37,7 @@ import {
     faHeart,
     faList,
     faLock,
+    faRobot,
     faSignOutAlt,
     faTachometerAlt,
     faTasks,
@@ -83,6 +84,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isNavbarNavVertical: boolean;
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
+    irisEnabled: boolean;
 
     // Icons
     faBars = faBars;
@@ -99,6 +101,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faBook = faBook;
     faTasks = faTasks;
     faList = faList;
+    faRobot = faRobot;
     faHeart = faHeart;
     faTachometerAlt = faTachometerAlt;
     faToggleOn = faToggleOn;
@@ -186,6 +189,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
+                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
             }
         });
 
