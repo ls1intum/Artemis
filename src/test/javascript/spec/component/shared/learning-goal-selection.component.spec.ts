@@ -84,7 +84,7 @@ describe('LearningGoalSelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeArrayOfSize(1);
+        expect(component.selectableLearningGoals).toBeArrayOfSize(1);
         expect(select).not.toBeNull();
     });
 
@@ -100,9 +100,9 @@ describe('LearningGoalSelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeArrayOfSize(2);
-        expect(component.learningGoals.first()?.course).toBeUndefined();
-        expect(component.learningGoals.first()?.userProgress).toBeUndefined();
+        expect(component.selectableLearningGoals).toBeArrayOfSize(2);
+        expect(component.selectableLearningGoals.first()?.course).toBeUndefined();
+        expect(component.selectableLearningGoals.first()?.userProgress).toBeUndefined();
     });
 
     it('should get non optional learning goals from service if include optionals false', () => {
@@ -117,9 +117,9 @@ describe('LearningGoalSelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeArrayOfSize(1);
-        expect(component.learningGoals.first()?.course).toBeUndefined();
-        expect(component.learningGoals.first()?.userProgress).toBeUndefined();
+        expect(component.selectableLearningGoals).toBeArrayOfSize(1);
+        expect(component.selectableLearningGoals.first()?.course).toBeUndefined();
+        expect(component.selectableLearningGoals.first()?.userProgress).toBeUndefined();
     });
 
     it('should set disabled when error during loading', () => {
@@ -142,7 +142,7 @@ describe('LearningGoalSelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.learningGoals).toBeEmpty();
+        expect(component.selectableLearningGoals).toBeEmpty();
         expect(select).toBeNull();
     });
 
