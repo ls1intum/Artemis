@@ -16,8 +16,9 @@
               AND (c2.end_date IS NULL OR c2.end_date > now())
               AND NOT EXISTS (
                 SELECT 1
-                FROM conversation
+                FROM conversation con
                 WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id)
+                  AND con.course_id = c2.id
                 );
         </sql>
         <sql>
@@ -49,8 +50,9 @@
               AND (c2.end_date IS NULL OR c2.end_date > now())
               AND NOT EXISTS (
                 SELECT 1
-                FROM conversation
-                WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id)
+                FROM conversation con
+                WHERE name = CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id)
+                  AND con.course_id = c2.id
                 );
         </sql>
         <sql>
