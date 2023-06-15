@@ -176,7 +176,7 @@ public class MailService implements InstantNotificationService {
 
     private void prepareTemplateAndSendEmailWithArgumentInSubject(User admin, String templateName, String titleKey, String argument, Context context) {
         String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, null, context.getLocale());
+        String subject = messageSource.getMessage(titleKey, new Object[] { argument }, context.getLocale());
         sendEmail(admin, subject, content, false, true);
     }
 

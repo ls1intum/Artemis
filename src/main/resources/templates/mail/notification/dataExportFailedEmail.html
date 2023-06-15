@@ -6,8 +6,7 @@
 <!-- Message Body Start -->
 <div id="message-body">
     <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
-    <span th:text="#{email.notification.title.dataExportFailed}">Your data export creation failed. Please try again.</span>
-    <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+    <span th:text="#{email.notification.title.dataExportFailed}">Your data export creation failed.</span>
     <th:block th:replace="mail/notification/fragments :: farewell"/>
 </div>
 <!-- Message Body End -->

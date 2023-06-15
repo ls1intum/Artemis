@@ -34,7 +34,7 @@ export class DataExportComponent implements OnInit {
     titleKey: string;
     description: string;
     state?: DataExportState;
-    dataExport: DataExport;
+    dataExport: DataExport = new DataExport();
 
     constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService, private route: ActivatedRoute) {}
 
@@ -60,14 +60,13 @@ export class DataExportComponent implements OnInit {
                 this.canRequestDataExport = canRequestDataExport;
             });
             this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
+                this.dataExport.requestDate = convertDateFromServer(dataExport.requestDate);
+                this.dataExport.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
                 this.canDownload = !!dataExport.id;
                 if (this.canDownload) {
                     this.dataExport.id = dataExport.id!;
                     this.dataExportId = dataExport.id!;
                     this.dataExport.dataExportState = dataExport.dataExportState;
-                    this.dataExport.requestDate = convertDateFromServer(dataExport.requestDate);
-                    this.dataExport.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
-                    this.dataExport = dataExport;
                     this.state = dataExport.dataExportState!;
                 }
             });

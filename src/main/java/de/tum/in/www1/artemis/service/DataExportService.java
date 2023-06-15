@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -124,22 +125,30 @@ public class DataExportService {
         var noDataExport = new DataExportDTO(null, null, null, null);
         var user = userRepository.getUser();
         var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserId(user.getId());
+        Optional<DataExport> latestDataExport = dataExportsFromUser.stream().max(Comparator.comparing(DataExport::getCreatedDate));
         if (dataExportsFromUser.isEmpty()) {
             return noDataExport;
         }
         for (var dataExport : dataExportsFromUser) {
             if (dataExport.getDataExportState().isDownloadable()) {
                 ZonedDateTime nextRequestDate;
-                if (dataExport.getCreationDate() == null) {
-                    nextRequestDate = dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
-                }
-                else {
-                    nextRequestDate = dataExport.getCreationDate().plusDays(DAYS_BETWEEN_DATA_EXPORTS);
-                }
+                nextRequestDate = retrieveNextRequestDate(dataExport);
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
-        return noDataExport;
+        return new DataExportDTO(null, null, latestDataExport.get().getCreatedDate().atZone(ZoneId.systemDefault()), retrieveNextRequestDate(latestDataExport.get()));
+    }
+
+    @NotNull
+    private ZonedDateTime retrieveNextRequestDate(DataExport dataExport) {
+        ZonedDateTime nextRequestDate;
+        if (dataExport.getCreationDate() == null) {
+            nextRequestDate = dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
+        }
+        else {
+            nextRequestDate = dataExport.getCreationDate().plusDays(DAYS_BETWEEN_DATA_EXPORTS);
+        }
+        return nextRequestDate;
     }
 
     /**

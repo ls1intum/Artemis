@@ -54,7 +54,7 @@
         <!--                {{ 'artemisApp.dataExport.mostRecentNotDownloadable' | artemisTranslate }}-->
         <!--            </p>-->
         <!--        </div>-->
-        <p>Last data export request at {{ dataExport.requestDate }}</p>
-        <p>Can request again at {{ dataExport.nextRequestDate }}</p>
+        <p>Last data export requested at {{ dataExport?.requestDate | artemisDate }}</p>
+        <p>Can request again at {{ dataExport?.nextRequestDate | artemisDate }}</p>
     </div>
 </div>
