@@ -27,14 +27,13 @@ public interface JenkinsXmlConfigBuilder {
      * code and exports the build results to Artemis afterwards. If static code analysis is activated, the plan will additionally
      * execute supported static code analysis tools.
      *
-     * @param programmingLanguage         The programming language for which the config should be generated
-     * @param projectType                 The optional project type of the exercise.
-     * @param internalVcsRepositoryURLs   The URLs of the source code repositories that are required to set up the build plan.
-     * @param isStaticCodeAnalysisEnabled Flag which determines whether a build plan with or without static code analysis is created
-     * @param isSequentialRuns            Should activate sequential test runs options
-     * @param isTestwiseCoverageEnabled   Flag which determines whether a build plan with or without testwise coverage analysis is created
+     * @param programmingLanguage       The programming language for which the config should be generated
+     * @param projectType               The optional project type of the exercise.
+     * @param internalVcsRepositoryURLs The URLs of the source code repositories that are required to set up the build plan.
+     * @param isSolutionPlan            True, if this is the build plan config for the solution repository.
+     * @param buildPlanUrl              The URL to the build plan for this exercise.
      * @return The parsed XML document containing the Jenkins build config
      */
     Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled);
+            boolean isSolutionPlan, String buildPlanUrl);
 }
