@@ -155,11 +155,6 @@
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
-            "presentationScoreEnabled": {
-                "title": "Presentations",
-                "description": "Activate this checkbox to define the number of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise whether this feature should be activated."
-            },
-            "presentationScore": "Required Presentations",
             "courseGroup": {
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
