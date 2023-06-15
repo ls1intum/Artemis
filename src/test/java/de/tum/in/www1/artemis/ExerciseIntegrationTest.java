@@ -443,14 +443,19 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+
+            StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
+            Submission submission = participation.getSubmissions().iterator().next();
             // Programming exercises should only have one automatic result
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+                assertThat(participation.getSubmissions()).hasSize(1);
+                assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
                 // All other exercises have only one visible result now
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+                assertThat(participation.getResults()).isEmpty();
+                assertThat(submission.getResults()).isEmpty();
             }
         }
     }
