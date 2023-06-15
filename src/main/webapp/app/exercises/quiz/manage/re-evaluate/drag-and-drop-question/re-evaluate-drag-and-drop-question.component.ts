@@ -9,7 +9,7 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
             [question]="question"
             [questionIndex]="questionIndex"
             [reEvaluationInProgress]="true"
-            [fileCheckCallback]="fileNameExists"
+            [filePool]="fileMap"
             (questionUpdated)="questionUpdated.emit()"
             (questionDeleted)="questionDeleted.emit()"
             (questionMoveUp)="questionMoveUp.emit()"
@@ -48,7 +48,7 @@ export class ReEvaluateDragAndDropQuestionComponent {
     @Output()
     questionMoveDown = new EventEmitter<void>();
 
-    fileMap = new Map<string, File>();
+    fileMap = new Map<string, { path?: string; file: File }>();
 
     constructor() {}
 
@@ -56,8 +56,8 @@ export class ReEvaluateDragAndDropQuestionComponent {
      * Add the given file to the fileMap for later upload.
      * @param event the event containing the file and its name. The name provided may be different from the actual file name but has to correspond to the name set in the entity object.
      */
-    handleAddFile(event: { fileName: string; file: File }): void {
-        this.fileMap.set(event.fileName, event.file);
+    handleAddFile(event: { fileName: string; path?: string; file: File }): void {
+        this.fileMap.set(event.fileName, { path: event.path, file: event.file });
     }
 
     /**
@@ -66,13 +66,5 @@ export class ReEvaluateDragAndDropQuestionComponent {
      */
     handleRemoveFile(fileName: string): void {
         this.fileMap.delete(fileName);
-    }
-
-    /**
-     * Check if the given file name exists in the fileMap.
-     * @param fileName the name of the file to be checked
-     */
-    fileNameExists(fileName: string): boolean {
-        return this.fileMap.has(fileName);
     }
 }

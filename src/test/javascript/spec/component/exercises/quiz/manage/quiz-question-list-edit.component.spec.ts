@@ -99,13 +99,14 @@ describe('QuizQuestionListEditComponent', () => {
     });
 
     it('should add file', () => {
+        const path = 'this/is/a/path/to/a/file.png';
         component.handleFileAdded({ fileName: fileName1, file: file1 });
-        component.handleFileAdded({ fileName: fileName2, file: file2 });
+        component.handleFileAdded({ fileName: fileName2, file: file2, path });
 
         expect(component.fileMap).toEqual(
-            new Map<string, File>([
-                [fileName1, file1],
-                [fileName2, file2],
+            new Map<string, { file: File; path?: string }>([
+                [fileName1, { file: file1 }],
+                [fileName2, { file: file2, path }],
             ]),
         );
     });
@@ -123,12 +124,5 @@ describe('QuizQuestionListEditComponent', () => {
                 [fileName3, file3],
             ]),
         );
-    });
-
-    it('should check if file exists', () => {
-        component.fileMap = new Map<string, File>([[fileName2, file2]]);
-        expect(component.fileNameExists(fileName2)).toBeTrue();
-        expect(component.fileNameExists(fileName1)).toBeFalse();
-        expect(component.fileNameExists(fileName3)).toBeFalse();
     });
 });

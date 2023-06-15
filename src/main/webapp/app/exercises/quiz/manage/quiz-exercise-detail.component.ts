@@ -397,7 +397,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
 
         Exercise.sanitize(this.quizExercise);
-        const files = this.quizQuestionListEditComponent.fileMap;
+        const filesMap = this.quizQuestionListEditComponent.fileMap;
+        const files = new Map<string, Blob>();
+        filesMap.forEach((value, key) => {
+            files.set(key, value.file);
+        });
 
         this.isSaving = true;
         this.quizQuestionListEditComponent.parseAllQuestions();

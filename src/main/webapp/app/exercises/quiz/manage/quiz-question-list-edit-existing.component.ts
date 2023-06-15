@@ -34,10 +34,10 @@ export enum State {
 export class QuizQuestionListEditExistingComponent implements OnChanges {
     @Input() show: boolean;
     @Input() courseId: number;
-    @Input() fileCheckCallback: (name: string) => boolean;
+    @Input() filePool: Map<string, { path?: string; file: File }>;
 
     @Output() onQuestionsAdded = new EventEmitter<Array<QuizQuestion>>();
-    @Output() onFilesAdded = new EventEmitter<Map<string, File>>();
+    @Output() onFilesAdded = new EventEmitter<Map<string, { path: string; file: File }>>();
 
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -277,7 +277,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
      */
     private async handleConversionOfExistingQuestions(existingQuizQuestions: Array<QuizQuestion>) {
         const newQuizQuestions = new Array<QuizQuestion>();
-        const files: Map<string, File> = new Map<string, File>();
+        const files: Map<string, { path: string; file: File }> = new Map<string, { path: string; file: File }>();
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of existingQuizQuestions) {
@@ -295,8 +295,8 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the server and then save new image to the question,
-                const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.fileCheckCallback);
-                files.set(backgroundFile.name, backgroundFile);
+                const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool);
+                files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                 dndQuestion.backgroundFilePath = backgroundFile.name;
 
                 // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
@@ -309,8 +309,8 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                 for (const dragItem of dndQuestion.dragItems || []) {
                     // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
                     if (dragItem.pictureFilePath) {
-                        const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.fileCheckCallback);
-                        files.set(dragItemFile.name, dragItemFile);
+                        const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool);
+                        files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
                         dragItem.pictureFilePath = dragItemFile.name;
                     }
                     dragItem.tempID = dragItem.id;

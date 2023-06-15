@@ -56,10 +56,12 @@ describe('FileService', () => {
         it('should return a file with unique name', async () => {
             const filePath = 'api/file/path/test.png';
             const blob = new Blob(['123456789']);
-            const existingFileNames = ['someUniqueFileName.png', 'someOtherUniqueFileName.png'];
-            const checker = (name: string) => existingFileNames.includes(name);
+            const existingFileNames = new Map<string, { file: File; path?: string }>([
+                [secondUniqueFileName + '.png', { file: new File([], secondUniqueFileName) }],
+                [firstUniqueFileName + '.png', { file: new File([], firstUniqueFileName) }],
+            ]);
 
-            const filePromise = fileService.getFile(filePath, checker);
+            const filePromise = fileService.getFile(filePath, existingFileNames);
             const req = httpMock.expectOne({
                 url: filePath,
                 method: 'GET',
@@ -69,8 +71,8 @@ describe('FileService', () => {
             const file = await filePromise;
 
             expect(file.size).toEqual(blob.size);
-            expect(file.name).toBe('someFinalUniqueFileName.png');
-            expect(getUniqueFileNameSpy).toHaveBeenCalledOnceWith('png', checker);
+            expect(file.name).toBe(thirdUniqueFileName + '.png');
+            expect(getUniqueFileNameSpy).toHaveBeenCalledOnceWith('png', existingFileNames);
             expect(v4Mock).toHaveBeenCalledTimes(3);
         });
     });

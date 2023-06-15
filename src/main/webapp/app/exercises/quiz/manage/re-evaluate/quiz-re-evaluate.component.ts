@@ -112,8 +112,8 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     save(): void {
         const files = new Map<string, File>();
         for (const component of this.reEvaluateDragAndDropQuestionComponents) {
-            component.fileMap.forEach((file, filename) => {
-                files.set(filename, file);
+            component.fileMap.forEach((value, filename) => {
+                files.set(filename, value.file);
             });
         }
         this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise, files).then((res) => {

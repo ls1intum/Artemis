@@ -231,7 +231,6 @@
             </div>
         </div>
         <hr />
-        <!--    TODO: Fix the background change for reevaluation -->
         <div class="question-options row d-flex justify-content-start" *ngIf="!reEvaluationInProgress">
             <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis" style="width: max-content !important">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
@@ -255,7 +254,7 @@
                 <div class="background-area">
                     <jhi-secured-image
                         #backgroundImage
-                        [src]="backgroundFilePath"
+                        [src]="filePreviewPaths.get(question.backgroundFilePath!) || ''"
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     >
@@ -322,7 +321,7 @@
             <div cdkDropList cdkDropListOrientation="horizontal" class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
                 <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                     <div *ngIf="dragItem.pictureFilePath">
-                        <jhi-secured-image [src]="dragItemFilesPreviewPath.get(dragItem.pictureFilePath)!"></jhi-secured-image>
+                        <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath)!"></jhi-secured-image>
                     </div>
                     <div *ngIf="!dragItem.pictureFilePath">
                         <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
@@ -383,14 +382,13 @@
             </div>
         </div>
 
-        <!--    TODO: Fix the item input for reevaluation -->
         <div class="question-options row d-flex justify-content-start" *ngIf="!reEvaluationInProgress">
             <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary" (click)="dragItemFileInput.click()">
                         <fa-icon [icon]="faPlus"></fa-icon>
-                        <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"> </span>
-                        <span *ngIf="reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"> </span>
+                        <span *ngIf="reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
+                        <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
                     </button>
                 </div>
                 <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
