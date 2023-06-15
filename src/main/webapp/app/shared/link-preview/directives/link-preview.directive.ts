@@ -10,7 +10,7 @@ import { Link } from 'app/shared/link-preview/linkify/interfaces/linkify.interfa
     exportAs: '[linkPreview]',
 })
 export class LinkPreviewDirective implements OnInit {
-    @Input() data?: string;
+    @Input() data: string | undefined;
     constructor(public linkifyService: LinkifyService, public linkPreviewService: LinkPreviewService) {}
 
     ngOnInit(): void {

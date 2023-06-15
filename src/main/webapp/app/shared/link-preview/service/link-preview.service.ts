@@ -24,25 +24,25 @@ export class LinkPreviewService {
         this.onLinkFound.subscribe((links: Array<Link>) => (this.links = links));
     }
 
-    fetchLink(url: string): Observable<LinkPreview> {
-        console.log('fetching the following link: ', url);
-
-        return this.http.post(this.resourceUrl, url).pipe(map((value) => value as LinkPreview));
-    }
-
-    // TODO: implement caching and re-check why the preview is the same all the time
     // fetchLink(url: string): Observable<LinkPreview> {
     //     console.log('fetching the following link: ', url);
     //
-    //     if (!this.linkPreview$) {
-    //         this.linkPreview$ = this.http.post(this.resourceUrl, url, { observe: 'response' }).pipe(
-    //             map((res: HttpResponse<LinkPreview>) => {
-    //                 return res.body!;
-    //             }),
-    //             shareReplay({ bufferSize: 1, refCount: true }),
-    //         );
-    //     }
-    //
-    //     return this.linkPreview$;
+    //     return this.http.post(this.resourceUrl, url).pipe(map((value) => value as LinkPreview));
     // }
+    // TODO: implement caching and re-check why the preview is the same all the time
+
+    fetchLink(url: string): Observable<LinkPreview> {
+        console.log('fetching the following link: ', url);
+
+        if (!this.linkPreview$) {
+            this.linkPreview$ = this.http.post(this.resourceUrl, url, { observe: 'response' }).pipe(
+                map((res: HttpResponse<LinkPreview>) => {
+                    return res.body!;
+                }),
+                shareReplay({ bufferSize: 1, refCount: true }),
+            );
+        }
+
+        return this.linkPreview$;
+    }
 }

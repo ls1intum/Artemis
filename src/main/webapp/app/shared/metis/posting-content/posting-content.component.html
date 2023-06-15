@@ -13,13 +13,7 @@
     </div>
     <!-- not in preview mode: content always shown -->
     <div *ngIf="!previewMode" [ngClass]="isAnnouncement ? 'announcement-post p-2' : ''">
-        <jhi-posting-content-part
-            *ngFor="let postingContentPart of postingContentParts"
-            [postingContentPart]="postingContentPart"
-            linkPreview
-            [data]="postingContentPart.contentBeforeReference"
-        >
-        </jhi-posting-content-part>
-        <jhi-link-preview-container [multiple]="true"></jhi-link-preview-container>
+        <jhi-posting-content-part *ngFor="let postingContentPart of postingContentParts" [postingContentPart]="postingContentPart"> </jhi-posting-content-part>
+        <jhi-link-preview-container [multiple]="true" [data]="content"></jhi-link-preview-container>
     </div>
 </ng-container>
