@@ -5,6 +5,9 @@ import java.util.*;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * Factory for creating Users and related objects.
+ */
 public class UserFactory {
 
     public static final String USER_PASSWORD = "00000000";

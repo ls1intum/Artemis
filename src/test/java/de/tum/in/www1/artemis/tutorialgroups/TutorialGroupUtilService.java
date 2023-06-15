@@ -22,6 +22,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.
+ */
 @Service
 public class TutorialGroupUtilService {
 

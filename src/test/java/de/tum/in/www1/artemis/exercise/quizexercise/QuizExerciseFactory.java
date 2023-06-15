@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
+/**
+ * Factory for creating QuizExercises and related objects.
+ */
 public class QuizExerciseFactory {
 
     public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {

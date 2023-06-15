@@ -4,6 +4,9 @@ import de.tum.in.www1.artemis.domain.Bonus;
 import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.GradingScale;
 
+/**
+ * Factory for creating Bonuses and related objects.
+ */
 public class BonusFactory {
 
     /**

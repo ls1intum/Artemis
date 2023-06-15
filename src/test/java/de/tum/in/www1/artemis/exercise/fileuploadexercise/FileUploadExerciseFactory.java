@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
+/**
+ * Factory for creating FileUploadExercises and related objects.
+ */
 public class FileUploadExerciseFactory {
 
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,

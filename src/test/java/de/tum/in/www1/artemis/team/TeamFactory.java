@@ -6,6 +6,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.user.UserFactory;
 
+/**
+ * Factory for creating Teams and related objects.
+ */
 public class TeamFactory {
 
     /**

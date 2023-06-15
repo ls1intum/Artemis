@@ -34,6 +34,9 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to courses for use in integration tests.
+ */
 @Service
 public class CourseUtilService {
 

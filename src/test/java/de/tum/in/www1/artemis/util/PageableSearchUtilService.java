@@ -14,6 +14,9 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to searches for use in integration tests.
+ */
 @Service
 public class PageableSearchUtilService {
 

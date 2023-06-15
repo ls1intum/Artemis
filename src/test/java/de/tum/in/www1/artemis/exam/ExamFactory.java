@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
+/**
+ * Factory for creating Exams and related objects.
+ */
 public class ExamFactory {
 
     /**

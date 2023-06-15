@@ -26,6 +26,9 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to programming exercises for use in integration tests.
+ */
 @Service
 public class ProgrammingExerciseUtilService {
 

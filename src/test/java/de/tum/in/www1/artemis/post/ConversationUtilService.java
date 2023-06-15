@@ -29,6 +29,9 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to conversations for use in integration tests.
+ */
 @Service
 public class ConversationUtilService {
 

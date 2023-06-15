@@ -17,6 +17,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
+/**
+ * Factory for creating Participations and related objects.
+ */
 public class ParticipationFactory {
 
     public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
