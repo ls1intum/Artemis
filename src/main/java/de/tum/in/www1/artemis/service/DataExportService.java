@@ -646,7 +646,7 @@ public class DataExportService {
         dataStreamBuilder.add(complaint.getComplaintText());
 
         if (complaint.getComplaintResponse() != null) {
-            headers.add("Complaint response");
+            headers.add("complaint response");
             dataStreamBuilder.add(complaint.getComplaintResponse().getResponseText());
         }
         if (complaint.isAccepted() != null && ComplaintType.COMPLAINT == complaint.getComplaintType()) {
