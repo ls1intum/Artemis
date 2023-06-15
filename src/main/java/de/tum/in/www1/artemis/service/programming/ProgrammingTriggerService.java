@@ -18,15 +18,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -48,6 +42,10 @@ public class ProgrammingTriggerService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
@@ -65,9 +63,13 @@ public class ProgrammingTriggerService {
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -291,6 +293,34 @@ public class ProgrammingTriggerService {
         catch (Exception e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             programmingMessagingService.notifyUserAboutSubmissionError(submission, error);
+        }
+    }
+
+    /**
+     * Triggers a new build for the template and solution repositories.
+     *
+     * @param programmingExerciseId The ID of the programming exercise.
+     */
+    public void triggerTemplateAndSolutionBuild(final long programmingExerciseId) {
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findWithEagerSubmissionsByProgrammingExerciseId(programmingExerciseId);
+        templateParticipation.ifPresent(this::triggerBuild);
+
+        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findWithEagerSubmissionsByProgrammingExerciseId(programmingExerciseId);
+        solutionParticipation.ifPresent(this::triggerBuild);
+    }
+
+    /**
+     * Takes a participation and triggers a build for it.
+     *
+     * @param participation A participation. Assumes that the submissions are present.
+     */
+    private void triggerBuild(final ProgrammingExerciseParticipation participation) {
+        final Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
+        if (submission.isPresent()) {
+            triggerBuildAndNotifyUser(submission.get());
+        }
+        else {
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
         }
     }
 }
