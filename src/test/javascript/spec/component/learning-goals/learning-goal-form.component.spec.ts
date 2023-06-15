@@ -133,11 +133,11 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.courseId = 1;
         learningGoalFormComponent.formData.id = 2;
         learningGoalFormComponent.isEditMode = true;
+        learningGoalFormComponent.ngOnChanges();
 
         learningGoalFormComponentFixture.detectChanges();
-
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(learningGoalFormComponent.canBeOptional()).toBeFalse();
+        expect(learningGoalFormComponent.canBeOptional).toBeFalse();
         const optionalInput = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#optional');
         learningGoalFormComponentFixture.whenStable().then(() => {
             expect(optionalInput.disabled).toBeTrue();

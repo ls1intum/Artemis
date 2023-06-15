@@ -102,6 +102,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
     suggestedTaxonomies: string[] = [];
+    canBeOptional = false;
 
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
@@ -142,6 +143,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     private initializeForm() {
+        this.canBeOptional = this.checkCanBeOptional();
         if (this.form) {
             return;
         }
@@ -246,14 +248,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         });
     }
 
-    regexValidator(regex: RegExp): ValidatorFn {
-        return (control: AbstractControl): { [key: string]: any } | null => {
-            const allowed = regex.test(control.value);
-            return allowed ? null : { forbidden: { value: control.value } };
-        };
-    }
-
-    canBeOptional(): boolean {
+    private checkCanBeOptional(): boolean {
         if (!this.isEditMode || !this.formData.id) {
             return true;
         }
@@ -278,6 +273,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
         return !requiredExerciseExists;
+    }
+
+    getCanBeOptional(): boolean {
+        return this.canBeOptional;
     }
 
     /**
