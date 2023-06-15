@@ -2,7 +2,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
 import { IrisSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-sub-settings-update/iris-sub-settings-update.component';
 
 function baseSettings() {
@@ -25,7 +24,7 @@ describe('IrisSubSettingsUpdateComponent Component', () => {
             imports: [ArtemisTestModule],
             declarations: [IrisSubSettingsUpdateComponent],
         }).compileComponents();
-        fixture = TestBed.createComponent(IrisSettingsUpdateComponent);
+        fixture = TestBed.createComponent(IrisSubSettingsUpdateComponent);
         comp = fixture.componentInstance;
     });
 

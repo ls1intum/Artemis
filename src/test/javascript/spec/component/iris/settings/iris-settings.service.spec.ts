@@ -20,8 +20,8 @@ function mockSettings() {
     mockHestiaSettings.enabled = true;
     const irisSettings = new IrisSettings();
     irisSettings.id = 1;
-    irisSettings.chatSettings = mockChatSettings;
-    irisSettings.hestiaSettings = mockHestiaSettings;
+    irisSettings.irisChatSettings = mockChatSettings;
+    irisSettings.irisHestiaSettings = mockHestiaSettings;
     return irisSettings;
 }
 
