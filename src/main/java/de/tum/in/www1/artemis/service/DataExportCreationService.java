@@ -190,15 +190,18 @@ public class DataExportCreationService {
      * Creates the data export for the given user.
      *
      * @param dataExport the data export to be created
+     * @return true if the export was successful, false otherwise
      */
-    public void createDataExport(DataExport dataExport) {
+    public boolean createDataExport(DataExport dataExport) {
         try {
             createDataExportWithContent(dataExport);
         }
         catch (Exception e) {
             log.error("Error while creating data export for user {}", dataExport.getUser().getLogin(), e);
             handleCreationFailure(dataExport, e);
+            return false;
         }
+        return true;
     }
 
     private void handleCreationFailure(DataExport dataExport, Exception e) {

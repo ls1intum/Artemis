@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Component({
     selector: 'jhi-data-export',
@@ -33,6 +34,7 @@ export class DataExportComponent implements OnInit {
     titleKey: string;
     description: string;
     state?: DataExportState;
+    dataExport: DataExport;
 
     constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService, private route: ActivatedRoute) {}
 
@@ -60,7 +62,12 @@ export class DataExportComponent implements OnInit {
             this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
                 this.canDownload = !!dataExport.id;
                 if (this.canDownload) {
+                    this.dataExport.id = dataExport.id!;
                     this.dataExportId = dataExport.id!;
+                    this.dataExport.dataExportState = dataExport.dataExportState;
+                    this.dataExport.requestDate = convertDateFromServer(dataExport.requestDate);
+                    this.dataExport.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
+                    this.dataExport = dataExport;
                     this.state = dataExport.dataExportState!;
                 }
             });

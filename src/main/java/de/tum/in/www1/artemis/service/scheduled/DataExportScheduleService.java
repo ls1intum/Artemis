@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -7,11 +11,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.notifications.MailService;
+import de.tum.in.www1.artemis.service.user.UserService;
 
 /**
  * Service responsible for scheduling data exports.
@@ -30,14 +37,20 @@ public class DataExportScheduleService {
 
     private final ProfileService profileService;
 
+    private final MailService mailService;
+
+    private final UserService userService;
+
     private final Logger log = LoggerFactory.getLogger(DataExportScheduleService.class);
 
     public DataExportScheduleService(DataExportRepository dataExportRepository, DataExportCreationService dataExportCreationService, DataExportService dataExportService,
-            ProfileService profileService) {
+            ProfileService profileService, MailService mailService, UserService userService) {
         this.dataExportRepository = dataExportRepository;
         this.dataExportCreationService = dataExportCreationService;
         this.dataExportService = dataExportService;
         this.profileService = profileService;
+        this.mailService = mailService;
+        this.userService = userService;
     }
 
     /**
@@ -57,10 +70,19 @@ public class DataExportScheduleService {
 
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
+        Set<DataExport> successfulDataExports = new HashSet<>();
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
-        dataExportsToBeCreated.forEach(this::createDataExport);
+        dataExportsToBeCreated.forEach(dataExport -> createDataExport(dataExport, successfulDataExports));
         var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted();
         dataExportsToBeDeleted.forEach(this::deleteDataExport);
+        Optional<User> admin = userService.findInternalAdminUser();
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
+            return;
+        }
+        if (!successfulDataExports.isEmpty()) {
+            mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
+        }
     }
 
     /**
@@ -68,9 +90,13 @@ public class DataExportScheduleService {
      *
      * @param dataExport the data export to be created
      */
-    private void createDataExport(DataExport dataExport) {
+    private void createDataExport(DataExport dataExport, Set<DataExport> successfulDataExports) {
         log.info("Creating data export for {}", dataExport.getUser().getLogin());
-        dataExportCreationService.createDataExport(dataExport);
+        var successful = dataExportCreationService.createDataExport(dataExport);
+        if (successful) {
+            successfulDataExports.add(dataExport);
+        }
+
     }
 
     private void checkSecurityUtils() {

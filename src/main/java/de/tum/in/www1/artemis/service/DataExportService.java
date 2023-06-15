@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -120,7 +121,7 @@ public class DataExportService {
      * @return a DataExportDTO containing the id of the data export to download or null if no data export can be downloaded
      */
     public DataExportDTO canDownloadAnyDataExport() {
-        var noDataExport = new DataExportDTO(null, null);
+        var noDataExport = new DataExportDTO(null, null, null, null);
         var user = userRepository.getUser();
         var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserId(user.getId());
         if (dataExportsFromUser.isEmpty()) {
@@ -128,7 +129,14 @@ public class DataExportService {
         }
         for (var dataExport : dataExportsFromUser) {
             if (dataExport.getDataExportState().isDownloadable()) {
-                return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState());
+                ZonedDateTime nextRequestDate;
+                if (dataExport.getCreationDate() == null) {
+                    nextRequestDate = dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
+                }
+                else {
+                    nextRequestDate = dataExport.getCreationDate().plusDays(DAYS_BETWEEN_DATA_EXPORTS);
+                }
+                return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
         return noDataExport;

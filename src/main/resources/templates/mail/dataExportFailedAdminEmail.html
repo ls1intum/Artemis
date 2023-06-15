@@ -2,27 +2,25 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="#{email.dataExportFailedAdmin.title(${user.login})}">Data export for one of the users failed</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/logo/favicon.svg|}" />
-</head><body>
+    <th:block th:replace="mail/notification/fragments :: headMetaDataAndIconLink"/>
+    <th:block th:replace="mail/notification/fragments :: css"/>
+</head>
+<body>
 <th:block th:replace="mail/notification/fragments :: header"/>
 <!-- Message Body Start -->
 <div id="message-body">
-    <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
-    <span th:text="#{email.dataExportFailedAdmin.text(${user.login})}">A data export creation failed. </span>
-    <span th:text="#{email.dataExportFailedAdmin.reason(${reason.getMessage()})}">The error message </span>
-    <span
+    <span th:text="#{email.dataExportFailedAdmin.text}">A data export creation failed. </span>
+    <span class="bold-text" th:text="${user.login}">Username</span>
+    <span th:text="#{email.dataExportFailedAdmin.textFailed}">failed</span>
+
+    <p th:text="#{email.dataExportFailedAdmin.reason(${reason.getMessage()})}">The error message </p>
+    <p
         th:text="#{email.dataExportFailedAdmin.actionItemList}">
-    </span>
-    <span th:text="#{email.dataExportFailedAdmin.actionItem1}">Check the configuration of the instance</span>
-    <span th:text="#{email.dataExportFailedAdmin.actionItem2}">Contact the development team</span>
-    <a th:href="@{http://www.thymeleaf/documentation.html}"  th:text="${url}">Create an issue on Github</a>
+    </p>
+    <p th:text="#{email.dataExportFailedAdmin.actionItem1}">Check the configuration of the instance</p>
+    <p th:text="#{email.dataExportFailedAdmin.actionItem2}">Contact the development team</p>
+    <a th:href="@{https://github.com/ls1intum/Artemis/issues/new/choose}" th:text="#{email.dataExportFailedAdmin.githubLink}">Create an issue on Github</a>
 
-
-
-    <th:block th:replace="mail/notification/fragments :: farewell"/>
 </div>
-<!-- Message Body End -->
-<th:block th:replace="mail/notification/fragments :: footer"/>
 </body>
 </html>
