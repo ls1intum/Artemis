@@ -28,19 +28,19 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
-        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 1, 1, NUMBER_OF_TUTORS);
+        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 2, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
             var userCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(8);
+        }).hasBeenCalledAtMostTimes(9);
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with exercise, lectures
         // 1 DB call to load all exercises
         // 1 DB call to load all exams
-        // 1 DB calls to get the quiz batches for active quiz exercises
+        // 2 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
@@ -51,9 +51,9 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledAtMostTimes(11);
+        }).hasBeenCalledAtMostTimes(14);
         // 1 DB call to get the user from the DB
-        // 1 DB call to get the course with exercise, lectures, exams
+        // 2 DB calls to get the course with exercise, lectures, exams
         // 1 DB call to load all exercises
         // 1 DB call to load all exams
         // 1 DB call to load all competencies
@@ -62,6 +62,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to load the tutorial group configuration
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
+        // 2 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all plagiarism cases
     }
 }

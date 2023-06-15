@@ -1348,14 +1348,10 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
-    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures,
-            int numberOfTutorParticipations) throws Exception {
+    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCourses, int numberOfTutorParticipations) throws Exception {
         List<Course> courses = new ArrayList<>();
-        for (int i = 0; i < numberOfCoursesWithExercises; i++) {
-            var course = createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(userPrefix, true);
-            courses.add(course);
-        }
-        for (int i = 0; i < numberOfCoursesWithLectures; i++) {
+
+        for (int i = 0; i < numberOfCourses; i++) {
             var coursesWithLectures = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true, numberOfTutorParticipations);
             courses.addAll(coursesWithLectures);
         }
