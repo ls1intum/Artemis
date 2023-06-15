@@ -266,12 +266,13 @@ public class ExerciseResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
+
+        final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
 
         // TODO: Create alternative route so that instructors and admins can access the exercise details
         // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
-        if (exercise.isExamExercise()) {
+        if (exercise.isExamExercise() && !isAtLeastTAForExercise) {
             throw new AccessForbiddenException();
         }
 
@@ -303,7 +304,7 @@ public class ExerciseResource {
         // TODO: we should also check that the submissions do not contain sensitive data
 
         // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (!isAtLeastTAForExercise) {
             exercise.filterSensitiveInformation();
         }
 

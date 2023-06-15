@@ -1,5 +1,16 @@
 #!/bin/sh
 
+DB=$1
+
+if [ "$DB" = "mysql" ]; then
+  COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
+elif [ "$DB" = "postgresql" ]; then
+  COMPOSE_FILE="cypress-E2E-tests-postgresql.yml"
+else
+  echo "Invalid database type. Please choose either mysql or postgresql."
+  exit 1
+fi
+
 # Create libs folder because the Artemis docker compose file expects the .war file there
 mkdir -p build/libs
 mv ./*.war build/libs/
@@ -9,9 +20,9 @@ export HOST_HOSTNAME=$(hostname)
 
 cd docker
 #just pull everything else than artemis-app as we build it later either way
-docker compose -f cypress-E2E-tests.yml pull artemis-cypress mysql nginx
-docker compose -f cypress-E2E-tests.yml build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
-docker compose -f cypress-E2E-tests.yml up --exit-code-from artemis-cypress
+docker compose -f $COMPOSE_FILE pull artemis-cypress $DB nginx
+docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
+docker compose -f $COMPOSE_FILE up --exit-code-from artemis-cypress
 exitCode=$?
 cd ..
 echo "Cypress container exit code: $exitCode"

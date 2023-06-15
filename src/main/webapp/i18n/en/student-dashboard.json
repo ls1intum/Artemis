@@ -27,6 +27,7 @@
             "noCourseIcon": "No course icon available",
             "showMore": "Show more",
             "showLess": "Show less",
+            "manage": "Manage",
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
@@ -58,6 +59,7 @@
                 "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
+                "shortDueDate": "Due",
                 "noDueDate": "No due date",
                 "userNotAssignedToTeam": "You have not been assigned to a team yet.",
                 "userNotStartedExercise": "You have not started this exercise yet.",
@@ -98,6 +100,8 @@
                 "totalScore": "Your overall points",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
+                "totalPresentationPoints": "Your presentation points: {{ number }}",
+                "achievablePresentationPoints": "Achievable presentation points: {{ number }}",
                 "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
@@ -123,6 +127,7 @@
                 "gradeInfo": "(based on attainable points)",
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
                 "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
+                "presentationHelp": "The reachable presentation points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
                 "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
                 "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
                 "programmingPointLabel": "Programming Points",
@@ -130,6 +135,7 @@
                 "modelingPointLabel": "Modeling Points",
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
+                "presentationPointsLabel": "Presentation Points",
                 "missingPointsLabel": "Missing Points",
                 "achievedPointsLabel": "Achieved Points",
                 "includeStandardCategories": "Hide Artemis standard categories:",
@@ -199,7 +205,9 @@
                 "complaintDue": "Complaint due:",
                 "complaintDueTooltip": "You can write a complain until {{date}}.",
                 "complaintPossible": "Complaint possible:",
-                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint."
+                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
+                "presented": "Presented:",
+                "presentation": "Presentation:"
             }
         }
     }

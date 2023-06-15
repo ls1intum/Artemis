@@ -142,6 +142,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateDefaultCourseChannelsOnCourseCreation() throws Exception {
+        courseTestService.testCreateCourseWithDefaultChannels();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseIsEmpty() throws Exception {
         courseTestService.testUpdateCourseIsEmpty();
     }
@@ -904,6 +910,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
         courseTestService.testGetCourseManagementDetailDataForFutureCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllGroupsForAllCourses() throws Exception {
+        courseTestService.testGetAllGroupsForAllCourses();
     }
 
     @Test

@@ -51,11 +51,9 @@ export class CourseUpdateComponent implements OnInit {
     courseImageUploadFile?: File;
     croppedImage?: string;
     showCropper = false;
-    presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
-    presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     isAdmin = false;
     // Icons
@@ -191,21 +189,16 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                registrationEnabled: new FormControl(this.course.registrationEnabled),
-                registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
+                registrationEnabled: new FormControl(this.course.enrollmentEnabled),
+                registrationConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
-                presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
-                    Validators.min(1),
-                    regexValidator(this.presentationScorePattern),
-                ]),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
             },
             { validators: CourseValidator },
         );
         this.croppedImage = this.course.courseIcon;
-        this.presentationScoreEnabled = this.course.presentationScore !== 0;
 
         this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.TutorialGroups)
@@ -274,6 +267,14 @@ export class CourseUpdateComponent implements OnInit {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.MESSAGING_ONLY;
         } else {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
+        }
+
+        // TODO: this has to be removed once the refactoring from course 'registration' to 'enrollment' is complete
+        course['enrollmentEnabled'] = course['registrationEnabled'];
+        delete course['registrationEnabled'];
+        if (course['enrollmentEnabled'] == true) {
+            course['enrollmentConfirmationMessage'] = course['registrationConfirmationMessage'];
+            delete course['registrationConfirmationMessage'];
         }
 
         if (this.course.id !== undefined) {
@@ -363,20 +364,6 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Enable or disable presentation score input field based on presentationScoreEnabled checkbox
-     */
-    changePresentationScoreInput() {
-        const presentationScoreControl = this.courseForm.controls['presentationScore'];
-        if (presentationScoreControl.disabled) {
-            presentationScoreControl.enable();
-            this.presentationScoreEnabled = true;
-        } else {
-            presentationScoreControl.reset({ value: 0, disabled: true });
-            this.presentationScoreEnabled = false;
-        }
-    }
-
-    /**
      * Enable or disable online course
      */
     changeOnlineCourse() {
@@ -391,12 +378,12 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable student course registration
      */
     changeRegistrationEnabled() {
-        this.course.registrationEnabled = !this.course.registrationEnabled;
-        if (this.course.registrationEnabled) {
+        this.course.enrollmentEnabled = !this.course.enrollmentEnabled;
+        if (this.course.enrollmentEnabled) {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
         }
-        this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
+        this.courseForm.controls['registrationEnabled'].setValue(this.course.enrollmentEnabled);
     }
 
     /**

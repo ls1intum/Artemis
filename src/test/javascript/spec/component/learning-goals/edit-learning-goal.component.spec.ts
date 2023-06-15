@@ -89,7 +89,7 @@ describe('EditLearningGoalComponent', () => {
             status: 200,
         });
         const learningGoalCourseProgressResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
-            body: { learningGoalId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress,
+            body: { competencyId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress,
             status: 200,
         });
 

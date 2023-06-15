@@ -1,5 +1,5 @@
 <div class="card mb-4" id="course-card-{{ course.shortName }}">
-    <div id="course-card-header" class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+    <div id="course-card-header" class="text-white card-heading" [ngStyle]="hoverEffectForBackground">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
             <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
@@ -13,7 +13,6 @@
                 </div>
             </div>
         </div>
-
         <div class="container container-padding title-container" [routerLink]="['/course-management', course.id]">
             <h3 class="card-title text-center fw-medium course-title">{{ course.title }} ({{ course.shortName }})</h3>
             <div *ngIf="course.description && course.description !== ''" class="text-center course-description">
@@ -99,7 +98,6 @@
             </div>
         </div>
     </div>
-
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card p-0">

@@ -27,6 +27,7 @@
             "noCourseIcon": "Kein Kurs Icon verfügbar",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
+            "manage": "Verwalten",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
@@ -58,6 +59,7 @@
                 "notReleasedTooltip": "Nicht sichtbar für Studierende. Veröffentlichungsdatum: ",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
+                "shortDueDate": "Bis",
                 "noDueDate": "Keine Deadline",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
@@ -96,6 +98,8 @@
                 "totalScore": "Gesamtpunktzahl",
                 "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
                 "presentationScoreBonus": "Benötigtes Präsentationsergebnis für den Bonus: {{ number }}",
+                "totalPresentationPoints": "Deine Präsentationspunkte: {{ number }}",
+                "achievablePresentationPoints": "Erreichbare Präsentationspunkte: {{ number }}",
                 "hideNotIncludedInScoreExercises": "Keine Optionalen",
                 "exerciseCount": "{{ number }} {{ type }}",
                 "yourPoints": "Deine Punktzahl: {{ number }}",
@@ -121,6 +125,7 @@
                 "gradeInfo": "(basierend auf der erreichbaren Punktzahl)",
                 "gradeHelp": "Die Note basiert auf der von dir erreichbaren Punktzahl. Sie kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
                 "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
+                "presentationHelp": "Die Präsentationspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
                 "programmingExerciseFailedTests": "{{ tests }} Tests fehlgeschlagen ({{ percentage }}%)",
                 "programmingExercisePassedTests": "{{ tests }} Tests erfolgreich ({{ percentage }}%)",
                 "programmingPointLabel": "Programmieraufgaben Punkte",
@@ -128,6 +133,7 @@
                 "modelingPointLabel": "Modellierungsaufgaben Punkte",
                 "textPointLabel": "Textaufgaben Punkte",
                 "fileUploadPointLabel": "Dateiupload-Aufgaben Punkte",
+                "presentationPointsLabel": "Präsentationspunkte",
                 "missingPointsLabel": "Fehlende Punkte",
                 "achievedPointsLabel": "Erreichte Punkte",
                 "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
@@ -197,7 +203,9 @@
                 "complaintDue": "Beschwerde bis:",
                 "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
                 "complaintPossible": "Beschwerde möglich:",
-                "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben."
+                "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
+                "presented": "Präsentiert:",
+                "presentation": "Präsentation:"
             }
         }
     }

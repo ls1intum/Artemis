@@ -37,7 +37,7 @@ concurrency:
   group: test-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-# Keep in sync with codeql-analysis.yml and build-deploy.yml
+# Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
   node: 18

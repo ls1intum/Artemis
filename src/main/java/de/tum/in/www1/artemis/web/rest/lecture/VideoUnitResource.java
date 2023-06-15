@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
@@ -40,14 +40,14 @@ public class VideoUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository,
-            LearningGoalProgressService learningGoalProgressService) {
+            CompetencyProgressService competencyProgressService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.videoUnitRepository = videoUnitRepository;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -89,7 +89,7 @@ public class VideoUnitResource {
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
 
-        learningGoalProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
 
         return ResponseEntity.ok(result);
     }
@@ -127,7 +127,7 @@ public class VideoUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
-        learningGoalProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
+        competencyProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
 
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId())).body(persistedVideoUnit);
     }

@@ -13,10 +13,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -36,8 +33,15 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
+@JsonTypeName("quiz")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExercise extends Exercise implements QuizConfiguration {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @JsonView(QuizView.Before.class)
+    public String getType() {
+        return "quiz";
+    }
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -152,11 +156,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     public void setQuizMode(QuizMode quizMode) {
         this.quizMode = quizMode;
-    }
-
-    @JsonView(QuizView.Before.class)
-    public String getType() {
-        return "quiz";
     }
 
     /**
@@ -295,29 +294,10 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      * @return the resulting score
      */
     public Double getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = getScoreInPointsForSubmission(quizSubmission);
+        double score = quizSubmission.getScoreInPoints(getQuizQuestions());
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
         return 100.0 * score / maxPoints;
-    }
-
-    /**
-     * Get the score for this submission as the number of points
-     *
-     * @param quizSubmission the submission that should be evaluated
-     * @return the resulting score
-     */
-    public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
-        double score = 0.0;
-        // iterate through all quizQuestions of this quiz
-        for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            // search for submitted answer for this quizQuestion
-            SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
-            if (submittedAnswer != null) {
-                score += quizQuestion.scoreForAnswer(submittedAnswer);
-            }
-        }
-        return score;
     }
 
     /**

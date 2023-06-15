@@ -8,13 +8,12 @@ services:
         image: postgres:15-alpine
         pull_policy: always
         user: postgres
+        command: ["postgres", "-c", "max_connections=200"]
         volumes:
             - artemis-postgresql-data:/var/lib/postgresql/data
-        # DO NOT use an empty password and the POSTGRES_HOST_AUTH_METHOD=trust for production systems!
-        environment:
-            POSTGRES_HOST_AUTH_METHOD: trust
-            POSTGRES_USER: postgres
-            POSTGRES_DB: Artemis
+        # DO NOT use this default file for production systems!
+        env_file:
+            - ./postgresql/default.env
         ports:
             - "5432:5432"
         healthcheck:
@@ -31,6 +30,7 @@ networks:
     artemis:
         driver: "bridge"
         name: artemis
+
 volumes:
     artemis-postgresql-data:
         name: artemis-postgresql-data

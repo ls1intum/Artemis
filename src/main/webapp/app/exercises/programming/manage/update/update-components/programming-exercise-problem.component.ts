@@ -17,6 +17,7 @@ export class ProgrammingExerciseProblemComponent {
     programmingExercise: ProgrammingExercise;
 
     @Input() isImportFromExistingExercise: boolean;
+    @Input() isImportFromFile: boolean;
     @Input() isExamMode: boolean;
     @Input() problemStatementLoaded: boolean;
     @Input() templateParticipationResultLoaded: boolean;

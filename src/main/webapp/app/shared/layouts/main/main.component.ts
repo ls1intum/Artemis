@@ -1,7 +1,6 @@
 import { Component, Inject, OnInit, Renderer2 } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
@@ -33,7 +32,7 @@ export class JhiMainComponent implements OnInit {
     }
 
     private async setupErrorHandling() {
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // sentry is only activated if it was specified in the application.yml file
             this.sentryErrorHandler.initSentry(profileInfo);
         });
@@ -52,7 +51,7 @@ export class JhiMainComponent implements OnInit {
             if (event instanceof NavigationStart) {
                 /*
                 In the case where we do not want to show the skeleton, we also want to set the background to transparent
-                such that the native applications can display their background in the web view.
+                such that the mobile native applications can display their background in the web view.
 
                 However, as the default background attribute is defined in the body html tag it is outside of Angular's reach.
                 We set the background ourselves by adding the transparent-background css class on the body element, thus

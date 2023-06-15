@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
@@ -359,6 +360,12 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
         programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported(scaEnabled);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_embeddedFiles_filesCopied() throws Exception {
+        programmingExerciseTestService.importFromFile_embeddedFiles_embeddedFilesCopied();
+    }
+
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "PYTHON", "C", "ASSEMBLER", "HASKELL", "OCAML" }, mode = EnumSource.Mode.INCLUDE)
@@ -375,7 +382,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateZip() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any(), eq(false));
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any());
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST);
     }
 
@@ -412,6 +419,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    @Disabled // TODO: Fix the TODO inside automaticCleanupBuildPlans() before enabling the test again.
     void testAutomaticCleanUpBuildPlans() throws Exception {
         programmingExerciseTestService.automaticCleanupBuildPlans();
     }

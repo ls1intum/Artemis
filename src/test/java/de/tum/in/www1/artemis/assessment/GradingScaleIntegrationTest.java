@@ -17,12 +17,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -174,6 +174,69 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         courseGradingScale.setGradeSteps(gradeSteps);
 
         request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post request with invalid presentation configuration for basic presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseInvalidBasicPresentationConfiguration() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        // The presentationsNumber and presentationsWeight must be null.
+        course.setPresentationScore(2);
+        courseGradingScale.setPresentationsNumber(1);
+        courseGradingScale.setPresentationsWeight(20.0);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        courseGradingScale.setPresentationsNumber(null);
+        courseGradingScale.setPresentationsWeight(null);
+
+        // The presentationScore must be above 0.
+        course.setPresentationScore(-1);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post request with invalid presentation configuration for graded presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseInvalidGradedPresentationConfiguration() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        // The presentationsNumber must be above 0. The presentationsWeight must be between 0 and 99.
+        course.setPresentationScore(null);
+        courseGradingScale.setPresentationsNumber(0);
+        courseGradingScale.setPresentationsWeight(120.0);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+
+        // The gradingScale must belong to a course.
+        courseGradingScale.setPresentationsNumber(2);
+        courseGradingScale.setPresentationsWeight(20.0);
+        courseGradingScale.setCourse(null);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post request with invalid presentation configuration for graded presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseWithChangedPresentationScore() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        course.setPresentationScore(5);
+
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+                HttpStatus.CREATED);
+
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
+        assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
+        assertThat(savedGradingScale.getCourse().getPresentationScore()).isEqualTo(5);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
 
     /**
@@ -403,20 +466,22 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam.setTitle("abcdefghijklmnop");
         examRepository.save(exam);
 
-        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=abcdefghijklmnop&sortedColumn=ID";
-        var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        String url = "/api/grading-scales";
+        var search = database.configureSearch("abcdefghijklmnop");
+        search.setPageSize(100);
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -424,20 +489,23 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
 
-        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=&sortedColumn=ID";
-        var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        String url = "/api/grading-scales";
+        var search = database.configureSearch("");
+        search.setPageSize(100);
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 

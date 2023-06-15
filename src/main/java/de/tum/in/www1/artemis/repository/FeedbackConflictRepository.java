@@ -6,9 +6,11 @@ import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.FeedbackConflict;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -28,9 +30,7 @@ public interface FeedbackConflictRepository extends JpaRepository<FeedbackConfli
     @Query("select distinct conflict from FeedbackConflict conflict where conflict.conflict = true and (conflict.firstFeedback.id in (:feedbackIds) or conflict.secondFeedback.id in (:feedbackIds))")
     List<FeedbackConflict> findAllConflictsByFeedbackList(@Param("feedbackIds") List<Long> feedbackIds);
 
-    List<FeedbackConflict> findByFirstFeedbackIdAndConflict(Long id, Boolean conflict);
-
-    List<FeedbackConflict> findBySecondFeedbackIdAndConflict(Long id, Boolean conflict);
+    List<FeedbackConflict> findByFirstFeedbackIdAndConflict(Long firstFeedbackId, Boolean conflict);
 
     @Query("select distinct conflict from FeedbackConflict conflict where (conflict.conflict = true or conflict.discard = true) and "
             + "((conflict.firstFeedback.id = :firstFeedbackId and conflict.secondFeedback.id = :secondFeedbackId) or "
@@ -46,4 +46,19 @@ public interface FeedbackConflictRepository extends JpaRepository<FeedbackConfli
         return findByFeedbackConflictId(feedbackConflictId)
                 .orElseThrow(() -> new BadRequestAlertException("No FeedbackConflict found for given feedbackConflictId.", "feedbackConflict", "feedbackConflictNotFound"));
     }
+
+    @Transactional // ok because of delete
+    @Modifying
+    default void deleteAllByResultId(long resultId) {
+        var feedbackConflicts = findAllConflictsByResultId(resultId);
+        deleteAll(feedbackConflicts);
+    }
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM FeedbackConflict c
+            WHERE c.firstFeedback.result.id = :resultId
+                OR c.secondFeedback.result.id = :resultId
+            """)
+    List<FeedbackConflict> findAllConflictsByResultId(@Param("resultId") long resultId);
 }

@@ -91,7 +91,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
         assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
-        System.out.println(teamAssignmentConfig);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);

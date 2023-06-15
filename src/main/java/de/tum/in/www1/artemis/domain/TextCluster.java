@@ -28,7 +28,7 @@ public class TextCluster extends DomainObject {
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 
-    @OneToMany(mappedBy = "cluster")
+    @OneToMany(mappedBy = "cluster", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @OrderBy("position_in_cluster")
     @JsonIgnoreProperties("cluster")
     private List<TextBlock> blocks = new ArrayList<>();

@@ -29,7 +29,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
 
     @Test
     void testGetPrivacyStatement_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/privacy-statement?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
+        request.get("/api/public/privacy-statement?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
     }
 
     @Test
@@ -37,7 +37,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/privacy-statement?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
+            request.get("/api/public/privacy-statement?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
         }
 
     }
@@ -103,7 +103,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
             }
 
-            response = request.get("/api/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
         }
         if ("de".equals(language.getShortName())) {
             assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.ENGLISH);
@@ -121,7 +121,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
 
-            request.get("/api/privacy-statement?language=de", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
+            request.get("/api/public/privacy-statement?language=de", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
         }
     }
 
@@ -161,7 +161,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             else {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
             }
-            response = request.get("/api/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);

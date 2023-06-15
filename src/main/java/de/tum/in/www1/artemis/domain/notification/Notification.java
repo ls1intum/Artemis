@@ -6,10 +6,10 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "N")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
@@ -51,6 +50,11 @@ public abstract class Notification extends DomainObject {
 
     @Column(name = "placeholder_values")
     private String placeholderValues;
+
+    // Only set when initially created and used by the instant notification system
+    @JsonIgnore
+    @Transient
+    private String[] transientPlaceholderValues;
 
     @Column(name = "notification_date")
     private ZonedDateTime notificationDate;
@@ -114,6 +118,11 @@ public abstract class Notification extends DomainObject {
         return placeholderValues;
     }
 
+    @JsonIgnore
+    public String[] getTransientPlaceholderValuesAsArray() {
+        return transientPlaceholderValues;
+    }
+
     public void setPlaceholderValues(String notificationTextValues) {
         this.placeholderValues = notificationTextValues;
     }
@@ -123,6 +132,8 @@ public abstract class Notification extends DomainObject {
      *                                   We convert it to a json string, so we can store it in the database
      */
     public void setPlaceholderValues(String[] notificationTextValues) {
+        transientPlaceholderValues = notificationTextValues;
+
         if (notificationTextValues == null || notificationTextValues.length == 0) {
             this.placeholderValues = null;
         }

@@ -153,7 +153,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
         // Api should return not found.
-        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-submissions/" + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
         assertThat(submissionRepository.findAllByParticipationIdWithResults(fakeParticipationId)).isEmpty();
     }
@@ -244,6 +244,36 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Do a call to new-result again and assert that no new submission is created.
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
         assertNoNewSubmissionsAndIsSubmission(participation.getId(), submission);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldHandleNewBuildResultCreatedByCommitForSolutionParticipation() throws Exception {
+        var course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).get(0);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+
+        exercise.setBranch(null);
+        programmingExerciseRepository.save(exercise);
+
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
+        bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get();
+        postSubmission(participation.getId(), HttpStatus.OK);
+
+        final var commit = new BambooBuildResultNotificationDTO.BambooCommitDTO("First commit", "asdf");
+        var vcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(commit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(commit));
+        var notificationCommit = ModelFactory.generateBambooBuildResultWithLogs(participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(),
+                ZonedDateTime.now(), List.of(vcsDTO));
+
+        postResult(notificationCommit, HttpStatus.OK, false);
+
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).hasSize(1);
     }
 
     /**
@@ -586,7 +616,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var secondCommitDate = ZonedDateTime.parse(pushJSON.get("date").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         var firstCommitDate = secondCommitDate.minusSeconds(30);
 
-        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, testService.programmingExercise.getProjectKey());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(testService.programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), firstCommitHash, firstCommitDate);
 
@@ -901,7 +930,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         changes.get(0).put("toHash", TEST_COMMIT);
 
         // Api should return ok.
-        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-exercises/test-cases-changed/" + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
@@ -911,7 +940,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
-        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, status, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-exercises/test-cases-changed/" + exerciseId, obj, status, new HttpHeaders());
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {
@@ -969,7 +998,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, expectedStatus, httpHeaders);
     }
 
     private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws Exception {

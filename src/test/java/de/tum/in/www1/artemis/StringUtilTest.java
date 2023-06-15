@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.web.rest.util.StringUtil.ILLEGAL_CHARACTERS;
 import static de.tum.in.www1.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
@@ -10,26 +10,26 @@ class StringUtilTest {
 
     @Test
     void testEmpty() {
-        assertEquals("", stripIllegalCharacters(""));
+        assertThat(stripIllegalCharacters("")).isEmpty();
     }
 
     @Test
     void testOnlyIllegals() {
-        assertEquals("", stripIllegalCharacters(ILLEGAL_CHARACTERS));
+        assertThat(stripIllegalCharacters(ILLEGAL_CHARACTERS)).isEmpty();
     }
 
     @Test
     void testNormal() {
-        assertEquals("abcdefg", stripIllegalCharacters("abcdefg"));
+        assertThat(stripIllegalCharacters("abcdefg")).isEqualTo("abcdefg");
     }
 
     @Test
     void testUmlaut() {
-        assertEquals("abcdefgäöü", stripIllegalCharacters("abcdefgäöü"));
+        assertThat(stripIllegalCharacters("abcdefgäöü")).isEqualTo("abcdefgäöü");
     }
 
     @Test
     void testWithIllegal() {
-        assertEquals("a^bcdefg(ä)öü", stripIllegalCharacters("a^b\"c$d%e&f/g(ä)ö?ü"));
+        assertThat(stripIllegalCharacters("a^b\"c$d%e&f/g(ä)ö?ü")).isEqualTo("a^bcdefg(ä)öü");
     }
 }

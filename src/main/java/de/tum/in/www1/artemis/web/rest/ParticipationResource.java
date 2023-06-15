@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -418,6 +419,11 @@ public class ParticipationResource {
                 && participation.getExercise().getPresentationScoreEnabled()) {
             Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
+            // Presentation Score is only valid for non practice participations
+            if (participation.isTestRun()) {
+                throw new BadRequestAlertException("Presentation score is not allowed for practice participations", ENTITY_NAME, "presentationScoreInvalid");
+            }
+
             // Validity of presentationScore for basic presentations
             if (course.getPresentationScore() != null && course.getPresentationScore() > 0) {
                 if (participation.getPresentationScore() >= 1.) {
@@ -428,9 +434,20 @@ public class ParticipationResource {
                 }
             }
             // Validity of presentationScore for graded presentations
-            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null
-                    && (participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
-                throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
+            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
+                if ((participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
+                    throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
+                }
+
+                long presentationCountForParticipant = studentParticipationRepository
+                        .findByCourseIdAndStudentIdWithRelevantResult(course.getId(), participation.getParticipant().getId()).stream()
+                        .filter(studentParticipation -> studentParticipation.getPresentationScore() != null && !Objects.equals(studentParticipation.getId(), participation.getId()))
+                        .count();
+                if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
+                    throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
+                            "invalid.presentations.maxNumberOfPresentationsExceeded",
+                            Map.of("name", participation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
+                }
             }
         }
         // Validity of presentationScore for no presentations
@@ -901,7 +918,7 @@ public class ParticipationResource {
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
     private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
-        if (quizExercise.isQuizEnded() || quizSubmissionService.isSubmitted(quizBatch, username)) {
+        if (quizExercise.isQuizEnded() || quizSubmissionService.hasUserSubmitted(quizBatch, username)) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
@@ -934,7 +951,7 @@ public class ParticipationResource {
         }
 
         // get submission from HashMap
-        QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+        AbstractQuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
         // construct result
         Result result = new Result().submission(quizSubmission);

@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -35,6 +33,8 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -1288,6 +1288,10 @@ class ProgrammingExerciseIntegrationTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
         params.add("updateTemplate", String.valueOf(updateTemplate));
+        var programmingExerciseSca = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+
+        setupMocksForConsistencyChecksOnImport(programmingExercise);
+        setupMocksForConsistencyChecksOnImport(programmingExerciseSca);
 
         // false -> true
         var sourceId = programmingExercise.getId();
@@ -1299,7 +1303,6 @@ class ProgrammingExerciseIntegrationTestService {
                 HttpStatus.BAD_REQUEST);
 
         // true -> false
-        var programmingExerciseSca = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceId = programmingExerciseSca.getId();
         programmingExerciseSca.setId(null);
         programmingExerciseSca.setStaticCodeAnalysisEnabled(false);
@@ -1667,11 +1670,8 @@ class ProgrammingExerciseIntegrationTestService {
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, database.getDefaultPlagiarismOptions());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
+
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            // var entries = zipFile.entries();
-            // while(entries.hasMoreElements()) {
-            // System.out.println(entries.nextElement().getName());
-            // }
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
             assertThat(zipFile.getEntry("files/Submission-1.java/Submission-1.java")).isNotNull();
             assertThat(zipFile.getEntry("files/Submission-2.java/Submission-2.java")).isNotNull();
@@ -1679,7 +1679,7 @@ class ProgrammingExerciseIntegrationTestService {
             // it is random which of the following two exists, but one of them must be part of the zip file
             var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
             var json2 = zipFile.getEntry("Submission-1.java-Submission-2.java.json");
-            assertTrue(json1 != null || json2 != null);
+            assertThat(json1 != null || json2 != null).isTrue();
         }
     }
 
@@ -2043,13 +2043,12 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
-        String uniqueExerciseTitle = String.format("Title%d%d", System.nanoTime(), ThreadLocalRandom.current().nextInt(100));
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
-        programmingExercise.setShortName(uniqueExerciseTitle);
-        programmingExercise.setTitle(uniqueExerciseTitle);
+        programmingExercise.setShortName("ExerciseTitle");
+        programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
             mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
@@ -2167,6 +2166,27 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private long getMaxProgrammingExerciseId() {
-        return programmingExerciseRepository.findAll().stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
+        return programmingExerciseRepository.findAll(PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))).stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
+    }
+
+    private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).get();
+
+        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(),
+                urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl()), true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(),
+                urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsSolutionRepositoryUrl()), true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTestRepositoryUrl(),
+                urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTestRepositoryUrl()), true);
+        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
+            mockDelegate.mockGetRepositorySlugFromRepositoryUrl(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUrl());
+            mockDelegate.mockRepositoryUrlIsValid(auxiliaryRepository.getVcsRepositoryUrl(), urlService.getProjectKeyFromRepositoryUrl(auxiliaryRepository.getVcsRepositoryUrl()),
+                    true);
+        }
+        mockDelegate.mockCheckIfBuildPlanExists(urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl()),
+                programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsSolutionRepositoryUrl()),
+                programmingExercise.getSolutionBuildPlanId(), true, false);
     }
 }

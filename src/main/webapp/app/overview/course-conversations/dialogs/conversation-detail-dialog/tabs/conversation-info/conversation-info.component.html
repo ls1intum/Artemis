@@ -71,7 +71,7 @@
                 <h6>{{ 'artemisApp.dialogs.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
             </div>
             <ul>
-                <li>
+                <li *ngIf="activeConversation.creator">
                     {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
                     {{ activeConversation.creator ? getUserLabel(activeConversation.creator) : '' }}
                 </li>

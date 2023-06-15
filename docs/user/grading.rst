@@ -20,6 +20,16 @@ There are two configurable special grades that are automatically treated as fail
 
 In bonus assignment calculations, these two special grades are treated equivalent as receiving a total score of 0 from the corresponding course or exam.
 
+The ``Presentation Mode`` allows you to decide whether students can hold presentations in the course, e.g. to be eligible for an exam bonus.
+Note that you can define for every exercise whether it should be eligible for the presentation score within the exercise settings. There are three different modes:
+
+- ``None``: No presentation can be held.
+- ``Basic``: Students must hold a given ``Number`` of presentations to be eligible for the exam bonus. The presentations are not graded.
+- ``Graded``: Students can hold a given ``Number`` of presentations. The presentations are graded, and their ``Combined Weight`` makes up for the specified percentage of points in the course.
+
+.. note::
+    The ``Presentation Mode`` is only available for grading keys of courses but not for exams.
+
 Instructors
 -----------
 Instructors can export and import grading keys in CSV format to reuse them inside or outside of Artemis.

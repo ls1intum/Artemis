@@ -65,11 +65,11 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
         long sizeBefore = notificationRepository.count();
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(4000).times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(javaMailSender, timeout(4000).times(1)).send(any(MimeMessage.class));
+        verify(mailService, timeout(4000).atLeast(1)).sendNotification(any(), anyList(), any());
     }
 
     @Test
@@ -81,11 +81,12 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         textSubmission.text("Text");
         textSubmission.submitted(true);
         database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
+
         Result manualResult = database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1"), 10.0, 10.0, 50, true);
         manualResult.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(manualResult);
 
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
 
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 

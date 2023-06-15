@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ExportToCsv } from 'export-to-csv';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -37,12 +36,12 @@ jest.mock('app/shared/util/download.util', () => ({
 }));
 
 const generateCsv = jest.fn();
-
-jest.mock('export-to-csv', () => ({
-    ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
-    })),
-}));
+jest.mock('export-to-csv', () => {
+    class MockExportToCsv {
+        generateCsv = generateCsv;
+    }
+    return { ExportToCsv: MockExportToCsv };
+});
 
 describe('Plagiarism Inspector Component', () => {
     let comp: PlagiarismInspectorComponent;
@@ -218,7 +217,6 @@ describe('Plagiarism Inspector Component', () => {
         comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsCsv();
 
-        expect(ExportToCsv).toHaveBeenCalledOnce();
         expect(generateCsv).toHaveBeenCalledOnce();
     });
 

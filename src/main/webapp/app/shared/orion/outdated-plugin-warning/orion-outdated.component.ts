@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { filter, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-orion-outdated',
@@ -29,15 +27,9 @@ export class OrionOutdatedComponent implements OnInit {
     ngOnInit(): void {
         this.activatedRoute.queryParams.subscribe((params) => {
             this.versionString = params['versionString'];
-            this.profileService
-                .getProfileInfo()
-                .pipe(
-                    filter(Boolean),
-                    tap((info: ProfileInfo) => {
-                        this.allowedMinimumVersion = info.allowedMinimumOrionVersion;
-                    }),
-                )
-                .subscribe();
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.allowedMinimumVersion = profileInfo.allowedMinimumOrionVersion;
+            });
         });
     }
 }

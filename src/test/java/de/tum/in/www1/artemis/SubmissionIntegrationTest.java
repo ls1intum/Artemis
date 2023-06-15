@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -141,7 +140,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
-        var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
+        var resultPage = request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
                 database.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
@@ -151,7 +150,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = 12345L;
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.searchMapping(search));
+        request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class, database.searchMapping(search));
     }
 
     @Test
@@ -163,7 +162,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
+        request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class, database.searchMapping(search));
     }
 
 }

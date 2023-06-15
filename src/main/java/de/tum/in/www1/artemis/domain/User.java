@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 
 /**
@@ -78,6 +79,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @NotNull
     @Column(nullable = false)
     private boolean activated = false;
+
+    @NotNull
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false; // default value
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -159,12 +164,16 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
-    private Set<LearningGoalProgress> learningGoalProgress = new HashSet<>();
+    private Set<CompetencyProgress> competencyProgresses = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<ExamUser> examUsers = new HashSet<>();
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -339,12 +348,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.completedLectureUnits = completedLectureUnits;
     }
 
-    public Set<LearningGoalProgress> getLearningGoalProgress() {
-        return learningGoalProgress;
+    public Set<CompetencyProgress> getCompetencyProgresses() {
+        return competencyProgresses;
     }
 
-    public void setLearningGoalProgress(Set<LearningGoalProgress> learningGoalProgress) {
-        this.learningGoalProgress = learningGoalProgress;
+    public void setCompetencyProgresses(Set<CompetencyProgress> competencyProgresses) {
+        this.competencyProgresses = competencyProgresses;
     }
 
     public Set<ExamUser> getExamUsers() {
@@ -406,6 +415,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         isInternal = internal;
     }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
     @Nullable
     public String getVcsAccessToken() {
         return vcsAccessToken;
@@ -421,5 +438,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setTutorialGroupRegistrations(Set<TutorialGroupRegistration> tutorialGroupRegistrations) {
         this.tutorialGroupRegistrations = tutorialGroupRegistrations;
+    }
+
+    public Set<PushNotificationDeviceConfiguration> getPushNotificationDeviceConfigurations() {
+        return pushNotificationDeviceConfigurations;
+    }
+
+    public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
+        this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
     }
 }

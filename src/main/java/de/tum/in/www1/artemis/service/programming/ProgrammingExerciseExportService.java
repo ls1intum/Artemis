@@ -12,6 +12,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -52,6 +54,7 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
@@ -85,6 +88,10 @@ public class ProgrammingExerciseExportService {
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
+    private static final String EMBEDDED_FILE_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
+
+    private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
@@ -104,10 +111,9 @@ public class ProgrammingExerciseExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return the path to the zip file
      */
-    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) {
+    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Create export directory for programming exercises
-        var exportDir = Path.of(repoDownloadClonePath, "programming-exercise-material");
-        fileService.createDirectory(exportDir);
+        var exportDir = Files.createTempDirectory(Path.of(repoDownloadClonePath), "programming-exercise-material");
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
@@ -123,6 +129,7 @@ public class ProgrammingExerciseExportService {
         String cleanProblemStatementFileName = fileService.removeIllegalCharacters(problemStatementFileName);
         var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
         pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
+        copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
@@ -140,7 +147,7 @@ public class ProgrammingExerciseExportService {
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
         try {
-            zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped, false);
+            zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped);
             return pathToZippedExercise;
         }
         catch (IOException e) {
@@ -156,8 +163,46 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Export instructor repositories and optionally students' repositories in a zip file.
+     * In case the problem statement contains embedded files, they need to be part of the zip, so they can be imported again.
      *
+     * @param exercise        the programming exercise that is exported
+     * @param outputDir       the directory where the content of the export is stored
+     * @param pathsToBeZipped the paths that should be included in the zip file
+     */
+
+    private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped) throws IOException {
+        Set<String> embeddedFiles = new HashSet<>();
+
+        Matcher matcher = Pattern.compile(EMBEDDED_FILE_REGEX).matcher(exercise.getProblemStatement());
+        while (matcher.find()) {
+            embeddedFiles.add(matcher.group());
+        }
+        log.debug("Found embedded files:{} ", embeddedFiles);
+        Path embeddedFilesDir = outputDir.resolve("files");
+        if (!embeddedFiles.isEmpty()) {
+            if (!Files.exists(embeddedFilesDir)) {
+                Files.createDirectory(embeddedFilesDir);
+            }
+            pathsToBeZipped.add(embeddedFilesDir);
+        }
+        for (String embeddedFile : embeddedFiles) {
+            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
+            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
+            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
+            String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
+            Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
+            Path imageExportPath = embeddedFilesDir.resolve(fileName);
+            // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
+            if (!Files.exists(imageExportPath)) {
+                Files.copy(imageFilePath, imageExportPath);
+            }
+        }
+
+    }
+
+    /**
+     * Export instructor repositories and optionally students' repositories in a zip file.
+     * <p>
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
@@ -223,7 +268,7 @@ public class ProgrammingExerciseExportService {
             }
 
             // Create the zip folder of the exported programming exercise and return the path to the created folder
-            zipFileService.createZipFile(pathToZippedExercise, includedFilePathsNotNull, false);
+            zipFileService.createZipFile(pathToZippedExercise, includedFilePathsNotNull);
             return pathToZippedExercise;
         }
         catch (Exception e) {
@@ -237,7 +282,7 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId     The id of the programming exercise that has the repository
@@ -252,7 +297,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId   The id of the programming exercise that has the repository
@@ -267,7 +312,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId          The id of the programming exercise that has the repository
@@ -285,7 +330,7 @@ public class ProgrammingExerciseExportService {
      * solution, or tests repository
      *
      * @param exerciseId     The id of the programming exercise that has the repository
-     * @param repositoryType the type of repository to export
+     * @param repositoryType The type of repository to export
      * @param outputDir      The directory used for store the zip file
      * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
@@ -432,7 +477,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Get participations of programming exercises of a requested list of students packed together in one zip file.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param programmingExerciseId   the id of the exercise entity
@@ -464,10 +509,10 @@ public class ProgrammingExerciseExportService {
     /**
      * Zip the participations of programming exercises of a requested list of students separately.
      *
-     * @param programmingExercise     the programming exercise
-     * @param participations          participations that should be exported
-     * @param repositoryExportOptions the options that should be used for the export
-     * @param outputDir               The directory used for store the zip file
+     * @param programmingExercise     The programming exercise
+     * @param participations          Participations that should be exported
+     * @param repositoryExportOptions The options that should be used for the export
+     * @param outputDir               The directory used to store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths
      */
@@ -504,7 +549,7 @@ public class ProgrammingExerciseExportService {
      *
      * @param repositoryUrl The url of the repository to zip
      * @param zipFilename   The name of the zip file
-     * @param outputDir     The directory used for downloading and zipping the repository
+     * @param outputDir     The directory used to store the zip file
      * @param contentFilter The path filter to exclude some files, can be null to include everything
      * @return The path to the zip file.
      * @throws IOException     if the zip file couldn't be created
@@ -522,7 +567,7 @@ public class ProgrammingExerciseExportService {
         }
 
         // Zip it and return the path to the file
-        return gitService.zipFiles(localRepoPath, zipFilename, repositoryDir, contentFilter);
+        return gitService.zipFiles(localRepoPath, zipFilename, outputDir.toString(), contentFilter);
     }
 
     /**
@@ -544,7 +589,7 @@ public class ProgrammingExerciseExportService {
                 + ".zip";
 
         Path zipFilePath = Path.of(outputDir.toString(), filename);
-        zipFileService.createZipFile(zipFilePath, pathsToZippedRepos, false);
+        zipFileService.createZipFile(zipFilePath, pathsToZippedRepos);
         return zipFilePath.toFile();
     }
 
@@ -555,7 +600,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir               The directory used for downloading and zipping the repository
+     * @param outputDir               The directory used for storing the zip file
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */

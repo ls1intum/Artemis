@@ -19,15 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -85,9 +79,33 @@ public class ProgrammingExerciseImportFromFileService {
         if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
         }
+        copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
         importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
         importedProgrammingExercise.setCourse(course);
+        fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
         return importedProgrammingExercise;
+    }
+
+    /**
+     * Copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement
+     *
+     * @param importExerciseDir the directory where the extracted zip file is located
+     **/
+    private void copyEmbeddedFiles(Path importExerciseDir) throws IOException {
+        Path embeddedFilesDir = importExerciseDir.resolve("files");
+
+        if (!Files.exists(embeddedFilesDir)) {
+            return;
+        }
+        try (var embeddedFiles = Files.list(embeddedFilesDir)) {
+            for (var file : embeddedFiles.toList()) {
+                var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
+                // we need this check because the detection if a file exists of Files.copy seems not to work properly
+                if (!Files.exists(targetPath)) {
+                    Files.copy(file, targetPath);
+                }
+            }
+        }
     }
 
     private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName) throws IOException, GitAPIException, URISyntaxException {
