@@ -225,7 +225,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 .. note::
     Artemis also supports validating participants signatures for on-site exams.
-    For more information please see :ref:`Exam Participation Checker <exam_participation_checker>`.
+    For more information, please see :ref:`Exam Participation Checker <exam_participation_checker>`.
 
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
 
