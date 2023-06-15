@@ -71,8 +71,7 @@ describe('Grading System Presentations Component', () => {
 
         expect(component.presentationsConfig.presentationsNumber).toBeUndefined();
         expect(component.presentationsConfig.presentationsWeight).toBeUndefined();
-        // Edit when presentation score is moved from course edit to grading key page
-        expect(component.presentationsConfig.presentationType).toBe(PresentationType.NONE);
+        expect(component.presentationsConfig.presentationType).toBe(PresentationType.BASIC);
     });
 
     it('should init presentations config for graded presentations', () => {

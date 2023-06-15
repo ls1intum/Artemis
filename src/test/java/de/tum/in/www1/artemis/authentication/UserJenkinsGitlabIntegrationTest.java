@@ -137,6 +137,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteAdminUserSkippedInJenkins() throws Exception {
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", TEST_PREFIX + "student1");
+        jenkinsRequestMockProvider.mockGetAnyUser(false, 1);
         userTestService.deleteUser_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
@@ -218,48 +219,34 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
 
+    /**
+     * Tests if the deletion of a user by admin succeeds
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_isSuccessful() throws Exception {
+        jenkinsRequestMockProvider.mockGetAnyUser(false, 1);
         userTestService.deleteUser_isSuccessful();
     }
 
+    /**
+     * Tests if the deletion of the current user by themselves fails.
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_failToGetUserIdInGitlab() throws Exception {
-        User student = userTestService.student;
-        gitlabRequestMockProvider.mockDeleteVcsUserFailToGetUserId(student.getLogin());
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+    void deleteSelf_isNotSuccessful() throws Exception {
+        userTestService.deleteSelf_isNotSuccessful("admin");
     }
 
+    /**
+     * Tests if attempting to delete a number of users, including the current user works as expected.
+     * The expected behavior is the deletion of all users except the current user.
+     */
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
-        userTestService.deleteUser_FailsInExternalCiUserManagement_isNotSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
-        userTestService.deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUsers() throws Exception {
-        userTestService.deleteUsers();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUsersException() throws Exception {
-        userTestService.deleteUsersException();
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "ADMIN")
+    void deleteUsers_isSuccessfulForAllUsersExceptSelf() throws Exception {
+        jenkinsRequestMockProvider.mockGetAnyUser(true, 4);
+        userTestService.deleteUsers(TEST_PREFIX + "tutor1");
     }
 
     @Test
