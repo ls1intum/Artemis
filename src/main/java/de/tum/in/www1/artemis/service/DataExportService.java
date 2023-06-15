@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -106,12 +107,14 @@ public class DataExportService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final ComplaintRepository complaintRepository;
+
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
             QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
+            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, ComplaintRepository complaintRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -130,6 +133,7 @@ public class DataExportService {
         this.answerPostRepository = answerPostRepository;
         this.reactionRepository = reactionRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -261,10 +265,7 @@ public class DataExportService {
     }
 
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        // we only want to export the results if the student has submitted the exam
-        if (studentExam.isSubmitted() == null || !studentExam.isSubmitted() || studentExam.isTestRun()) {
-            return;
-        }
+
         var studentExamGrade = examService.getStudentExamGradeForDataExport(studentExam);
         var studentResult = studentExamGrade.studentResult();
         List<String> headers = new ArrayList<>();
@@ -373,7 +374,7 @@ public class DataExportService {
                     createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir, includeResults);
                 }
                 if (includeResults) {
-                    createResultsTxtFile(submission, exerciseDir);
+                    createResultsAndComplaintTxtFile(submission, exerciseDir);
                 }
             }
         }
@@ -599,7 +600,7 @@ public class DataExportService {
         }
     }
 
-    private void createResultsTxtFile(Submission submission, Path outputDir) throws IOException {
+    private void createResultsAndComplaintTxtFile(Submission submission, Path outputDir) throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
@@ -627,7 +628,39 @@ public class DataExportService {
             }
             resultScoreAndFeedbacks = new StringBuilder();
         }
+        var possibleComplaint = complaintRepository.findWithEagerComplaintResponseByResultSubmissionId(submission.getId());
+        if (possibleComplaint.isPresent()) {
+            addComplaintData(possibleComplaint.get(), outputDir);
+        }
+    }
 
+    private void addComplaintData(Complaint complaint, Path outputDir) throws IOException {
+        List<String> headers = new ArrayList<>();
+        var dataStreamBuilder = Stream.builder();
+        headers.add("id");
+        dataStreamBuilder.add(complaint.getId());
+        headers.add("submitted at");
+        dataStreamBuilder.add(complaint.getSubmittedTime());
+        headers.add("complaint type");
+        dataStreamBuilder.add(complaint.getComplaintType());
+        headers.add("complaint text");
+        dataStreamBuilder.add(complaint.getComplaintText());
+
+        if (complaint.getComplaintResponse() != null) {
+            headers.add("Complaint response");
+            dataStreamBuilder.add(complaint.getComplaintResponse().getResponseText());
+        }
+        if (complaint.isAccepted() != null && ComplaintType.COMPLAINT == complaint.getComplaintType()) {
+            headers.add("accepted");
+            dataStreamBuilder.add(complaint.isAccepted());
+        }
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        var prefix = complaint.getComplaintType() == ComplaintType.COMPLAINT ? "complaint_" : "more_feedback_";
+
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve(prefix + complaint.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
+            printer.printRecord(dataStreamBuilder.build());
+            printer.flush();
+        }
     }
 
     private void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir, long userId) throws IOException {
