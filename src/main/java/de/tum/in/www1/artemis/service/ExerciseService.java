@@ -453,13 +453,17 @@ public class ExerciseService {
                 }
             }
 
+            if (submission != null && latestSubmissionWithRatedResult != null && !submission.equals(latestSubmissionWithRatedResult)) {
+                submission = latestSubmissionWithRatedResult;
+            }
+
             // filter sensitive information in submission's result
             if (isStudent && submission != null && submission.getLatestResult() != null) {
                 submission.getLatestResult().filterSensitiveInformation();
             }
 
             // add submission to participation or set it to null
-            participation.setSubmissions(latestSubmissionWithRatedResult != null ? Set.of(latestSubmissionWithRatedResult) : null);
+            participation.setSubmissions(submission != null ? Set.of(submission) : null);
 
             participation.setResults(results);
 
