@@ -96,7 +96,7 @@ describe('LearningGoalFormComponent', () => {
         });
     }));
 
-    it('should detect invalid optional form', fakeAsync(() => {
+    it('should detect disable optional selection if scored exercise exists', fakeAsync(() => {
         // stubbing learning goal service for validator
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -128,31 +128,19 @@ describe('LearningGoalFormComponent', () => {
             body: learningGoalOfFindByIdResponse,
             status: 200,
         });
+        jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
 
         learningGoalFormComponent.courseId = 1;
         learningGoalFormComponent.formData.id = 2;
+        learningGoalFormComponent.isEditMode = true;
 
-        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
-
-        const exampleOptional = true;
-        learningGoalFormComponent.optionalControl!.setValue(exampleOptional);
-
-        console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
         learningGoalFormComponentFixture.detectChanges();
-        // test validator alone (REMOVE LATER!)
-        console.log(learningGoalFormComponent.optionalControl.value);
-        console.log(learningGoalFormComponent.optionalControl.hasError());
-        console.log(learningGoalFormComponent.optionalControl.valid);
 
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        console.log(learningGoalFormComponent.optionalControl.value);
-        console.log(learningGoalFormComponent.optionalControl.hasError());
-        console.log(learningGoalFormComponent.optionalControl.valid);
-        expect(learningGoalFormComponent.form.valid).toBeFalse();
-        expect(findByIdSpy).toHaveBeenCalledOnce();
-        const submitButton = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        expect(learningGoalFormComponent.canBeOptional()).toBeFalse();
+        const optionalInput = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#optional');
         learningGoalFormComponentFixture.whenStable().then(() => {
-            expect(submitButton.disabled).toBeTrue();
+            expect(optionalInput.disabled).toBeTrue();
         });
     }));
 

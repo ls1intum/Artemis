@@ -48,38 +48,6 @@ export const titleUniqueValidator = (learningGoalService: LearningGoalService, c
     };
 };
 
-/**
- * Validator to make sure that a competency can only be optional if no exercise is completely included in the score
- */
-export function canBeOptionalValidator(learningGoalService: LearningGoalService, courseId: number, competencyId?: number): ValidatorFn {
-    return (control: FormControl<boolean>) => {
-        if (!competencyId) {
-            return null;
-        }
-
-        let requiredExerciseExists = false;
-        learningGoalService
-            .findById(competencyId, courseId)
-            .pipe(
-                map((res) => {
-                    if (res.body) {
-                        return res.body;
-                    }
-                    return null;
-                }),
-            )
-            .subscribe({
-                next: (learningGoal) => {
-                    if (learningGoal && learningGoal.exercises) {
-                        requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-        return requiredExerciseExists ? { canBeOptional: { valid: false } } : null;
-    };
-}
-
 export interface LearningGoalFormData {
     id?: number;
     title?: string;
@@ -190,7 +158,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
-            optional: [false, [this.canBeOptional()]],
+            optional: [false],
         });
         this.selectedLectureUnitsInTable = [];
 
@@ -285,10 +253,37 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         };
     }
 
+    canBeOptional(): boolean {
+        if (!this.isEditMode || !this.formData.id) {
+            return true;
+        }
+
+        let requiredExerciseExists = false;
+        this.learningGoalService
+            .findById(this.formData.id, this.courseId)
+            .pipe(
+                map((res) => {
+                    if (res.body) {
+                        return res.body;
+                    }
+                    return null;
+                }),
+            )
+            .subscribe({
+                next: (learningGoal) => {
+                    if (learningGoal && learningGoal.exercises) {
+                        requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+        return !requiredExerciseExists;
+    }
+
     /**
      * Validator to make sure that a competency can only be optional if no exercise is completely included in the score
      */
-    canBeOptional(): ValidatorFn {
+    canBeOptionalValidator(): ValidatorFn {
         return (control: FormControl) => {
             console.log('executed 1');
 
