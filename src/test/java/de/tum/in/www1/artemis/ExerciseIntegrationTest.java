@@ -446,14 +446,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
             Submission submission = participation.getSubmissions().iterator().next();
-            // Programming exercises should only have one automatic result
             if (exercise instanceof ProgrammingExercise) {
+                // Programming exercises should only have one automatic result
                 assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
-                // All other exercises have only one visible result now
+                // All other exercises have no visible result
                 assertThat(participation.getResults()).isEmpty();
                 assertThat(submission.getResults()).isEmpty();
             }
