@@ -312,11 +312,14 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationError_handlesErrorAndInformsUser() {
         var dataExport = initDataExport();
-        doThrow(new RuntimeException("error")).when(courseRepository).getAllCoursesWithExamsUserIsMemberOf(anyBoolean(), anySet());
+        Exception exception = new RuntimeException("error");
+        doThrow(exception).when(courseRepository).getAllCoursesWithExamsUserIsMemberOf(anyBoolean(), anySet());
+        doNothing().when(mailService).sendDataExportFailedEmailToAdmin(any(), any(), any());
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
         verify(singleUserNotificationService).notifyUserAboutDataExportFailure(any(DataExport.class));
+        verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), dataExportFromDb, exception);
     }
 
     @Test

@@ -31,7 +31,7 @@ public class DataExport extends AbstractAuditingEntity {
     private ZonedDateTime downloadDate;
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "file_path")

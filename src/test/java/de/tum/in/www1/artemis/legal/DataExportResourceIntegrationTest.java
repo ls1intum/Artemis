@@ -70,7 +70,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     private DataExport prepareDataExportForDownload() throws IOException {
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport.setRequestDate(ZonedDateTime.now().minusDays(2));
         dataExport.setCreationDate(ZonedDateTime.now().minusDays(1));
         // rename file to avoid duplicates in the temp directory
         var newFilePath = TEST_DATA_EXPORT_BASE_FILE_PATH + ZonedDateTime.now().toEpochSecond();
@@ -136,7 +135,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(state);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
@@ -150,7 +148,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
         var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
@@ -177,7 +174,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void testCanDownloadSpecificExport_dataExportNotDownloadable_false() throws Exception {
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
         var canDownload = request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.OK, Boolean.class);
@@ -198,7 +194,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.FAILED);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
@@ -222,7 +217,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setRequestDate(ZonedDateTime.now().minusDays(15));
+        dataExport.setCreationDate(ZonedDateTime.now().minusDays(15));
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
@@ -235,7 +230,19 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setRequestDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setCreationDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCannotRequest_ifDataExportRequestedInThePast14DaysAndNotYetCreated() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
@@ -248,7 +255,18 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setRequestDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setCreationDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequest_ifDataExportRequestedInThePast14DaysButNotYetCreated_forbidden() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
@@ -268,7 +286,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         var dataExport = request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
-        assertThat(dataExport.getRequestDate()).isNotNull();
+        assertThat(dataExport.getCreatedDate()).isNotNull();
     }
 
     @Test
@@ -299,7 +317,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         DataExport dataExport = new DataExport();
         dataExport.setUser(userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get());
         dataExport.setDataExportState(state);
-        dataExport.setRequestDate(ZonedDateTime.now());
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);
         return dataExport;

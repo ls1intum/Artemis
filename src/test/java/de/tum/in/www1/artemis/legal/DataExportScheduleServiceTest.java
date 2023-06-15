@@ -122,7 +122,6 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private DataExport createDataExportWithState(DataExportState state) {
         DataExport dataExport = new DataExport();
-        dataExport.setRequestDate(ZonedDateTime.of(2023, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
         dataExport.setDataExportState(state);
         dataExport.setUser(database.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("path");
