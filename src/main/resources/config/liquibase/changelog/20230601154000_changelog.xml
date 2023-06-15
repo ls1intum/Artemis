@@ -34,7 +34,8 @@
         <sql>
             UPDATE post
             SET lecture_id = NULL
-            WHERE conversation_id IS NOT NULL;
+            WHERE conversation_id IS NOT NULL
+              AND lecture_id IS NOT NULL;
         </sql>
         <comment>Step 2: Create channels for exercises that do not have a channel and update posts</comment>
         <sql>
@@ -66,7 +67,8 @@
         <sql>
             UPDATE post
             SET exercise_id = NULL
-            WHERE conversation_id IS NOT NULL;
+            WHERE conversation_id IS NOT NULL
+              AND exercise_id IS NOT NULL;
         </sql>
         <comment>
             For the next step, we need the user_groups table, which contains a column called "groups".
