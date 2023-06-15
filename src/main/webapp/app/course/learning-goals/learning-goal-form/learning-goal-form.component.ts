@@ -266,10 +266,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             )
             .subscribe({
                 next: (learningGoal) => {
-                    console.log(learningGoal);
-                    console.log(learningGoal?.exercises);
                     if (learningGoal && learningGoal.exercises) {
-                        console.log(learningGoal.exercises);
                         this.canBeOptional = !learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
                     }
                     if (!this.canBeOptional) {
@@ -278,52 +275,5 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
-        //console.log(this.canBeOptional);
-    }
-
-    getCanBeOptional(): boolean {
-        return this.canBeOptional;
-    }
-
-    /**
-     * Validator to make sure that a competency can only be optional if no exercise is completely included in the score
-     */
-    canBeOptionalValidator(): ValidatorFn {
-        return (control: FormControl) => {
-            console.log('executed 1');
-
-            if (!this.form?.value.optional) {
-                console.log('executed 1.1 ' + this.form?.value.optional);
-                return null;
-            }
-
-            console.log('executed 2');
-
-            if (!this.formData.id) {
-                return null;
-            }
-
-            let requiredExerciseExists = false;
-            console.log('executed 3');
-            this.learningGoalService
-                .findById(this.formData.id, this.courseId)
-                .pipe(
-                    map((res) => {
-                        if (res.body) {
-                            return res.body;
-                        }
-                        return null;
-                    }),
-                )
-                .subscribe({
-                    next: (learningGoal) => {
-                        if (learningGoal && learningGoal.exercises) {
-                            requiredExerciseExists = learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
-                        }
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
-            return requiredExerciseExists ? { canBeOptional: false } : null;
-        };
     }
 }

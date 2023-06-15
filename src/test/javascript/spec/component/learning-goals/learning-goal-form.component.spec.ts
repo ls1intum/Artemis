@@ -135,7 +135,7 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.isEditMode = true;
 
         learningGoalFormComponent.ngOnInit();
-        expect(learningGoalFormComponent.optionalControl.disabled).toBeTrue();
+        expect(learningGoalFormComponent.optionalControl?.disabled).toBeTrue();
     });
 
     it('should correctly set form values in edit mode', () => {
