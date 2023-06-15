@@ -96,7 +96,7 @@ describe('LearningGoalFormComponent', () => {
         });
     }));
 
-    it('should detect disable optional selection if scored exercise exists', fakeAsync(() => {
+    it('should detect disable optional selection if scored exercise exists', () => {
         // stubbing learning goal service for validator
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -133,16 +133,10 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponent.courseId = 1;
         learningGoalFormComponent.formData.id = 2;
         learningGoalFormComponent.isEditMode = true;
-        //learningGoalFormComponent.ngOnChanges();
 
-        learningGoalFormComponentFixture.detectChanges();
-        tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(learningGoalFormComponent.canBeOptional).toBeFalse();
-        const optionalInput = learningGoalFormComponentFixture.debugElement.nativeElement.querySelector('#optional');
-        learningGoalFormComponentFixture.whenStable().then(() => {
-            expect(optionalInput.disabled).toBeTrue();
-        });
-    }));
+        learningGoalFormComponent.ngOnInit();
+        expect(learningGoalFormComponent.optionalControl.disabled).toBeTrue();
+    });
 
     it('should correctly set form values in edit mode', () => {
         learningGoalFormComponent.isEditMode = true;
