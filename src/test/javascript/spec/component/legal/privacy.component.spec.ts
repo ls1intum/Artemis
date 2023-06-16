@@ -1,4 +1,4 @@
-import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
@@ -10,13 +10,12 @@ import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.s
 import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
-import { RouterModule } from '@angular/router';
+import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
     let fixture: ComponentFixture<PrivacyComponent>;
-    let privacyStatementService: PrivacyStatementService;
+    let privacyStatementService: LegalDocumentService;
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -26,13 +25,13 @@ describe('PrivacyComponent', () => {
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 {
                     provide: SessionStorageService,
-                    use: MockSyncStorage,
+                    useClass: MockSyncStorage,
                 },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(PrivacyComponent);
         component = fixture.componentInstance;
-        privacyStatementService = TestBed.inject(PrivacyStatementService);
+        privacyStatementService = TestBed.inject(LegalDocumentService);
         languageHelper = TestBed.inject(JhiLanguageHelper);
         fixture.detectChanges();
     });
@@ -43,6 +42,6 @@ describe('PrivacyComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         expect(privacyServiceSpy).toHaveBeenCalledOnce();
-        expect(privacyServiceSpy).toHaveBeenCalledWith(PrivacyStatementLanguage.ENGLISH);
+        expect(privacyServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });
 });
