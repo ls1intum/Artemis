@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
@@ -50,6 +52,15 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ExamActivityResource examActivityResource;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course;
 
     private Exam exam;
@@ -58,13 +69,13 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        course = database.addEmptyCourse();
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        exam = database.addActiveExamWithRegisteredUser(course, student1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        course = courseUtilService.addEmptyCourse();
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        exam = examUtilService.addActiveExamWithRegisteredUser(course, student1);
         exam.setMonitoring(true);
         exam = examRepository.save(exam);
-        studentExam = database.addStudentExam(exam);
+        studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200);
         studentExam.setUser(student1);
         studentExamRepository.save(studentExam);

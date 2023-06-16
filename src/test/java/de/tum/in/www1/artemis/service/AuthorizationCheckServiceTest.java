@@ -14,18 +14,26 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.context.TestPropertySource;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "authorizationservice";
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
     }
 
     @Nested
@@ -45,7 +53,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         private User student1;
 
         private Course getCourseForSelfEnrollmentAllowedTest() {
-            var course = database.createCourse();
+            var course = courseUtilService.createCourse();
             course.setEnrollmentEnabled(true);
             course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
@@ -55,7 +63,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         @BeforeEach
         void setUp() {
-            this.student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+            this.student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         }
 
         @Test
@@ -70,7 +78,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
         void testIsUserAllowedToSelfEnrollInCourseForWrongUsernamePattern() {
             // student2 is not allowed to self-enroll in courses, see the @TestPropertySource annotation above.
-            var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+            var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
             Course course = getCourseForSelfEnrollmentAllowedTest();
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(student2, course));
@@ -106,7 +114,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfEnrollInCourseForDifferentOrganizations() {
-            var courseWithOrganizations = database.createCourseWithOrganizations();
+            var courseWithOrganizations = courseUtilService.createCourseWithOrganizations();
             assertThatExceptionOfType(AccessForbiddenException.class)
                     .isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, courseWithOrganizations));
         }
@@ -135,7 +143,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         private User student;
 
         private Course getCourseForSelfUnenrollmentAllowedTest() {
-            var course = database.createCourse();
+            var course = courseUtilService.createCourse();
             course.setUnenrollmentEnabled(true);
             course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
@@ -147,7 +155,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         @BeforeEach
         void setUp() {
-            this.student = database.getUserByLogin(TEST_PREFIX + "student1");
+            this.student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         }
 
         @Test

@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamSessionService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import inet.ipaddr.IPAddressString;
 
 class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -29,15 +31,24 @@ class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private ExamSessionService examSessionService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private StudentExam studentExam1;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course1 = database.addEmptyCourse();
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        Exam exam1 = database.addActiveExamWithRegisteredUser(course1, student1);
-        studentExam1 = database.addStudentExam(exam1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        Course course1 = courseUtilService.addEmptyCourse();
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setUser(student1);
         studentExamRepository.save(studentExam1);
     }
