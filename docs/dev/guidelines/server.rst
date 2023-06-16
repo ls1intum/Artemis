@@ -321,13 +321,13 @@ The table contains all annotations for the corresponding minimum role including 
 +------------------+----------------------------------------+-----------------+----------------+
 | ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
 +------------------+----------------------------------------+-----------------+----------------+
-| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") | /api/           | web.rest       |
+| INSTRUCTOR       | @EnforceInstructor                     | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     | /api/           | web.rest       |
+| EDITOR           | @EnforceEditor                         | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| TA               | @PreAuthorize("hasRole('TA')")         | /api/           | web.rest       |
+| TA               | @EnforceTutor                          | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| USER             | @PreAuthorize("hasRole('USER')")       | /api/           | web.rest       |
+| USER             | @EnforceStudent                        | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
 | ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
 +------------------+----------------------------------------+-----------------+----------------+
