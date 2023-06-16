@@ -11,6 +11,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { RouterModule } from '@angular/router';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
