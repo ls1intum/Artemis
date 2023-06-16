@@ -9,17 +9,17 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
-            "register": {
-                "title": "Kursanmeldung",
-                "registerSuccessful": "Anmeldung erfolgreich",
-                "registerForCourse": "Anmelden",
-                "notInCourseButCanRegister": "Du bist nicht in diesem Kurs, kannst dich aber anmelden.",
+            "enroll": {
+                "title": "Kurseinschreibung",
+                "enrollSuccessful": "Einschreibung erfolgreich",
+                "enrollInCourse": "Einschreiben",
+                "notInCourseButCanEnroll": "Du bist nicht in diesem Kurs, kannst dich aber einschreiben.",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
-                "noCourse": "Keine Kurse für eine Anmeldung verfügbar",
+                "noCourse": "Keine Kurse zur Einschreibung verfügbar",
                 "courseLoading": "Kurs wird geladen...",
                 "coursesLoading": "Kurse werden geladen...",
-                "courseSignupConfirmationTitle": "Bestätigung der Kursanmeldung"
+                "courseSignupConfirmationTitle": "Bestätigung der Kurseinschreibung"
             },
             "course": "Kurs"
         },
@@ -90,6 +90,20 @@
                     "file-uploadTotal": "Aufgaben mit Datei-Upload insgesamt:",
                     "startDate": "Start:",
                     "endDate": "Ende:",
+                    "enrollmentStartDate": "Einschreibung von:",
+                    "enrollmentEndDate": "Einschreibung bis:",
+                    "unenrollmentEndDate": "Austragen bis:",
+                    "unenrollmentButton": "Austragen",
+                    "unenrollmentModal": {
+                        "title": "Bestätigung für das Austragen aus dem Kurs",
+                        "confirmationQuestion": "Bist du dir sicher, dass du dich von folgendem Kurs austragen möchtest:",
+                        "reenrollmentNotPossible": "Der Kurs erlaubt dir nicht, dich erneut einzuschreiben. Dies ist eine endgültige Entscheidung.",
+                        "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut einzuschreiben:",
+                        "confirmationInput": "Gib den Titel des Kurses ein:",
+                        "cancelButton": "Abbruch",
+                        "acceptButton": "Ja, ich möchte mich austragen.",
+                        "unenrollmentSuccessful": "Austragung erfolgreich"
+                    },
                     "upcomingDeadlines": "Bevorstehende Termine:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }

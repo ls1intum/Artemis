@@ -20,12 +20,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,11 +44,23 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private FeatureToggleService featureToggleService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private PersistentAuditEvent persAuditEvent;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal(TEST_PREFIX + "student1");
         persAuditEvent.setAuditEventDate(Instant.now());
@@ -72,11 +88,11 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "admin", roles = "ADMIN")
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
-        var course = database.addCourseWithOneProgrammingExercise();
-        var programmingExercise1 = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        var programmingExercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
-        database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
