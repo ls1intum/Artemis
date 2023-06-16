@@ -330,6 +330,17 @@ public class CourseService {
     }
 
     /**
+     * Gets all courses that the specified user can enroll in.
+     *
+     * @param user the user entity
+     * @return unmodifiable set of courses the student can enroll in
+     */
+    public Set<Course> findAllEnrollableForUser(User user) {
+        return courseRepository.findAllEnrollmentActiveWithOrganizationsAndPrerequisites(ZonedDateTime.now()).stream()
+                .filter(course -> !user.getGroups().contains(course.getStudentGroupName())).collect(Collectors.toSet());
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      * <li>The Course</li>
@@ -492,6 +503,20 @@ public class CourseService {
         }
 
         return notFoundStudentsDTOs;
+    }
+
+    /**
+     * Unenroll a user from a course by removing them from the student group of the course
+     *
+     * @param user   The user that should get removed from the course
+     * @param course The course from which the user should be removed from
+     */
+    public void unenrollUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(user, course);
+        userService.removeUserFromGroup(user, course.getStudentGroupName());
+        final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
     }
 
     /**

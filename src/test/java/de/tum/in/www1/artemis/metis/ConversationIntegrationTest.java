@@ -13,7 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
@@ -23,9 +23,9 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        this.database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
         }
     }
 
@@ -67,7 +67,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var channel2 = createChannel(false, TEST_PREFIX + "2");
 
         // then
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var convOfUsers = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
         assertThat(convOfUsers).hasSize(3); // the channel2 is not returned because the user is not a member
         assertThat(convOfUsers).extracting(ConversationDTO::getId).containsExactlyInAnyOrder(channel.getId(), groupChat.getId(), oneToOneChat.getId());
@@ -91,7 +91,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // check that the channel moderator role is correctly set
         convOfUsers.stream().filter(conv -> conv.getId().equals(channel.getId())).findFirst().ifPresent(conv -> assertThat(((ChannelDTO) conv).getIsChannelModerator()).isTrue());
         // check that creator is correctly set
-        database.changeUser(testPrefix + "instructor1");
+        userUtilService.changeUser(testPrefix + "instructor1");
         var convOfInstructor = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
         // should be creator of all conversations
         assertThat(convOfInstructor).hasSize(4);
@@ -116,7 +116,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isFavorite", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, trueParams);
@@ -161,7 +161,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isHidden", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, trueParams);
@@ -237,7 +237,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         grantChannelModeratorRole(channel.getId(), "tutor1");
 
         // search for students
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         // <server>/api/courses/:courseId/conversations/:conversationId/members/search?loginOrName=:searchTerm&sort=firstName,asc&sort=lastName,asc&page=0&size=10
         // optional filter attribute to further : filter=INSTRUCTOR or EDITOR or TUTOR or STUDENT or CHANNEL_MODERATOR
         var params = new LinkedMultiValueMap<String, String>();
@@ -296,7 +296,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
                 HttpStatus.CREATED);
         this.postInConversation(oneToOneChat.getId(), "instructor1");
 
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
 
         boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
         assertThat(unreadMessages).isTrue();
@@ -314,13 +314,13 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     private void assertFavoriteStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedFavoriteStatus) {
-        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
+        var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
         assertThat(participant.get().getIsFavorite()).isEqualTo(expectedFavoriteStatus);
     }
 
     private void assertHiddenStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedHiddenStatus) {
-        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
+        var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
         assertThat(participant.get().getIsHidden()).isEqualTo(expectedHiddenStatus);
     }

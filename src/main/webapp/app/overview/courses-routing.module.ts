@@ -19,7 +19,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'courses/register',
+        path: 'courses/enroll',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     // /courses/:courseId/register is special,
