@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
@@ -40,20 +41,26 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private RequestUtilService request;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private LectureUnitInformationDTO lectureUnitSplits;
 
     private Lecture lecture1;
 
     @BeforeEach
     void initTestCase() {
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = this.database.createCourseWithLecture(true);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, true);
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         slideRepository.deleteAll();
     }

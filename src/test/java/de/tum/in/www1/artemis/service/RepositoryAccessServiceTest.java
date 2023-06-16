@@ -15,7 +15,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
@@ -29,6 +32,15 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private RepositoryAccessService repositoryAccessService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     User student;
 
     Course course;
@@ -37,23 +49,23 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void setup() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        course = database.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().stream().iterator().next();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testShouldEnforceLockRepositoryPolicy() {
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
-        database.createSubmissionAndResult(participation, 50, true);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
+        participationUtilService.createSubmissionAndResult(participation, 50, true);
 
         // Add LockRepositoryPolicy to the programmingExercise.
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
         lockRepositoryPolicy.setActive(true);
         lockRepositoryPolicy.setSubmissionLimit(1);
-        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
         assertThatExceptionOfType(AccessForbiddenException.class)
