@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -224,5 +225,43 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindEnrollableForStudent() {
+        var enrollmentDisabled = database.createCourse();
+        enrollmentDisabled.setStudentGroupName("test-enrollable-students");
+        enrollmentDisabled.setEnrollmentEnabled(false);
+        courseRepository.save(enrollmentDisabled);
+
+        var enrollmentEnabledNotActivePast = database.createCourse();
+        enrollmentEnabledNotActivePast.setStudentGroupName("test-enrollable-students");
+        setEnrollmentConfiguration(enrollmentEnabledNotActivePast, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().minusDays(5));
+        courseRepository.save(enrollmentEnabledNotActivePast);
+
+        var enrollmentEnabledNotActiveFuture = database.createCourse();
+        enrollmentEnabledNotActiveFuture.setStudentGroupName("test-enrollable-students");
+        setEnrollmentConfiguration(enrollmentEnabledNotActiveFuture, ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(7));
+        courseRepository.save(enrollmentEnabledNotActiveFuture);
+
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
+
+        var courses = courseService.findAllEnrollableForUser(student);
+        assertThat(courses).doesNotContain(enrollmentDisabled, enrollmentEnabledNotActivePast, enrollmentEnabledNotActiveFuture);
+
+        var enrollmentEnabledAndActive = database.createCourse();
+        enrollmentEnabledAndActive.setStudentGroupName("test-enrollable-students");
+        setEnrollmentConfiguration(enrollmentEnabledAndActive, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5));
+        courseRepository.save(enrollmentEnabledAndActive);
+
+        courses = courseService.findAllEnrollableForUser(student);
+        assertThat(courses).contains(enrollmentEnabledAndActive);
+    }
+
+    private void setEnrollmentConfiguration(Course course, ZonedDateTime start, ZonedDateTime end) {
+        course.setEnrollmentEnabled(true);
+        course.setEnrollmentStartDate(start);
+        course.setEnrollmentEndDate(end);
     }
 }
