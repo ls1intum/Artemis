@@ -1,12 +1,22 @@
 {
     "artemisApp": {
         "exerciseChatbot": {
-            "welcome": "Willkommen",
-            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit IrisBot von Microsoft und OpenAI verarbeitet werden, wobei die Datenübertragung außerhalb unseres Universitätsrechenzentrums erfolgt. Wenn du mit diesen Bedingungen nicht einverstanden bist, wähle bitte 'Ablehnen'. Um dies zu bestätigen und deinen Chat mit IrisBot zu beginnen, klick auf 'Akzeptieren'.",
+            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit Iris von Microsoft und OpenAI verarbeitet werden, wobei die Datenübertragung außerhalb unseres Universitätsrechenzentrums erfolgt. Wenn du mit diesen Bedingungen nicht einverstanden bist, wähle bitte 'Ablehnen'. Um dies zu bestätigen und deinen Chat mit IrisBot zu beginnen, klick auf 'Akzeptieren'.",
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
-            "buttonTooltip": "Beginne mit Iris zu chatten!"
+            "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "title": "Iris: Der Chatbot, der von einem großen Sprachmodell für Artemis unterstützt wird",
+            "subtext": "Iris ist speziell darauf ausgelegt, umfassende Unterstützung für Ihre Programmieraufgaben zu bieten. Es nutzt seine fortschrittlichen Sprachverständnisfähigkeiten, um Ihre Anfragen zu bearbeiten und Sie während Ihres Lernprozesses zu unterstützen.",
+            "f1": "Die Interaktionen mit Iris unterliegen der Verarbeitung durch Microsoft und OpenAI, was den Transfer von Daten über die Grenzen unseres Universitätsrechenzentrums hinaus bedeutet.",
+            "f2": "Um Iris nutzen zu können, ist es erforderlich, der Genehmigungsnachricht, die während der erstmaligen Verwendung angezeigt wird, zuzustimmen. Durch die Zustimmung erkennen und akzeptieren Sie, dass Ihre Interaktionen mit Iris von den oben genannten Organisationen verarbeitet werden.",
+            "f3": "Iris hilft dabei, Aufgabendefinitionen zu verstehen, Codefehler zu beheben und einfache Fragen zur verwendeten Programmiersprache zu beantworten. Sie liefert jedoch keine direkten Lösungen für die zu lösenden Aufgaben.",
+            "f4": "Iris speichert Ihren Chat-Verlauf für jede Programmieraufgabe, an der Sie teilgenommen haben. Dadurch können Sie Ihre Unterhaltung fortsetzen, indem Sie die Chat-Schnittstelle erneut öffnen. Diese Funktion ermöglicht es Ihnen, auf frühere Diskussionen bequem zurückzugreifen und Ihre Interaktion mit Iris nahtlos fortzusetzen.",
+            "f5": "Sie werden ermutigt, Feedback zu geben, das in zwei Arten eingeteilt werden kann. Die erste Art ist eine nachrichtenbasierte Rückmeldung, bei der Sie die Möglichkeit haben, Ihre Präferenz für jede Nachricht durch die Auswahl von \"Gefällt mir\", oder \"Gefällt mir nicht\", auszudrücken. Die zweite Art ist eine auf die Konversation bezogene Rückmeldung, die am Ende einer Unterhaltung abgegeben werden kann. Für die konversationsbasierte Rückmeldung stehen Ihnen die Optionen \"Gefällt mi\", \"Gefällt mir nicht\", oder \"Unsicher\", zur Verfügung. Ihr Feedback ist wertvoll, um die Effektivität des Chatbots zu verbessern und Ihre Bedürfnisse zu erfüllen.",
+            "f6": "Das Chat-Widget kann durch Klicken auf die Schaltfläche 'X' in der oberen rechten Ecke oder durch Verwendung der Chatbot-Schaltfläche unterhalb des Widgets geschlossen werden.",
+            "f7": "Das Widget ist mit einer Funktion zum Verschieben ausgestattet, die es den Benutzern ermöglicht, es frei an verschiedene Positionen auf der Seite zu bewegen.",
+            "f8": "Das Widget unterstützt die Größenanpassung, sodass die Benutzer seine Abmessungen durch das Vergrößern oder Verkleinern der Ränder anpassen können.",
+            "f9": "Das Widget bietet eine Vollbildfunktion, die durch Klicken auf die Schaltfläche neben der 'X'-Schaltfläche aktiviert wird. Dadurch wird das Widget auf die gesamte Seite erweitert und ähnelt einer Vollbildanzeige. Um zur vorherigen Größe zurückzukehren, können Sie die Schaltfläche erneut klicken"
         }
     }
 }

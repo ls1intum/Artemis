@@ -8,9 +8,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AngularDraggableModule } from 'angular2-draggable';
 import { RouterModule } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { AboutIrisComponent } from 'app/overview/exercise-chatbot/about-iris/about-iris.component';
 
 @NgModule({
-    declarations: [ExerciseChatWidgetComponent],
+    declarations: [ExerciseChatWidgetComponent, AboutIrisComponent],
     imports: [MatDialogModule, FormsModule, CommonModule, FontAwesomeModule, ArtemisSharedModule, AngularDraggableModule, RouterModule, ArtemisSharedComponentModule],
     providers: [],
 })
