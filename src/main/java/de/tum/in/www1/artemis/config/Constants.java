@@ -154,6 +154,8 @@ public final class Constants {
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
 
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
+
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
     public static final String EDIT_EXERCISE = "EDIT_EXERCISE";

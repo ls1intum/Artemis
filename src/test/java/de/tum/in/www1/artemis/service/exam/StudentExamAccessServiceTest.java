@@ -11,12 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -34,6 +37,15 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private User student1;
 
     private Course course1;
@@ -48,17 +60,17 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-        course1 = database.addEmptyCourse();
-        course2 = database.addEmptyCourse();
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        course1 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEmptyCourse();
         course2.setStudentGroupName("another-group");
         courseRepository.save(course2);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        exam1 = database.addActiveExamWithRegisteredUser(course1, student1);
-        studentExam1 = database.addStudentExam(exam1);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setUser(student1);
         studentExamRepository.save(studentExam1);
-        exam2 = database.addExam(course2);
+        exam2 = examUtilService.addExam(course2);
     }
 
     @Test
@@ -104,7 +116,7 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamIsLive() {
         // Exam is not visible.
-        Exam examNotStarted = database.addExam(course1, student1, ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3));
+        Exam examNotStarted = examUtilService.addExam(course1, student1, ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3));
         assertThatExceptionOfType(AccessForbiddenException.class)
                 .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotStarted.getId(), student1, false, true));
 
@@ -115,8 +127,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
                 .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotStarted.getId(), studentExam1, student1));
 
         // Exam has ended. After exam has ended, it should still be retrievable by the students to see their participation
-        Exam examEnded = database.addExam(course1, student1, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
-        StudentExam studentExamEnded = database.addStudentExam(examEnded);
+        Exam examEnded = examUtilService.addExam(course1, student1, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        StudentExam studentExamEnded = examUtilService.addStudentExam(examEnded);
         studentExamEnded.setUser(student1);
         studentExamRepository.save(studentExamEnded);
         // does not throw
@@ -131,8 +143,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserIsRegisteredForExam() {
-        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-        Exam examNotRegistered = database.addExam(course1, student2, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Exam examNotRegistered = examUtilService.addExam(course1, student2, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
         assertThatExceptionOfType(AccessForbiddenException.class)
                 .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), student1, false, true));
 
@@ -153,7 +165,7 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamIdEqualsExamOfStudentExam() {
-        StudentExam studentExamNotRelatedToExam1 = database.addStudentExam(exam2);
+        StudentExam studentExamNotRelatedToExam1 = examUtilService.addStudentExam(exam2);
         assertThatExceptionOfType(ConflictException.class)
                 .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1, student1));
 
@@ -164,8 +176,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCurrentUserIsUserOfStudentExam() {
-        StudentExam studentExamWithOtherUser = database.addStudentExam(exam1);
-        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        StudentExam studentExamWithOtherUser = examUtilService.addStudentExam(exam1);
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         studentExamWithOtherUser.setUser(student2);
         studentExamRepository.save(studentExamWithOtherUser);
 
