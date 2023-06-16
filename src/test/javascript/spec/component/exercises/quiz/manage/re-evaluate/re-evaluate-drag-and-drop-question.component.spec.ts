@@ -47,16 +47,16 @@ describe('ReEvaluateDragAndDropQuestionComponent', () => {
     });
 
     it('should remove file', () => {
-        component.fileMap = new Map<string, File>([
-            [fileName1, file1],
-            [fileName2, file2],
-            [fileName3, file3],
+        component.fileMap = new Map<string, { file: File; path?: string }>([
+            [fileName1, { file: file1 }],
+            [fileName2, { file: file2 }],
+            [fileName3, { file: file3 }],
         ]);
         component.handleRemoveFile(fileName2);
         expect(component.fileMap).toEqual(
-            new Map<string, File>([
-                [fileName1, file1],
-                [fileName3, file3],
+            new Map<string, { file: File; path?: string }>([
+                [fileName1, { file: file1 }],
+                [fileName3, { file: file3 }],
             ]),
         );
     });
