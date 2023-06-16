@@ -708,7 +708,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // then
         userUtilService.changeUser(testPrefix + "student1");
         var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
-        assertThat(channels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
+        assertThat(channels.stream().map(ChannelDTO::getId).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
                 privateChannelWhereMember.getId());
 
         // cleanup
@@ -732,7 +732,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // then
         userUtilService.changeUser(testPrefix + "instructor2");
         var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
-        assertThat(channels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
+        assertThat(channels.stream().map(ChannelDTO::getId).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
                 privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
 
         // cleanup

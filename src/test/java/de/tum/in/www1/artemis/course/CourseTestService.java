@@ -977,7 +977,7 @@ public class CourseTestService {
 
         // Perform the request that is being tested here
         List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).collect(Collectors.toList());
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
@@ -2180,12 +2180,17 @@ public class CourseTestService {
         // Generate a course that has an archive
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         course.setCourseArchivePath("some-archive-path");
-        courseRepo.save(course);
+        course = courseRepo.save(course);
 
-        var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        final ProgrammingExercise courseExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1", false);
-        var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
+        final var programmingExercise = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(courseExercise.getId()).orElseThrow();
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+
+        final String repoSuffix = "-" + userPrefix + "student1";
+
+        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + repoSuffix, false);
+        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
