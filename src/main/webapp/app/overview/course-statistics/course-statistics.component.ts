@@ -442,7 +442,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             if (score > 0) {
                 this.ngxDoughnutData.push({
                     name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
-                    value: score,
+                    value: this.roundScoreSpecifiedByCourseSettings(score, this.course),
                     color: this.doughnutChartColors[index],
                 });
                 this.ngxDoughnutColor.domain.push(this.doughnutChartColors[index]);
