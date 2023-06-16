@@ -38,6 +38,7 @@ import {
     faList,
     faLock,
     faSignOutAlt,
+    faStamp,
     faTachometerAlt,
     faTasks,
     faThLarge,
@@ -95,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faWrench = faWrench;
     faLock = faLock;
+    faStamp = faStamp;
     faFlag = faFlag;
     faBook = faBook;
     faTasks = faTasks;
@@ -326,7 +328,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
-        privacy_statement: 'artemisApp.privacyStatement.title',
+        privacy_statement: 'artemisApp.legal.privacyStatement.title',
+        imprint: 'artemisApp.legal.imprint.title',
+        edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -543,6 +547,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR])) {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
+                break;
+            case 'submissions':
+                // only a scores list exists, no special one for submissions
+                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                this.addTranslationAsCrumb(updatedLink, 'submissions');
                 break;
             default:
                 // Special cases:
