@@ -20,7 +20,7 @@ describe('MeetingPatternPipe', () => {
 
         const result = pipe.transform(schedule, true);
         expect(result).toBe('');
-        expect(translateService.instant).toHaveBeenCalledTimes(0);
+        expect(translateService.instant).not.toHaveBeenCalled();
     });
 
     it('should return a translated meeting pattern for a valid every week schedule', () => {

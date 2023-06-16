@@ -372,7 +372,7 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
-        component.loadCourse();
+        component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
     });

@@ -1,5 +1,10 @@
 .card {
     height: 450px;
+    transition: transform 0.2s linear;
+
+    &:hover {
+        transform: scale(1.012);
+    }
 
     .card-title {
         font-size: 1.575rem;
@@ -13,7 +18,7 @@
         background-color: var(--background-color-for-hover) !important;
 
         &:hover {
-            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 10%) !important;
+            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
         }
         display: flex;
         cursor: pointer;

@@ -34,13 +34,16 @@ describe('Course Management Service', () => {
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
+
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
     let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
     let convertExercisesDateFromServerSpy: jest.SpyInstance;
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
+
     const resourceUrl = 'api/courses';
+
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
@@ -86,7 +89,7 @@ describe('Course Management Service', () => {
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
-        courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
         courseForDashboard.programmingScores = courseScores;
         courseForDashboard.modelingScores = courseScores;
@@ -113,6 +116,11 @@ describe('Course Management Service', () => {
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        jest.restoreAllMocks();
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {
@@ -501,9 +509,4 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
-
-    afterEach(() => {
-        httpMock.verify();
-        jest.restoreAllMocks();
-    });
 });

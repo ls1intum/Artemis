@@ -99,8 +99,8 @@ describe('UserRouteAccessService', () => {
         snapshot.data = { authorities: [Authority.USER] };
 
         service.canActivate(snapshot, routeStateMock);
-        expect(alertServiceStub).toHaveBeenCalledTimes(0);
-        expect(accountServiceStub).toHaveBeenCalledTimes(0);
+        expect(alertServiceStub).not.toHaveBeenCalled();
+        expect(accountServiceStub).not.toHaveBeenCalled();
     });
 
     it('should return true if authorities are omitted', async () => {
@@ -116,7 +116,7 @@ describe('UserRouteAccessService', () => {
 
         expect(result).toBeFalse();
         expect(consoleErrorMock).toHaveBeenCalledWith('User has not any of required authorities: ', [Authority.EDITOR]);
-        expect(storeSpy).toHaveBeenCalledTimes(0);
+        expect(storeSpy).not.toHaveBeenCalled();
     });
 
     it('should store url if identity is undefined', async () => {

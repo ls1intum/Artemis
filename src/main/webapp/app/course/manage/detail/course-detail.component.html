@@ -183,12 +183,6 @@
                     </div>
                 </dd>
             </ng-container>
-            <ng-container *ngIf="course.presentationScore !== 0">
-                <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
-                <dd id="course-presentation-score">
-                    <span>{{ course.presentationScore }}</span>
-                </dd>
-            </ng-container>
             <ng-container *ngIf="course.maxComplaints !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxComplaints.title">Maximum amount of complaints per student</span></dt>
                 <dd id="course-max-complaints">
