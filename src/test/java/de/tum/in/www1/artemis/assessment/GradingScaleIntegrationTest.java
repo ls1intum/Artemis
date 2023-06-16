@@ -177,6 +177,69 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
+     * Test post request with invalid presentation configuration for basic presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseInvalidBasicPresentationConfiguration() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        // The presentationsNumber and presentationsWeight must be null.
+        course.setPresentationScore(2);
+        courseGradingScale.setPresentationsNumber(1);
+        courseGradingScale.setPresentationsWeight(20.0);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        courseGradingScale.setPresentationsNumber(null);
+        courseGradingScale.setPresentationsWeight(null);
+
+        // The presentationScore must be above 0.
+        course.setPresentationScore(-1);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post request with invalid presentation configuration for graded presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseInvalidGradedPresentationConfiguration() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        // The presentationsNumber must be above 0. The presentationsWeight must be between 0 and 99.
+        course.setPresentationScore(null);
+        courseGradingScale.setPresentationsNumber(0);
+        courseGradingScale.setPresentationsWeight(120.0);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+
+        // The gradingScale must belong to a course.
+        courseGradingScale.setPresentationsNumber(2);
+        courseGradingScale.setPresentationsWeight(20.0);
+        courseGradingScale.setCourse(null);
+        request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post request with invalid presentation configuration for graded presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseWithChangedPresentationScore() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        course.setPresentationScore(5);
+
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+                HttpStatus.CREATED);
+
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
+        assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
+        assertThat(savedGradingScale.getCourse().getPresentationScore()).isEqualTo(5);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
+    }
+
+    /**
      * Test post request for grading scale
      */
     @Test
