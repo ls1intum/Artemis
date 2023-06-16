@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -81,6 +82,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingSubmission programmingSubmission;
@@ -140,7 +144,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -210,7 +214,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -834,7 +838,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         // Creating complaint response
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
         List<Feedback> complaintFeedback = new ArrayList<>();

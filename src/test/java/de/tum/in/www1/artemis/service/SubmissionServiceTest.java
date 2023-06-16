@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -63,6 +64,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
 
     private User student1;
 
@@ -569,8 +573,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         var submissionWithComplaintSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(),
                 TEST_PREFIX + "instructor1");
         var submissionWithComplaintOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
-        participationUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
-        participationUtilService.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
 
@@ -604,8 +608,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         var submissionWithoutComplaint = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
         var submissionWithComplaintSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
         var submissionWithComplaintOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
-        participationUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
-        participationUtilService.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
 
@@ -635,8 +639,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         var submissionWithoutRequest = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
         var submissionWithRequestSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
         var submissionWithRequestOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
-        participationUtilService.addComplaintToSubmission(submissionWithRequestSameTutor, TEST_PREFIX + "student2", ComplaintType.MORE_FEEDBACK);
-        participationUtilService.addComplaintToSubmission(submissionWithRequestOtherTutor, TEST_PREFIX + "student3", ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaintToSubmission(submissionWithRequestSameTutor, TEST_PREFIX + "student2", ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaintToSubmission(submissionWithRequestOtherTutor, TEST_PREFIX + "student3", ComplaintType.MORE_FEEDBACK);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(examTextExercise.getId());
 

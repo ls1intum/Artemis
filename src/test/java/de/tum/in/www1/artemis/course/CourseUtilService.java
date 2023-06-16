@@ -9,6 +9,7 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -132,6 +133,9 @@ public class CourseUtilService {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
 
     public Course createCourse() {
         return createCourse(null);
@@ -537,7 +541,7 @@ public class CourseUtilService {
             course = courseRepo.save(course);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-            programmingExerciseUtilService.populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
+            ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -648,7 +652,7 @@ public class CourseUtilService {
                         participation.addResult(result);
                         studentParticipationRepo.save(participation);
                         modelingSubmissionRepo.save(submission);
-                        participationUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                        complaintUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
 
@@ -667,7 +671,7 @@ public class CourseUtilService {
                         submission.addResult(result);
                         participationUtilService.saveResultInParticipation(submission, result);
                         textSubmissionRepo.save(submission);
-                        participationUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                        complaintUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
             }
@@ -685,7 +689,7 @@ public class CourseUtilService {
                         Result result = participationUtilService.generateResult(submission, currentUser);
                         participationUtilService.saveResultInParticipation(submission, result);
                         fileUploadSubmissionRepo.save(submission);
-                        participationUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                        complaintUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
             }

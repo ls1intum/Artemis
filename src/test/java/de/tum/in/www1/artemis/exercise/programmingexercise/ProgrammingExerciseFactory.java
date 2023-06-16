@@ -4,8 +4,7 @@ import static java.time.ZonedDateTime.now;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -363,5 +362,58 @@ public class ProgrammingExerciseFactory {
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
         return new BambooBuildResultNotificationDTO.BambooTestJobDTO(name, name, "SpringTestClass", successful ? List.of() : List.of("bad solution, did not work"));
+    }
+
+    public static void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
+        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
+    }
+
+    public static void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
+            boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        programmingExercise.setShortName(shortName);
+        programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
+        programmingExercise.setBonusPoints(0D);
+        programmingExercise.setPublishBuildPlanUrl(false);
+        programmingExercise.setMaxPoints(42.0);
+        programmingExercise.setDifficulty(DifficultyLevel.EASY);
+        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
+        programmingExercise.setProblemStatement("Lorem Ipsum");
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setGradingInstructions("Lorem Ipsum");
+        programmingExercise.setTitle(title);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExercise.setProjectType(ProjectType.GCC);
+        }
+        else {
+            programmingExercise.setProjectType(null);
+        }
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
+        if (enableStaticCodeAnalysis) {
+            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+        }
+        programmingExercise.setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
+        // Note: no separators are allowed for Swift package names
+        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setPackageName("swiftTest");
+        }
+        else {
+            programmingExercise.setPackageName("de.test");
+        }
+        programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
+        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setShowTestNamesToStudents(false);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 }

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory.DEFAULT_BRANCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -140,7 +139,7 @@ public class ProgrammingExerciseUtilService {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
-        populateProgrammingExercise(programmingExercise, shortName, title, false);
+        ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, shortName, title, false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -156,7 +155,7 @@ public class ProgrammingExerciseUtilService {
     public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(exerciseGroupNumber));
-        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+        ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -218,7 +217,8 @@ public class ProgrammingExerciseUtilService {
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
             ProgrammingLanguage programmingLanguage, String title, String shortName) {
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage);
+        ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis,
+                programmingLanguage);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -236,7 +236,7 @@ public class ProgrammingExerciseUtilService {
         course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, scaActive);
+        ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, scaActive);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -247,59 +247,6 @@ public class ProgrammingExerciseUtilService {
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
-    }
-
-    public void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
-        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
-    }
-
-    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
-            boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
-        programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.setShortName(shortName);
-        programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
-        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
-        programmingExercise.setBonusPoints(0D);
-        programmingExercise.setPublishBuildPlanUrl(false);
-        programmingExercise.setMaxPoints(42.0);
-        programmingExercise.setDifficulty(DifficultyLevel.EASY);
-        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
-        programmingExercise.setProblemStatement("Lorem Ipsum");
-        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
-        programmingExercise.setGradingInstructions("Lorem Ipsum");
-        programmingExercise.setTitle(title);
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
-        }
-        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setProjectType(ProjectType.PLAIN);
-        }
-        else if (programmingLanguage == ProgrammingLanguage.C) {
-            programmingExercise.setProjectType(ProjectType.GCC);
-        }
-        else {
-            programmingExercise.setProjectType(null);
-        }
-        programmingExercise.setAllowOnlineEditor(true);
-        programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
-        if (enableStaticCodeAnalysis) {
-            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
-        }
-        programmingExercise.setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
-        // Note: no separators are allowed for Swift package names
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setPackageName("swiftTest");
-        }
-        else {
-            programmingExercise.setPackageName("de.test");
-        }
-        programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
-        programmingExercise.setShowTestNamesToStudents(false);
-        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {

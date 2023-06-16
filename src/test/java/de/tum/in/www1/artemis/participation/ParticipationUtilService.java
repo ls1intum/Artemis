@@ -57,12 +57,6 @@ public class ParticipationUtilService {
     private RatingRepository ratingRepo;
 
     @Autowired
-    private ComplaintRepository complaintRepo;
-
-    @Autowired
-    private ComplaintResponseRepository complaintResponseRepo;
-
-    @Autowired
     private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
@@ -417,24 +411,6 @@ public class ParticipationUtilService {
         return result;
     }
 
-    public void generateComplaintAndResponses(String userPrefix, int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
-            User currentUser) {
-        result = resultRepo.save(result);
-        if (numberOfComplaints >= j) {
-            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT) : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
-            complaint.setResult(result);
-            complaint = complaintRepo.save(complaint);
-            if (numberComplaintResponses >= j) {
-                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? userPrefix + "tutor5" : currentUser.getLogin(), complaint);
-                complaintResponse.getComplaint().setAccepted(true);
-                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
-                complaintResponseRepo.save(complaintResponse);
-                complaint.setComplaintResponse(complaintResponse);
-                complaintRepo.save(complaint);
-            }
-        }
-    }
-
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
@@ -497,46 +473,9 @@ public class ParticipationUtilService {
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
-    public ComplaintResponse createInitialEmptyResponse(String loginOfTutor, Complaint complaint) {
-        ComplaintResponse complaintResponse = new ComplaintResponse();
-        complaintResponse.setComplaint(complaint);
-        User tutor = userRepo.findOneByLogin(loginOfTutor).get();
-        complaintResponse.setReviewer(tutor);
-        complaintResponse = complaintResponseRepo.saveAndFlush(complaintResponse);
-        return complaintResponse;
-    }
-
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
-    }
-
-    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
-        for (int i = 0; i < numberOfComplaints; i++) {
-            Result dummyResult = new Result().participation(participation);
-            dummyResult = resultRepo.save(dummyResult);
-            Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
-            complaintRepo.save(complaint);
-        }
-    }
-
-    public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType type) {
-        Result result = submission.getLatestResult();
-        if (result != null) {
-            result.hasComplaint(true);
-            resultRepo.save(result);
-        }
-        Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(type);
-        complaintRepo.save(complaint);
-    }
-
-    public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
-        for (int i = 0; i < numberOfComplaints; i++) {
-            Result dummyResult = new Result().participation(participation);
-            dummyResult = resultRepo.save(dummyResult);
-            Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
-            complaintRepo.save(complaint);
-        }
     }
 
     /**

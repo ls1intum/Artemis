@@ -85,6 +85,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
+
     private ModelingExercise modelingExercise;
 
     private ModelingSubmission modelingSubmission;
@@ -179,7 +182,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max complaints
-        participationUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
@@ -191,7 +194,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        participationUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -206,7 +209,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
-        participationUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
@@ -257,7 +260,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     void submitComplaintResponse_rejectComplaint() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("Rejected");
 
@@ -276,7 +279,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     void submitComplaintResponse_updateAssessment() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("Accepted");
 
@@ -305,7 +308,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         complaint = complaintRepo.save(complaint);
         course = courseUtilService.updateCourseComplaintResponseTextLimit(course, 25);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
@@ -323,7 +326,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         complaint = complaintRepo.save(complaint);
         course = courseUtilService.updateCourseComplaintResponseTextLimit(course, 26);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
@@ -386,7 +389,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultid_student_sensitiveDataHidden() throws Exception {
         complaint = complaintRepo.save(complaint);
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponseRepo.save(complaintResponse);
 
         final var received = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
@@ -620,8 +623,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmittedComplaints_byComplaintType() throws Exception {
-        participationUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
-        participationUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
         String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
         String coursesUrl = "/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints";
@@ -646,7 +649,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 AssessmentType.MANUAL, false);
         courseRepository.save(course);
-        participationUtilService.addComplaintToSubmission(programmingSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(programmingSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         var programmingComplaint = complaintRepo.findByResultId(programmingSubmission.getResultWithComplaint().getId()).orElseThrow();
         programmingComplaint.setComplaintText("Programming exercise complaint");
         complaintRepo.save(programmingComplaint);
@@ -671,7 +674,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
         courseRepository.save(course);
-        participationUtilService.addComplaintToSubmission(fileUploadSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(fileUploadSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         var fileUploadComplaint = complaintRepo.findByResultId(fileUploadSubmission.getResultWithComplaint().getId()).orElseThrow();
         fileUploadComplaint.setComplaintText("File upload complaint");
         complaintRepo.save(fileUploadComplaint);

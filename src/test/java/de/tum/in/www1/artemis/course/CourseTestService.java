@@ -41,6 +41,7 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -147,6 +148,9 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -2597,7 +2601,7 @@ public class CourseTestService {
         complaint.getResult().setParticipation(null);
 
         // Accept Complaint and update Assessment
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(userPrefix + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -2632,7 +2636,7 @@ public class CourseTestService {
 
         feedbackRequest.getResult().setParticipation(null);
 
-        ComplaintResponse feedbackResponse = participationUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
+        ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);
         feedbackResponse.setResponseText("accepted");
         var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4);

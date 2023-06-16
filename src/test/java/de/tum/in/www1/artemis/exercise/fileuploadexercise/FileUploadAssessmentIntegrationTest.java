@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -74,6 +75,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
 
     private FileUploadExercise afterReleaseFileUploadExercise;
 
@@ -258,7 +262,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         complaint = complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -688,7 +692,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
 
         Submission submission = submissions.get(0);
-        participationUtilService.addComplaintToSubmission(submission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         assertThat(submission.getResults()).hasSize(2);
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + lastResult.getId(),

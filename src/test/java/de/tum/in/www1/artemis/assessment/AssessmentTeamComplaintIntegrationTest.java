@@ -64,6 +64,9 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
+
     private ModelingExercise modelingExercise;
 
     private ModelingSubmission modelingSubmission;
@@ -101,7 +104,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max team complaints
-        participationUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
         request.post(resourceUrl, complaint, HttpStatus.CREATED);
 
@@ -113,7 +116,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        participationUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post(resourceUrl, complaint, HttpStatus.BAD_REQUEST);
 
@@ -127,7 +130,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
-        participationUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 5, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 5, ComplaintType.MORE_FEEDBACK);
 
         request.post(resourceUrl, complaint, HttpStatus.CREATED);
 
@@ -175,7 +178,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     void submitComplaintResponse_rejectComplaint() throws Exception {
         complaint = complaintRepo.saveAndFlush(complaint);
 
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -197,7 +200,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void submitComplaintResponse_rejectComplaint_asOtherTutor_forbidden() throws Exception {
         complaint = complaintRepo.save(complaint);
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
         request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.FORBIDDEN);
@@ -210,7 +213,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
 
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor1", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
@@ -240,7 +243,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         complaint = complaintRepo.save(complaint);
 
         List<Feedback> feedback = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
