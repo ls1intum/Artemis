@@ -29,8 +29,8 @@
                 "description": "Set the maximum number of complaints allowed per team. Accepted complaints do not count toward this quota. This limit applies only to team exercises."
             },
             "maxComplaintTimeDays": {
-                "title": "Complaint deadline in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this deadline."
+                "title": "Complaint due date in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this due date."
             },
             "maxComplaintTextLimit": {
                 "title": "Maximum number of characters per complaint",
@@ -49,8 +49,8 @@
                 "description": "This option allows students to request more feedback without complaining. Asking for further feedback will not count towards the number of complaints, but it will also not allow modification of the assessment. By default, this option is enabled, but it can be disabled if assessment corrections must always be possible."
             },
             "maxRequestMoreFeedbackTimeDays": {
-                "title": "More feedback request deadline in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this deadline."
+                "title": "More feedback request due date in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this due date."
             },
             "customizeGroupNames": {
                 "title": "Customize group names",

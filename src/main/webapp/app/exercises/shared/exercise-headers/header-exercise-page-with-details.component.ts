@@ -53,7 +53,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public dueDate?: dayjs.Dayjs;
     public isBeforeStartDate: boolean;
     public programmingExercise?: ProgrammingExercise;
-    public individualComplaintDeadline?: dayjs.Dayjs;
+    public individualComplaintDueDate?: dayjs.Dayjs;
     public nextDueDate = NextDate.NONE;
     public statusBadges: string[];
     public canComplainLaterOn: boolean;
@@ -80,7 +80,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
             this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
             if (this.course?.maxComplaintTimeDays) {
-                this.individualComplaintDeadline = ComplaintService.getIndividualComplaintDueDate(
+                this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                     this.exercise,
                     this.course.maxComplaintTimeDays,
                     this.studentParticipation?.results?.last(),
@@ -91,7 +91,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             this.canComplainLaterOn =
                 (dayjs().isBefore(this.exercise.dueDate) ||
                     (this.studentParticipation?.individualDueDate && dayjs().isBefore(this.studentParticipation.individualDueDate)) ||
-                    (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
+                    (!!this.studentParticipation?.submissionCount && !this.individualComplaintDueDate)) &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
             this.setIsNextDueDateCourseMode();
@@ -122,7 +122,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     /**
-     * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
+     * Determines what element of the header should be highlighted. The highlighted due date/time is the one being due next
      * Array for badge class (= statusBadges) consist of
      * 0: Exam End Date
      * 1: Publish Results Date
@@ -142,12 +142,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     /**
-     * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
+     * Determines what element of the header should be highlighted. The highlighted due date/time is the one being due next
      * Array for badge class (= statusBadges) consist of
      * 0: Start Date (either release date or start date if set)
      * 1: Submission Due Date
      * 2: Assessment Due Date
-     * 3: Individual Complaint Deadline
+     * 3: Individual Complaint Due Date
      * 4: Complaint Possible (Yes / No)
      */
     private setIsNextDueDateCourseMode() {
@@ -161,7 +161,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         } else if (this.exercise.assessmentDueDate && now.isBefore(this.exercise.assessmentDueDate)) {
             this.nextDueDate = NextDate.ASSESSMENT_DUE_DATE;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success', 'bg-success'];
-        } else if (this.individualComplaintDeadline && now.isBefore(this.individualComplaintDeadline)) {
+        } else if (this.individualComplaintDueDate && now.isBefore(this.individualComplaintDueDate)) {
             this.nextDueDate = NextDate.COMPLAINT;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {

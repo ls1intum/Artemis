@@ -30,7 +30,7 @@ export enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
     /**
      * A regular, finished result is available.
-     * Can be rated (counts toward the score) or not rated (after the deadline for practice).
+     * Can be rated (counts toward the score) or not rated (after the due date for practice).
      */
     HAS_RESULT = 'HAS_RESULT',
     /**

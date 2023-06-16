@@ -135,8 +135,8 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
-     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or
-     *                            after the deadline by the INSTRUCTOR.
+     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the due date or
+     *                            after the due date by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the
      *         build is running.
      */
@@ -357,7 +357,7 @@ public class ProgrammingSubmissionResource {
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
         if (programmingExercise.getAllowManualFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            // Assess manual feedback request before the deadline
+            // Assess manual feedback request before the due date
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {

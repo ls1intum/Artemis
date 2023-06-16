@@ -9,7 +9,7 @@
             "saving": "Saving...",
             "submitSuccessful": "Your diagram was submitted successfully! You may submit again or wait for your feedback.",
             "submitSuccessfulWithAssessment": "Your diagram was submitted successfully! You may no longer edit your diagram. Your feedback is shown below.",
-            "submitDeadlineMissed": "Your diagram was submitted successfully! You may submit again or wait for your feedback. As you missed the deadline, your score will not be counted.",
+            "submitDueDateMissed": "Your diagram was submitted successfully! You may submit again or wait for your feedback. As you missed the due date, your score will not be counted.",
             "empty": "Unable to submit an empty diagram.",
             "fullscreen": {
                 "enterButtonText": "Fullscreen",

@@ -259,7 +259,7 @@ describe('ComplaintService', () => {
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
-        it('should calculate the correct complaint due date for no exercise deadline', () => {
+        it('should calculate the correct complaint due date for no exercise due date', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3;
             exercise.dueDate = undefined;

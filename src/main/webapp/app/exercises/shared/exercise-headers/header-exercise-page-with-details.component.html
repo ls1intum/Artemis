@@ -108,14 +108,14 @@
                     {{ exercise.assessmentDueDate | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="individualComplaintDeadline" [class.fw-500]="nextDueDate === NextDate.COMPLAINT">
+            <div *ngIf="individualComplaintDueDate" [class.fw-500]="nextDueDate === NextDate.COMPLAINT">
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
                 <span
                     [ngClass]="statusBadges[3]"
                     class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate : { date: individualComplaintDeadline | artemisDate }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate : { date: individualComplaintDueDate | artemisDate }"
                 >
-                    {{ individualComplaintDeadline | artemisTimeAgo }}
+                    {{ individualComplaintDueDate | artemisTimeAgo }}
                 </span>
             </div>
             <div *ngIf="canComplainLaterOn" [class.fw-500]="nextDueDate === NextDate.COMPLAINT">

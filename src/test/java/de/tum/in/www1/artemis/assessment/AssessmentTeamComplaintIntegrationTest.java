@@ -63,7 +63,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(TEST_PREFIX, 1, 2, 0, 1);
-        // Initialize with 3 max team complaints and 7 days max complaint deadline
+        // Initialize with 3 max team complaints and 7 days max complaint due date
         course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         modelingExercise.setMode(ExerciseMode.TEAM);
@@ -123,8 +123,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "team1" + TEST_PREFIX + "1")
-    void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
-        // Mock object initialized with 2 weeks deadline. One week after result date is fine.
+    void submitComplaintAboutModelingAssessment_validDueDate() throws Exception {
+        // Mock object initialized with 2 weeks due date. One week after result date is fine.
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
         database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
 
@@ -138,7 +138,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        // 3 weeks is already past the deadline
+        // 3 weeks is already past the due date
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));

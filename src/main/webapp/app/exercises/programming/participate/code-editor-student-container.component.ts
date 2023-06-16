@@ -171,7 +171,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
-        // Also check for assessment due date to never show manual feedback before the deadline
+        // Also check for assessment due date to never show manual feedback before the due date
         this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
     }
 

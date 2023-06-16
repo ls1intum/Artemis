@@ -28,7 +28,7 @@ Manual assessment in Artemis involves the following steps:
 2. Review: Reviewers access the submitted work and put a **lock** on the submission, preventing inconsistency and ambiguity the other reviewer evaluations can cause. Then they review it carefully, considering the objectives, requirements, and criteria established for the assessment.
 3. Evaluation: Based on their assessment, reviewers assign scores, provide feedback, or grade the student's work, keeping the grading criteria in mind to ensure consistency and fairness. In the end, reviewers submit or cancel their evaluation, which revokes the lock for use by the other reviewers.
 4. Student feedback: Students rate the quality of the feedback to motivate the reviewers to provide high-quality feedback to improve understanding and prevent misconceptions.
-            
+
 
 Assessment Dashboard
 ^^^^^^^^^^^^^^^^^^^^
@@ -56,8 +56,8 @@ To ensure consistency, fairness, and transparency, as well as to simplify the gr
 Integrated Training Process
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Instructors can use the assessment training process to make the grading more consistent. 
-An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to assess submissions and provide feedback properly. 
+Instructors can use the assessment training process to make the grading more consistent.
+An integrated training process for reviewers based on example submissions and example assessments ensures that reviewers have enough knowledge to assess submissions and provide feedback properly.
 They define a series of example submissions and assessments that the reviewers must first read through.
 
 The integrated training process is as follows:
@@ -96,25 +96,25 @@ The integrated training process is as follows:
 Double-blind Grading
 ^^^^^^^^^^^^^^^^^^^^
 
-The manual assessment begins after the deadline for an exercise has passed for all students and is **double-blind**. 
-It means that the reviewers do not know the names of the students they assess, and the students do not know the identity of the reviewers. 
-The double-blind grading aims to minimize bias and increase the objectivity of the assessment. 
-It implies that both the students and the reviewers are **blind** to each other's identities, ensuring that their expectations or biases do not influence the results. 
+The manual assessment begins after the due date for an exercise has passed for all students and is **double-blind**.
+It means that the reviewers do not know the names of the students they assess, and the students do not know the identity of the reviewers.
+The double-blind grading aims to minimize bias and increase the objectivity of the assessment.
+It implies that both the students and the reviewers are **blind** to each other's identities, ensuring that their expectations or biases do not influence the results.
 
-   
+
 .. _exercise_complaints:
 
 Complaints
 ^^^^^^^^^^
 
-After receiving a grade, students can complain about an exercise assessment if the instructor enabled this option, the complaint deadline is still ongoing, and the students think the evaluation needs to be revised. 
-The instructor can set a maximum number of allowed complaints per course. These so-called tokens are used for each complaint. The token is returned to the student if the reviewer accepts the complaint. 
+After receiving a grade, students can complain about an exercise assessment if the instructor enabled this option, the complaint due date is still ongoing, and the students think the evaluation needs to be revised.
+The instructor can set a maximum number of allowed complaints per course. These so-called tokens are used for each complaint. The token is returned to the student if the reviewer accepts the complaint.
 It means a student can submit as many complaints as they want, as long as they are accepted.
 
 The complaint process is as follows:
 
 1. The student opens the related exercise, interacts with the "Complain" button below the exercise instructions, and writes additional text before submitting a complaint to justify the reevaluation.
-   
+
    .. figure:: assessment/complaint-submission.png
             :alt: Complaint submission
             :align: center
@@ -127,7 +127,7 @@ The complaint process is as follows:
     +---------------------------------------------------------+--------------------------------------------------+
 
 
-3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assesses students' submissions. 
+3. By interacting with the respective "Exercise Dashboard" button, the reviewer opens the exercise-specific dashboard and assesses students' submissions.
    Upon evaluation, the reviewer puts a lock expiring automatically in 24 hours in addition to an option of unlocking manually.
 
     .. figure:: assessment/exercise-dashboard.png
@@ -156,7 +156,7 @@ The complaint process is as follows:
     +------------------------------------+---------------------------------------------+
 
 5. Student can rate the quality of the feedback.
-   
+
     .. figure:: assessment/student-feedback.png
             :alt: Student Feedback
             :align: center
@@ -183,12 +183,12 @@ For the reviewers, the process is identical to the complaint process.
 Grading Leaderboard
 ^^^^^^^^^^^^^^^^^^^
 
-Artemis also offers a way for instructors to monitor the reviewers' assessments based on the students' feedback on reviewer evaluation. The first part of this is the grading leaderboard, which is visible to all reviewers. 
-    
+Artemis also offers a way for instructors to monitor the reviewers' assessments based on the students' feedback on reviewer evaluation. The first part of this is the grading leaderboard, which is visible to all reviewers.
+
     .. figure:: assessment/leaderboard.png
             :alt: Grading leaderboard
             :align: center
-   
+
 The leaderboard shows the number of assessments each reviewer has done and the number of feedback requests and accepted complaints about them.
 It also shows the average score the reviewer has given and the average rating they received for their assessments. It helps to track and display the performance and rankings of the reviewers who assess and provide feedback on student submissions.
 Additionally, Artemis automatically checks for “Issues with reviewer performance” in case reviewers significantly deviate from the average.
@@ -197,7 +197,7 @@ Automatic Assessment
 --------------------
 
 Automatic assessment is available for programming and quiz exercises.
-For quiz exercises, this is the only mode of assessment available. Artemis automatically grades students' submissions after the quiz deadline has passed. See the section about :ref:`quiz` for more information about this.
+For quiz exercises, this is the only mode of assessment available. Artemis automatically grades students' submissions after the quiz due date has passed. See the section about :ref:`quiz` for more information about this.
 
-For programming exercises, this is done via instructor-written test cases that are run for each submission either during or after the deadline. See the section about :ref:`programming` for detailed information about this.
+For programming exercises, this is done via instructor-written test cases that are run for each submission either during or after the due date. See the section about :ref:`programming` for detailed information about this.
 Instructors can enable complaints for automatically graded programming exercises.

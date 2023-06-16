@@ -33,13 +33,13 @@ export class SubmissionResultStatusComponent implements OnChanges {
     @Input() triggerLastGraded = true;
 
     quizNotStarted: boolean;
-    exerciseMissedDeadline: boolean;
+    exerciseMissedDueDate: boolean;
     uninitialized: boolean;
     notSubmitted: boolean;
 
     ngOnChanges() {
         const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
-        this.exerciseMissedDeadline = afterDueDate && !this.studentParticipation;
+        this.exerciseMissedDueDate = afterDueDate && !this.studentParticipation;
 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
