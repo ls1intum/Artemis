@@ -47,8 +47,8 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -62,8 +62,8 @@ describe('ExamParticipationComponent', () => {
     let artemisServerDateService: ArtemisServerDateService;
     let websocketService: JhiWebsocketService;
     let artemisDatePipe: ArtemisDatePipe;
-    let courseScoreCalculationService: CourseScoreCalculationService;
     let courseService: CourseManagementService;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -104,7 +104,6 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
-                MockProvider(CourseScoreCalculationService),
             ],
         })
             .compileComponents()
@@ -120,8 +119,8 @@ describe('ExamParticipationComponent', () => {
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 websocketService = TestBed.inject(JhiWebsocketService);
                 artemisDatePipe = TestBed.inject(ArtemisDatePipe);
-                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 courseService = TestBed.inject(CourseManagementService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 fixture.detectChanges();
                 comp.exam = new Exam();
             });
@@ -328,10 +327,10 @@ describe('ExamParticipationComponent', () => {
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '4' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => httpError));
-        const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(course);
+        const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
-        expect(courseScoreCalculationServiceSpy).toHaveBeenCalledOnce();
+        expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(comp.isAtLeastTutor).toBeTrue();
     });
 
@@ -344,11 +343,11 @@ describe('ExamParticipationComponent', () => {
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '4' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => httpError));
-        const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(undefined);
+        const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
         const courseServiceSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
-        expect(courseScoreCalculationServiceSpy).toHaveBeenCalledOnce();
+        expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(courseServiceSpy).toHaveBeenCalledOnce();
         expect(comp.isAtLeastTutor).toBeTrue();
     });

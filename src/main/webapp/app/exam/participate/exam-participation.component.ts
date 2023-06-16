@@ -48,6 +48,7 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -150,6 +151,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private featureToggleService: FeatureToggleService,
         private artemisDatePipe: ArtemisDatePipe,
         private courseService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -586,7 +588,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
      */
     handleNoStudentExam() {
-        const course = this.courseCalculationService.getCourse(this.courseId);
+        const course = this.courseStorageService.getCourse(this.courseId);
         if (!course) {
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
