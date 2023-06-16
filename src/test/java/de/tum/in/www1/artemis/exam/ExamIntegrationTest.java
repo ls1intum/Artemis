@@ -1623,7 +1623,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddAllRegisteredUsersToExam() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
-        database.enableMessagingForCourse(course);
+        courseUtilService.enableMessagingForCourse(course);
         Exam exam = examUtilService.addExam(course);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, false);
         exam = examRepository.save(exam);

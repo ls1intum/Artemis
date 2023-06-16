@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
@@ -48,6 +46,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private LectureRepository lectureRepository;
 
     private static final String TEST_PREFIX = "chtest";
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     @BeforeEach
     void setupTestScenario() throws Exception {
@@ -754,7 +755,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExerciseChannel_asCourseStudent_shouldGetExerciseChannel() throws Exception {
         Course course = courseRepository.findById(exampleCourseId).orElseThrow();
-        var exercise = database.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(7), ZonedDateTime.now().plusMinutes(14));
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(7), ZonedDateTime.now().plusMinutes(14));
         var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
         Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
         channel.setExercise(exercise);
@@ -765,7 +766,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
 
         // switch to student1
-        database.changeUser(testPrefix + "student1");
+        userUtilService.changeUser(testPrefix + "student1");
 
         Channel exerciseChannel = request.get("/api/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
@@ -791,7 +792,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
 
-        database.changeUser(testPrefix + "student1");
+        userUtilService.changeUser(testPrefix + "student1");
 
         Channel lectureChannel = request.get("/api/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());

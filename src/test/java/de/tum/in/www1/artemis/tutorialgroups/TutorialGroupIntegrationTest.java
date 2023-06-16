@@ -373,7 +373,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
-        database.enableMessagingForCourse(courseRepository.findByIdElseThrow(exampleCourseId));
+        courseUtilService.enableMessagingForCourse(courseRepository.findByIdElseThrow(exampleCourseId));
 
         // given
         var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
