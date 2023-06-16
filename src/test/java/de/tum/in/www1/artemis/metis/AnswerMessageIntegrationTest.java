@@ -13,12 +13,15 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -31,6 +34,15 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private List<Post> existingConversationPostsWithAnswers;
 
     private List<Post> existingPostsWithAnswersCourseWide;
@@ -40,11 +52,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
+        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> (coursePost.getAnswers() != null)).toList();
 
         List<Post> existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
@@ -60,7 +72,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 .toList();
 
         Course course = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
-        database.enableMessagingForCourse(course);
+        courseUtilService.enableMessagingForCourse(course);
         courseId = course.getId();
 
         SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
@@ -77,7 +89,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var countBefore = answerPostRepository.count();
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -225,7 +237,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-        Course dummyCourse = database.createCourse();
+        Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
                 answerPostToUpdate, AnswerPost.class, HttpStatus.BAD_REQUEST);

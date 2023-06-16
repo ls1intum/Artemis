@@ -25,14 +25,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -43,6 +46,15 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -124,14 +136,14 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         /* We mock the following method because we don't have the OAuth secret for edx */
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
         user.setInternal(false);
         userRepository.save(user);
 
-        course = database.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         course.setOnlineCourse(true);
-        database.addOnlineCourseConfigurationToCourse(course);
+        courseUtilService.addOnlineCourseConfigurationToCourse(course);
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(course.getExercises().stream().findFirst().get().getId());
 

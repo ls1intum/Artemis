@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -25,9 +26,12 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -50,6 +54,18 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Exercise exercise;
 
@@ -118,35 +134,35 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @BeforeEach
     void setUp() {
-        course = database.createCourse();
+        course = courseUtilService.createCourse();
         course.setInstructorGroupName(TEST_PREFIX + "instructors");
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
         course.setEditorGroupName(TEST_PREFIX + "editors");
         course.setStudentGroupName(TEST_PREFIX + "students");
         course.setTitle(COURSE_TITLE);
 
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        student = database.getUserByLogin(TEST_PREFIX + "student1");
+        student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setGroups(Set.of(TEST_PREFIX + "students"));
         userRepository.save(student);
 
-        instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of(TEST_PREFIX + "instructors"));
         userRepository.save(instructor);
 
         archiveErrors = new ArrayList<>();
 
-        exam = database.addExam(course);
+        exam = examUtilService.addExam(course);
         examRepository.save(exam);
 
         lecture = new Lecture();
         lecture.setCourse(course);
         lecture.setTitle(LECTURE_TITLE);
 
-        exercise = ModelFactory.generateTextExercise(null, null, null, course);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(exercise);
-        updatedExercise = ModelFactory.generateTextExercise(null, null, null, course);
+        updatedExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(updatedExercise);
 
         attachment = new Attachment();
@@ -159,7 +175,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examExercise.setExerciseGroup(exerciseGroup);
         examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        quizExercise = database.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
+        quizExercise = quizExerciseUtilService.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
         exerciseRepository.save(quizExercise);
 
         programmingExercise = new ProgrammingExercise();
@@ -179,7 +195,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         answerPost.setContent(ANSWER_POST_CONTENT);
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // store the current notification count to let tests work even if notifications are created in other tests
         notificationCountBeforeTest = notificationRepository.findAll().size();
