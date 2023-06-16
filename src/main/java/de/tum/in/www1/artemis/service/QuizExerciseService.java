@@ -266,7 +266,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
 
-        fileService.deleteFiles(filesToRemove.stream().map(Paths::get).collect(Collectors.toList()));
+        fileService.deleteFiles(filesToRemove.stream().map(Paths::get).toList());
     }
 
     private Set<String> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
