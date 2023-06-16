@@ -1,0 +1,15 @@
+{
+    "artemisApp": {
+        "dataExport": {
+            "title": "Data export",
+            "description": "Here you can request a data export in accordance with Art. 15 GDPR Right of Access. Once the export has been created, you will receive an email. In the following seven days you can download the export. Afterward, it will be deleted.",
+            "request": "Request data export",
+            "download": "Download data export",
+            "requestSuccess": "Successfully requested data export",
+            "downloadSuccess": "Successfully downloaded data export",
+            "typeLoginToConfirm": "Please enter your login to confirm the data export request",
+            "confirmationQuestion": "Do you really want to request a data export?",
+            "confirmationHeader": "Request data export"
+        }
+    }
+}
