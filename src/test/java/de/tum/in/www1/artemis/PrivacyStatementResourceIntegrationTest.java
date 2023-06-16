@@ -141,7 +141,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatement.class);
         }
         assertThat(response.getText()).isEqualTo("");
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
@@ -184,7 +184,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             else {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
             }
-            response = request.get("/api/privacy-statement-for-update?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/admin/privacy-statement-for-update?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
@@ -199,7 +199,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdatePrivacyStatement_instructorAccessForbidden() throws Exception {
-        request.put("/api/privacy-statement", new PrivacyStatement(Language.GERMAN), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/privacy-statement", new PrivacyStatement(Language.GERMAN), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -211,7 +211,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
 
-            response = request.putWithResponseBody("/api/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
             // we explicitly check the method calls to ensure createDirectories is not called when the directory exists
