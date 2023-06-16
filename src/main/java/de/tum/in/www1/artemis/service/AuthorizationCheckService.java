@@ -35,6 +35,7 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
+    // TODO: we should move this into some kind of EnrollmentService
     @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseRegistrationUsernamePattern;
@@ -209,7 +210,7 @@ public class AuthorizationCheckService {
      * Checks if the user is allowed to self enroll in the given course.
      * Returns `EnrollmentAuthorization.ALLOWED` if the user is allowed to self enroll in the course,
      * or the reason why the user is not allowed to self enroll in the course otherwise.
-     * See also: {@link #checkUserAllowedToSelfEnrollInCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToEnrollInCourseElseThrow(User, Course)}
      *
      * @param user   The user that wants to self enroll
      * @param course The course to which the user wants to self enroll
@@ -238,7 +239,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the user is allowed to self enroll in the given course.
-     * See also: {@link #checkUserAllowedToSelfEnrollInCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToEnrollInCourseElseThrow(User, Course)}
      *
      * @param user   The user that wants to self enroll
      * @param course The course to which the user wants to self enroll
@@ -256,7 +257,7 @@ public class AuthorizationCheckService {
      * @param user   The user that wants to self enroll
      * @param course The course to which the user wants to self enroll
      */
-    public void checkUserAllowedToSelfEnrollInCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+    public void checkUserAllowedToEnrollInCourseElseThrow(User user, Course course) throws AccessForbiddenException {
         EnrollmentAuthorization auth = getUserEnrollmentAuthorizationForCourse(user, course);
         switch (auth) {
             case USERNAME_PATTERN -> throw new AccessForbiddenException("Enrollment with this username is not allowed.");
@@ -279,7 +280,7 @@ public class AuthorizationCheckService {
      * Checks if the user is allowed to unenroll from the given course.
      * Returns `UnenrollmentAuthorization.ALLOWED` if the user is allowed to unenroll from the course,
      * or the reason why the user is not allowed to unenroll from the course otherwise.
-     * See also: {@link #checkUserAllowedToSelfUnenrollFromCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToUnenrollFromCourseElseThrow(User, Course)}
      *
      * @param user   The user that wants to unenroll
      * @param course The course from which the user wants to unenroll
@@ -307,7 +308,7 @@ public class AuthorizationCheckService {
      * @param user   The user that wants to unenroll
      * @param course The course from which the user wants to unenroll
      */
-    public void checkUserAllowedToSelfUnenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+    public void checkUserAllowedToUnenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
         UnenrollmentAuthorization auth = getUserUnenrollmentAuthorizationForCourse(user, course);
         switch (auth) {
             case UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow unenrollment.");

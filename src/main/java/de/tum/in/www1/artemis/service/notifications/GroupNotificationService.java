@@ -79,8 +79,7 @@ public class GroupNotificationService {
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
         for (GroupNotificationType group : groups) {
-            GroupNotification resultingGroupNotification;
-            resultingGroupNotification = switch (notificationType) {
+            GroupNotification resultingGroupNotification = switch (notificationType) {
                 // Post Types
                 case NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification((Post) notificationSubject, author, group, notificationType,
                         (Course) typeSpecificInformation);
