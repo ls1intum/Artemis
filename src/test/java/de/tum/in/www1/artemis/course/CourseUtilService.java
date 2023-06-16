@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.course;
 
+import static de.tum.in.www1.artemis.participation.ParticipationFactory.generateResult;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -276,11 +277,11 @@ public class CourseUtilService {
             Submission programmingSubmission1 = ParticipationFactory.generateProgrammingSubmission(true, "1234", SubmissionType.MANUAL);
             Submission programmingSubmission2 = ParticipationFactory.generateProgrammingSubmission(true, "5678", SubmissionType.MANUAL);
 
-            Result result1 = ParticipationFactory.generateResult(true, 10D);
-            Result result2 = ParticipationFactory.generateResult(true, 12D);
-            Result result3 = ParticipationFactory.generateResult(false, 0D);
-            Result result4 = ParticipationFactory.generateResult(true, 12D);
-            Result result5 = ParticipationFactory.generateResult(false, 42D);
+            Result result1 = generateResult(true, 10D);
+            Result result2 = generateResult(true, 12D);
+            Result result3 = generateResult(false, 0D);
+            Result result4 = generateResult(true, 12D);
+            Result result5 = generateResult(false, 42D);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -392,23 +393,23 @@ public class CourseUtilService {
         participationProgramming = studentParticipationRepo.save(participationProgramming);
 
         // Setup results
-        Result resultModeling = ParticipationFactory.generateResult(true, 10D);
+        Result resultModeling = generateResult(true, 10D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
-        Result resultText = ParticipationFactory.generateResult(true, 12D);
+        Result resultText = generateResult(true, 12D);
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
-        Result resultFileUpload = ParticipationFactory.generateResult(true, 0D);
+        Result resultFileUpload = generateResult(true, 0D);
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
-        Result resultQuiz = ParticipationFactory.generateResult(true, 0D);
+        Result resultQuiz = generateResult(true, 0D);
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
-        Result resultProgramming = ParticipationFactory.generateResult(true, 20D);
+        Result resultProgramming = generateResult(true, 20D);
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -643,7 +644,7 @@ public class CourseUtilService {
                     modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
-                        Result result = participationUtilService.generateResult(submission, currentUser);
+                        Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
                         submission.addResult(result);
                         participation.addResult(result);
                         studentParticipationRepo.save(participation);
@@ -663,7 +664,7 @@ public class CourseUtilService {
                     TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
                     submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
-                        Result result = participationUtilService.generateResult(submission, currentUser);
+                        Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
                         submission.addResult(result);
                         participationUtilService.saveResultInParticipation(submission, result);
                         textSubmissionRepo.save(submission);
@@ -682,7 +683,7 @@ public class CourseUtilService {
                     FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
-                        Result result = participationUtilService.generateResult(submission, currentUser);
+                        Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
                         participationUtilService.saveResultInParticipation(submission, result);
                         fileUploadSubmissionRepo.save(submission);
                         complaintUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);

@@ -30,14 +30,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
-import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseResultTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
@@ -68,7 +76,31 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     private ZipFileTestUtilService zipFileTestUtilService;
 
     @Autowired
+    private ProgrammingExerciseResultTestService programmingExerciseResultTestService;
+
+    @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     @MockBean
     private ApollonConversionService apollonConversionService;
@@ -79,8 +111,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws IOException {
-        database.addUsers(TEST_PREFIX, 5, 4, 1, 1);
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 5, 4, 1, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
         // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
         var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
         when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
@@ -118,28 +150,28 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
-        Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
-        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
+        Course course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        var programmingExercise = database.addProgrammingExerciseToCourse(course1, false);
-        var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
+        var programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        var submission = database.createProgrammingSubmission(participation, false, "abc");
-        var submission2 = database.createProgrammingSubmission(participation, false, "def");
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
+        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "def");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
-        database.addFeedbackToResult(feedback, submission.getFirstResult());
-        database.addSubmission(participation, submission);
-        database.addSubmission(participation, submission2);
-        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
+        participationUtilService.addSubmission(participation, submission);
+        participationUtilService.addSubmission(participation, submission2);
+        participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
 
         // add communication and messaging data
-        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
-        database.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
-        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
+        conversationUtilService.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
+        conversationUtilService.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
+        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
