@@ -15,7 +15,7 @@ const routes: Routes = [
         component: CourseRegistrationComponent,
         data: {
             authorities: [Authority.USER],
-            pageTitle: 'artemisApp.studentDashboard.register.title',
+            pageTitle: 'artemisApp.studentDashboard.enroll.title',
         },
         canActivate: [UserRouteAccessService],
     },

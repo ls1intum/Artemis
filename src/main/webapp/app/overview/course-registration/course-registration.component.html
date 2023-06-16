@@ -1,5 +1,5 @@
 <div>
-    <h3>{{ 'artemisApp.studentDashboard.register.title' | artemisTranslate }}</h3>
+    <h3>{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</h3>
     <div class="col-12 col-sm-auto" *ngIf="coursesToSelect">
         <table class="table table-striped">
             <thead>
@@ -31,11 +31,11 @@
         </table>
     </div>
     <div *ngIf="!loading && !coursesToSelect" class="col-12 col-sm-auto">
-        {{ 'artemisApp.studentDashboard.register.noCourse' | artemisTranslate }}
+        {{ 'artemisApp.studentDashboard.enroll.noCourse' | artemisTranslate }}
     </div>
     <div *ngIf="loading && !coursesToSelect" class="col-12 col-sm-auto d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'artemisApp.studentDashboard.register.coursesLoading' | artemisTranslate }}</span>
+            <span class="sr-only">{{ 'artemisApp.studentDashboard.enroll.coursesLoading' | artemisTranslate }}</span>
         </div>
     </div>
 </div>

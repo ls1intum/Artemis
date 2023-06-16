@@ -9,13 +9,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -30,12 +33,21 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Autowired
     private ProgrammingTriggerService programmingTriggerService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        var course = database.addEmptyCourse();
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        var course = courseUtilService.addEmptyCourse();
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -47,7 +59,7 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        database.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "dummy-build-plan");
+        programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "dummy-build-plan");
     }
 
     private void testReadAccessForbidden() throws Exception {
