@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;

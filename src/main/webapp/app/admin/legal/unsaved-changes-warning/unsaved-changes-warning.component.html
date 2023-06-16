@@ -1,0 +1,12 @@
+<form>
+    <div class="modal-header">
+        <button id="close-modal-btn" type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="continueEditing()"></button>
+    </div>
+    <div class="modal-body">
+        <h5 jhiTranslate="{{ textMessage }}">Do you really want to proceed and discard the unsaved changes?</h5>
+        <div>
+            <jhi-button id="discard-content-btn" (click)="discardContent()" [title]="'entity.action.discardChanges'">Discard</jhi-button>
+            <jhi-button id="continue-editing-btn" (click)="continueEditing()" [title]="'entity.action.goBack'">Go back</jhi-button>
+        </div>
+    </div>
+</form>

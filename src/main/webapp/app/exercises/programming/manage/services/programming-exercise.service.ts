@@ -21,6 +21,9 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { SortService } from 'app/shared/service/sort.service';
+import { Result } from 'app/entities/result.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -46,7 +49,7 @@ export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION
 export class ProgrammingExerciseService {
     public resourceUrl = 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private sortService: SortService) {}
 
     /**
      * Sets a new programming exercise up
@@ -251,6 +254,60 @@ export class ProgrammingExerciseService {
                     return res;
                 }),
             );
+    }
+
+    /**
+     * Finds the programming exercise for the given exerciseId with the template and solution participation and their latest result each.
+     * @param programmingExerciseId of the programming exercise to retrieve
+     */
+    findWithTemplateAndSolutionParticipationAndLatestResults(programmingExerciseId: number): Observable<EntityResponseType> {
+        return this.findWithTemplateAndSolutionParticipation(programmingExerciseId, true).pipe(
+            map((response) => {
+                if (response.body) {
+                    this.setLatestResultForTemplateAndSolution(response.body);
+                }
+                return response;
+            }),
+        );
+    }
+
+    private setLatestResultForTemplateAndSolution(programmingExercise: ProgrammingExercise) {
+        if (programmingExercise.templateParticipation) {
+            const latestTemplateResult = this.getLatestResult(programmingExercise.templateParticipation);
+            if (latestTemplateResult) {
+                programmingExercise.templateParticipation.results = [latestTemplateResult];
+            }
+            // This is needed to access the exercise in the result details
+            programmingExercise.templateParticipation.programmingExercise = programmingExercise;
+        }
+
+        if (programmingExercise.solutionParticipation) {
+            const latestSolutionResult = this.getLatestResult(programmingExercise.solutionParticipation);
+            if (latestSolutionResult) {
+                programmingExercise.solutionParticipation.results = [latestSolutionResult];
+            }
+            // This is needed to access the exercise in the result details
+            programmingExercise.solutionParticipation.programmingExercise = programmingExercise;
+        }
+    }
+
+    /**
+     * Finds the result that has the latest submission date.
+     *
+     * @param participation Some participation.
+     */
+    getLatestResult(participation: Participation): Result | undefined {
+        const submissions = participation.submissions;
+        if (!submissions || submissions.length === 0) {
+            return;
+        }
+
+        // important: sort to get the latest submission (the order of the server can be random)
+        this.sortService.sortByProperty(submissions, 'submissionDate', true);
+        const results = submissions.sort().last()?.results;
+        if (results && results.length > 0) {
+            return results.last();
+        }
     }
 
     /**

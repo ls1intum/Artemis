@@ -1,0 +1,66 @@
+// ARTEMIS: JenkinsPipeline
+
+node('docker') {
+    ownStages = null
+    try {
+        stage('Checkout') {
+            checkout([
+                $class: 'GitSCM',
+                branches: [[name: '#defaultBranch']],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [],
+                submoduleCfg: [],
+                userRemoteConfigs: [[
+                    credentialsId: '#gitCredentials',
+                    name: 'tests',
+                    url: '#testRepository'
+                ]]
+            ])
+            dir('#assignmentCheckoutPath') {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '#defaultBranch']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[
+                        credentialsId: '#gitCredentials',
+                        name: 'assignment',
+                        url: '#assignmentRepository'
+                    ]]
+                ])
+            }
+            script {
+                if (#checkoutSolution) {
+                    dir('#solutionCheckoutPath') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '#defaultBranch']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            submoduleCfg: [],
+                            userRemoteConfigs: [[
+                                credentialsId: '#gitCredentials',
+                                name: 'solution',
+                                url: '#solutionRepository'
+                            ]]
+                        ])
+                    }
+                }
+            }
+        }
+        stage('Load') {
+            timestamps {
+                sh "curl -o pipeline.groovy #buildPlanUrl"
+                ownStages = load 'pipeline.groovy'
+                ownStages.testRunner()
+            }
+        }
+    } finally {
+        if (ownStages != null) {
+            ownStages.postBuildTasks()
+        }
+        sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
+        cleanWs()
+    }
+}
