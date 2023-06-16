@@ -19,8 +19,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -33,10 +31,10 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     private UserRepository userRepo;
 
     @Autowired
-    private DatabaseUtilService database;
+    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
-    private GitlabRequestMockProvider gitlabRequestMockProvider;
+    private UserUtilService userUtilService;
 
     @BeforeEach
     void setUp() {
@@ -54,7 +52,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         String login = "abd123cd";
         String password = "this is a password";
         // setup user
-        User user = ModelFactory.generateActivatedUser(login);
+        User user = UserFactory.generateActivatedUser(login);
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword(password);
 
@@ -76,7 +74,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     void testUnactivatedUserIsDeletedDespiteUnableToDeleteInGitlab() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = UserFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
         user.setFirstName("Old Firstname");
         user.setActivationKey(testActivationKey);
@@ -112,7 +110,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @Test
     void testFailureWhenTryingToDeleteActivatedUser() throws Exception {
         // create activated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cde");
+        User user = UserFactory.generateActivatedUser("ab123cde");
         user.setFirstName("Old Firstname");
         user = userRepo.save(user);
 
@@ -140,7 +138,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdf");
+        User user = UserFactory.generateActivatedUser("ab123cdf");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -168,7 +166,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdg");
+        User user = UserFactory.generateActivatedUser("ab123cdg");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -187,7 +185,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdh");
+        User user = UserFactory.generateActivatedUser("ab123cdh");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -206,7 +204,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdi");
+        User user = UserFactory.generateActivatedUser("ab123cdi");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -232,7 +230,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdj");
+        User user = UserFactory.generateActivatedUser("ab123cdj");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -287,15 +285,15 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
     @NotNull
     private static User createUser(String newLogin, String email) {
-        User newUser = ModelFactory.generateActivatedUser(newLogin);
+        User newUser = UserFactory.generateActivatedUser(newLogin);
         newUser.setActivated(false);
         newUser.setEmail(email);
         return newUser;
     }
 
     private void createAndSaveUser(String login, String email) {
-        if (!database.userExistsWithLogin(login)) {
-            User user = ModelFactory.generateActivatedUser(login);
+        if (!userUtilService.userExistsWithLogin(login)) {
+            User user = UserFactory.generateActivatedUser(login);
             user.setEmail(email);
             user.setActivated(false);
             userRepo.save(user);

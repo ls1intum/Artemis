@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.UserTestService;
+import de.tum.in.www1.artemis.user.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
