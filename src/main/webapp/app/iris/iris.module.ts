@@ -8,7 +8,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { IrisSettingsUpdateRoutingModule } from 'app/iris/settings/iris-settings-update-routing.module';
 import { IrisSettingsUpdateComponent } from './settings/iris-settings-update/iris-settings-update.component';
 import { IrisGlobalSettingsUpdateComponent } from './settings/iris-global-settings-update/iris-global-settings-update.component';
 import { IrisSubSettingsUpdateComponent } from './settings/iris-settings-update/iris-sub-settings-update/iris-sub-settings-update.component';

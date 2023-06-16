@@ -87,6 +87,7 @@ describe('NavbarComponent', () => {
                 },
             },
         },
+        activeProfiles: ['test'],
     } as ProfileInfo;
 
     beforeEach(() => {
