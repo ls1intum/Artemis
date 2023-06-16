@@ -9,17 +9,17 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
-            "register": {
-                "title": "Kursanmeldung",
-                "registerSuccessful": "Anmeldung erfolgreich",
-                "registerForCourse": "Anmelden",
-                "notInCourseButCanRegister": "Du bist nicht in diesem Kurs, kannst dich aber anmelden.",
+            "enroll": {
+                "title": "Kurseinschreibung",
+                "enrollSuccessful": "Einschreibung erfolgreich",
+                "enrollInCourse": "Einschreiben",
+                "notInCourseButCanEnroll": "Du bist nicht in diesem Kurs, kannst dich aber einschreiben.",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
-                "noCourse": "Keine Kurse für eine Anmeldung verfügbar",
+                "noCourse": "Keine Kurse zur Einschreibung verfügbar",
                 "courseLoading": "Kurs wird geladen...",
                 "coursesLoading": "Kurse werden geladen...",
-                "courseSignupConfirmationTitle": "Bestätigung der Kursanmeldung"
+                "courseSignupConfirmationTitle": "Bestätigung der Kurseinschreibung"
             },
             "course": "Kurs"
         },
