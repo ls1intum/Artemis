@@ -198,7 +198,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllNotificationsForCurrentUserFilteredBySettings() throws Exception {
-        GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+        GroupNotification allowedNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         allowedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(allowedType));
         notificationRepository.save(allowedNotification);
 
@@ -258,11 +258,11 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnreadCountForCurrentUserFilteredBySettings() throws Exception {
-        GroupNotification readNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(25), course1, GroupNotificationType.STUDENT);
+        GroupNotification readNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now().minusHours(25), course1, GroupNotificationType.STUDENT);
         notificationRepository.save(readNotification);
 
         for (int i = 0; i < 3; i++) {
-            GroupNotification unreadNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
+            GroupNotification unreadNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
             notificationRepository.save(unreadNotification);
         }
 
@@ -274,13 +274,13 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnreadCountForCurrentUserFilteredBySettingsFilteredBySettings() throws Exception {
         for (int i = 0; i < 3; i++) {
-            GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
+            GroupNotification allowedNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
             allowedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(allowedType));
             notificationRepository.save(allowedNotification);
         }
 
         for (int i = 0; i < 2; i++) {
-            GroupNotification blockedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
+            GroupNotification blockedNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now().minusHours(i), course1, GroupNotificationType.STUDENT);
             blockedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(blockedType));
             notificationRepository.save(blockedNotification);
         }
