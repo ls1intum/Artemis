@@ -74,6 +74,8 @@ export class CourseManagementCardComponent implements OnChanges {
     faAngleUp = faAngleUp;
     faPersonChalkboard = faPersonChalkboard;
 
+    courseColor: string;
+
     readonly FeatureToggle = FeatureToggle;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -97,6 +99,8 @@ export class CourseManagementCardComponent implements OnChanges {
 
         // If there are no future exercises either, show the past exercises by default
         this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
+
+        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**
@@ -143,11 +147,5 @@ export class CourseManagementCardComponent implements OnChanges {
 
         this.pastExerciseCount = allPastExercises.length;
         this.pastExercises = allPastExercises.slice(0, 5);
-    }
-
-    get hoverEffectForBackground(): Record<string, string> {
-        return {
-            '--background-color-for-hover': this.course.color || this.ARTEMIS_DEFAULT_COLOR,
-        };
     }
 }

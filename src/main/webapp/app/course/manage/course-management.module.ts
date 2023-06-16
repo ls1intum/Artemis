@@ -62,6 +62,7 @@ import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lt
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
 
 @NgModule({
     imports: [
@@ -111,6 +112,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
         FeatureToggleModule,
         ExerciseCategoriesModule,
         NgbNavModule,
+        ArtemisExerciseCreateButtonsModule,
     ],
     declarations: [
         CourseManagementComponent,
