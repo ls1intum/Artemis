@@ -396,19 +396,19 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
-        courseTestService.testGetCourseForDashboardForbiddenWithRegistrationPossible();
+        courseTestService.testGetCourseForDashboardForbiddenWithEnrollmentPossible();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistration() throws Exception {
-        courseTestService.testGetCourseForRegistration();
+        courseTestService.testGetCourseForEnrollment();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistrationAccessDenied() throws Exception {
-        courseTestService.testGetCourseForRegistrationAccessDenied();
+        courseTestService.testGetCourseForEnrollmentAccessDenied();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -456,8 +456,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
-    void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
-        courseTestService.testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation();
+    void testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation() throws Exception {
+        courseTestService.testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation();
     }
 
     @Test
@@ -546,8 +546,14 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "ab12cde")
-    void testRegisterForCourse() throws Exception {
-        courseTestService.testRegisterForCourse();
+    void testEnrollInCourse() throws Exception {
+        courseTestService.testEnrollInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUnenrollFromCourse() throws Exception {
+        courseTestService.testUnenrollFromCourse();
     }
 
     @Test
@@ -582,8 +588,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "ab12cde")
-    void testRegisterForCourse_notMeetsDate() throws Exception {
-        courseTestService.testRegisterForCourse_notMeetsDate();
+    void testEnrollInCourse_notMeetsDate() throws Exception {
+        courseTestService.testEnrollInCourse_notMeetsDate();
     }
 
     @Test
