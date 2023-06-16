@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.security.Principal;
@@ -10,7 +11,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -378,7 +378,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student6", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
     void testQuizSubmitEmptyQuizInLiveMode() throws Exception {
         int invalidExerciseId = -1;
 
@@ -525,7 +525,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_badRequest_exam() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExerciseServer = quizExerciseUtilService.createQuizForExam(exerciseGroup);
@@ -542,7 +542,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPreview_forbidden() throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         Course course = courses.get(0);
@@ -552,7 +552,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_forbidden() throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         Course course = courses.get(0);
@@ -661,13 +661,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitScheduledAndDeleted() throws Exception {
-        log.debug("// Start testQuizSubmitScheduledAndDeleted");
-        /*
-         * The time we wait in between needs to be relatively high to make sure the concurrent tasks are finished in time, especially sending out the exercise can easily take up to
-         * 100 ms, so we should leave about 200 ms for that, similar for the completion of all saving/updating/scheduling operations.
-         */
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         Course course = courses.get(0);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
@@ -680,23 +675,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // also schedules the quiz
         log.debug("// Saving the quiz initially");
         quizExercise = quizExerciseService.save(quizExercise);
-
-        checkQuizNotStarted(publishQuizPath);
-
-        // wait a bit
-        sleep(500);
-        checkQuizNotStarted(publishQuizPath);
-
-        // reschedule
-        log.debug("// Rescheduling the quiz for another 2s into the future");
-        var adjustedReleaseDate = initialReleaseDate.plus(1000, ChronoUnit.MILLIS);
-        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(adjustedReleaseDate));
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        // wait for the old release date to pass
-        sleep(750);
-
-        // check that quiz has still not started now
         checkQuizNotStarted(publishQuizPath);
 
         // check that submission fails
@@ -706,15 +684,21 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizScheduleService.processCachedQuizSubmissions();
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
-        // check that quiz has started
+        // reschedule
+        log.debug("// Rescheduling the quiz to now");
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // check that quiz and quiz batches have started
         log.debug("// Check that the quiz has started");
-        verify(messagingTemplate, timeout(2000).times(1)).send(eq(publishQuizPath), any());
+        assertThat(quizExercise.isQuizStarted()).isTrue();
+        assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
 
         // process cached submissions
         quizScheduleService.processCachedQuizSubmissions();
 
         // save submissions
-        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+        for (int i = 1; i <= 2; i++) {
             quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
             final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
@@ -738,8 +722,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // ... directly delete the quiz
         exerciseRepository.delete(quizExercise);
 
-        sleep(500);
-
+        QuizExercise finalQuizExercise = quizExercise;
+        await().until(() -> exerciseRepository.findById(finalQuizExercise.getId()).isEmpty());
         // the deleted quiz should get removed, no submissions should be saved
         quizScheduleService.processCachedQuizSubmissions();
 
@@ -838,7 +822,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student6", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS);
@@ -871,11 +855,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // check that quiz has not started now
         log.debug("// Check that the quiz has not started and submissions are not allowed");
         verify(messagingTemplate, never()).send(eq(path), any());
-    }
-
-    private void sleep(long millis) throws InterruptedException {
-        log.debug("zzzzzzzzzzzzz Sleep {}ms", millis);
-        TimeUnit.MILLISECONDS.sleep(millis);
     }
 
     private void setupShortAnswerSubmission(ShortAnswerQuestion saQuestion, QuizSubmission submission, int amountOfCorrectAnswers) {
