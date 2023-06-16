@@ -166,11 +166,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<Competency> competencies,
-            boolean istTeamExercise) {
+            boolean isTeamExercise) {
         // creating text exercise with Result
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
 
-        if (istTeamExercise) {
+        if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
         }
 
