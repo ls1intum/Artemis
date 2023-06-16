@@ -126,6 +126,7 @@ public class ChannelService {
         if (StringUtils.hasText(channel.getName())) {
             channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
         }
+
         channel.setCreator(creator.orElse(null));
         channel.setCourse(course);
         channel.setIsArchived(false);
@@ -147,6 +148,34 @@ public class ChannelService {
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         return savedChannel;
+    }
+
+    /**
+     * Adds all course students to the given channel asynchronously
+     *
+     * @param course  the course to add the students from
+     * @param channel the channel to add the students to
+     */
+    @Async
+    public void registerCourseStudentsToChannelAsynchronously(Course course, Channel channel) {
+        SecurityUtils.setAuthorizationObject();
+        registerUsersToChannel(true, false, false, List.of(), course, channel);
+    }
+
+    /**
+     * Adds users to the given channel asynchronously
+     *
+     * @param addAllStudents if true, all students of the course will be added to the channel
+     * @param course         the course to add the students from
+     * @param channel        the channel to add the students to
+     */
+    @Async
+    public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
+        if (channel == null || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            return;
+        }
+        SecurityUtils.setAuthorizationObject();
+        registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
     }
 
     /**
@@ -190,9 +219,18 @@ public class ChannelService {
         for (Course c : courses) {
             // set the security context because the async methods use multiple threads
             SecurityUtils.setAuthorizationObject();
-            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+
+            channelRepository.findChannelsByCourseId(c.getId()).forEach(channel -> {
+                // add user to default channels
+                if (channelNames.contains(channel.getName())) {
+                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+                }
+                // add to exercise or lecture channel if user is not member
+                if ((channel.getLecture() != null || channel.getExercise() != null) && !conversationService.isMember(channel.getId(), userToAddToGroup.getId())) {
+                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+                }
             });
+
         }
     }
 
@@ -249,61 +287,56 @@ public class ChannelService {
     }
 
     /**
-     * Create a channel for a lecture
+     * Creates a channel for a lecture and sets the channel name of the lecture accordingly. Also adds all course members asynchronously.
      *
      * @param lecture     the lecture to create the channel for
      * @param channelName the name of the channel
      * @return the created channel
      */
-    public Channel createLectureChannel(Lecture lecture, @NotNull String channelName) {
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName);
-        channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAnnouncementChannel(false);
-        channelToCreate.setIsArchived(false);
+    public Channel createLectureChannel(Lecture lecture, String channelName) {
+        if (!lecture.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            return null;
+        }
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setLecture(lecture);
-        return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        lecture.setChannelName(createdChannel.getName());
+        return createdChannel;
     }
 
     /**
-     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly
+     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly. Also adds all course members asynchronously.
      *
      * @param exercise    the exercise to create the channel for
      * @param channelName the name of the channel
      * @return the created channel
      */
-    public Channel createExerciseChannel(Exercise exercise, @NotNull String channelName) {
-        if (!exercise.isCourseExercise()) {
+    public Channel createExerciseChannel(Exercise exercise, String channelName) {
+        if (!exercise.isCourseExercise() || !exercise.getCourseViaExerciseGroupOrCourseMember().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
-
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName);
-        channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAnnouncementChannel(false);
-        channelToCreate.setIsArchived(false);
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setExercise(exercise);
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     /**
-     * Create a channel for an exam
+     * Creates a channel for a real exam and sets the channel name of the exam accordingly. Also adds all course members asynchronously.
      *
      * @param exam        the exam to create the channel for
      * @param channelName the name of the channel
      * @return the created channel
      */
-    public Channel createExamChannel(Exam exam, @NotNull String channelName) {
-        if (exam.isTestExam()) {
+    public Channel createExamChannel(Exam exam, String channelName) {
+        if (exam.isTestExam() || !exam.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName);
+        Channel channelToCreate = createDefaultChannel(channelName);
         channelToCreate.setIsPublic(false);
-        channelToCreate.setIsAnnouncementChannel(false);
-        channelToCreate.setIsArchived(false);
         channelToCreate.setExam(exam);
-        return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        exam.setChannelName(createdChannel.getName());
+        return createdChannel;
     }
 
     /**
@@ -352,12 +385,20 @@ public class ChannelService {
     }
 
     /**
-     * Update the channel name
+     * Removes users from an exam channel
      *
-     * @param channel        the channel to update
-     * @param newChannelName the new channel name
-     * @return the updated channel
+     * @param users  users to remove from the channel
+     * @param examId id of the exam the channel belongs to
      */
+    public void deregisterUsersFromExamChannel(Set<User> users, Long examId) {
+        Channel channel = channelRepository.findChannelByExamId(examId);
+        if (channel == null) {
+            return;
+        }
+
+        conversationService.deregisterUsersFromAConversation(channel.getCourse(), users, channel);
+    }
+
     private Channel updateChannelName(Channel channel, String newChannelName) {
 
         // Update channel name if necessary
@@ -369,5 +410,14 @@ public class ChannelService {
         else {
             return channel;
         }
+    }
+
+    private static Channel createDefaultChannel(@NotNull String channelName) {
+        Channel defaultChannel = new Channel();
+        defaultChannel.setName(channelName);
+        defaultChannel.setIsPublic(true);
+        defaultChannel.setIsAnnouncementChannel(false);
+        defaultChannel.setIsArchived(false);
+        return defaultChannel;
     }
 }

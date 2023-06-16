@@ -376,7 +376,7 @@ public class CourseTestService {
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(userPrefix, true, 5));
-        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null);
+        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null, true);
         course3.setStudentGroupName(course3.getDefaultStudentGroupName());
         course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
         course3.setEditorGroupName(course3.getDefaultEditorGroupName());
@@ -823,14 +823,14 @@ public class CourseTestService {
             courses[i] = courseRepo.save(courses[i]);
             Exam examRegistered = ModelFactory.generateExam(courses[i]);
             Channel channel = new Channel();
-            channel.setName(examRegistered.getTitle());
+            channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
             channel.setIsAnnouncementChannel(false);
             channel.setIsPublic(false);
             channel.setIsArchived(false);
             channelRepository.save(channel);
             Exam examUnregistered = ModelFactory.generateExam(courses[i]);
             Channel channel1 = new Channel();
-            channel1.setName(examUnregistered.getTitle());
+            channel1.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
             channel1.setIsAnnouncementChannel(false);
             channel1.setIsPublic(false);
             channel1.setIsArchived(false);
@@ -900,7 +900,7 @@ public class CourseTestService {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
         Channel channel = new Channel();
-        channel.setName(programmingExercise.getTitle());
+        channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setIsAnnouncementChannel(false);
         channel.setIsPublic(true);
         channel.setIsArchived(false);

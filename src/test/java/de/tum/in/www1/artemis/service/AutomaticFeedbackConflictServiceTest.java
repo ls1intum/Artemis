@@ -62,6 +62,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @AfterEach
     void tearDown() throws Exception {
         atheneRequestMockProvider.reset();
+        super.resetSpyBeans();
     }
 
     /**

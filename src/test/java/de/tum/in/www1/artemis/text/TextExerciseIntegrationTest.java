@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.text;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -28,8 +30,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -80,6 +84,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -153,6 +160,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
+        database.enableMessagingForCourse(course);
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         String title = "New Text Exercise";
@@ -173,6 +181,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
         assertThat(channel).as("channel was created").isNotNull();
         assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("new-text-exercise");
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            return conversationParticipants.size() == 4; // 2 students, 1 tutor, 1 instructor (see @BeforeEach)
+        });
     }
 
     @Test
@@ -520,11 +535,21 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
+        database.enableMessagingForCourse(course2);
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
         textExercise.setChannelName("testchannel" + textExercise.getId());
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
+        assertThat(channel).isNotNull();
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            return conversationParticipants.size() == 4; // 2 students, 1 tutor, 1 instructor (see @BeforeEach)
+        });
     }
 
     @Test
@@ -584,7 +609,11 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setReleaseDate(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+
+        // There should not be created a channel for the imported exam exercise
+        Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
+        assertThat(channel).isNull();
     }
 
     @Test
@@ -709,7 +738,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + textExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(textExercise);
         channelRepository.save(channel);
         TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
@@ -756,7 +785,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         Channel channel = new Channel();
-        channel.setName("testchannel-" + textExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);

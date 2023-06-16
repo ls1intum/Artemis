@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -47,7 +48,9 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
         FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
 
-        channelService.createExerciseChannel(newFileUploadExercise, importedExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(newFileUploadExercise, importedExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, newFileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+
         return newFileUploadExercise;
     }
 

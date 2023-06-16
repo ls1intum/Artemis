@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.fileupload;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -20,9 +22,12 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -53,6 +58,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private List<GradingCriterion> gradingCriteria;
 
@@ -148,8 +156,10 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
+        database.enableMessagingForCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
         fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setChannelName("testchannel");
+        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        fileUploadExercise.setChannelName(uniqueChannelName);
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
@@ -172,7 +182,14 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
                 .isEqualTo("created first instruction with empty criteria for testing");
 
         assertThat(channelFromDB).isNotNull();
-        assertThat(channelFromDB.getName()).isEqualTo("testchannel");
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 5; // 2 students, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
+        });
     }
 
     @Test
@@ -237,7 +254,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + fileUploadExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(fileUploadExercise);
         channelRepository.save(channel);
 
@@ -307,7 +324,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
-        channel.setName("testchannel-" + fileUploadExercise.getId());
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(fileUploadExercise);
         channelRepository.save(channel);
 
@@ -660,14 +677,26 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         Course course = database.addCourseWithFileUploadExercise();
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
         Course course2 = database.addEmptyCourse();
+        database.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
-        expectedFileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 8));
+        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        expectedFileUploadExercise.setChannelName(uniqueChannelName);
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedFileUploadExercise).usingRecursiveComparison()
                 .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient")
                 .isEqualTo(expectedFileUploadExercise);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 5; // 2 students, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
+        });
     }
 
     @Test

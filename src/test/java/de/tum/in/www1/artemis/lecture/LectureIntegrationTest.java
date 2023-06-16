@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -14,9 +15,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -38,6 +42,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     ChannelRepository channelRepository;
 
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
+
     private Attachment attachmentDirectOfLecture;
 
     private Attachment attachmentOfAttachmentUnit;
@@ -57,10 +64,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         var lecture = this.course1.getLectures().stream().findFirst().get();
         lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
         Channel channel = new Channel();
+        channel.setCourse(course1);
         channel.setIsAnnouncementChannel(false);
         channel.setIsPublic(true);
         channel.setIsArchived(false);
-        channel.setName("test");
+        channel.setName("lecture" + UUID.randomUUID().toString().substring(0, 8));
         lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(lecture);
         channel.setLecture(this.lecture1);
@@ -114,6 +122,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLecture_correctRequestBody_shouldCreateLecture() throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+        database.enableMessagingForCourse(course);
 
         Lecture lecture = new Lecture();
         lecture.setTitle("loremIpsum");
@@ -131,6 +140,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
+
+        // Check that the conversation participants are added correctly to the lecture channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            return conversationParticipants.size() == 4; // 2 tutors, 1 instructor, 1 student (see @BeforeEach)
+        });
     }
 
     @Test
@@ -148,13 +164,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        originalLecture.setChannelName("test");
+        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        originalLecture.setChannelName(uniqueChannelName);
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
         Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
 
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo("test");
+        assertThat(channel.getName()).isEqualTo(uniqueChannelName);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }
@@ -397,6 +414,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport() throws Exception {
         Course course2 = this.database.addEmptyCourse();
+        database.enableMessagingForCourse(course2);
 
         Lecture lecture = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
 
@@ -406,5 +424,16 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         assertThat(lecture.getAttachments().stream().map(Attachment::getName).toList())
                 .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
+
+        Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo("change-imported-lecture-" + lecture.getId()); // default name of imported lecture channel
+
+        // Check that the conversation participants are added correctly to the lecture channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            return conversationParticipants.size() == 4; // 2 tutors, 1 instructor, 1 student (see @BeforeEach)
+        });
     }
 }

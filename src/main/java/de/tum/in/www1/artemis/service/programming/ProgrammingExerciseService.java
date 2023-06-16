@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -209,7 +210,8 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, savedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
 
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook

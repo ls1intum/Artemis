@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -86,6 +87,8 @@ public class ModelingExerciseResource {
 
     private final ChannelService channelService;
 
+    private final ConversationService conversationService;
+
     private final ChannelRepository channelRepository;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
@@ -93,7 +96,8 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ConversationService conversationService,
+            ChannelRepository channelRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -110,6 +114,7 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.channelService = channelService;
+        this.conversationService = conversationService;
         this.channelRepository = channelRepository;
     }
 
@@ -145,7 +150,8 @@ public class ModelingExerciseResource {
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
-        channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 
@@ -285,6 +291,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(modelingExercise);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }

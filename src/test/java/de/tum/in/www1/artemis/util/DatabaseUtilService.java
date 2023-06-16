@@ -57,6 +57,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -563,7 +564,8 @@ public class DatabaseUtilService {
     /**
      * Adds the provided number of students and tutors into the user repository. Students login is a concatenation of the prefix "student" and a number counting from 1 to
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
-     * the "tumuser" group
+     * the "tumuser" group.
+     * To avoid accumulating a high number of users per course, this method also removes existing users from courses before adding new users.
      *
      * @param prefix              the prefix for the user login
      * @param numberOfStudents    the number of students that will be added to the database
@@ -604,7 +606,15 @@ public class DatabaseUtilService {
             log.debug("Generate admin done");
         }
 
+        // Before adding new users, existing users are removed from courses.
+        // Otherwise, the amount users per course constantly increases while running the tests,
+        // even though the old users are not needed anymore.
         if (usersToAdd.size() > 0) {
+            Set<User> currentUsers = userRepo.findAllInAnyGroup();
+            log.debug("Removing {} users from all courses...", currentUsers.size());
+            currentUsers.forEach(user -> user.setGroups(Set.of()));
+            userRepo.saveAll(currentUsers);
+            log.debug("Removing {} users from all courses. Done", currentUsers.size());
             log.debug("Save {} users to database...", usersToAdd.size());
             usersToAdd = userRepo.saveAll(usersToAdd);
             log.debug("Save {} users to database. Done", usersToAdd.size());
@@ -750,6 +760,11 @@ public class DatabaseUtilService {
 
     public Course createCourse() {
         return createCourse(null);
+    }
+
+    public Course createCourseWithMessagingEnabled() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        return courseRepo.save(course);
     }
 
     public Course createCourse(Long id) {
@@ -974,6 +989,18 @@ public class DatabaseUtilService {
         onlineUnit.setDescription("Lorem Ipsum");
         onlineUnit.setSource("http://video.fake");
         return onlineUnitRepository.save(onlineUnit);
+    }
+
+    public void enableMessagingForCourse(Course course) {
+        CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
+        if (currentConfig == CourseInformationSharingConfiguration.DISABLED) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+            courseRepo.save(course);
+        }
+        else if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepo.save(course);
+        }
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
@@ -1729,6 +1756,14 @@ public class DatabaseUtilService {
         exam.setGracePeriod(180);
         exam = examRepository.save(exam);
         return exam;
+    }
+
+    public Channel addExamChannel(Exam exam, String channelName) {
+        Channel channel = ModelFactory.generateChannel(exam.getCourse(), channelName);
+        channel.setExam(exam);
+        channel = conversationRepository.save(channel);
+        exam.setChannelName(channelName);
+        return channel;
     }
 
     public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultDate) {

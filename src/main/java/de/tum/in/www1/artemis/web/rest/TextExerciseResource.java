@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -98,6 +99,8 @@ public class TextExerciseResource {
 
     private final ChannelService channelService;
 
+    private final ConversationService conversationService;
+
     private final ChannelRepository channelRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
@@ -107,7 +110,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository) {
+            ChannelService channelService, ChannelRepository channelRepository, ConversationService conversationService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -130,6 +133,7 @@ public class TextExerciseResource {
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
         this.channelService = channelService;
+        this.conversationService = conversationService;
         this.channelRepository = channelRepository;
     }
 
@@ -164,7 +168,8 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
 
-        channelService.createExerciseChannel(result, textExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, textExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
@@ -296,6 +301,7 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(textExercise);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }

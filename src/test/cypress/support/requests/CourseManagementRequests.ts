@@ -261,6 +261,14 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
     }
 
+    getExerciseChannel(courseId: number, exerciseId: number) {
+        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/channel` });
+    }
+
+    getLectureChannel(courseId: number, exerciseId: number) {
+        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/lectures/${exerciseId}/channel` });
+    }
+
     createCourseMessageGroupChat(course: Course, users: Array<string>) {
         const body = users;
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/group-chats`, body });
@@ -399,6 +407,13 @@ export class CourseManagementRequests {
         };
         const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
+    }
+
+    deleteTextExercise(exerciseId: number) {
+        return cy.request({
+            url: TEXT_EXERCISE_BASE + exerciseId,
+            method: DELETE,
+        });
     }
 
     /**

@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -63,13 +64,15 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final ConversationService conversationService;
+
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ConversationService conversationService, ChannelRepository channelRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -78,6 +81,7 @@ public class LectureResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.channelService = channelService;
+        this.conversationService = conversationService;
         this.channelRepository = channelRepository;
     }
 
@@ -96,9 +100,11 @@ public class LectureResource {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+
         Lecture savedLecture = lectureRepository.save(lecture);
-        channelService.createLectureChannel(savedLecture, lecture.getChannelName());
-        savedLecture.setChannelName(lecture.getChannelName());
+        Channel createdChannel = channelService.createLectureChannel(savedLecture, lecture.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
+
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
@@ -237,7 +243,7 @@ public class LectureResource {
 
         final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
         Channel createdChannel = channelService.createLectureChannel(result, "change-imported-lecture-" + result.getId());
-        result.setChannelName(createdChannel.getName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourse(), createdChannel);
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
@@ -358,7 +364,7 @@ public class LectureResource {
         }
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
+        conversationService.deregisterAllClientsFromChannel(lecture);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
