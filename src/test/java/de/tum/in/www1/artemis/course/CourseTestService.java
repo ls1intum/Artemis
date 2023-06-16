@@ -2182,10 +2182,10 @@ public class CourseTestService {
         course.setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 
-        final ProgrammingExercise courseExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final ProgrammingExercise courseExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         final var programmingExercise = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(courseExercise.getId()).orElseThrow();
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
