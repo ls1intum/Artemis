@@ -101,7 +101,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     ngOnChanges() {
         this.course = this.course ?? getCourseFromExercise(this.exercise);
 
-        if (this.submissionPolicy) {
+        if (this.submissionPolicy?.active) {
             this.countSubmissions();
         }
         if (this.studentParticipation?.results?.length) {

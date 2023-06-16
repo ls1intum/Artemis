@@ -320,13 +320,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const courseId = programmingExercise.course!.id!;
 
-        comp.hasSubmissionPolicy = false;
         comp.courseId = courseId;
 
         comp.handleNewExercise(programmingExercise);
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
-        expect(comp.hasSubmissionPolicy).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
