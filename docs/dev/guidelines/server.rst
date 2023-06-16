@@ -314,23 +314,25 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
 
-The table contains all annotations for the corresponding minimum role. Different annotations get used during migration.
+The table contains all annotations for the corresponding minimum role including the required path prefix for all their endpoints and the package they should reside in. Different annotations get used during migration.
 
-+------------------+----------------------------------------+
-| **Minimum Role** | **Endpoint Annotation**                |
-+------------------+----------------------------------------+
-| ADMIN            | @EnforceAdmin                          |
-+------------------+----------------------------------------+
-| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") |
-+------------------+----------------------------------------+
-| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     |
-+------------------+----------------------------------------+
-| TA               | @PreAuthorize("hasRole('TA')")         |
-+------------------+----------------------------------------+
-| USER             | @PreAuthorize("hasRole('USER')")       |
-+------------------+----------------------------------------+
-| ANONYMOUS        | @PreAuthorize("permitAll()")           |
-+------------------+----------------------------------------+
++------------------+----------------------------------------+-----------------+----------------+
+| **Minimum Role** | **Endpoint Annotation**                | **Path Prefix** | **Package**    |
++------------------+----------------------------------------+-----------------+----------------+
+| ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
++------------------+----------------------------------------+-----------------+----------------+
+| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| TA               | @PreAuthorize("hasRole('TA')")         | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| USER             | @PreAuthorize("hasRole('USER')")       | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
++------------------+----------------------------------------+-----------------+----------------+
+
+If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
 If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:

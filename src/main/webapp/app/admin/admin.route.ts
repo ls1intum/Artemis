@@ -82,7 +82,11 @@ export const adminState: Routes = [
             },
             {
                 path: 'privacy-statement',
-                loadChildren: () => import('./privacy-statement/privacy-statement-update/privacy-statement-update.module').then((module) => module.PrivacyStatementUpdateModule),
+                loadChildren: () => import('./legal/legal-update.module').then((module) => module.LegalUpdateModule),
+            },
+            {
+                path: 'imprint',
+                loadChildren: () => import('./legal/legal-update.module').then((module) => module.LegalUpdateModule),
             },
             {
                 path: 'iris',
