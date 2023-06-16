@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -38,6 +39,12 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private Lecture lecture1;
 
     private OnlineUnit onlineUnit;
@@ -46,17 +53,17 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() {
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = this.database.createCourseWithLecture(true);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.onlineUnit = new OnlineUnit();
         this.onlineUnit.setDescription("LoremIpsum");
         this.onlineUnit.setName("LoremIpsum");
         this.onlineUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         jsoupMock = mockStatic(Jsoup.class);
     }
@@ -131,7 +138,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         persistOnlineUnitWithLecture();
 
         // Add a second lecture unit
-        OnlineUnit onlineUnit = database.createOnlineUnit();
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
         lecture1.addLectureUnit(onlineUnit);
         lectureRepository.save(lecture1);
 

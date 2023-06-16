@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
@@ -41,10 +38,13 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.UserRole;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -60,6 +60,15 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -110,17 +119,17 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        userUtilService.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts (there are 8 posts with lecture context (4 per lecture), 8 with exercise context (4 per exercise),
         // 1 plagiarism case, 4 with course-wide context and 3 with conversation initialized - initialized): 24 posts in total
-        existingPostsAndConversationPosts = database.createPostsWithinCourse(TEST_PREFIX);
+        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
         existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
-        existingCoursePosts = existingPosts.stream().filter(coursePost -> (coursePost.getPlagiarismCase() == null)).collect(Collectors.toList());
+        existingCoursePosts = existingPosts.stream().filter(coursePost -> (coursePost.getPlagiarismCase() == null)).collect(Collectors.toCollection(ArrayList::new));
 
         existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
 
@@ -180,7 +189,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setExercise(exercise);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
@@ -229,7 +238,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExamExercisePost_badRequest() throws Exception {
-        Exam exam = database.setupSimpleExamWithExerciseGroupExercise(course);
+        Exam exam = examUtilService.setupSimpleExamWithExerciseGroupExercise(course);
         Post postToSave = createPostWithoutContext();
         Exercise examExercise = exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
         postToSave.setExercise(examExercise);
@@ -251,7 +260,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setLecture(lecture);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
@@ -268,7 +277,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setCourseWideContext(existingCourseWidePosts.get(0).getCourseWideContext());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
@@ -292,7 +301,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdPost);
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
@@ -357,7 +366,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreatePostForCourseWithDisabledPosts_badRequest() throws Exception {
-        Course course = database.createCourseWithPostsDisabled();
+        Course course = conversationUtilService.createCourseWithPostsDisabled();
         courseId = course.getId();
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
@@ -376,7 +385,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setContent("");
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdPost);
         Post expectedPost = new Post();
         expectedPost.setId(createdPost.getId());
         expectedPost.setAuthor(createdPost.getAuthor());
@@ -448,7 +457,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -462,7 +471,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToUpdate.setLecture(this.postsBelongingToFirstLecture.get(0).getLecture());
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -476,7 +485,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToUpdate.setExercise(this.postsBelongingToFirstExercise.get(0).getExercise());
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -491,7 +500,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToUpdate.setLecture(this.postsBelongingToFirstLecture.get(0).getLecture());
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -504,7 +513,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToUpdate.setCourseWideContext(CourseWideContext.RANDOM);
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -515,7 +524,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
 
         // update post from another student (index 1)--> forbidden
@@ -535,7 +544,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToNotUpdate.setLecture(this.postsBelongingToFirstLecture.get(0).getLecture());
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.OK);
-        database.assertSensitiveInformationHidden(notUpdatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(notUpdatedPost);
         // no effect on post context
         assertThat(notUpdatedPost.getCourseWideContext()).isNull();
         assertThat(notUpdatedPost.getCourse()).isNull();
@@ -586,7 +595,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // change display priority to PINNED
         Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/display-priority", null, Post.class, HttpStatus.OK,
                 params);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToPin);
     }
 
@@ -613,7 +622,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // change display priority to ARCHIVED
         Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/display-priority", null, Post.class,
                 HttpStatus.OK, params);
-        database.assertSensitiveInformationHidden(updatedPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToArchive);
     }
 
@@ -992,7 +1001,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @NotNull
     private List<Post> getPosts(LinkedMultiValueMap<String, String> params) throws Exception {
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         return returnedPosts;
     }
 

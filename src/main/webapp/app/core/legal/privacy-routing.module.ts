@@ -13,7 +13,7 @@ const routes: Routes = [
                 component: PrivacyComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'legal.privacy.title',
+                    pageTitle: 'artemisApp.legal.privacyStatement.title',
                 },
             },
             {
@@ -21,7 +21,7 @@ const routes: Routes = [
                 component: PrivacyComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'legal.privacy.title',
+                    pageTitle: 'artemisApp.legal.privacyStatement.title',
                 },
             },
         ],
