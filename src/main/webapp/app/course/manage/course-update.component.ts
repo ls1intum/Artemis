@@ -197,10 +197,6 @@ export class CourseUpdateComponent implements OnInit {
                 }),
                 unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
-                presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
-                    Validators.min(1),
-                    regexValidator(this.presentationScorePattern),
-                ]),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
             },

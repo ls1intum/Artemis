@@ -15,7 +15,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { Router } from '@angular/router';
 
 describe('CourseRegistrationButtonComponent', () => {
