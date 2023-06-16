@@ -37,25 +37,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_PATH = "programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/" + NEW_RESULT_RESOURCE_PATH;
-
-    public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
-
-    public static final String TEST_CASE_CHANGED_API_PATH = "/api" + TEST_CASE_CHANGED_PATH;
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
-
-    public static final String ATHENE_RESULT_PATH = "/athene-result/";
-
-    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
-
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
-
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";
+    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -88,6 +72,12 @@ public final class Constants {
 
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
+
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Deleted";
+
+    public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
+
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.deleted";
 
     // TODO: the following numbers should be configurable in the yml files
 
@@ -163,6 +153,8 @@ public final class Constants {
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
+
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
@@ -274,6 +266,8 @@ public final class Constants {
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
     /**
      * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.

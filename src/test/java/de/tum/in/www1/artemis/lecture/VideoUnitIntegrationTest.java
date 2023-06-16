@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -27,23 +28,29 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private Lecture lecture1;
 
     private VideoUnit videoUnit;
 
     @BeforeEach
     void initTestCase() {
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = this.database.createCourseWithLecture(true);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.videoUnit = new VideoUnit();
         this.videoUnit.setDescription("LoremIpsum");
         this.videoUnit.setName("LoremIpsum");
         this.videoUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -121,7 +128,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         persistVideoUnitWithLecture();
 
         // Add a second lecture unit
-        VideoUnit videoUnit = database.createVideoUnit();
+        VideoUnit videoUnit = lectureUtilService.createVideoUnit();
         lecture1.addLectureUnit(videoUnit);
         lectureRepository.save(lecture1);
 

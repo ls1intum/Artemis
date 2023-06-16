@@ -102,6 +102,8 @@
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
+            "buildplan": "Build Plan",
+            "buildPlanEditor": "Build Plan Editor",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
@@ -464,7 +466,7 @@
                 "created": "The submission policy was created successfully!",
                 "updated": "The submission policy was updated successfully!",
                 "deleted": "The submission policy was deleted successfully!",
-                "submissionsAllowed": "allowed Submissions",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} allowed Submissions",
                 "none": {
                     "optionLabel": "None"
                 },

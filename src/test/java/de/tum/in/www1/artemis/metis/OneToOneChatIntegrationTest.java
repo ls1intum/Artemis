@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -23,9 +23,9 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        this.database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
         }
     }
 
