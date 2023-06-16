@@ -52,3 +52,8 @@ export class ProfileInfo {
         };
     };
 }
+
+export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {
+    const cisWithEditableBuildPlan = ['gitlabci', 'jenkins'];
+    return profileInfo.activeProfiles.some((profile) => cisWithEditableBuildPlan.includes(profile));
+};

@@ -45,19 +45,19 @@ class ProgrammingExerciseTestCaseGatlingTest extends Simulation {
 
     val scn = scenario("Test the ProgrammingExerciseTestCase entity")
         .exec(http("First unauthenticated request")
-        .get("/api/account")
+        .get("/api/public/account")
         .headers(headers_http)
         .check(status.is(401))
         ).exitHereIfFailed
         .pause(10)
         .exec(http("Authentication")
-        .post("/api/authenticate")
+        .post("/api/public/authenticate")
         .headers(headers_http_authentication)
         .body(StringBody("""{"username":"admin", "password":"admin"}""")).asJSON
         .check(header.get("Authorization").saveAs("access_token"))).exitHereIfFailed
         .pause(2)
         .exec(http("Authenticated request")
-        .get("/api/account")
+        .get("/api/public/account")
         .headers(headers_http_authenticated)
         .check(status.is(200)))
         .pause(10)

@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -104,7 +105,8 @@ public class BonusResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus/calculate-raw")
     @EnforceAdmin
-    // TODO: Ignore this in automated tests as this is only used for testing purposes
+    // TODO: Remove the manual configuration once the endpoint gets it's final pre-authorization when the feature releases.
+    @ManualConfig
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 

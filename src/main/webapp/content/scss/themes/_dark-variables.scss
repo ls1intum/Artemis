@@ -142,6 +142,7 @@ $navbar-breadcrumb-color: $primary;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 10);
+$hover-slightly-darker-body-bg: transparentize(#fff, 0.9);
 
 $dropdown-bg: $neutral-dark;
 $popover-bg: $neutral-dark-l-5;
