@@ -87,8 +87,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
 
-    private QuizExercise quizExercise;
-
     @Autowired
     private UserUtilService userUtilService;
 
