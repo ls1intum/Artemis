@@ -445,7 +445,6 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
-        console.log(participations);
         expect(component.students[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
         expect(component.students[0].numberOfParticipatedExercises).toBe(3);
         expect(component.students[0].numberOfSuccessfulExercises).toBe(3);
