@@ -2657,17 +2657,17 @@ public class DatabaseUtilService {
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
-        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
-        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "DragItem_2023-05-14T20-45-49-515_bebf2c89.jpg");
+        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "drag_and_drop_background.jpg");
+        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "drag_item.jpg");
         if (Files.exists(backgroundPathInFileSystem)) {
             Files.delete(backgroundPathInFileSystem);
         }
         if (Files.exists(dragItemPathInFileSystem)) {
             Files.delete(dragItemPathInFileSystem);
         }
-        Files.copy(new ClassPathResource("test-data/data-export/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg").getInputStream(), backgroundPathInFileSystem);
-        Files.copy(new ClassPathResource("test-data/data-export/DragItem_2023-05-14T20-45-49-515_bebf2c89.jpg").getInputStream(), dragItemPathInFileSystem);
-        dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
+        Files.copy(new ClassPathResource("test-data/data-export/drag_and_drop_background.jpg").getInputStream(), backgroundPathInFileSystem);
+        Files.copy(new ClassPathResource("test-data/data-export/drag_item.jpg").getInputStream(), dragItemPathInFileSystem);
+        dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
@@ -4482,7 +4482,7 @@ public class DatabaseUtilService {
         dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().text("invalid drag item");
         dragItem4.setTempID(generateTempId());
-        var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/DragItem_2023-05-14T20-45-49-515_bebf2c89.jpg");
+        var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
