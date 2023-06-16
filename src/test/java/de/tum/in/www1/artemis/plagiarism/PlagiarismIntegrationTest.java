@@ -19,10 +19,12 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
 class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -41,6 +43,12 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -53,10 +61,10 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 1, 1, 1);
-        course = database.addCourseWithOneFinishedTextExercise();
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
+        course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
 
         plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
