@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.exception;
 
+import org.springframework.context.annotation.Profile;
+
 /**
  * Exception related to the connected LSP functionalities
  */
+@Profile("lsp")
 public class LspException extends RuntimeException {
 
     /**

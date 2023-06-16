@@ -19,7 +19,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALVC, PROFILE_LSP } from 'app/app.constants';
 import { CodeEditorMonacoService } from 'app/exercises/programming/shared/code-editor/service/code-editor-monaco.service';
 
 @Component({
@@ -41,7 +41,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
 
-    isLspEnabled = false;
+    isLspFeatureEnabled = false;
+    isLspProfileActive = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
@@ -76,7 +77,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         private participationService: ParticipationService,
         private profileService: ProfileService,
         private featureToggleService: FeatureToggleService,
-        private monacoService: CodeEditorMonacoService,
     ) {}
 
     ngOnInit(): void {
@@ -86,9 +86,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
-            this.featureToggleService.getFeatureToggleActive(FeatureToggle.LSP).subscribe((isActive) => (this.isLspEnabled = isActive));
+            this.featureToggleService.getFeatureToggleActive(FeatureToggle.LSP).subscribe((isActive) => (this.isLspFeatureEnabled = isActive));
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
+                this.isLspProfileActive = profileInfo.activeProfiles?.includes(PROFILE_LSP);
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -149,7 +150,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     isMonacoOnlineEditorAllowed() {
         const exercise = this.exercise as ProgrammingExercise;
-        return exercise.allowOnlineEditor && exercise.allowMonacoOnlineEditor;
+        return this.isLspProfileActive && this.isLspFeatureEnabled && exercise.allowOnlineEditor && exercise.allowMonacoOnlineEditor;
     }
 
     /**

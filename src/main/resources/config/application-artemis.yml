@@ -99,6 +99,3 @@ artemis:
         token-validity-in-seconds: 10800
     apollon:
         conversion-service-url: http://localhost:8080
-    monaco:
-        token: lsp-token
-        lsp-servers: # URLs pointing to the LSP servers

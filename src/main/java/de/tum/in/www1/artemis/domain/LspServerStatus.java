@@ -2,12 +2,15 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Date;
 
+import org.springframework.context.annotation.Profile;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A helper object used to represent the metrics retrieved by the
  * health endpoint of a LSP server
  */
+@Profile("lsp")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LspServerStatus {
 

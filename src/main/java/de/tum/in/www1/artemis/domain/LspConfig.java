@@ -2,12 +2,15 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.URL;
 
+import org.springframework.context.annotation.Profile;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A helper object used to represent the configs passed to the client
  * for the Language Server Protocol connections
  */
+@Profile("lsp")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LspConfig {
 

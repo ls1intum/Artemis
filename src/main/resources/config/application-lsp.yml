@@ -1,0 +1,3 @@
+monaco:
+    token: lsp-token
+    lsp-servers: # URLs pointing to the LSP servers

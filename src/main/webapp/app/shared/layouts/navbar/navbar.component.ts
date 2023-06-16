@@ -6,7 +6,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { VERSION } from 'app/app.constants';
+import { PROFILE_LSP, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -74,7 +74,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     gitUsername: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
-    lspEnabled?: boolean;
+    lspFeatureEnabled?: boolean;
     modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
@@ -86,6 +86,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     iconsMovedToMenu: boolean;
     isNavbarNavVertical: boolean;
     isExamActive = false;
+    isLspProfileActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
 
     // Icons
@@ -193,6 +194,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
+                this.isLspProfileActive = profileInfo.activeProfiles?.includes(PROFILE_LSP);
             }
         });
 
@@ -215,7 +217,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.checkExamActive();
         });
 
-        this.featureToggleService.getFeatureToggleActive(FeatureToggle.LSP).subscribe((isActive) => (this.lspEnabled = isActive));
+        this.featureToggleService.getFeatureToggleActive(FeatureToggle.LSP).subscribe((isActive) => (this.lspFeatureEnabled = isActive));
 
         this.buildBreadcrumbs(this.router.url);
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));
