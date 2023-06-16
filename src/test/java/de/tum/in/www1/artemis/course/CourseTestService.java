@@ -801,17 +801,17 @@ public class CourseTestService {
         }
     }
 
-    private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
+    private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         Course course = courses.get(0);
-        course.setEnrollmentEnabled(registrationEnabled);
+        course.setEnrollmentEnabled(enrollmentEnabled);
         courseRepo.save(course);
         return course;
     }
 
     private User removeAllGroupsFromStudent1() {
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
-        // remove student from all courses so that they are not already registered
+        // remove student from all courses so that they are not already enrolled
         student.setGroups(new HashSet<>());
         userRepo.save(student);
         return student;
@@ -819,31 +819,31 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
-        Course course = createCourseWithRegistrationEnabled(true);
+        Course course = createCourseWithEnrollmentEnabled(true);
         removeAllGroupsFromStudent1();
         request.get("/api/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
-    public void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
-        Course course = createCourseWithRegistrationEnabled(true);
+    public void testGetCourseForDashboardForbiddenWithEnrollmentPossible() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
         removeAllGroupsFromStudent1();
         // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
         request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
-    public void testGetCourseForRegistration() throws Exception {
-        Course course = createCourseWithRegistrationEnabled(true);
-        // remove student from course so that they are not already registered
+    public void testGetCourseForEnrollment() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        // remove student from course so that they are not already enrolled
         course.setStudentGroupName("someNonExistingStudentGroupName");
         courseRepo.save(course);
         request.get("/api/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, Course.class);
     }
 
     // Test
-    public void testGetCourseForRegistrationAccessDenied() throws Exception {
-        Course course = createCourseWithRegistrationEnabled(false);
+    public void testGetCourseForEnrollmentAccessDenied() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(false);
         removeAllGroupsFromStudent1();
         request.get("/api/courses/" + course.getId() + "/for-enrollment", HttpStatus.FORBIDDEN, Course.class);
     }
@@ -1109,25 +1109,40 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation() throws Exception {
-        Course courseActiveRegistrationEnabled = CourseFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "testuser", "tutor", "editor", "instructor");
-        courseActiveRegistrationEnabled.setEnrollmentEnabled(true);
-        Course courseActiveRegistrationDisabled = CourseFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "testuser", "tutor", "editor", "instructor");
-        courseActiveRegistrationDisabled.setEnrollmentEnabled(false);
-        Course courseNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser", "tutor",
-                "editor", "instructor");
-        Course courseNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser", "tutor",
-                "editor", "instructor");
-        courseRepo.save(courseActiveRegistrationEnabled);
-        courseRepo.save(courseActiveRegistrationDisabled);
-        courseRepo.save(courseNotActivePast);
-        courseRepo.save(courseNotActiveFuture);
+    public void testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation() throws Exception {
+        Course courseEnrollmentActiveEnrollmentEnabled = CourseFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
+                new HashSet<>(), "testuser", "tutor", "editor", "instructor");
+        courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEnabled(true);
+        courseEnrollmentActiveEnrollmentEnabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
+        courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
+
+        Course courseEnrollmentActiveEnrollmentDisabled = CourseFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
+                new HashSet<>(), "testuser", "tutor", "editor", "instructor");
+        courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEnabled(false);
+        courseEnrollmentActiveEnrollmentDisabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
+        courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
+
+        Course courseEnrollmentNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser",
+                "tutor", "editor", "instructor");
+        courseEnrollmentNotActivePast.setEnrollmentEnabled(true);
+        courseEnrollmentNotActivePast.setEnrollmentStartDate(ZonedDateTime.now().minusDays(5));
+        courseEnrollmentNotActivePast.setEnrollmentEndDate(ZonedDateTime.now().minusMinutes(25));
+
+        Course courseEnrollmentNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser",
+                "tutor", "editor", "instructor");
+        courseEnrollmentNotActiveFuture.setEnrollmentEnabled(true);
+        courseEnrollmentNotActiveFuture.setEnrollmentStartDate(ZonedDateTime.now().plusMinutes(25));
+        courseEnrollmentNotActiveFuture.setEnrollmentEndDate(ZonedDateTime.now().plusDays(5));
+
+        courseRepo.save(courseEnrollmentActiveEnrollmentEnabled);
+        courseRepo.save(courseEnrollmentActiveEnrollmentDisabled);
+        courseRepo.save(courseEnrollmentNotActivePast);
+        courseRepo.save(courseEnrollmentNotActiveFuture);
 
         List<Course> courses = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
-        assertThat(courses).as("Only active course is returned").contains(courseActiveRegistrationEnabled);
-        assertThat(courses).as("Inactive courses are not returned").doesNotContain(courseActiveRegistrationDisabled, courseNotActivePast, courseNotActiveFuture);
+        assertThat(courses).as("Only active course is returned").contains(courseEnrollmentActiveEnrollmentEnabled);
+        assertThat(courses).as("Inactive courses are not returned").doesNotContain(courseEnrollmentActiveEnrollmentDisabled, courseEnrollmentNotActivePast,
+                courseEnrollmentNotActiveFuture);
     }
 
     // Test
@@ -1489,7 +1504,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testRegisterForCourse() throws Exception {
+    public void testEnrollInCourse() throws Exception {
         User student = userUtilService.createAndSaveUser("ab12cde");
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -1497,6 +1512,8 @@ public class CourseTestService {
         Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
+        course1.setEnrollmentStartDate(pastTimestamp);
+        course2.setEnrollmentEndDate(futureTimestamp);
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
@@ -1505,10 +1522,10 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName(), false);
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
+        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
-        assertThat(auditEvents).as("Audit Event for course registration added").hasSize(1);
+        assertThat(auditEvents).as("Audit Event for course enrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
@@ -1516,7 +1533,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testRegisterForCourse_notMeetsDate() throws Exception {
+    public void testEnrollInCourse_notMeetsDate() throws Exception {
         User student = userUtilService.createAndSaveUser("ab12cde");
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -1524,6 +1541,8 @@ public class CourseTestService {
         Course notYetStartedCourse = CourseFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course finishedCourse = CourseFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         notYetStartedCourse.setEnrollmentEnabled(true);
+        notYetStartedCourse.setEnrollmentStartDate(futureTimestamp);
+        notYetStartedCourse.setEnrollmentEndDate(futureTimestamp);
 
         notYetStartedCourse = courseRepo.save(notYetStartedCourse);
         finishedCourse = courseRepo.save(finishedCourse);
@@ -1533,6 +1552,53 @@ public class CourseTestService {
 
         request.post("/api/courses/" + notYetStartedCourse.getId() + "/enroll", User.class, HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + finishedCourse.getId() + "/enroll", User.class, HttpStatus.FORBIDDEN);
+    }
+
+    // Test
+    public void testUnenrollFromCourse() throws Exception {
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+        var groups = new HashSet<>(Set.of("unenrolltestcourse1", "unenrolltestcourse2", "unenrolltestcourse3"));
+        student.setGroups(groups);
+        userRepo.save(student);
+
+        Course[] courses = generateCoursesForUnenrollmentTest();
+        courseRepo.saveAll(Arrays.stream(courses).toList());
+
+        for (Course course : courses) {
+            mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName(), false);
+        }
+
+        testUnenrollFromCourseSuccessfull(courses[0]);
+
+        request.postWithResponseBody("/api/courses/" + courses[1].getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+
+        request.postWithResponseBody("/api/courses/" + courses[2].getId() + "/unenroll", null, User.class, HttpStatus.FORBIDDEN);
+    }
+
+    private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
+        User updatedStudent = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, User.class, HttpStatus.OK);
+        assertThat(updatedStudent.getGroups()).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
+        List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
+        assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
+        AuditEvent auditEvent = auditEvents.get(0);
+        assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course.getTitle());
+    }
+
+    private Course[] generateCoursesForUnenrollmentTest() {
+        Course[] courses = new Course[3];
+
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        courses[0] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
+        courses[1] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
+        courses[2] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
+        courses[0].setUnenrollmentEnabled(true);
+        courses[0].setUnenrollmentEndDate(futureTimestamp);
+        courses[1].setUnenrollmentEnabled(false);
+        courses[2].setUnenrollmentEnabled(true);
+        courses[2].setUnenrollmentEndDate(pastTimestamp);
+
+        return courses;
     }
 
     // Test
@@ -2761,7 +2827,7 @@ public class CourseTestService {
     public void testCreateInvalidOnlineCourse() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
 
-        // with RegistrationEnabled
+        // with EnrollmentEnabled
         course.setOnlineCourse(true);
         course.setEnrollmentEnabled(true);
         request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());

@@ -240,20 +240,20 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
-        courseTestService.testGetCourseForDashboardForbiddenWithRegistrationPossible();
+    void testGetCourseForDashboardForbiddenWithEnrollmentPossible() throws Exception {
+        courseTestService.testGetCourseForDashboardForbiddenWithEnrollmentPossible();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForRegistration() throws Exception {
-        courseTestService.testGetCourseForRegistration();
+    void testGetCourseForEnrollment() throws Exception {
+        courseTestService.testGetCourseForEnrollment();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseForRegistrationAccessDenied() throws Exception {
-        courseTestService.testGetCourseForRegistrationAccessDenied();
+    void testGetCourseForEnrollmentAccessDenied() throws Exception {
+        courseTestService.testGetCourseForEnrollmentAccessDenied();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -301,8 +301,8 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
-    void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
-        courseTestService.testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation();
+    void testGetCoursesToEnrollAndAccurateTimeZoneEvaluation() throws Exception {
+        courseTestService.testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation();
     }
 
     @Test
@@ -397,16 +397,25 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "ab12cde")
-    void testRegisterForCourse() throws Exception {
+    void testEnrollInCourse() throws Exception {
         bitbucketRequestMockProvider.mockUpdateUserDetails("ab12cde", "ab12cde@test.de", "ab12cdeFirst ab12cdeLast");
         bitbucketRequestMockProvider.mockAddUserToGroups();
-        courseTestService.testRegisterForCourse();
+        courseTestService.testEnrollInCourse();
     }
 
     @Test
     @WithMockUser(username = "ab12cde")
-    void testRegisterForCourse_notMeetsDate() throws Exception {
-        courseTestService.testRegisterForCourse_notMeetsDate();
+    void testEnrollInCourse_notMeetsDate() throws Exception {
+        courseTestService.testEnrollInCourse_notMeetsDate();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUnenrollFromCourse() throws Exception {
+        User student = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "student1").get();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup(student.getLogin(), "unenrolltestcourse1");
+        courseTestService.testUnenrollFromCourse();
     }
 
     @Test

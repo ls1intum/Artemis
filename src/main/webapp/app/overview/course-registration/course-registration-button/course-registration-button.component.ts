@@ -41,13 +41,13 @@ export class CourseRegistrationButtonComponent implements OnInit {
     }
 
     /**
-     * Register the logged-in user for the course
-     * @param courseId The id of course to register the user for
+     * Enroll the logged-in user for the course
+     * @param courseId The id of course to enroll the user in
      */
     registerForCourse(courseId: number) {
         this.courseService.registerForCourse(courseId).subscribe({
             next: () => {
-                this.alertService.success('artemisApp.studentDashboard.register.registerSuccessful');
+                this.alertService.success('artemisApp.studentDashboard.enroll.enrollSuccessful');
                 this.onRegistration.emit();
             },
             error: (error: string) => {
