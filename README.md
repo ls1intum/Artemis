@@ -77,7 +77,7 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup), [`GitLab and GitLab CI (experimental)`](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
+You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup), [`GitLab and GitLab CI (experimental)`](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup), [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup), or with [`local CI and local VC`](https://docs.artemis.cit.tum.de/dev/setup/#local-ci-and-local-vc-setup).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
