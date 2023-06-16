@@ -15,8 +15,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
@@ -43,7 +43,7 @@ public class SystemNotificationResource {
      * @return the list of system notifications
      */
     @GetMapping("system-notifications")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
@@ -58,7 +58,7 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("system-notifications/{notificationId}")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long notificationId) {
         log.debug("REST request to get SystemNotification : {}", notificationId);
         Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(notificationId);

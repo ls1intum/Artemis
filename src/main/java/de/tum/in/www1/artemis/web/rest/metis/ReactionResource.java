@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.Reaction;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ReactionService;
 
 /**
@@ -39,7 +39,7 @@ public class ReactionResource {
      *         or with status 400 (Bad Request) if the checks on user, course or posting validity fail
      */
     @PostMapping("courses/{courseId}/postings/reactions")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
         try {
             Reaction createdReaction = reactionService.createReaction(courseId, reaction);
@@ -61,7 +61,7 @@ public class ReactionResource {
      *         or 400 (Bad Request) if the checks on user, course or posting validity fail
      */
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
         reactionService.deleteReactionById(reactionId, courseId);
         return ResponseEntity.ok().build();

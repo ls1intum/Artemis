@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -56,7 +56,7 @@ public class NotificationSettingsResource {
      * @return the list of found NotificationSettings
      */
     @GetMapping("notification-settings")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<NotificationSetting>> getNotificationSettingsForCurrentUser() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all NotificationSettings for current user {}", currentUser);
@@ -75,7 +75,7 @@ public class NotificationSettingsResource {
      *         200 for a successful execution, 400 if the user provided empty settings to save, 500 if the save call returns empty settings
      */
     @PutMapping("notification-settings")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@NotNull @RequestBody NotificationSetting[] notificationSettings) {
         if (notificationSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Notification Settings", "NotificationSettings", "notificationSettingsEmpty");

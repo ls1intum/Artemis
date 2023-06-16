@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
@@ -82,7 +82,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
      */
     @GetMapping("/{courseId}/channels/overview")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to all channels of course: {}", courseId);
         checkMessagingEnabledElseThrow(courseId);
@@ -108,7 +108,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 201 (Created) and with body containing the created channel
      */
     @PostMapping("/{courseId}/channels")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -140,7 +140,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated channel
      */
     @PutMapping("/{courseId}/channels/{channelId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
         checkMessagingEnabledElseThrow(courseId);
@@ -168,7 +168,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("/{courseId}/channels/{channelId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -199,7 +199,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/archive")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -218,7 +218,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/unarchive")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -238,7 +238,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/grant-channel-moderator")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -261,7 +261,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-moderator")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -291,7 +291,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/register")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
@@ -329,7 +329,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/deregister")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         checkMessagingEnabledElseThrow(courseId);
         if (userLogins == null || userLogins.isEmpty()) {

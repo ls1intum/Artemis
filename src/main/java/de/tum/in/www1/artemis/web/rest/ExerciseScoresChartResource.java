@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ExerciseScoresChartService;
@@ -66,7 +66,7 @@ public class ExerciseScoresChartResource {
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
     @GetMapping("courses/{courseId}/charts/exercise-scores")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);

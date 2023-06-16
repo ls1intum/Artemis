@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -46,7 +46,7 @@ public class BuildPlanResource {
      * @return the build plan stored in the database
      */
     @GetMapping("/programming-exercises/{exerciseId}/build-plan/for-editor")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<BuildPlan> getBuildPlanForEditor(@PathVariable Long exerciseId) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
@@ -70,7 +70,7 @@ public class BuildPlanResource {
      * @return The updated build plan.
      */
     @PutMapping("/programming-exercises/{exerciseId}/build-plan")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 

@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamImportService;
@@ -78,7 +78,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroup);
@@ -115,7 +115,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to update an exercise group : {}", updatedExerciseGroup);
@@ -142,7 +142,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/import-exercise-group")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup) {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
@@ -162,7 +162,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
 
@@ -180,7 +180,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
 
@@ -201,7 +201,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);

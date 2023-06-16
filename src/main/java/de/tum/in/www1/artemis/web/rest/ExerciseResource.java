@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -98,7 +98,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -150,7 +150,7 @@ public class ExerciseResource {
      *         status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
      */
     @GetMapping("/exercises/{exerciseId}/example-solution")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Exercise> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get exercise with example solution: {}", exerciseId);
@@ -182,7 +182,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/for-assessment-dashboard")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -220,7 +220,7 @@ public class ExerciseResource {
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
      */
     @GetMapping("exercises/{exerciseId}/title")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -233,7 +233,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/stats-for-assessment-dashboard")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -249,7 +249,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("exercises/{exerciseId}/reset")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -265,7 +265,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/details")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
@@ -320,7 +320,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and new state of the correction toggle state
      */
     @PutMapping("exercises/{exerciseId}/toggle-second-correction")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -335,7 +335,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
     @GetMapping("exercises/{exerciseId}/latest-due-date")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {
         log.debug("getLatestDueDate for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

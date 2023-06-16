@@ -22,8 +22,8 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -108,7 +108,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
     @PutMapping("participations/{participationId}/results/{resultId}/text-assessment")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
                 && textAssessment.getFeedbacks().stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
@@ -143,7 +143,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
         log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
@@ -177,7 +177,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment/feedback")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -219,7 +219,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
@@ -261,7 +261,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("participations/{participationId}/submissions/{submissionId}/text-assessment-after-complaint")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -294,7 +294,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PostMapping("participations/{participationId}/submissions/{submissionId}/cancel-assessment")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (!submission.getParticipation().getId().equals(participationId)) {
@@ -314,7 +314,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("participations/{participationId}/text-submissions/{submissionId}/results/{resultId}")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
     }
@@ -334,7 +334,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
 
@@ -420,7 +420,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return the example result linked to the submission
      */
     @GetMapping("/exercises/{exerciseId}/submissions/{submissionId}/example-result")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
@@ -482,7 +482,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return - Set of text submissions
      */
     @GetMapping("/participations/{participationId}/submissions/{submissionId}/feedbacks/{feedbackId}/feedback-conflicts")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long participationId, @PathVariable long submissionId, @PathVariable long feedbackId) {
         log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
 
@@ -524,7 +524,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return - solved feedback conflict
      */
     @PostMapping("/exercises/{exerciseId}/feedback-conflicts/{feedbackConflictId}/solve")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
         log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
 

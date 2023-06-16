@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -65,7 +65,7 @@ public class RatingResource {
      * @return Rating or null
      */
     @GetMapping("/results/{resultId}/rating")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
         // TODO allow for Instructors
         if (!authCheckService.isAdmin()) {
@@ -84,7 +84,7 @@ public class RatingResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Rating> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
@@ -106,7 +106,7 @@ public class RatingResource {
      * @return updated Rating
      */
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Rating> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
@@ -121,7 +121,7 @@ public class RatingResource {
      * @return List of Ratings for the course
      */
     @GetMapping("/course/{courseId}/rating")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);

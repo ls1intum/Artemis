@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
@@ -48,7 +48,7 @@ public class ProgrammingExerciseTaskResource {
      * @return the {@link ResponseEntity} with status {@code 200}.
      */
     @GetMapping("programming-exercises/{exerciseId}/tasks")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<ProgrammingExerciseTask>> getTasks(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         // Reload the exercise from the database as we can't trust data from the client
@@ -69,7 +69,7 @@ public class ProgrammingExerciseTaskResource {
      * @return the {@link ResponseEntity} with status {@code 200}.
      */
     @GetMapping("programming-exercises/{exerciseId}/tasks-with-unassigned-test-cases")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<ProgrammingExerciseTask>> getTasksWithUnassignedTask(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         // Reload the exercise from the database as we can't trust data from the client

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 
 /**
  * REST controller for managing the Organization entities
@@ -37,7 +37,7 @@ public class OrganizationResource {
      * @return ResponseEntity containing a set of organizations containing the given course
      */
     @GetMapping("organizations/courses/{courseId}")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);

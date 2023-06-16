@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.AnswerMessageService;
 
 @RestController
@@ -30,7 +30,7 @@ public class AnswerMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/answer-messages")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerMessage) throws URISyntaxException {
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
 
@@ -48,7 +48,7 @@ public class AnswerMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody AnswerPost answerMessage) {
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, answerMessage);
         return new ResponseEntity<>(updatedAnswerMessage, null, HttpStatus.OK);
@@ -63,7 +63,7 @@ public class AnswerMessageResource {
      *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @DeleteMapping("courses/{courseId}/answer-messages/{answerMessageId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerMessageId) {
         answerMessageService.deleteAnswerMessageById(courseId, answerMessageId);
 

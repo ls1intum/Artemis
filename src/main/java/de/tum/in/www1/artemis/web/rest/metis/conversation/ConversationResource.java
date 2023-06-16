@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -61,7 +61,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of conversations where the requesting user is a member
      */
     @GetMapping("/{courseId}/conversations")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
 
@@ -80,7 +80,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -98,7 +98,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -114,7 +114,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
      */
     @GetMapping("/{courseId}/unread-messages")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
 
@@ -134,7 +134,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
      */
     @GetMapping("/{courseId}/conversations/{conversationId}/members/search")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,
             @RequestParam("loginOrName") String loginOrName, @RequestParam(value = "filter", required = false) ConversationMemberSearchFilters filter, Pageable pageable) {
         log.debug("REST request to get members of conversation : {} with login or name : {} in course: {}", conversationId, loginOrName, courseId);
@@ -191,7 +191,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return the list of Conversations for which the current user should receive notifications about
      */
     @GetMapping("/conversations-for-notifications")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public List<Conversation> getAllConversationsForNotifications() {
         log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
         User user = userRepository.getUserWithGroupsAndAuthorities();

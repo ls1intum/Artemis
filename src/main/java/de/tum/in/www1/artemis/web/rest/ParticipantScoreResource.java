@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
@@ -54,7 +54,7 @@ public class ParticipantScoreResource {
      * @return list of scores for every member of the course
      */
     @GetMapping("/courses/{courseId}/course-scores")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get course scores for course : {}", courseId);
@@ -80,7 +80,7 @@ public class ParticipantScoreResource {
      * @return list of scores for every registered user in the xam
      */
     @GetMapping("/exams/{examId}/exam-scores")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);

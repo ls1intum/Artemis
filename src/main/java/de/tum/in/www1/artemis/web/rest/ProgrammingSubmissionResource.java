@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
@@ -103,7 +103,7 @@ public class ProgrammingSubmissionResource {
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping("programming-submissions/{participationId}/trigger-build")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -144,7 +144,7 @@ public class ProgrammingSubmissionResource {
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping("programming-submissions/{participationId}/trigger-failed-build")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         final Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -185,7 +185,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -207,7 +207,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
@@ -239,7 +239,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
     @GetMapping("exercises/{exerciseId}/programming-submissions")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
@@ -274,7 +274,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
     @GetMapping("programming-submissions/{submissionId}/lock")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
@@ -339,7 +339,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");

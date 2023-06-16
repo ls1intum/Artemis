@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
- * This annotation is used to enforce that the user is an instructor.
+ * This annotation is used to enforce that the user is an editor.
  * It should only be used with endpoints starting with {@code /api/}
  * <p>
  * It's only addable to methods. The intention is that a developer can see the required role without the need to scroll up.
@@ -16,7 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('INSTRUCTOR')")
-public @interface EnforceInstructor {
+@PreAuthorize("hasRole('EDITOR')")
+public @interface EnforceAtLeastEditor {
 
 }

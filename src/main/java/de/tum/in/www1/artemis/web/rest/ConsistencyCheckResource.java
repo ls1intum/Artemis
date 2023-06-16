@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
@@ -46,7 +46,7 @@ public class ConsistencyCheckResource {
      * @return List containing the resulting errors, if any.
      */
     @GetMapping("programming-exercises/{programmingExerciseId}/consistency-check")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
         final Exercise exercise = exerciseRepository.findByIdElseThrow(programmingExerciseId);

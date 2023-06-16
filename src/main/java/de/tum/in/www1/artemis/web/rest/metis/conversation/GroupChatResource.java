@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
@@ -70,7 +70,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @return ResponseEntity with status 201 (Created) and with body containing the created group chat
      */
     @PostMapping("/{courseId}/group-chats")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantsLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to create group chat in course {} between: {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantsLogins);
@@ -105,7 +105,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated group chat
      */
     @PutMapping("/{courseId}/group-chats/{groupChatId}")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
         log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
         checkMessagingEnabledElseThrow(courseId);
@@ -129,7 +129,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/group-chats/{groupChatId}/register")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -157,7 +157,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/group-chats/{groupChatId}/deregister")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsersFromGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);

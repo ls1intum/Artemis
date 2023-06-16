@@ -144,7 +144,7 @@ public class ProgrammingExerciseExportImportResource {
      * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)
      */
     @PostMapping(IMPORT)
-    @EnforceEditor
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
             @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) {
@@ -232,7 +232,7 @@ public class ProgrammingExerciseExportImportResource {
      *         (403) if the user is not at least an editor in the target course.
      */
     @PostMapping(IMPORT_FROM_FILE)
-    @EnforceEditor
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@PathVariable long courseId,
             @RequestPart("programmingExercise") ProgrammingExercise programmingExercise, @RequestPart("file") MultipartFile zipFile) {
@@ -259,7 +259,7 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(EXPORT_INSTRUCTOR_EXERCISE)
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -290,7 +290,7 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(EXPORT_INSTRUCTOR_REPOSITORY)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -311,7 +311,7 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -357,7 +357,7 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPANTS)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
@@ -402,7 +402,7 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if submissions can't be zippedRequestBody
      */
     @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPATIONS)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
@@ -461,7 +461,7 @@ public class ProgrammingExerciseExportImportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(EXPORT_SOLUTION_REPOSITORY)
-    @EnforceStudent
+    @EnforceAtLeastStudent
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

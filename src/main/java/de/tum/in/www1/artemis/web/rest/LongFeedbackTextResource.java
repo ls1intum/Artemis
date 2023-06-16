@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.LongFeedbackTextRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -36,7 +36,7 @@ public class LongFeedbackTextResource {
      * @return The long feedback belonging to the feedback with id {@code feedbackId}.
      */
     @GetMapping("results/{resultId}/feedbacks/{feedbackId}/long-feedback")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {} (result: {})", feedbackId, resultId);
 

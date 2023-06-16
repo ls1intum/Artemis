@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.PlantUmlService;
 
 /**
@@ -35,7 +35,7 @@ public class PlantUmlResource {
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(value = Endpoints.GENERATE_PNG)
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.currentTimeMillis();
@@ -55,7 +55,7 @@ public class PlantUmlResource {
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(Endpoints.GENERATE_SVG)
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.currentTimeMillis();

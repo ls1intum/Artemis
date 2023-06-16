@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.security.annotations.*;
 @Service
 public class AuthorizationTestService {
 
-    private static final Set<Class<? extends Annotation>> ALLOWED_AUTH_METHOD_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceInstructor.class, EnforceEditor.class,
-            EnforceTutor.class, EnforceStudent.class, EnforceNothing.class, PreAuthorize.class);
+    private static final Set<Class<? extends Annotation>> ALLOWED_AUTH_METHOD_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,
+            EnforceAtLeastTutor.class, EnforceAtLeastStudent.class, EnforceNothing.class, PreAuthorize.class);
 
     private final Method preAuthorizeValueAnnotation = PreAuthorize.class.getDeclaredMethod("value");
 
@@ -200,13 +200,13 @@ public class AuthorizationTestService {
             case "hasRole('ADMIN')" -> addElement(classReports, javaClass,
                     "PreAuthorize(\"hasRole('ADMIN')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAdmin for methods instead.");
             case "hasRole('INSTRUCTOR')" -> addElement(classReports, javaClass, "PreAuthorize(\"hasRole('INSTRUCTOR')\") class annotation found for " + javaMethod.getName()
-                    + "() but not allowed. Use @EnforceInstructor for methods instead.");
-            case "hasRole('EDITOR')" -> addElement(classReports, javaClass,
-                    "PreAuthorize(\"hasRole('EDITOR')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceEditor for methods instead.");
+                    + "() but not allowed. Use @EnforceAtLeastInstructor for methods instead.");
+            case "hasRole('EDITOR')" -> addElement(classReports, javaClass, "PreAuthorize(\"hasRole('EDITOR')\") class annotation found for " + javaMethod.getName()
+                    + "() but not allowed. Use @EnforceAtLeastEditor for methods instead.");
             case "hasRole('TA')" -> addElement(classReports, javaClass,
-                    "PreAuthorize(\"hasRole('TA')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceTutor for methods instead.");
+                    "PreAuthorize(\"hasRole('TA')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAtLeastTutor for methods instead.");
             case "hasRole('USER')" -> addElement(classReports, javaClass,
-                    "PreAuthorize(\"hasRole('USER')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceStudent for methods instead.");
+                    "PreAuthorize(\"hasRole('USER')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAtLeastStudent for methods instead.");
             case "permitAll()" -> addElement(classReports, javaClass,
                     "PreAuthorize(\"permitAll\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceNothing for methods instead.");
             default -> addElement(classReports, javaClass, "PreAuthorize class annotation with unknown content found for " + javaMethod.getName() + "().");
@@ -225,13 +225,13 @@ public class AuthorizationTestService {
             case "hasRole('ADMIN')" -> addElement(methodReports, javaMethod,
                     "PreAuthorize(\"hasRole('Admin')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAdmin instead.");
             case "hasRole('INSTRUCTOR')" -> addElement(methodReports, javaMethod,
-                    "PreAuthorize(\"hasRole('INSTRUCTOR')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceInstructor instead.");
+                    "PreAuthorize(\"hasRole('INSTRUCTOR')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAtLeastInstructor instead.");
             case "hasRole('EDITOR')" -> addElement(methodReports, javaMethod,
-                    "PreAuthorize(\"hasRole('EDITOR')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceEditor instead.");
+                    "PreAuthorize(\"hasRole('EDITOR')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAtLeastEditor instead.");
             case "hasRole('TA')" -> addElement(methodReports, javaMethod,
-                    "PreAuthorize(\"hasRole('TA')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceTutor instead.");
+                    "PreAuthorize(\"hasRole('TA')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAtLeastTutor instead.");
             case "hasRole('USER')" -> addElement(methodReports, javaMethod,
-                    "PreAuthorize(\"hasRole('USER')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceStudent instead.");
+                    "PreAuthorize(\"hasRole('USER')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAtLeastStudent instead.");
             case "permitAll()" -> addElement(methodReports, javaMethod,
                     "PreAuthorize(\"permitAll\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceNothing instead.");
             default -> addElement(methodReports, javaMethod, "PreAuthorize method annotation with unknown content found for " + javaMethod.getName() + "().");

@@ -17,9 +17,9 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.TextBlockService;
@@ -72,7 +72,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/example-submissions")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -91,7 +91,7 @@ public class ExampleSubmissionResource {
      *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/example-submissions")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {
@@ -110,7 +110,7 @@ public class ExampleSubmissionResource {
      * @return ResponseEntity with status 200 (OK)
      */
     @PostMapping("/exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> prepareExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long exampleSubmissionId) {
         log.debug("REST request to prepare ExampleSubmission for assessment : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
@@ -150,7 +150,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exampleSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/example-submissions/{exampleSubmissionId}")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
         log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
@@ -173,7 +173,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
      */
     @DeleteMapping("/example-submissions/{exampleSubmissionId}")
-    @EnforceEditor
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long exampleSubmissionId) {
         log.debug("REST request to delete ExampleSubmission : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
@@ -191,7 +191,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
         log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

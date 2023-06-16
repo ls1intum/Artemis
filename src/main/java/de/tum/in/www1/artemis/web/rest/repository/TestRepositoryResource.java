@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
@@ -84,21 +84,21 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long exerciseId) {
         return super.getFiles(exerciseId);
     }
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         return super.getFile(exerciseId, filename);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(exerciseId, filename, request);
@@ -106,7 +106,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(exerciseId, folderName, request);
@@ -114,7 +114,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
         return super.renameFile(exerciseId, fileMove);
@@ -122,7 +122,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         return super.deleteFile(exerciseId, filename);
@@ -130,14 +130,14 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Void> pullChanges(@PathVariable Long exerciseId) {
         return super.pullChanges(exerciseId);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) {
         return super.commitChanges(exerciseId);
@@ -145,7 +145,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
         return super.resetToLastCommit(exerciseId);
@@ -153,7 +153,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException {
         return super.getStatus(exerciseId);
     }
@@ -168,7 +168,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping("/test-repository/{exerciseId}/files")
-    @EnforceTutor
+    @EnforceAtLeastTutor
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam Boolean commit, Principal principal) {
 

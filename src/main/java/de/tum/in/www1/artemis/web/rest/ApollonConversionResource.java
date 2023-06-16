@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.security.annotations.EnforceStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
@@ -40,7 +40,7 @@ public class ApollonConversionResource {
      * @return input stream for conversion
      */
     @PostMapping("/apollon/convert-to-pdf")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) {
         log.debug("REST call to convert apollon model to pdf");
 

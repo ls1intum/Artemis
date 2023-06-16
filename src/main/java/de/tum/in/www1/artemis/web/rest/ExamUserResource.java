@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamUserService;
@@ -58,7 +58,7 @@ public class ExamUserResource {
      * @return saved examUser ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
             @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
@@ -96,7 +96,7 @@ public class ExamUserResource {
      * @return list of not found student matriculation numbers ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExamUsersNotFoundDTO> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -111,7 +111,7 @@ public class ExamUserResource {
      * @return list of students who did not sign ResponseEntity with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all students who did not sign for exam with id: {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

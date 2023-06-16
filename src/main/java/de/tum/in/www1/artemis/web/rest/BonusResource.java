@@ -70,7 +70,7 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus")
-    @EnforceStudent
+    @EnforceAtLeastStudent
     public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
@@ -128,7 +128,7 @@ public class BonusResource {
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("courses/{courseId}/exams/{examId}/bonus")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Bonus> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
         log.debug("REST request to create a bonus for exam: {}", examId);
         if (bonus.getId() != null) {
@@ -193,7 +193,7 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus updatedBonus) {
         log.debug("REST request to update a updatedBonus: {}", bonusId);
 
@@ -247,7 +247,7 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) if the bonus is successfully deleted and 400 (Bad request) otherwise
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
-    @EnforceInstructor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus: {}", bonusId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
