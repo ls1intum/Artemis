@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -114,13 +115,15 @@ public class DataExportCreationService {
 
     private final UserService userService;
 
+    private final ComplaintRepository complaintRepository;
+
     public DataExportCreationService(CourseRepository courseRepository, ZipFileService zipFileService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExamService examService, QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService,
             DataExportRepository dataExportRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, MailService mailService,
-            UserService userService) {
+            UserService userService, ComplaintRepository complaintRepository) {
         this.courseRepository = courseRepository;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -142,6 +145,7 @@ public class DataExportCreationService {
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.userService = userService;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -151,39 +155,38 @@ public class DataExportCreationService {
      * @param dataExport the data export to be created
      **/
     private void createDataExportWithContent(DataExport dataExport) throws IOException {
-        throw new UnsupportedOperationException("Not yet implemented");
-        // log.info("Creating data export for user {}", dataExport.getUser().getLogin());
-        // var userId = dataExport.getUser().getId();
-        // // we need to load the user with the authorities and groups to avoid lazy loading exception when passing the user to the authorization check service
-        // var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
-        // var workingDirectory = prepareDataExport(dataExport);
-        // // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
-        // var posts = postRepository.findPostsByAuthorId(userId);
-        // var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
-        // var reactions = reactionRepository.findReactionsByUserId(userId);
-        // var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
-        // for (var course : courses) {
-        // Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
-        // userId);
-        // Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
-        // if (!exercises.isEmpty()) {
-        // courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
-        // }
-        // for (var exercise : exercises) {
-        // if (exercise instanceof ProgrammingExercise programmingExercise) {
-        // createProgrammingExerciseExport(programmingExercise, courseDir, userId);
-        // }
-        // else {
-        // createNonProgrammingExerciseExport(exercise, courseDir, userId);
-        // }
-        // }
-        // createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
-        // createExportForExams(user.getId(), course.getExams(), courseDir);
-        // }
-        // addGeneralUserInformation(user, workingDirectory);
-        // var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
-        // fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
-        // finishDataExportCreation(dataExport, dataExportPath);
+        log.info("Creating data export for user {}", dataExport.getUser().getLogin());
+        var userId = dataExport.getUser().getId();
+        // we need to load the user with the authorities and groups to avoid lazy loading exception when passing the user to the authorization check service
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        var workingDirectory = prepareDataExport(dataExport);
+        // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
+        var posts = postRepository.findPostsByAuthorId(userId);
+        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
+        var reactions = reactionRepository.findReactionsByUserId(userId);
+        var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
+        for (var course : courses) {
+            Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
+                    userId);
+            Path courseDir = workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
+            if (!exercises.isEmpty()) {
+                courseDir = Files.createDirectory(workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName()));
+            }
+            for (var exercise : exercises) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    createProgrammingExerciseExport(programmingExercise, courseDir, userId);
+                }
+                else {
+                    createNonProgrammingExerciseExport(exercise, courseDir, userId);
+                }
+            }
+            createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
+            createExportForExams(user.getId(), course.getExams(), courseDir);
+        }
+        addGeneralUserInformation(user, workingDirectory);
+        var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
+        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
+        finishDataExportCreation(dataExport, dataExportPath);
     }
 
     /**
@@ -378,7 +381,7 @@ public class DataExportCreationService {
                     createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir, includeResults);
                 }
                 if (includeResults) {
-                    createResultsTxtFile(submission, exerciseDir);
+                    createResultsAndComplaintFiles(submission, exerciseDir);
                 }
             }
         }
@@ -607,7 +610,7 @@ public class DataExportCreationService {
         }
     }
 
-    private void createResultsTxtFile(Submission submission, Path outputDir) throws IOException {
+    private void createResultsAndComplaintFiles(Submission submission, Path outputDir) throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
@@ -638,7 +641,39 @@ public class DataExportCreationService {
             }
             resultScoreAndFeedbacks = new StringBuilder();
         }
+        var possibleComplaint = complaintRepository.findWithEagerComplaintResponseByResultSubmissionId(submission.getId());
+        if (possibleComplaint.isPresent()) {
+            addComplaintData(possibleComplaint.get(), outputDir);
+        }
+    }
 
+    private void addComplaintData(Complaint complaint, Path outputDir) throws IOException {
+        List<String> headers = new ArrayList<>();
+        var dataStreamBuilder = Stream.builder();
+        headers.add("id");
+        dataStreamBuilder.add(complaint.getId());
+        headers.add("submitted at");
+        dataStreamBuilder.add(complaint.getSubmittedTime());
+        headers.add("complaint type");
+        dataStreamBuilder.add(complaint.getComplaintType());
+        headers.add("complaint text");
+        dataStreamBuilder.add(complaint.getComplaintText());
+
+        if (complaint.getComplaintResponse() != null) {
+            headers.add("complaint response");
+            dataStreamBuilder.add(complaint.getComplaintResponse().getResponseText());
+        }
+        if (complaint.isAccepted() != null && ComplaintType.COMPLAINT == complaint.getComplaintType()) {
+            headers.add("accepted");
+            dataStreamBuilder.add(complaint.isAccepted());
+        }
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        var prefix = complaint.getComplaintType() == ComplaintType.COMPLAINT ? "complaint_" : "more_feedback_";
+
+        try (final var printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve(prefix + complaint.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
+            printer.printRecord(dataStreamBuilder.build());
+            printer.flush();
+        }
     }
 
     private void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir, long userId) throws IOException {
