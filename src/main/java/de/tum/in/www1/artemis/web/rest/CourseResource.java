@@ -217,9 +217,9 @@ public class CourseResource {
         courseUpdate.validateOnlineCourseAndEnrollmentEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
-        if (!courseUpdate.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+        courseUpdate.validateStartAndEndDate();
+        courseUpdate.validateEnrollmentStartAndEndDate();
+        courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
             String pathString = fileService.handleSaveFile(file, false, false);
@@ -305,6 +305,25 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseService.enrollUserForCourseOrThrow(user, course);
+        return ResponseEntity.ok(user);
+    }
+
+    /**
+     * POST /courses/{courseId}/unenroll : Unenroll from an existing course. This method unenrolls the current user for the given course id in case the student is currently
+     * enrolled.
+     * The user is removed from the course student group in the Authentication System and the course student group is removed from the user's groups in the Artemis
+     * database.
+     *
+     * @param courseId to find the course
+     * @return response entity for user who has been unenrolled from the course
+     */
+    @PostMapping("courses/{courseId}/unenroll")
+    @EnforceAtLeastStudent
+    public ResponseEntity<User> unenrollFromCourse(@PathVariable Long courseId) {
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
+        courseService.unenrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -409,14 +428,7 @@ public class CourseResource {
     public List<Course> getAllCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-
-        Set<Course> allEnrolledCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyEnroll = courseRepository.findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites();
-        // check whether enrollment is actually possible for each of the courses
-        return allCoursesToPotentiallyEnroll.stream().filter(course -> {
-            boolean isAlreadyInCourse = allEnrolledCourses.contains(course);
-            return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
-        }).toList();
+        return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
     }
 
     /**
