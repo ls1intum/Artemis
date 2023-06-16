@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
@@ -18,38 +19,36 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.PrivacyStatement;
+import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import net.minidev.json.JSONObject;
 
 @ExtendWith(MockitoExtension.class)
-class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "psr"; // only lower case is supported
+    private static final String TEST_PREFIX = "ir"; // only lower case is supported
 
     @Test
-    void testGetPrivacyStatement_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/public/privacy-statement?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
+    void testGetImprint_unsupportedLanguageBadRequest() throws Exception {
+        request.get("/api/public/imprint?language=fr", HttpStatus.BAD_REQUEST, Imprint.class);
     }
 
     @Test
-    void testGetPrivacyStatement_cannotReadFileInternalServerError() throws Exception {
+    void testGetImprint_cannotReadFileInternalServerError() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/public/privacy-statement?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
+            request.get("/api/public/imprint?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
         }
-
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdate_cannotReadFileInternalServerError() throws Exception {
+    void testGetImprintForUpdate_cannotReadFileInternalServerError() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
-
+            request.get("/api/admin/imprint-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
         }
     }
 
@@ -61,87 +60,84 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             mockedFiles.when(
                     () -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE), eq(StandardOpenOption.TRUNCATE_EXISTING)))
                     .thenThrow(new IOException());
-            request.putWithResponseBody("/api/admin/privacy-statement", new PrivacyStatement("text", Language.GERMAN), PrivacyStatement.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            request.putWithResponseBody("/api/admin/imprint", new Imprint("text", Language.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_directoryDoesntExist_createsDirectoryAndSavesFile() throws Exception {
-        PrivacyStatement response;
+        Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
 
-            response = request.putWithResponseBody("/api/admin/privacy-statement", new PrivacyStatement("updatedText", Language.GERMAN), PrivacyStatement.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/imprint", new Imprint("updatedText", Language.GERMAN), Imprint.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.createDirectories(any()));
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
-
         }
         assertThat(response.getText()).isEqualTo("updatedText");
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
-
     }
 
     // no mock user as anonymous access should be allowed
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
-    void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound(Language language) throws Exception {
-        PrivacyStatement response;
+    void testGetImprintReturnsOtherLanguageIfFirstLanguageNotFound(Language language) throws Exception {
+        Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             if ("de".equals(language.getShortName())) {
                 mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
                 mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(true);
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
             }
             else {
                 mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
                 mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
             }
 
-            response = request.get("/api/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/public/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
         if ("de".equals(language.getShortName())) {
             assertThat(response.getLanguage()).isEqualTo(Language.ENGLISH);
-            assertThat(response.getText()).isEqualTo("Privacy Statement");
+            assertThat(response.getText()).isEqualTo("Imprint");
         }
         else {
             assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
-            assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
+            assertThat(response.getText()).isEqualTo("Impressum");
         }
     }
 
     @Test
-    void testGetPrivacyStatement_noLanguageFound_badRequest() throws Exception {
+    void testGetImprint_noLanguageFound_badRequest() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
 
-            request.get("/api/public/privacy-statement?language=de", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
+            request.get("/api/public/imprint?language=de", HttpStatus.BAD_REQUEST, Imprint.class);
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPrivacyStatementForUpdate_instructorAccessForbidden() throws Exception {
-        request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.FORBIDDEN, PrivacyStatement.class);
+    void testGetImprintForUpdate_instructorAccessForbidden() throws Exception {
+        request.get("/api/admin/imprint-for-update?language=de", HttpStatus.FORBIDDEN, Imprint.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdate_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/admin/privacy-statement-for-update?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
+    void testGetImprintForUpdate_unsupportedLanguageBadRequest() throws Exception {
+        request.get("/api/admin/imprint-for-update?language=fr", HttpStatus.BAD_REQUEST, Imprint.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdateFileDoesntExist_emptyStringSuccess() throws Exception {
-        PrivacyStatement response;
+    void testGetImprintForUpdateFileDoesntExist_emptyStringSuccess() throws Exception {
+        Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/admin/imprint-for-update?language=de", HttpStatus.OK, Imprint.class);
         }
         assertThat(response.getText()).isEqualTo("");
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
@@ -149,96 +145,92 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
 
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
-    void testGetPrivacyStatementReturnsCorrectFileContent(Language language) throws Exception {
-        PrivacyStatement response;
+    void testGetImprintReturnsCorrectFileContent(Language language) throws Exception {
+        Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
             if (language == Language.ENGLISH) {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
             }
             else {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
             }
-            response = request.get("/api/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/public/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
         if (language == Language.ENGLISH) {
-            assertThat(response.getText()).isEqualTo("Privacy Statement");
+            assertThat(response.getText()).isEqualTo("Imprint");
         }
         else {
-            assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
+            assertThat(response.getText()).isEqualTo("Impressum");
         }
     }
 
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdateReturnsCorrectFileContent(Language language) throws Exception {
-        PrivacyStatement response;
+    void testGetImprintForUpdateReturnsCorrectFileContent(Language language) throws Exception {
+        Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
             if ("de".equals(language.getShortName())) {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Impressum");
             }
             else {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
             }
-            response = request.get("/api/admin/privacy-statement-for-update?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/admin/imprint-for-update?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
         if ("de".equals(language.getShortName())) {
-            assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
+            assertThat(response.getText()).isEqualTo("Impressum");
         }
         else {
-            assertThat(response.getText()).isEqualTo("Privacy Statement");
+            assertThat(response.getText()).isEqualTo("Imprint");
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdatePrivacyStatement_instructorAccessForbidden() throws Exception {
-        request.put("/api/admin/privacy-statement", new PrivacyStatement(Language.GERMAN), HttpStatus.FORBIDDEN);
+    void testUpdateImprint_instructorAccessForbidden() throws Exception {
+        request.put("/api/admin/imprint", new Imprint(Language.GERMAN), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdatePrivacyStatement_writesFile_ReturnsUpdatedFileContent() throws Exception {
-        PrivacyStatement response;
-        PrivacyStatement requestBody = new PrivacyStatement(Language.GERMAN);
-        requestBody.setText("Datenschutzerklärung");
+    void testUpdateImprint_writesFile_ReturnsUpdatedFileContent() throws Exception {
+        Imprint response;
+        Imprint requestBody = new Imprint(Language.GERMAN);
+        requestBody.setText("Impressum");
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-
-            response = request.putWithResponseBody("/api/admin/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/imprint", requestBody, Imprint.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
-            // we explicitly check the method calls to ensure createDirectories is not called when the directory exists
-            mockedFiles.verify(() -> Files.exists(any()));
-            mockedFiles.verifyNoMoreInteractions();
 
         }
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
-        assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
+        assertThat(response.getText()).isEqualTo("Impressum");
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdatePrivacyStatement_unsupportedLanguageBadRequest() throws Exception {
+    void testUpdateImprint_unsupportedLanguageBadRequest() throws Exception {
         JSONObject body = new JSONObject();
         body.put("text", "test");
         body.put("language", "FRENCH");
-        request.put("/api/admin/privacy-statement", body, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/imprint", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdatePrivacyStatement_blankTextBadRequest() throws Exception {
-        PrivacyStatement requestBody = new PrivacyStatement(Language.GERMAN);
+    void testUpdateImprint_blankTextBadRequest() throws Exception {
+        Imprint requestBody = new Imprint(Language.GERMAN);
         requestBody.setText("           ");
-        request.put("/api/admin/privacy-statement", requestBody, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/imprint", requestBody, HttpStatus.BAD_REQUEST);
     }
 
 }

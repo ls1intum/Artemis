@@ -1,0 +1,46 @@
+<div class="legal-document-container">
+    <div>
+        <h2>
+            <span id="legal-document-update-heading" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey }}">Update legal document</span>
+        </h2>
+
+        <jhi-markdown-editor
+            [markdown]="legalDocument.text"
+            (markdownChange)="checkUnsavedChanges($event)"
+            [resizableMinHeight]="minHeight"
+            [resizableMaxHeight]="maxHeight"
+            [enableResize]="true"
+            [enableFileUpload]="false"
+            [minHeightEditor]="700"
+            class="markdown-editor"
+            (onEditSelect)="updateTextIfLanguageChangedInPreview()"
+        ></jhi-markdown-editor>
+        <div>
+            <div *ngIf="!unsavedChanges && !isSaving">
+                <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.legal.savedTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.legal.saved">Saved.</span>
+            </div>
+            <div *ngIf="unsavedChanges && !isSaving">
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" ngbTooltip="{{ 'artemisApp.legal.unsavedTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.legal.unsaved">Unsaved.</span>
+            </div>
+            <div *ngIf="isSaving">
+                <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.legal.savingTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.legal.saving">Saving...</span>
+            </div>
+        </div>
+        <div class="btn-below-editor">
+            <button
+                type="submit"
+                (click)="updateLegalDocument()"
+                class="btn btn-primary"
+                id="update-legal-document-btn"
+                [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === '' || isSaving"
+            >
+                <fa-icon [icon]="faSave"></fa-icon>
+                <span jhiTranslate="entity.action.save">Save</span>
+            </button>
+            <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
+        </div>
+    </div>
+</div>
