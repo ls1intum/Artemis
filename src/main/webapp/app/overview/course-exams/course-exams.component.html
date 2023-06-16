@@ -5,7 +5,7 @@
             <jhi-course-exam-detail
                 [exam]="exam"
                 [course]="course!"
-                class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success hover-green"
+                class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success hover-effect"
                 id="exam-{{ exam.id }}"
             ></jhi-course-exam-detail>
         </ng-container>
@@ -18,7 +18,7 @@
     <div class="row">
         <ng-container *ngFor="let exam of testExamsOfCourse">
             <div class="row d-flex align-items-start">
-                <div class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary hover-blue">
+                <div class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary hover-effect">
                     <jhi-course-exam-detail
                         [exam]="exam"
                         [course]="course!"
