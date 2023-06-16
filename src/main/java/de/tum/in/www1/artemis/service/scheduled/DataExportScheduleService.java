@@ -96,7 +96,6 @@ public class DataExportScheduleService {
         if (successful) {
             successfulDataExports.add(dataExport);
         }
-
     }
 
     private void checkSecurityUtils() {
