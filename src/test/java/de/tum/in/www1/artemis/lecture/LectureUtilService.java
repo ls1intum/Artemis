@@ -6,11 +6,11 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
@@ -59,7 +59,7 @@ public class LectureUtilService {
     private CourseUtilService courseUtilService;
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -113,7 +113,7 @@ public class LectureUtilService {
 
     public AttachmentUnit createAttachmentUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
+        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -125,7 +125,7 @@ public class LectureUtilService {
 
     public AttachmentUnit createAttachmentUnitWithSlides(int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = ModelFactory.generateAttachment(started);
+        Attachment attachmentOfAttachmentUnit = LectureFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);

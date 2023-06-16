@@ -12,8 +12,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -25,20 +28,32 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private ResultRepository resultRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private TextExercise textExercise;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = database.addCourseWithOneReleasedTextExercise();
-        textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteSubmissionOfParticipation() throws Exception {
-        Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
-        submissionWithResult = database.addResultToSubmission(submissionWithResult, null);
+        Submission submissionWithResult = participationUtilService.addSubmission(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
+        submissionWithResult = participationUtilService.addResultToSubmission(submissionWithResult, null);
         Long participationId = submissionWithResult.getParticipation().getId();
         Long submissionId = submissionWithResult.getId();
 

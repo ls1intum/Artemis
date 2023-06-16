@@ -9,13 +9,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -31,9 +35,27 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
     }
 
     @Test
@@ -133,16 +155,16 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize() throws Exception {
-        Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
-        TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
-        submission = database.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
-        PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
 
         var resultPage = request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
-                database.searchMapping(search));
+                pageableSearchUtilService.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
 
@@ -150,20 +172,22 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = 12345L;
-        PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class, database.searchMapping(search));
+        PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
+                pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
-        Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class, database.searchMapping(search));
+        PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
+                pageableSearchUtilService.searchMapping(search));
     }
 
 }

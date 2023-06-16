@@ -17,9 +17,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -37,10 +38,16 @@ public class ContinuousIntegrationTestService {
     private ProgrammingExerciseStudentParticipation participation;
 
     @Autowired
-    private DatabaseUtilService database;
+    private GitService gitService;
 
     @Autowired
-    private GitService gitService;
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     private MockDelegate mockDelegate;
 
@@ -55,8 +62,8 @@ public class ContinuousIntegrationTestService {
         this.mockDelegate = mockDelegate;
         this.continuousIntegrationService = continuousIntegrationService;
 
-        database.addUsers(testPrefix, 2, 0, 0, 1);
-        var course = database.addCourseWithOneProgrammingExercise();
+        userUtilService.addUsers(testPrefix, 2, 0, 0, 1);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
 
         // init local repo
@@ -75,7 +82,7 @@ public class ContinuousIntegrationTestService {
 
         GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
         // create a participation
-        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUrl.getURI());
+        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUrl.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path

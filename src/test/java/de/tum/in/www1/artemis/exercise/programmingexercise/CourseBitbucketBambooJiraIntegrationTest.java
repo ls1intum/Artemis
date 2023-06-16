@@ -17,13 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseTestService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,6 +37,9 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     void setup() {
@@ -428,10 +431,10 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveTutorFromCourse_userNotFoundInJira_successful() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
                 TEST_PREFIX + "instructor");
         course = courseRepo.save(course);
-        database.addProgrammingExerciseToCourse(course, false);
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
         User tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").get();
@@ -446,7 +449,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         request.put("/api/courses", course, HttpStatus.OK);

@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
@@ -28,9 +29,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
@@ -106,7 +107,7 @@ public class QuizExerciseUtilService {
     }
 
     public Course addCourseWithOneQuizExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
@@ -273,7 +274,7 @@ public class QuizExerciseUtilService {
 
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
         return quizExercise;
     }
@@ -317,7 +318,7 @@ public class QuizExerciseUtilService {
     public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = courseUtilService.createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
 
         return quizExercise;
@@ -372,11 +373,11 @@ public class QuizExerciseUtilService {
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
         Course course = courseUtilService.createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
 
-        Exam exam = ModelFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
+        Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
         examRepository.save(exam);
 
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         initializeQuizExercise(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
@@ -408,7 +409,7 @@ public class QuizExerciseUtilService {
 
     @NotNull
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         initializeQuizExercise(quizExercise);
 
         return quizExercise;

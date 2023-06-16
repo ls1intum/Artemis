@@ -26,11 +26,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
@@ -41,6 +42,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     private final String testRepoBaseUrl = "/api/test-repository/";
 
@@ -56,9 +63,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = database.addEmptyCourse();
-        programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        Course course = courseUtilService.addEmptyCourse();
+        programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
         // add file to the repository folder
@@ -310,7 +317,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     private List<FileSubmission> getFileSubmissions() {
@@ -352,7 +359,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test

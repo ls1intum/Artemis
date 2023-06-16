@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.participation;
 
-import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
+import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory.DEFAULT_BRANCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to participations, submissions and results.
@@ -151,7 +150,7 @@ public class ParticipationUtilService {
         submission.setParticipation(studentParticipation);
         submission = submissionRepository.saveAndFlush(submission);
 
-        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
         result.setParticipation(studentParticipation);
         result.setSubmission(submission);
         result.completionDate(ZonedDateTime.now());
@@ -354,8 +353,8 @@ public class ParticipationUtilService {
     }
 
     public Result addFeedbackToResults(Result result) {
-        List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
-        feedback.addAll(ModelFactory.generateFeedback());
+        List<Feedback> feedback = ParticipationFactory.generateStaticCodeAnalysisFeedbackList(5);
+        feedback.addAll(ParticipationFactory.generateFeedback());
         feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
         return resultRepo.save(result);
@@ -564,14 +563,14 @@ public class ParticipationUtilService {
     public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
         Submission submission;
         if (exercise instanceof ModelingExercise) {
-            submission = ModelFactory.generateModelingSubmission(modelOrText, false);
+            submission = ParticipationFactory.generateModelingSubmission(modelOrText, false);
         }
         else {
-            submission = ModelFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
+            submission = ParticipationFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
             saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
-        return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
+        return ParticipationFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
     }
 
     public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
@@ -603,16 +602,16 @@ public class ParticipationUtilService {
         StudentParticipation studentParticipation = createAndSaveParticipationForExercise(exercise, login);
         Submission submission = null;
         if (exercise instanceof TextExercise) {
-            submission = ModelFactory.generateTextSubmission("test", Language.ENGLISH, true);
+            submission = ParticipationFactory.generateTextSubmission("test", Language.ENGLISH, true);
         }
         if (exercise instanceof FileUploadExercise) {
-            submission = ModelFactory.generateFileUploadSubmission(true);
+            submission = ParticipationFactory.generateFileUploadSubmission(true);
         }
         if (exercise instanceof ModelingExercise) {
-            submission = ModelFactory.generateModelingSubmission(null, true);
+            submission = ParticipationFactory.generateModelingSubmission(null, true);
         }
         if (exercise instanceof ProgrammingExercise) {
-            submission = ModelFactory.generateProgrammingSubmission(true);
+            submission = ParticipationFactory.generateProgrammingSubmission(true);
         }
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
         Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);

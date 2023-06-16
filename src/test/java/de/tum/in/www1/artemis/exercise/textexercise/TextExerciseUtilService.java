@@ -9,6 +9,7 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -17,11 +18,11 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to text exercises for use in integration tests.
@@ -194,14 +195,14 @@ public class TextExerciseUtilService {
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         return exerciseRepo.save(textExercise);
     }
 
     public TextExercise createTeamTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise teamTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
@@ -213,8 +214,8 @@ public class TextExerciseUtilService {
      * @return A course with one specified text exercise
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
         course = courseRepo.save(course);
@@ -231,7 +232,7 @@ public class TextExerciseUtilService {
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         if (title != null) {
             textExercise.setTitle(title);
         }
@@ -244,7 +245,7 @@ public class TextExerciseUtilService {
 
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamWithReviewDatesAndCourse(true);
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         return exerciseRepo.save(textExercise);
     }
 
@@ -326,12 +327,12 @@ public class TextExerciseUtilService {
     }
 
     public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
         StudentParticipation studentParticipation;
         if (participant instanceof User user) {
-            studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+            studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
         }
         else if (participant instanceof Team team) {
             studentParticipation = participationUtilService.addTeamParticipationForExercise(textExercise, team.getId());
@@ -355,13 +356,13 @@ public class TextExerciseUtilService {
     }
 
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
-        return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
-                exerciseId, participationId, submissionId);
+        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId,
+                userId, exerciseId, participationId, submissionId);
     }
 
     public Course addCourseWithOneFinishedTextExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        TextExercise finishedTextExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
         course = courseRepo.save(course);

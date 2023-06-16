@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
@@ -20,7 +21,6 @@ import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.
@@ -63,7 +63,7 @@ public class TutorialGroupUtilService {
     private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     public void addTutorialCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
                 tutorialGroupEditors.get(), tutorialGroupInstructors.get());
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
@@ -101,7 +101,7 @@ public class TutorialGroupUtilService {
             User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepo.findByIdElseThrow(courseId);
 
-        var tutorialGroup = ModelFactory.generateTutorialGroup(title, additionalInformation, capacity, isOnline, language, campus);
+        var tutorialGroup = TutorialGroupFactory.generateTutorialGroup(title, additionalInformation, capacity, isOnline, language, campus);
         tutorialGroup.setCourse(course);
         tutorialGroup.setTeachingAssistant(teachingAssistant);
 
@@ -117,7 +117,7 @@ public class TutorialGroupUtilService {
 
     public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, LocalDate start, LocalDate end) {
         var course = courseRepo.findByIdElseThrow(courseId);
-        var tutorialGroupConfiguration = ModelFactory.generateTutorialGroupsConfiguration(start, end);
+        var tutorialGroupConfiguration = TutorialGroupFactory.generateTutorialGroupsConfiguration(start, end);
         tutorialGroupConfiguration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupConfiguration);
         course.setTutorialGroupsConfiguration(persistedConfiguration);

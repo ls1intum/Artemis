@@ -14,13 +14,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -38,6 +41,18 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
 
     private Bonus courseBonus;
 
@@ -60,16 +75,16 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
      */
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        course = database.addEmptyCourse();
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        course = courseUtilService.addEmptyCourse();
         course.setMaxPoints(200);
         courseRepository.save(course);
 
-        Exam targetExam = database.addExamWithExerciseGroup(course, true);
+        Exam targetExam = examUtilService.addExamWithExerciseGroup(course, true);
         targetExam.setExamMaxPoints(200);
         examRepository.save(targetExam);
 
-        Exam sourceExam = database.addExamWithExerciseGroup(course, true);
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(course, true);
         bonusToExamGradingScale = new GradingScale();
         bonusToExamGradingScale.setGradeType(GradeType.GRADE);
         bonusToExamGradingScale.setExam(targetExam);
@@ -84,10 +99,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
 
-        courseBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
+        courseBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
         bonusRepository.save(courseBonus);
 
-        examBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale.getId(), bonusToExamGradingScale.getId());
+        examBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale.getId(), bonusToExamGradingScale.getId());
 
         bonusToExamGradingScale.setBonusStrategy(BonusStrategy.GRADES_CONTINUOUS);
         gradingScaleRepository.save(bonusToExamGradingScale);
@@ -125,13 +140,13 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     void testSaveBonusForTargetExam() throws Exception {
         bonusRepository.delete(courseBonus);
 
-        Exam newExam = database.addExamWithExerciseGroup(course, true);
+        Exam newExam = examUtilService.addExamWithExerciseGroup(course, true);
         var newExamGradingScale = new GradingScale();
         newExamGradingScale.setGradeType(GradeType.BONUS);
         newExamGradingScale.setExam(newExam);
         gradingScaleRepository.save(newExamGradingScale);
 
-        Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());
+        Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());
 
         Bonus savedBonus = request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.CREATED);
 
@@ -155,7 +170,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         courseGradingScale.setGradeType(GradeType.GRADE);
         gradingScaleRepository.save(courseGradingScale);
 
-        Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
+        Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
 
         // Source grading scale must have GradeType.BONUS.
         request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
@@ -242,7 +257,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @NotNull
     private GradingScale createBonusToGradingScale(Exam bonusToExam) {
-        GradingScale bonusToGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 40, 20, 15, 15, 10, 100 },
+        GradingScale bonusToGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 40, 20, 15, 15, 10, 100 },
                 Optional.of(new String[] { "5.0", "4.0", "3.0", "2.0", "1.0", "1.0+" }), true, 1);
 
         bonusToGradingScale.setGradeType(GradeType.GRADE);
@@ -252,7 +267,8 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @NotNull
     private GradingScale createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(Course sourceCourse) {
-        GradingScale sourceGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "0.1", "0.2" }), true, 1);
+        GradingScale sourceGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "0.1", "0.2" }),
+                true, 1);
 
         sourceGradingScale.setGradeType(GradeType.BONUS);
         sourceGradingScale.setCourse(sourceCourse);
@@ -385,7 +401,8 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @NotNull
     private GradingScale createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(Course sourceCourse) {
-        GradingScale sourceGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "10", "20" }), true, 1);
+        GradingScale sourceGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "10", "20" }),
+                true, 1);
 
         sourceGradingScale.setGradeType(GradeType.BONUS);
         sourceGradingScale.setCourse(sourceCourse);

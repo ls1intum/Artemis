@@ -14,14 +14,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,6 +43,27 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private UserRepository userRepo;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private Course course;
 
@@ -54,8 +81,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
-        course = database.addCourseWithOneProgrammingExercise();
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
         // Make exercise team-based and already released to students
         exercise = course.getExercises().iterator().next();
@@ -180,7 +207,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testUpdateTeam() throws Exception {
         final String TEAM_NAME_UPDATED = TEST_PREFIX + "Team Updated";
 
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setName(TEAM_NAME_UPDATED);
         team.setStudents(students);
 
@@ -197,7 +224,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.putWithResponseBody(resourceUrl() + "/1", team1, Team.class, HttpStatus.BAD_REQUEST);
 
         // Try updating a team with an id specified that does not match the team id param in the route
-        Team team2 = database.addTeamForExercise(exercise, tutor);
+        Team team2 = teamUtilService.addTeamForExercise(exercise, tutor);
         request.putWithResponseBody(resourceUrl() + "/" + (team2.getId() + 1), team2, Team.class, HttpStatus.BAD_REQUEST);
 
         // Try updating a team with an exercise specified that does not match the exercise id param in the route
@@ -239,7 +266,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         course.setTeachingAssistantGroupName("Different group name");
         courseRepo.save(course);
 
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setName("Updated Team Name");
         request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
     }
@@ -248,7 +275,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateTeam_Forbidden_ShortNameChanged() throws Exception {
         // It should not be allowed to change a team's short name (unique identifier) after creation
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setShortName(TEST_PREFIX + team.getShortName() + " Updated");
         request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.BAD_REQUEST);
     }
@@ -257,7 +284,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateTeam_Forbidden_OwnerChanged() throws Exception {
         // It should not be allowed to change a team's owner as a tutor
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setOwner(userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow());
         request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
     }
@@ -265,7 +292,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam() throws Exception {
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
         Team serverTeam = request.get(resourceUrl() + "/" + team.getId(), HttpStatus.OK, Team.class);
         assertThat(serverTeam.getName()).as("Team name was fetched correctly").isEqualTo(team.getName());
@@ -276,11 +303,11 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_BadRequest() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
-        Exercise wrongExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Exercise wrongExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
         // Try getting a team with an exercise specified that does not match the exercise id param in the route
-        Team team = database.addTeamForExercise(wrongExercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(wrongExercise, tutor);
         request.get(resourceUrl() + "/" + team.getId(), HttpStatus.BAD_REQUEST, Team.class);
     }
 
@@ -295,7 +322,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetTeamsForExercise() throws Exception {
         int numberOfTeams = 3;
 
-        List<Team> teams = database.addTeamsForExercise(exercise, numberOfTeams, tutor);
+        List<Team> teams = teamUtilService.addTeamsForExercise(exercise, numberOfTeams, tutor);
         int numberOfStudents = getCountOfStudentsInTeams(teams);
 
         List<Team> serverTeams = request.getList(resourceUrl(), HttpStatus.OK, Team.class);
@@ -309,14 +336,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // If the TA is not part of the correct course TA group anymore, he should not be able to get the teams for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepo.save(course);
-        database.addTeamsForExercise(exercise, 3, tutor);
+        teamUtilService.addTeamsForExercise(exercise, 3, tutor);
         request.getList(resourceUrl(), HttpStatus.FORBIDDEN, Team.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTeam() throws Exception {
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.OK);
 
@@ -327,7 +354,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteTeam_Forbidden_AsTutor() throws Exception {
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
     }
@@ -340,7 +367,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);
 
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -348,7 +375,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTeam_BadRequest() throws Exception {
         // Try deleting a team with an exercise specified that does not match the exercise id param in the route
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         request.delete(resourceUrlWithWrongExerciseId() + "/" + team.getId(), HttpStatus.BAD_REQUEST);
     }
 
@@ -361,7 +388,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testExistsTeamByShortName() throws Exception {
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
 
         final String queryUrl = resourceUrlExistsTeamByShortName(team.getShortName());
 
@@ -389,7 +416,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(users3).as("No user was found as expected").isEmpty();
 
         // Check whether a student from a team is found but marked as "assignedToTeam"
-        Team team = database.addTeamForExercise(exercise, tutor, TEST_PREFIX);
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor, TEST_PREFIX);
         User teamStudent = team.getStudents().iterator().next();
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -417,8 +444,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTeamOperationsAsStudent() throws Exception {
-        Team existingTeam = database.addTeamForExercise(exercise, tutor);
-        Team unsavedTeam = database.generateTeamForExercise(exercise, TEST_PREFIX + "Team Unsaved", TEST_PREFIX + "teamUnsaved", 2, tutor);
+        Team existingTeam = teamUtilService.addTeamForExercise(exercise, tutor);
+        Team unsavedTeam = teamUtilService.generateTeamForExercise(exercise, TEST_PREFIX + "Team Unsaved", TEST_PREFIX + "teamUnsaved", 2, tutor);
 
         // Create team
         request.postWithResponseBody(resourceUrl(), unsavedTeam, Team.class, HttpStatus.FORBIDDEN);
@@ -439,7 +466,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
-        var student = database.getUserByLogin(TEST_PREFIX + "student1");
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setGroups(Set.of(TEST_PREFIX + "student" + "assignedTeam"));
         userRepo.save(student);
 
@@ -477,12 +504,12 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
 
-        ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
-        ModelingExercise modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
+        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        ModelingExercise modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         // make exercises team-based
         Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> {
@@ -493,22 +520,22 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String shortNamePrefix1 = TEST_PREFIX + "team";
         String shortNamePrefix2 = TEST_PREFIX + "otherTeam";
 
-        Team team1a = database.addTeamsForExercise(programmingExercise, shortNamePrefix1, TEST_PREFIX + "team1astudent", 1, tutor).get(0);
-        Team team1b = database.addTeamsForExercise(textExercise, shortNamePrefix1, TEST_PREFIX + "team1bstudent", 1, tutor).get(0);
-        Team team1c = database.addTeamsForExercise(modelingExercise, shortNamePrefix1, TEST_PREFIX + "team1cstudent", 1, tutor).get(0);
+        Team team1a = teamUtilService.addTeamsForExercise(programmingExercise, shortNamePrefix1, TEST_PREFIX + "team1astudent", 1, tutor).get(0);
+        Team team1b = teamUtilService.addTeamsForExercise(textExercise, shortNamePrefix1, TEST_PREFIX + "team1bstudent", 1, tutor).get(0);
+        Team team1c = teamUtilService.addTeamsForExercise(modelingExercise, shortNamePrefix1, TEST_PREFIX + "team1cstudent", 1, tutor).get(0);
 
-        Team team2a = database.addTeamsForExercise(programmingExercise, shortNamePrefix2, TEST_PREFIX + "team2astudent", 1, null).get(0);
-        Team team2b = database.addTeamsForExercise(textExercise, shortNamePrefix2, TEST_PREFIX + "team2bstudent", 1, null).get(0);
+        Team team2a = teamUtilService.addTeamsForExercise(programmingExercise, shortNamePrefix2, TEST_PREFIX + "team2astudent", 1, null).get(0);
+        Team team2b = teamUtilService.addTeamsForExercise(textExercise, shortNamePrefix2, TEST_PREFIX + "team2bstudent", 1, null).get(0);
 
         assertThat(Stream.of(team1a, team1b, team1c).map(Team::getShortName).distinct()).as("Teams 1 need the same short name for this test").hasSize(1);
         assertThat(Stream.of(team2a, team2b).map(Team::getShortName).distinct()).as("Teams 2 need the same short name for this test").hasSize(1);
         assertThat(Stream.of(team1a, team1b, team1c, team2a, team2b).map(Team::getShortName).distinct()).as("Teams 1 and Teams 2 need different short names").hasSize(2);
 
-        database.addTeamParticipationForExercise(programmingExercise, team1a.getId());
-        database.addTeamParticipationForExercise(textExercise, team1b.getId());
+        participationUtilService.addTeamParticipationForExercise(programmingExercise, team1a.getId());
+        participationUtilService.addTeamParticipationForExercise(textExercise, team1b.getId());
 
-        database.addTeamParticipationForExercise(programmingExercise, team2a.getId());
-        database.addTeamParticipationForExercise(textExercise, team2b.getId());
+        participationUtilService.addTeamParticipationForExercise(programmingExercise, team2a.getId());
+        participationUtilService.addTeamParticipationForExercise(textExercise, team2b.getId());
 
         Course course1 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
         assertThat(course1.getExercises()).as("All exercises of team 1 in course were returned").hasSize(3);
@@ -524,8 +551,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Submission and Result should be present for Team of which the user is the Team Owner
         final String submissionText = "Hello World";
-        TextSubmission submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
+        TextSubmission submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
 
         Course course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
         StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
@@ -535,8 +562,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(participation.getResults()).as("Latest result is present").hasSize(1);
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
-        submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), TEST_PREFIX + "tutor2");
+        submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), TEST_PREFIX + "tutor2");
 
         Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
         participation = course4.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations().iterator().next();
@@ -555,7 +582,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
-        Team team = database.addTeamsForExercise(exercise, TEST_PREFIX + "team_forb", TEST_PREFIX + "otherStudent", 1, tutor).get(0);
+        Team team = teamUtilService.addTeamsForExercise(exercise, TEST_PREFIX + "team_forb", TEST_PREFIX + "otherStudent", 1, tutor).get(0);
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, Course.class);
     }
 }

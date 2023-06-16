@@ -14,12 +14,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -31,6 +32,9 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Autowired
     private CourseRepository courseRepo;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     private ApollonDiagram apollonDiagram;
 
     private Course course1;
@@ -39,14 +43,14 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        database.createAndSaveUser(TEST_PREFIX + "tutor2");
-        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
 
-        apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
+        apollonDiagram = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course2 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course1);
         courseRepo.save(course2);
     }
@@ -119,14 +123,14 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(responseCourse1).as("response is not empty").isNotEmpty();
         assertThat(responseCourse1).as("response has length 1 ").hasSize(1);
 
-        ApollonDiagram newDiagramCourse1 = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "new title");
+        ApollonDiagram newDiagramCourse1 = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ClassDiagram, "new title");
         newDiagramCourse1.setCourseId(course1.getId());
         apollonDiagramRepository.save(newDiagramCourse1);
         List<ApollonDiagram> updatedResponseCourse1 = request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(updatedResponseCourse1).as("updated response is not empty").isNotEmpty();
         assertThat(updatedResponseCourse1).as("updated response has length 2").hasSize(2);
 
-        ApollonDiagram newDiagramCourse2 = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "newer title");
+        ApollonDiagram newDiagramCourse2 = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ClassDiagram, "newer title");
         newDiagramCourse2.setCourseId(course2.getId());
         apollonDiagramRepository.save(newDiagramCourse2);
         updatedResponseCourse1 = request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);

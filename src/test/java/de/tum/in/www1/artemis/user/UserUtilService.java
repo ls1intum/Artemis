@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.user;
 
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to users for use in integration tests.
@@ -136,7 +135,7 @@ public class UserUtilService {
     }
 
     public User createAndSaveUser(String login, String hashedPassword) {
-        User user = ModelFactory.generateActivatedUser(login, hashedPassword);
+        User user = UserFactory.generateActivatedUser(login, hashedPassword);
         if (userExistsWithLogin(login)) {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
@@ -145,7 +144,7 @@ public class UserUtilService {
     }
 
     public User createOrReuseExistingUser(String login, String hashedPassword) {
-        User user = ModelFactory.generateActivatedUser(login, hashedPassword);
+        User user = UserFactory.generateActivatedUser(login, hashedPassword);
         if (userExistsWithLogin(login)) {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
@@ -154,7 +153,7 @@ public class UserUtilService {
     }
 
     public User createAndSaveUser(String login) {
-        User user = ModelFactory.generateActivatedUser(login);
+        User user = UserFactory.generateActivatedUser(login);
         if (userExistsWithLogin(login)) {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
@@ -203,7 +202,7 @@ public class UserUtilService {
 
         if (!userExistsWithLogin("admin")) {
             log.debug("Generate admin");
-            User admin = ModelFactory.generateActivatedUser("admin", passwordService.hashPassword(USER_PASSWORD));
+            User admin = UserFactory.generateActivatedUser("admin", passwordService.hashPassword(USER_PASSWORD));
             admin.setGroups(Set.of("admin"));
             admin.setAuthorities(adminAuthorities);
             usersToAdd.add(admin);

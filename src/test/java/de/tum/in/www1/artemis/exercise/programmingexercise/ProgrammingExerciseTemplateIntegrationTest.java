@@ -35,13 +35,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -55,6 +55,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -105,8 +108,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = database.addEmptyCourse();
-        exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        Course course = courseUtilService.addEmptyCourse();
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
 

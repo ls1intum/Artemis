@@ -15,11 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -27,8 +25,14 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -58,38 +62,62 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ExerciseService exerciseService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
     static final int NUMBER_OF_TUTORS = 1;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 3, NUMBER_OF_TUTORS, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, NUMBER_OF_TUTORS, 0, 1);
 
         // Add users that are not in exercise/course
-        database.createAndSaveUser(TEST_PREFIX + "student11");
-        database.createAndSaveUser(TEST_PREFIX + "tutor6");
-        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student11");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExerciseAssessmentDashboardWithSubmissions() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course = courses.get(0);
-        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         List<Submission> submissions = new ArrayList<>();
 
-        database.addStudents(TEST_PREFIX, 4, 7);
+        userUtilService.addStudents(TEST_PREFIX, 4, 7);
         for (int i = 1; i <= 6; i++) {
             TextSubmission textSubmission = new TextSubmission();
             textSubmission.text("Text");
             textSubmission.submitted(true);
             textSubmission.submissionDate(ZonedDateTime.now());
-            submissions.add(database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + (i + 1))); // student1 was already used
+            submissions.add(participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + (i + 1))); // student1 was already used
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
+                participationUtilService.addResultToSubmission(textSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"));
+                participationUtilService.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
             }
         }
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
@@ -108,8 +136,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
-        var user = database.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).get(0);
         var textExercise = examRepository.findAllExercisesByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().orElseThrow();
@@ -130,8 +158,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, database.getUserByLogin(TEST_PREFIX + "student1")));
-        var course = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS).get(0); // the course with exercises
+                .isThrownBy(() -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        var course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS).get(0); // the course with exercises
         var exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         var student = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).isEmpty();
@@ -149,7 +177,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).isEmpty();
 
-        var additionalCourses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS);
+        var additionalCourses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS);
         var exercisesFromMultipleCourses = course.getExercises();
         for (var additionalCourse : additionalCourses) {
             exercisesFromMultipleCourses.addAll(additionalCourse.getExercises());
@@ -160,7 +188,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
@@ -236,7 +264,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private void getExamExercise() throws Exception {
-        TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         request.get("/api/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
@@ -252,7 +280,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         var size = exercises.size();
 
         // Test for exercise with upcoming due date.
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var exercise = course.getExercises().iterator().next();
         assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
         exercises = request.getList("/api/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
@@ -280,7 +308,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseDetails() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
@@ -323,7 +351,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseExerciseForExampleSolution() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         ZonedDateTime now = ZonedDateTime.now();
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
@@ -352,8 +380,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
     void testGetExamExerciseForExampleSolution() throws Exception {
-        var user = database.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
         TextExercise exercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
@@ -361,7 +389,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         ZonedDateTime now = ZonedDateTime.now();
         exam.setExampleSolutionPublicationDate(now.minusHours(1));
-        database.addStudentExamWithUser(exam, user);
+        examUtilService.addStudentExamWithUser(exam, user);
         examRepository.save(exam);
 
         TextExercise exerciseForExampleSolution = request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK, TextExercise.class);
@@ -373,11 +401,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseDetails_assessmentDueDate_notPassed() throws Exception {
-        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
+                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
+                        exercise.getStudentParticipations().iterator().next());
             }
             Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
@@ -397,11 +426,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseDetails_assessmentDueDate_passed() throws Exception {
-        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
+                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
+                        exercise.getStudentParticipations().iterator().next());
             }
             Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
@@ -422,25 +452,25 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseDetails_withExamExercise_asStudent() throws Exception {
-        Exercise exercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exercise exercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseDetails_withExamExercise_asTutor() throws Exception {
-        Exercise exercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exercise exercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void filterForCourseDashboard_assessmentDueDate_notPassed() {
-        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
+                exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
@@ -459,11 +489,11 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void filterForCourseDashboard_assessmentDueDate_passed() {
-        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
+                Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
                         exercise.getStudentParticipations().iterator().next());
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
@@ -482,8 +512,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetExercise_forbidden() throws Exception {
-        var course = database.addCourseWithOneReleasedTextExercise();
-        var exercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         request.get("/api/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
@@ -491,7 +521,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseForAssessmentDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
@@ -526,10 +556,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        var course = database.addCourseWithOneModelingExercise();
-        var exercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
-        var exampleSubmission = database.generateExampleSubmission(validModel, exercise, true);
-        database.addExampleSubmission(exampleSubmission);
+        var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        var exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
         Exercise receivedExercise = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
         assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
     }
@@ -537,22 +567,22 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
-        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
         request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
-        var exercise = database.addCourseWithOneProgrammingExercise().getExercises().iterator().next();
+        var exercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise().getExercises().iterator().next();
         request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
-        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
-        var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
         var textExercise = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
@@ -573,7 +603,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExerciseAssessmentDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
@@ -610,14 +640,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
-        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
         request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
@@ -631,14 +661,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testResetExercise_forbidden() throws Exception {
-        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
         request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSetSecondCorrectionEnabledFlagEnable() throws Exception {
-        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
 
         boolean isSecondCorrectionEnabled = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
@@ -648,7 +678,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSetSecondCorrectionEnabledFlagDisable() throws Exception {
-        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setSecondCorrectionEnabled(true);
         exerciseRepository.save(exercise);
@@ -659,7 +689,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
-        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
     }
@@ -686,7 +716,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private void testGetExerciseTitle() throws Exception {
-        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setTitle("Test Exercise");
         exerciseRepository.save(exercise);
@@ -704,11 +734,11 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestDueDate() throws Exception {
-        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
-        database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
-        StudentParticipation studentParticipation3 = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
+        participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        StudentParticipation studentParticipation3 = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
 
         studentParticipation2.setIndividualDueDate(exercise.getDueDate().plusHours(2));
         studentParticipation3.setIndividualDueDate(exercise.getDueDate().plusHours(4));
@@ -722,10 +752,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestDueDateWhenNoIndividualDeadline() throws Exception {
-        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
-        database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
 
         ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
         assertThat(latestDueDate).isCloseTo(exercise.getDueDate(), within(1, ChronoUnit.SECONDS));

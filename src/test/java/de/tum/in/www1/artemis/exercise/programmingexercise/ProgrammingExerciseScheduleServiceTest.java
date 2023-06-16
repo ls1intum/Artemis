@@ -35,8 +35,12 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -64,6 +68,21 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Autowired
     private StudentExamRepository studentExamRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
@@ -78,14 +97,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
-        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student3");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
     }
 
@@ -224,8 +243,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), delayMS));
         programmingExerciseRepository.save(programmingExercise);
 
-        var course = database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise2 = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise2);
 
@@ -634,13 +653,13 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void foo() {
-        ProgrammingExercise examExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
         exam = examRepository.save(exam);
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
-        StudentExam studentExam = database.addStudentExamWithUser(exam, user);
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) database
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
                 .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);

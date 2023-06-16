@@ -18,9 +18,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 /**
@@ -41,17 +42,23 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
     private RequestUtilService request;
 
     @Autowired
-    private DatabaseUtilService database;
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     public ProgrammingExercise programmingExercise;
 
     public ProgrammingExerciseParticipation participation;
 
     public void setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(String userPrefix) {
-        Course course = database.addCourseWithOneProgrammingExercise(false, false, JAVA);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, JAVA);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
     }
 
     /**

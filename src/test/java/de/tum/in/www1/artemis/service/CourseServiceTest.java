@@ -16,12 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -45,9 +47,15 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @Autowired
     private ExerciseRepository exerciseRepo;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
     }
 
     static IntStream weekRangeProvider() {
@@ -60,16 +68,16 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetActiveStudents(long weeks) {
         ZonedDateTime date = ZonedDateTime.now().minusWeeks(weeks);
         SecurityUtils.setAuthorizationObject();
-        var course = database.addEmptyCourse();
-        var exercise = ModelFactory.generateTextExercise(date, date, date, course);
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var participation1 = new StudentParticipation();
         participation1.setParticipant(student1);
         participation1.exercise(exercise);
-        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var participation2 = new StudentParticipation();
         participation2.setParticipant(student2);
         participation2.exercise(exercise);
@@ -121,12 +129,12 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetActiveStudents_UTCConversion() {
         ZonedDateTime date = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, ZonedDateTime.now().getZone());
         SecurityUtils.setAuthorizationObject();
-        var course = database.addEmptyCourse();
-        var exercise = ModelFactory.generateTextExercise(date, date, date, course);
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var participation1 = new StudentParticipation();
         participation1.setParticipant(student1);
         participation1.exercise(exercise);
@@ -153,8 +161,8 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetOverviewAsAdmin() {
         // Minimal testcase: Admins always see all courses
         // Add two courses, one not active
-        var course = database.addEmptyCourse();
-        var inactiveCourse = database.createCourse();
+        var course = courseUtilService.addEmptyCourse();
+        var inactiveCourse = courseUtilService.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
         courseRepository.save(inactiveCourse);
 
@@ -171,16 +179,16 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetOverviewAsInstructor() {
         // Testcase: Instructors see their courses
         // Add three courses, containing one not active and one not belonging to the instructor
-        var course = database.addEmptyCourse();
-        var inactiveCourse = database.createCourse();
+        var course = courseUtilService.addEmptyCourse();
+        var inactiveCourse = courseUtilService.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
         inactiveCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(inactiveCourse);
-        var instructorsCourse = database.createCourse();
+        var instructorsCourse = courseUtilService.createCourse();
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(instructorsCourse);
 
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         var groups = new HashSet<String>();
         groups.add("test-instructors");
         instructor.setGroups(groups);
@@ -204,16 +212,16 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetOverviewAsStudent() {
         // Testcase: Students should not see courses
         // Add three courses, containing one not active and one not belonging to the student
-        database.addEmptyCourse();
-        var inactiveCourse = database.createCourse();
+        courseUtilService.addEmptyCourse();
+        var inactiveCourse = courseUtilService.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
         inactiveCourse.setStudentGroupName("test-students");
         courseRepository.save(inactiveCourse);
-        var instructorsCourse = database.createCourse();
+        var instructorsCourse = courseUtilService.createCourse();
         instructorsCourse.setStudentGroupName("test-students");
         courseRepository.save(instructorsCourse);
 
-        var student = database.getUserByLogin(TEST_PREFIX + "student1");
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var groups = new HashSet<String>();
         groups.add("test-students");
         student.setGroups(groups);

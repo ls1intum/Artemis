@@ -27,9 +27,11 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -45,13 +47,22 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository participationRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private Long programmingExerciseId;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
-        var course = database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
@@ -131,7 +142,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         // test cases with weights > 0, changing to automatic feedback: update should work
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -144,7 +155,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .get();
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         testCases.forEach(testCase -> testCase.setWeight(0D));
@@ -181,7 +192,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
             // submission time after exercise due date but before individual due date
             submission.setSubmissionDate(ZonedDateTime.now().plusHours(1));
         }
-        submission = database.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
 
         ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1").get();
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));

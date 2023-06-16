@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -27,7 +29,6 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
@@ -102,8 +103,9 @@ public class ModelingExerciseUtilService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = ModelFactory.generateCourse(courseId, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
+        Course course1 = CourseFactory.generateCourse(courseId, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course1);
         modelingExercise.setGradingInstructions("Grading instructions");
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setId(exerciseId);
@@ -134,8 +136,9 @@ public class ModelingExerciseUtilService {
      * @return A course with one specified modeling exercise
      */
     public Course addCourseWithOneModelingExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
@@ -151,8 +154,9 @@ public class ModelingExerciseUtilService {
     }
 
     public Course addCourseWithOneReleasedModelExerciseWithKnowledge(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
         courseRepo.save(course);
@@ -162,7 +166,7 @@ public class ModelingExerciseUtilService {
 
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise classExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         classExercise.setTitle(title);
         classExercise = modelingExerciseRepository.save(classExercise);
         return classExercise;
@@ -173,49 +177,55 @@ public class ModelingExerciseUtilService {
     }
 
     public Course addCourseWithDifferentModelingExercises() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         classExercise.setTitle("ClassDiagram");
         course.addExercises(classExercise);
 
-        ModelingExercise activityExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ActivityDiagram, course);
+        ModelingExercise activityExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ActivityDiagram,
+                course);
         activityExercise.setTitle("ActivityDiagram");
         course.addExercises(activityExercise);
 
-        ModelingExercise objectExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ObjectDiagram, course);
+        ModelingExercise objectExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ObjectDiagram,
+                course);
         objectExercise.setTitle("ObjectDiagram");
         course.addExercises(objectExercise);
 
-        ModelingExercise useCaseExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.UseCaseDiagram, course);
+        ModelingExercise useCaseExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.UseCaseDiagram,
+                course);
         useCaseExercise.setTitle("UseCaseDiagram");
         course.addExercises(useCaseExercise);
 
-        ModelingExercise communicationExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.CommunicationDiagram,
-                course);
+        ModelingExercise communicationExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp,
+                DiagramType.CommunicationDiagram, course);
         communicationExercise.setTitle("CommunicationDiagram");
         course.addExercises(communicationExercise);
 
-        ModelingExercise componentExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ComponentDiagram, course);
+        ModelingExercise componentExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ComponentDiagram,
+                course);
         componentExercise.setTitle("ComponentDiagram");
         course.addExercises(componentExercise);
 
-        ModelingExercise deploymentExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.DeploymentDiagram, course);
+        ModelingExercise deploymentExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.DeploymentDiagram,
+                course);
         deploymentExercise.setTitle("DeploymentDiagram");
         course.addExercises(deploymentExercise);
 
-        ModelingExercise petriNetExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.PetriNet, course);
+        ModelingExercise petriNetExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.PetriNet, course);
         petriNetExercise.setTitle("PetriNet");
         course.addExercises(petriNetExercise);
 
-        ModelingExercise syntaxTreeExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.SyntaxTree, course);
+        ModelingExercise syntaxTreeExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.SyntaxTree,
+                course);
         syntaxTreeExercise.setTitle("SyntaxTree");
         course.addExercises(syntaxTreeExercise);
 
-        ModelingExercise flowchartExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.Flowchart, course);
+        ModelingExercise flowchartExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.Flowchart, course);
         flowchartExercise.setTitle("Flowchart");
         course.addExercises(flowchartExercise);
 
-        ModelingExercise finishedExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+        ModelingExercise finishedExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
         finishedExercise.setTitle("finished");
         course.addExercises(finishedExercise);
 
@@ -248,7 +258,7 @@ public class ModelingExerciseUtilService {
      */
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
@@ -311,7 +321,7 @@ public class ModelingExerciseUtilService {
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
         String model = FileUtils.loadFileFromResources(path);
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);
         checkModelingSubmissionCorrectlyStored(submission.getId(), model);
         return submission;

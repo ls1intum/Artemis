@@ -18,10 +18,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -29,7 +33,6 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -41,9 +44,6 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  */
 @Service
 public class UserTestService {
-
-    @Autowired
-    private DatabaseUtilService database;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -69,6 +69,15 @@ public class UserTestService {
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -87,7 +96,7 @@ public class UserTestService {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
-        List<User> users = database.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        List<User> users = userUtilService.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
         student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userRepository.save(student);
@@ -149,10 +158,10 @@ public class UserTestService {
     // Test
     public void deleteUsers(String currentUserLogin) throws Exception {
         userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var users = Set.of(database.getUserByLogin(TEST_PREFIX + "student1"), database.getUserByLogin(TEST_PREFIX + "tutor1"), database.getUserByLogin(TEST_PREFIX + "editor1"),
-                database.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var users = Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                userUtilService.getUserByLogin(TEST_PREFIX + "editor1"), userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
@@ -276,8 +285,8 @@ public class UserTestService {
 
     // Test
     public void updateUserGroups() throws Exception {
-        var course = database.addEmptyCourse();
-        database.addProgrammingExerciseToCourse(course, false);
+        var course = courseUtilService.addEmptyCourse();
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         courseRepository.save(course);
 
         // First we create a new user with group
@@ -511,9 +520,9 @@ public class UserTestService {
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
-        var course = database.addEmptyCourse();
-        database.addProgrammingExerciseToCourse(course, false);
-        course = database.addEmptyCourse();
+        var course = courseUtilService.addEmptyCourse();
+        programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
 
@@ -631,21 +640,21 @@ public class UserTestService {
     // Test
     public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
-        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
 
     // Test
     public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", true, HttpStatus.OK);
-        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNull();
     }
 
     // Test
     public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", false, HttpStatus.OK);
-        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
         assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
@@ -653,7 +662,7 @@ public class UserTestService {
     // Test
     public void initializeUser(boolean mock) throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User repoUser = database.getUserByLogin(TEST_PREFIX + "student1");
+        User repoUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
@@ -673,7 +682,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNotEmpty();
 
-        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
@@ -684,7 +693,7 @@ public class UserTestService {
     // Test
     public void initializeUserWithoutFlag() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
@@ -695,7 +704,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -705,7 +714,7 @@ public class UserTestService {
     // Test
     public void initializeUserNonLTI() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(false);
@@ -714,7 +723,7 @@ public class UserTestService {
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
@@ -723,7 +732,7 @@ public class UserTestService {
     // Test
     public void initializeUserExternal() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
@@ -733,7 +742,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -794,12 +803,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -813,7 +822,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithGroups() throws Exception {
-        Course course = database.addEmptyCourse();
+        Course course = courseUtilService.addEmptyCourse();
         courseRepository.save(course);
 
         final var params = createParamsForPagingRequest("USER", "", FILTER_WITHOUT_REG_NO, "", Long.toString(course.getId()));
@@ -823,7 +832,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -844,7 +853,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -863,12 +872,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -886,12 +895,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -910,12 +919,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -933,12 +942,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -960,12 +969,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -987,12 +996,12 @@ public class UserTestService {
 
         List<User> result;
 
-        database.addEmptyCourse();
+        courseUtilService.addEmptyCourse();
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);

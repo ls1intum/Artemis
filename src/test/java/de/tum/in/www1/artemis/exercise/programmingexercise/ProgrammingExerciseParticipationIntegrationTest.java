@@ -24,7 +24,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -46,15 +49,27 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Autowired
     private ResultRepository resultRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private Participation programmingExerciseParticipation;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
     }
 
@@ -108,7 +123,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        var secondResult = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        var secondResult = participationUtilService.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
         StudentParticipation participation = (StudentParticipation) secondResult.getParticipation();
 
         // Expect the request to always be ok because it should at least return the first automatic result
@@ -147,7 +162,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void testGetParticipationWithLatestResult_cannotAccessParticipation() throws Exception {
         // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.FORBIDDEN,
                 ProgrammingExerciseStudentParticipation.class);
     }
@@ -170,13 +186,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        final var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         participationRepository.save(participation2);
 
         addStudentParticipationWithResult(assessmentType, null);
         StudentParticipation participation = studentParticipationRepository
-                .findByExerciseIdAndStudentId(programmingExercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1").getId()).get(0);
+                .findByExerciseIdAndStudentId(programmingExercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId()).get(0);
 
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
@@ -241,8 +257,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     void testGetLatestResultWithSubmission(boolean withSubmission) throws Exception {
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
         result.setSuccessful(true);
-        result = database.addFeedbackToResults(result);
-        var submission = database.addProgrammingSubmissionToResultAndParticipation(result, (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation, "ABC");
+        result = participationUtilService.addFeedbackToResults(result);
+        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result,
+                (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation, "ABC");
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("withSubmission", String.valueOf(withSubmission));
         var resultResponse = request.get(participationsBaseUrl + programmingExerciseParticipation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class,
@@ -264,7 +281,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestPendingSubmissionIfExists_student() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
@@ -272,7 +289,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestPendingSubmissionIfExists_ta() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
@@ -280,7 +297,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmissionIfExists_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
     }
 
@@ -299,7 +316,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
@@ -312,7 +329,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         // Submission has a result, therefore not considered pending.
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
@@ -325,7 +342,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         // Submission has a result, therefore not considered pending.
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
@@ -337,7 +354,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     void testGetLatestPendingSubmission_cannotAccessParticipation() throws Exception {
         // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now());
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.FORBIDDEN,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isNull();
@@ -347,11 +364,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLatestSubmissionsForExercise_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         ProgrammingSubmission submission2 = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission2 = database.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student2");
+        submission2 = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student2");
         ProgrammingSubmission notPendingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(55L));
-        database.addProgrammingSubmissionWithResult(programmingExercise, notPendingSubmission, TEST_PREFIX + "student3");
+        programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, notPendingSubmission, TEST_PREFIX + "student3");
         Map<Long, ProgrammingSubmission> submissions = new HashMap<>();
         submissions.put(submission.getParticipation().getId(), submission);
         submissions.put(submission2.getParticipation().getId(), submission2);
@@ -377,7 +394,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkIfParticipationHasResult_withResult_returnsTrue() throws Exception {
         addStudentParticipationWithResult(null, null);
-        database.addResultToParticipation(null, null, programmingExerciseParticipation);
+        participationUtilService.addResultToParticipation(null, null, programmingExerciseParticipation);
 
         final var response = request.get("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK, Boolean.class);
 
@@ -387,7 +404,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkIfParticipationHasResult_withoutResult_returnsFalse() throws Exception {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         final var response = request.get("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK, Boolean.class);
 
@@ -397,7 +414,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_noAccess_forbidden() throws Exception {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
@@ -405,8 +422,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_noAccessToGradedParticipation_forbidden() throws Exception {
-        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var gradedParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         practiceParticipation.setTestRun(true);
         participationRepository.save(practiceParticipation);
 
@@ -417,7 +434,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_afterDueDateGradedParticipation_forbidden() throws Exception {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExerciseRepository.save(programmingExercise);
 
@@ -427,29 +444,29 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_forbidden() throws Exception {
-        programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result r = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
-        return database.addVariousVisibilityFeedbackToResult(r);
+        programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        Result r = participationUtilService.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        return participationUtilService.addVariousVisibilityFeedbackToResult(r);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
-        programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        Result r = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
-        database.addVariousVisibilityFeedbackToResult(r);
+        programmingExerciseParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        Result r = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        participationUtilService.addVariousVisibilityFeedbackToResult(r);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
-        programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
-        database.addVariousVisibilityFeedbackToResult(result);
+        programmingExerciseParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 

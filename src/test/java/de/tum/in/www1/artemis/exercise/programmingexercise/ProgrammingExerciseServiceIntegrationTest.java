@@ -17,17 +17,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -47,6 +50,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
@@ -55,21 +73,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        database.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
-        additionalEmptyCourse = database.addEmptyCourse();
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
+        additionalEmptyCourse = courseUtilService.addEmptyCourse();
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
-        programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
-        database.addHintsToExercise(programmingExercise);
-        database.addTasksToProgrammingExercise(programmingExercise);
-        database.addSolutionEntriesToProgrammingExercise(programmingExercise);
-        database.addCodeHintsToProgrammingExercise(programmingExercise);
-        database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
+        programmingExerciseUtilService.addHintsToExercise(programmingExercise);
+        programmingExerciseUtilService.addTasksToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionEntriesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addCodeHintsToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs
-        programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
+        programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
     }
 
     @Test
@@ -146,43 +164,43 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
-        final var search = database.configureSearch("");
-        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
+        final var search = pageableSearchUtilService.configureSearch("");
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var search = database.configureSearch("Programming");
-        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
+        final var search = pageableSearchUtilService.configureSearch("Programming");
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNotEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesId() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesId();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesId() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesId();
     }
 
     private void testSearchTermMatchesId() throws Exception {
-        final Course course = database.addEmptyCourse();
+        final Course course = courseUtilService.addEmptyCourse();
         final var now = ZonedDateTime.now();
-        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
+        ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
         exercise = programmingExerciseRepository.save(exercise);
         var exerciseId = exercise.getId();
 
-        final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchTerm));
+        final var searchTerm = pageableSearchUtilService.configureSearch(exerciseId.toString());
+        final var searchResult = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage().stream().filter(programmingExercise -> (Objects.equals(programmingExercise.getId(), exerciseId)))).hasSize(1);
     }
 
@@ -201,21 +219,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
-        database.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
-        database.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
+        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
+        programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork");
         exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }
 
     private void testSCAFilter(String searchTerm, boolean expectSca) throws Exception {
-        var search = database.configureSearch(searchTerm);
-        var filters = database.searchMapping(search);
+        var search = pageableSearchUtilService.configureSearch(searchTerm);
+        var filters = pageableSearchUtilService.searchMapping(search);
 
         // We should get both exercises when we don't filter for SCA only (other endpoint)
         var result = request.getSearchResult("/api/programming-exercises", HttpStatus.OK, ProgrammingExercise.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(2);
 
-        filters = database.searchMapping(search);
+        filters = pageableSearchUtilService.searchMapping(search);
         filters.add("programmingLanguage", "JAVA");
 
         // The exam exercise is always created with SCA deactivated
@@ -227,19 +245,19 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
-        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
-        database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
-        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
-        final var searchPython = database.configureSearch("Python");
-        final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchPython));
+        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
+        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
+        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        final var searchPython = pageableSearchUtilService.configureSearch("Python");
+        final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage()).hasSize(1);
 
-        final var searchJava = database.configureSearch("Java");
-        final var resultJava = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchJava));
+        final var searchJava = pageableSearchUtilService.configureSearch("Java");
+        final var resultJava = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchJava));
         assertThat(resultJava.getResultsOnPage()).hasSize(2);
 
-        final var searchSwift = database.configureSearch("Swift");
-        final var resultSwift = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchSwift));
+        final var searchSwift = pageableSearchUtilService.configureSearch("Swift");
+        final var resultSwift = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -251,13 +269,13 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         programmingExercise.setTitle(title);
         programmingExerciseRepository.save(programmingExercise);
 
-        var otherCourse = database.addCourseInOtherInstructionGroupAndExercise("Programming");
-        var otherProgrammingExercise = database.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        var otherCourse = courseUtilService.addCourseInOtherInstructionGroupAndExercise("Programming");
+        var otherProgrammingExercise = exerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         otherProgrammingExercise.setTitle(title);
         programmingExerciseRepository.save(otherProgrammingExercise);
 
-        final var search = database.configureSearch(title);
-        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
+        final var search = pageableSearchUtilService.configureSearch(title);
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -267,7 +285,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     private ProgrammingExercise createToBeImported() {
-        return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
+        return ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
     }
 
 }

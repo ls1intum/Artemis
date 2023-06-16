@@ -23,11 +23,11 @@ import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtil
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to exercises for use in integration tests.
@@ -76,19 +76,19 @@ public class ExerciseUtilService {
     }
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
-        GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1, 0);
+        GradingCriterion emptyCriterion = ExerciseFactory.generateGradingCriterion(null);
+        List<GradingInstruction> instructionWithNoCriteria = ExerciseFactory.generateGradingInstructions(emptyCriterion, 1, 0);
         instructionWithNoCriteria.get(0).setCredits(1);
         instructionWithNoCriteria.get(0).setUsageCount(0);
         emptyCriterion.setExercise(exercise);
         emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
 
-        GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3, 1);
+        GradingCriterion testCriterion = ExerciseFactory.generateGradingCriterion("test title");
+        List<GradingInstruction> instructions = ExerciseFactory.generateGradingInstructions(testCriterion, 3, 1);
         testCriterion.setStructuredGradingInstructions(instructions);
 
-        GradingCriterion testCriterion2 = ModelFactory.generateGradingCriterion("test title2");
-        List<GradingInstruction> instructionsWithBigLimit = ModelFactory.generateGradingInstructions(testCriterion2, 1, 4);
+        GradingCriterion testCriterion2 = ExerciseFactory.generateGradingCriterion("test title2");
+        List<GradingInstruction> instructionsWithBigLimit = ExerciseFactory.generateGradingInstructions(testCriterion2, 1, 4);
         testCriterion2.setStructuredGradingInstructions(instructionsWithBigLimit);
 
         testCriterion.setExercise(exercise);
@@ -139,7 +139,7 @@ public class ExerciseUtilService {
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, userPrefix + "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
-                    ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
+                    ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
                     modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
                     studentParticipationRepo.save(participation);
@@ -159,7 +159,7 @@ public class ExerciseUtilService {
                 course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    TextSubmission textSubmission = ModelFactory.generateTextSubmission("Text" + j + j, null, true);
+                    TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Text" + j + j, null, true);
                     textExerciseUtilService.saveTextSubmission((TextExercise) exercise, textSubmission, userPrefix + "student" + j);
                 }
                 return course;
@@ -168,7 +168,7 @@ public class ExerciseUtilService {
                 course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     fileUploadExerciseUtilService.saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;

@@ -25,10 +25,12 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -43,18 +45,30 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Long programmingExerciseId;
 
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        database.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor");
-        database.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
-        database.addStudent("other-student-group", TEST_PREFIX + "other-student");
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor");
+        userUtilService.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
+        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student");
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
     }
 
@@ -227,11 +241,13 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitGreater() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy());
-        ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        ProgrammingExerciseStudentParticipation participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
+        ProgrammingExerciseStudentParticipation participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student2");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student2";
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student2");
@@ -244,11 +260,13 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitSmaller() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy());
-        ProgrammingExerciseStudentParticipation participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        ProgrammingExerciseStudentParticipation participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, TEST_PREFIX + "commit1");
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, TEST_PREFIX + "commit2");
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
+        ProgrammingExerciseStudentParticipation participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student2");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, TEST_PREFIX + "commit1");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, TEST_PREFIX + "commit2");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student2";
         User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -388,16 +406,18 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         if (type != EnforcePolicyTestType.POLICY_NULL) {
             addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(1).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
         }
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1"), List.of("test2", "test3"), new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1"), List.of("test2", "test3"),
+                new ArrayList<>());
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
         Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isPresent();
 
-        database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
         result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
@@ -417,9 +437,11 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         if (type != EnforcePolicyTestType.POLICY_NULL) {
             addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().limit(1).penalty(1.0).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
         }
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
-        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1", "test2", "test3"), List.of(), new ArrayList<>());
+        var resultNotification = ProgrammingExerciseFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1", "test2", "test3"), List.of(),
+                new ArrayList<>());
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
@@ -441,25 +463,26 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void test_getParticipationSubmissionCount() throws Exception {
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
         int numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isZero();
 
-        Submission submission1 = database.addSubmission(participation, new ProgrammingSubmission().commitHash("first").type(SubmissionType.MANUAL));
-        database.addResultToParticipation(participation, submission1);
+        Submission submission1 = participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("first").type(SubmissionType.MANUAL));
+        participationUtilService.addResultToParticipation(participation, submission1);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
-        Submission submission2 = database.addSubmission(participation, new ProgrammingSubmission().commitHash("second").type(SubmissionType.MANUAL));
+        Submission submission2 = participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("second").type(SubmissionType.MANUAL));
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
-        database.addResultToParticipation(participation, submission2);
+        participationUtilService.addResultToParticipation(participation, submission2);
 
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
 
-        database.addResultToParticipation(participation, submission2);
+        participationUtilService.addResultToParticipation(participation, submission2);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
     }
@@ -508,7 +531,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     private void addSubmissionPolicyToExercise(SubmissionPolicy policy) {
-        database.addSubmissionPolicyToExercise(policy, programmingExercise);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
     }
 
     private void addAnySubmissionPolicyToExercise() {

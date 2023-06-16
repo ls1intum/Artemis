@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -19,6 +20,8 @@ import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -27,7 +30,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to conversations for use in integration tests.
@@ -80,7 +82,7 @@ public class ConversationUtilService {
     private UserUtilService userUtilService;
 
     public Course createCourseWithPostsDisabled() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         return courseRepo.save(course);
     }
@@ -88,11 +90,11 @@ public class ConversationUtilService {
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
         Course course1 = courseUtilService.createCourse();
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         course1.addExercises(textExercise);
         textExercise = exerciseRepo.save(textExercise);
 
-        Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Lecture lecture = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
         course1.addLectures(lecture);
         lecture = lectureRepo.save(lecture);
 

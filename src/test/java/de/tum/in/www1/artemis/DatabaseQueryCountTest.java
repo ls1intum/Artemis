@@ -4,10 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -15,23 +18,29 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private static final String TEST_PREFIX = "databasequerycount";
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private static final int NUMBER_OF_TUTORS = 1;
 
     @BeforeEach
     void setup() {
         participantScoreScheduleService.shutdown();
-        database.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         String suffix = "cfdr";
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, suffix, 1, NUMBER_OF_TUTORS, 0, 0);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, suffix, 1, NUMBER_OF_TUTORS, 0, 0);
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
-        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 10, 10, NUMBER_OF_TUTORS);
-        database.updateCourseGroups(TEST_PREFIX, courses, suffix);
+        var courses = courseUtilService.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 10, 10, NUMBER_OF_TUTORS);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, courses, suffix);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");

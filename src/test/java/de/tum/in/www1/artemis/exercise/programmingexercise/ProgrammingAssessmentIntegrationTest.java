@@ -27,9 +27,13 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -62,6 +66,21 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingSubmission programmingSubmission;
@@ -76,33 +95,33 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
-        database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-                AssessmentType.SEMI_AUTOMATIC, true);
+        exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
 
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         // A new manual result and submission are created during the locking of submission for manual assessment
         // The new result has an assessment type, automatic feedbacks and assessor
         var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
         automaticFeedbacks.add(automaticFeedback);
-        var newManualResult = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, TEST_PREFIX + "tutor1",
-                automaticFeedbacks);
+        var newManualResult = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation,
+                TEST_PREFIX + "tutor1", automaticFeedbacks);
         programmingExerciseStudentParticipation.addResult(newManualResult);
         // Set submission of newResult
-        database.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
-        manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
+        manualResult = ParticipationFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
@@ -113,15 +132,15 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
-        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-                AssessmentType.SEMI_AUTOMATIC, true);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
         Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -191,7 +210,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -243,7 +262,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
-        database.updateAssessmentDueDate(programmingExercise.getId(), null);
+        exerciseUtilService.updateAssessmentDueDate(programmingExercise.getId(), null);
         overrideAssessment(HttpStatus.OK);
     }
 
@@ -477,7 +496,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateManualProgrammingExerciseResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
 
         resultRepository.save(manualResult);
@@ -512,7 +531,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateManualProgrammingExerciseResult_newResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        database.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
 
         manualResult.setParticipation(programmingExerciseStudentParticipation);
         manualResult.setSubmission(programmingSubmission);
@@ -553,7 +572,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private void assessmentDueDatePassed() {
-        database.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+        exerciseUtilService.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusSeconds(10));
     }
 
     private void overrideAssessment(HttpStatus httpStatus) throws Exception {
@@ -561,7 +580,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         var result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();
         result.setScore(75D);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         result.setCompletionDate(ZonedDateTime.now());
         result.setFeedbacks(feedbacks);
@@ -575,12 +594,12 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setAssessmentType(assessmentType);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        return database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        return participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
-        ProgrammingSubmission submission = database.createProgrammingSubmission(null, false);
-        submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+        ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(null, false);
+        submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 AssessmentType.AUTOMATIC, true);
         request.put("/api/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
@@ -590,7 +609,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     void multipleCorrectionRoundsForExam() throws Exception {
         // Setup exam with 2 correction rounds and a programming exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
-        Exam exam = database.addExam(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        Exam exam = examUtilService.addExam(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.addExerciseGroup(exerciseGroup1);
         exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
@@ -600,19 +619,19 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
-        ProgrammingExercise exercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
         // add three user submissions with automatic results to student participation
-        final var studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        final var firstSubmission = database.createProgrammingSubmission(studentParticipation, true, "1");
-        database.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
-        final var secondSubmission = database.createProgrammingSubmission(studentParticipation, false, "2");
-        database.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
+        final var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final var firstSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true, "1");
+        participationUtilService.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
+        final var secondSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, "2");
+        participationUtilService.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
         // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
-        final var thirdSubmission = database.createProgrammingSubmission(studentParticipation, false, dummyHash);
-        database.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
+        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, dummyHash);
+        participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
@@ -657,7 +676,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
@@ -680,7 +699,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // change the user here, so that for the next query the result will show up again.
         // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
-        firstSubmittedManualResult.setAssessor(database.getUserByLogin(TEST_PREFIX + "instructor1"));
+        firstSubmittedManualResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(firstSubmittedManualResult);
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");
 
@@ -785,11 +804,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
 
         // Starting participation
-        StudentParticipation participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        StudentParticipation participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
         studentParticipationRepository.save(participation);
 
         // Creating submission
-        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission.setType(SubmissionType.MANUAL);
         programmingSubmission.setParticipation(participation);
         programmingSubmission.setSubmitted(Boolean.TRUE);
@@ -798,7 +817,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // assess this submission
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElse(null);
-        Result initialResult = ModelFactory.generateResult(true, 50);
+        Result initialResult = ParticipationFactory.generateResult(true, 50);
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -815,7 +834,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         // Creating complaint response
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = participationUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
         List<Feedback> complaintFeedback = new ArrayList<>();
@@ -887,17 +906,17 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteResult() throws Exception {
-        Course course = database.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,
+        Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,
                 Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
 
-        database.addAutomaticAssessmentToExercise(exercise);
-        database.addAutomaticAssessmentToExercise(exercise);
-        database.addAutomaticAssessmentToExercise(exercise);
-        database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor1"));
-        database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor2"));
+        exerciseUtilService.addAutomaticAssessmentToExercise(exercise);
+        exerciseUtilService.addAutomaticAssessmentToExercise(exercise);
+        exerciseUtilService.addAutomaticAssessmentToExercise(exercise);
+        exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
-        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.get(0);
         assertThat(submission.getResults()).hasSize(5);
         Result firstResult = submission.getResults().get(0);
