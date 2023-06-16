@@ -37,6 +37,7 @@ $min-contrast-ratio: 1.9;
 
 $body-color: $gray-100;
 $body-secondary-color: $secondary;
+$text-body-secondary: $secondary;
 $body-bg: $gray-800;
 
 $input-color: $gray-800;
@@ -130,11 +131,19 @@ $card-cap-bg: $neutral-dark-l-5;
 $card-border-color: $border-color;
 
 // Navbar
-$navbar-foreground: $body-color;
+$navbar-foreground: $gray-400;
 $navbar-bg: $artemis-dark;
-$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-light-item-active-hover-bg: $artemis-dark;
 $navbar-breadcrumb-background: $body-bg;
 $navbar-breadcrumb-color: $primary;
+$navbar-light-color: rgba($white, 0.6);
+$navbar-light-hover-color: $white;
+$navbar-light-disabled-color: rgba($white, 0.25);
+$navbar-light-active-color: $white;
+$navbar-light-brand-color: $white;
+$navbar-light-brand-hover-color: $white;
+$navbar-light-toggler-border-color: rgba($white, 0.1);
+$navbar-light-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.6%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 
 // Tooltip
 $tooltip-color: $white;
