@@ -1,13 +1,12 @@
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
-import { courseCommunication, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { BASE_API, CourseWideContext, POST } from '../../support/constants';
+import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
+import { CourseWideContext } from '../../support/constants';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { generateUUID, titleCaseWord, titleLowercase } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
 import day from 'dayjs/esm';
-import { text } from 'stream/consumers';
 import { Channel } from '../../../../main/webapp/app/entities/metis/conversation/channel.model';
 
 describe('Course communication', () => {
