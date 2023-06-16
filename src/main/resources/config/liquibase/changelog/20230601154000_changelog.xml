@@ -6,8 +6,8 @@
         <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
         <comment>Step 1: Create channels for lectures that do not have a channel and update posts</comment>
         <sql>
-            INSERT INTO conversation (course_id, lecture_id, name, description,discriminator, is_public, is_announcement, creation_date)
-            SELECT l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), CONCAT('Description of lecture: ', l.title), 'C', true, false, NOW()
+            INSERT INTO conversation (course_id, lecture_id, name, discriminator, is_public, is_announcement, creation_date)
+            SELECT l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), 'C', true, false, NOW()
             FROM lecture l
                      LEFT JOIN conversation c ON l.id = c.lecture_id
                      LEFT JOIN course c2 on l.course_id = c2.id
@@ -40,8 +40,8 @@
         </sql>
         <comment>Step 2: Create channels for exercises that do not have a channel and update posts</comment>
         <sql>
-            INSERT INTO conversation (course_id, exercise_id, name, description,discriminator, is_public, is_announcement, creation_date)
-            SELECT e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), CONCAT('Description of exercise: ', e.title), 'C', true, false, NOW()
+            INSERT INTO conversation (course_id, exercise_id, name, discriminator, is_public, is_announcement, creation_date)
+            SELECT e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), 'C', true, false, NOW()
             FROM exercise e
                      LEFT JOIN conversation c ON e.id = c.exercise_id
                      LEFT JOIN course c2 on e.course_id = c2.id
