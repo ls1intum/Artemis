@@ -11,21 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LspServerStatus {
 
-    public LspServerStatus() {
-    }
-
     public LspServerStatus(String url) {
         this.url = url;
-    }
-
-    public LspServerStatus(int activeSessions, int loadAvg1, int loadAvg5, int loadAvg15, long totalMem, long freeMem, double cpuUsage) {
-        this.activeSessions = activeSessions;
-        this.loadAvg1 = loadAvg1;
-        this.loadAvg5 = loadAvg5;
-        this.loadAvg15 = loadAvg15;
-        this.totalMem = totalMem;
-        this.freeMem = freeMem;
-        this.cpuUsage = cpuUsage;
     }
 
     private String url;

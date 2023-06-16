@@ -1,19 +1,16 @@
 package de.tum.in.www1.artemis.exception;
 
+/**
+ * Exception related to the connected LSP functionalities
+ */
 public class LspException extends RuntimeException {
 
-    public LspException() {
-    }
-
+    /**
+     * Creates a new LSP exception
+     *
+     * @param message The message related to the exception
+     */
     public LspException(String message) {
         super(message);
-    }
-
-    public LspException(Throwable cause) {
-        super(cause);
-    }
-
-    public LspException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

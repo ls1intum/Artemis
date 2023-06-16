@@ -25,6 +25,9 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+/**
+ * REST controller for managing LSP and Monaco related endpoints
+ */
 @RestController
 @RequestMapping("/api")
 public class MonacoEditorResource {
@@ -42,14 +45,11 @@ public class MonacoEditorResource {
 
     private final ParticipationAuthorizationCheckService authCheckService;
 
-    private final FeatureToggleService featureToggleService;
-
     public MonacoEditorResource(ParticipationAuthorizationCheckService authCheckService, FeatureToggleService featureToggleService, MonacoEditorService monacoEditorService,
             ParticipationRepository participationRepository) {
         this.participationRepository = participationRepository;
         this.monacoEditorService = monacoEditorService;
         this.authCheckService = authCheckService;
-        this.featureToggleService = featureToggleService;
     }
 
     /**

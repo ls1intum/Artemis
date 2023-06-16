@@ -83,9 +83,7 @@ public class MonacoEditorService {
      * @return The configuration parameters of the initialized LSP participation
      */
     public LspConfig initLsp(Participation participation) throws IOException, LspException {
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
+        ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
 
         String url = this.getIntegrationServerUrl();
 
@@ -121,10 +119,8 @@ public class MonacoEditorService {
      * @return The configuration parameters of the initialized terminal
      */
     public LspConfig initTerminal(Participation participation, String serverUrl) throws IOException {
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
-        validateServerUrl(serverUrl);
+        ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
+        this.validateServerUrl(serverUrl);
 
         String url = serverUrl + this.terminalInitEndpoint;
 
@@ -175,10 +171,8 @@ public class MonacoEditorService {
      * @param serverUrl     Url of the external server to send the updates to
      */
     public void forwardFileUpdates(Participation participation, List<FileSubmission> fileUpdates, String serverUrl) {
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
-        validateServerUrl(serverUrl);
+        ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
+        this.validateServerUrl(serverUrl);
 
         String url = serverUrl + this.forwardUpdatesEndpoint;
 
@@ -202,10 +196,8 @@ public class MonacoEditorService {
      * @param serverUrl     Url of the external server to send the updates to
      */
     public void forwardFileRename(Participation participation, FileMove fileMove, String serverUrl) {
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
-        validateServerUrl(serverUrl);
+        ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
+        this.validateServerUrl(serverUrl);
 
         String url = serverUrl + this.forwardRenameEndpoint;
 
@@ -230,10 +222,8 @@ public class MonacoEditorService {
      * @param serverUrl     Url of the external server to send the updates to
      */
     public void forwardFileRemoval(Participation participation, String filename, String serverUrl) {
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
-            throw new IllegalArgumentException();
-        }
-        validateServerUrl(serverUrl);
+        ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
+        this.validateServerUrl(serverUrl);
 
         String url = serverUrl + this.forwardRemovalEndpoint;
 
@@ -450,6 +440,20 @@ public class MonacoEditorService {
             unhealthyStatus.setTimestamp(new Date());
             return unhealthyStatus;
         }
+    }
+
+    /**
+     * Checks if the participation is a programming exercise participation and returns it.
+     *
+     * @param participation The participation to check
+     * @return The participation as ProgrammingExerciseParticipation
+     */
+    private ProgrammingExerciseParticipation validationCheck(Participation participation) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+            throw new IllegalArgumentException();
+        }
+
+        return programmingParticipation;
     }
 
     /**
