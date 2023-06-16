@@ -17,9 +17,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
@@ -349,5 +347,80 @@ public class ConversationUtilService {
         conversationParticipant.setUser(userUtilService.getUserByLogin(userName));
 
         return conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    public Conversation addMessageWithReplyAndReactionInGroupChatOfCourseForUser(String login, Course course, String messageText) {
+        Conversation groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, groupChat);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(groupChat);
+    }
+
+    public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
+        Conversation oneToOneChat = new OneToOneChat();
+        oneToOneChat.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, oneToOneChat);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(oneToOneChat);
+    }
+
+    private void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(userUtilService.getUserByLogin(login));
+        answerPost.setContent("answer post");
+        answerPost.setCreationDate(ZonedDateTime.now());
+        answerPost.setPost(answerPostBelongsTo);
+        addReactionForUserToAnswerPost(login, answerPost);
+        postRepository.save(answerPostBelongsTo);
+        answerPostRepository.save(answerPost);
+    }
+
+    private void addReactionForUserToPost(String login, Post post) {
+        Reaction reaction = createReactionForUser(userUtilService.getUserByLogin(login));
+        reaction.setPost(post);
+        conversationRepository.save(post.getConversation());
+        postRepository.save(post);
+        reactionRepository.save(reaction);
+    }
+
+    private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
+        Reaction reaction = createReactionForUser(userUtilService.getUserByLogin(login));
+        reaction.setAnswerPost(answerPost);
+        answerPostRepository.save(answerPost);
+        reactionRepository.save(reaction);
+    }
+
+    private Reaction createReactionForUser(User user) {
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId("heart");
+        reaction.setUser(user);
+        return reaction;
+    }
+
+    public Conversation addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("channel");
+        channel.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, channel);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(channel);
+    }
+
+    private Post createMessageWithReactionForUser(String login, String messageText, Conversation conversation) {
+        Post message = new Post();
+        message.setConversation(conversation);
+        message.setAuthor(userUtilService.getUserByLogin(login));
+        message.setContent(messageText);
+        message.setCreationDate(ZonedDateTime.now());
+        conversation.setCreator(message.getAuthor());
+        addReactionForUserToPost(login, message);
+        conversationRepository.save(conversation);
+        message = postRepository.save(message);
+
+        return message;
     }
 }

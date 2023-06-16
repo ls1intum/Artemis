@@ -411,6 +411,12 @@ public class ParticipationUtilService {
         return result;
     }
 
+    public Result generateResultWithScore(Submission submission, User assessor, Double score) {
+        Result result = generateResult(submission, assessor);
+        result.setScore(score);
+        return result;
+    }
+
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
