@@ -27,9 +27,9 @@
                             <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                         </div>
                         <div class="rate-message-buttons">
-                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful === true">
+                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
                                 <fa-icon
-                                    [class]="message.helpful === true ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
+                                    [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
                                     style="margin-right: 15px"
                                     [icon]="faThumbsUp"
                                     size="sm"
