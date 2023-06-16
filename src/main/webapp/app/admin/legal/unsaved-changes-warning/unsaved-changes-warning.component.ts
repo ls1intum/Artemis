@@ -1,12 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-unsaved-changes-warning',
-    templateUrl: './privacy-statement-unsaved-changes-warning.component.html',
-    styleUrls: ['./privacy-statement-unsaved-changes-warning.component.scss'],
+    templateUrl: './unsaved-changes-warning.component.html',
 })
-export class PrivacyStatementUnsavedChangesWarningComponent {
+export class UnsavedChangesWarningComponent {
+    @Input()
+    textMessage: string;
+
     constructor(private activeModal: NgbActiveModal) {}
 
     /**
