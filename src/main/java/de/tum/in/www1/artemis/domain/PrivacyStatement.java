@@ -1,29 +1,15 @@
 package de.tum.in.www1.artemis.domain;
 
-public class PrivacyStatement {
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.LegalDocumentType;
 
-    private String text;
+public class PrivacyStatement extends LegalDocument {
 
-    private final PrivacyStatementLanguage language;
-
-    public PrivacyStatement(PrivacyStatementLanguage language) {
-        this.language = language;
+    public PrivacyStatement(Language language) {
+        super(LegalDocumentType.PRIVACY_STATEMENT, language);
     }
 
-    public PrivacyStatement(String privacyStatement, PrivacyStatementLanguage language) {
-        this.text = privacyStatement;
-        this.language = language;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public PrivacyStatementLanguage getLanguage() {
-        return language;
+    public PrivacyStatement(String privacyStatementText, Language language) {
+        super(LegalDocumentType.PRIVACY_STATEMENT, privacyStatementText, language);
     }
 }

@@ -22,6 +22,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
+   user/assessment
    user/exercises
    user/lectures
    user/exam_mode

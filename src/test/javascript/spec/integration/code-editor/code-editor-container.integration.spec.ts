@@ -65,6 +65,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -97,6 +98,7 @@ describe('CodeEditorContainerIntegration', () => {
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorInstructionsComponent),
+                MockComponent(CodeEditorHeaderComponent),
                 KeysPipe,
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleLinkDirective),
