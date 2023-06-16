@@ -21,6 +21,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 
 @NgModule({
     imports: [
@@ -48,6 +49,7 @@ import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/tre
         CodeEditorResolveConflictModalComponent,
         CodeEditorConfirmRefreshModalComponent,
         CodeEditorContainerComponent,
+        CodeEditorHeaderComponent,
     ],
     exports: [
         CodeEditorGridComponent,
@@ -58,6 +60,7 @@ import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/tre
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorContainerComponent,
+        CodeEditorHeaderComponent,
     ],
     providers: [],
 })

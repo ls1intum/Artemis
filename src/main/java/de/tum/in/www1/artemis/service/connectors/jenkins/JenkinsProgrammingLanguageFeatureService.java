@@ -25,6 +25,6 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         // Jenkins is not supporting XCODE at the moment
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, true, true, false, List.of(PLAIN), false, true, true));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC), false, true, true));
-        programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, false, List.of(), false, true, true));
+        programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of(), false, true, true));
     }
 }

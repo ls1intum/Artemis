@@ -8,6 +8,7 @@ export class CourseScoresStudentStatistics {
     user: User;
     participations: StudentParticipation[] = [];
     presentationScore = 0;
+    presentationPoints = 0;
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;

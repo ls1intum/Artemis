@@ -5,7 +5,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, HighlightType } from 'app/course/course-scores/course-scores.component';
-import { COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, EMAIL_KEY, NAME_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import {
+    COURSE_OVERALL_POINTS_KEY,
+    COURSE_OVERALL_SCORE_KEY,
+    EMAIL_KEY,
+    NAME_KEY,
+    PRESENTATION_POINTS_KEY,
+    PRESENTATION_SCORE_KEY,
+    USERNAME_KEY,
+} from 'app/shared/export/export-constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -103,6 +111,15 @@ describe('CourseScoresComponent', () => {
         maxPoints: 10,
         bonusPoints: 0,
     } as Exercise;
+    const modelingNotIncludedWith10Points0BonusPoints = {
+        title: 'exercise six',
+        id: 6,
+        dueDate: sharedDueDate,
+        type: ExerciseType.MODELING,
+        includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
+        maxPoints: 10,
+        bonusPoints: 0,
+    } as Exercise;
 
     const course = {
         courseId: 1,
@@ -113,6 +130,7 @@ describe('CourseScoresComponent', () => {
             textIncludedWith10Points10BonusPoints,
             fileBonusWith10Points0BonusPoints,
             modelingIncludedWith10Points0BonusPoints,
+            modelingNotIncludedWith10Points0BonusPoints,
         ],
         accuracyOfScores: 1,
     } as Course;
@@ -134,6 +152,7 @@ describe('CourseScoresComponent', () => {
         student: user1,
         exercise: textIncludedWith10Points10BonusPoints,
         results: [{ score: 200 } as Result],
+        presentationScore: 100,
     } as StudentParticipation;
     const participation2 = {
         id: 2,
@@ -179,14 +198,14 @@ describe('CourseScoresComponent', () => {
     } as StudentParticipation;
     const courseScoreStudent1 = new ScoresDTO();
     courseScoreStudent1.studentId = user1.id;
-    courseScoreStudent1.pointsAchieved = 40;
+    courseScoreStudent1.pointsAchieved = 50;
     courseScoreStudent1.studentLogin = user1.login;
-    courseScoreStudent1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(40 / 30, course);
+    courseScoreStudent1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(50 / 40, course);
     const courseScoreStudent2 = new ScoresDTO();
     courseScoreStudent2.studentId = user2.id;
     courseScoreStudent2.pointsAchieved = 15;
     courseScoreStudent2.studentLogin = user2.login;
-    courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 30, course);
+    courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 40, course);
     let findCourseScoresSpy: jest.SpyInstance;
     const participation9 = {
         id: 9,
@@ -200,6 +219,19 @@ describe('CourseScoresComponent', () => {
         exercise: quizNotIncludedWith10Points0BonusPoints,
         results: [{ score: 100 } as Result],
     } as StudentParticipation;
+    const participation11 = {
+        id: 11,
+        student: user1,
+        exercise: modelingNotIncludedWith10Points0BonusPoints,
+        results: [{ score: 100 } as Result],
+        presentationScore: 100,
+    } as StudentParticipation;
+    const participation12 = {
+        id: 12,
+        student: user2,
+        exercise: modelingNotIncludedWith10Points0BonusPoints,
+        results: [{ score: 100 } as Result],
+    } as StudentParticipation;
     const participations: StudentParticipation[] = [
         participation1,
         participation2,
@@ -211,6 +243,8 @@ describe('CourseScoresComponent', () => {
         participation8,
         participation9,
         participation10,
+        participation11,
+        participation12,
     ];
     const pointsOfStudent1 = new ExerciseTypeStatisticsMap();
     const pointsOfStudent2 = new ExerciseTypeStatisticsMap();
@@ -226,6 +260,12 @@ describe('CourseScoresComponent', () => {
     const gradingScale: GradingScale = {
         gradeType: GradeType.GRADE,
         gradeSteps: [gradeStep],
+    };
+    const gradingScaleWithGradedPresentations: GradingScale = {
+        gradeType: GradeType.GRADE,
+        gradeSteps: [gradeStep],
+        presentationsNumber: 2,
+        presentationsWeight: 25,
     };
 
     beforeEach(() => {
@@ -401,18 +441,24 @@ describe('CourseScoresComponent', () => {
     it('should calculate per student score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
         expect(component.students[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
         expect(component.students[0].numberOfParticipatedExercises).toBe(3);
         expect(component.students[0].numberOfSuccessfulExercises).toBe(3);
-        expect(component.students[0].overallPoints).toBe(40);
+        expect(component.students[0].presentationPoints).toBe(10);
+        expect(component.students[0].overallPoints).toBe(50);
 
         expect(component.students[1].pointsPerExerciseType).toEqual(pointsOfStudent2);
         expect(component.students[1].numberOfParticipatedExercises).toBe(2);
         expect(component.students[1].numberOfSuccessfulExercises).toBe(1);
+        expect(component.students[1].presentationPoints).toBe(0);
         expect(component.students[1].overallPoints).toBe(15);
+
+        expect(component.maxNumberOfPresentationPoints).toBe(10);
+        expect(component.averageNumberOfPresentationPoints).toBe(5);
 
         expect(component.exportReady).toBeTrue();
     });
@@ -459,6 +505,7 @@ describe('CourseScoresComponent', () => {
     it('should generate excel row correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
         const exportAsExcelStub = jest.spyOn(component, 'exportAsExcel').mockImplementation();
@@ -479,8 +526,10 @@ describe('CourseScoresComponent', () => {
             { t: 'n', v: 2, z: '0%' },
             { t: 'n', v: 10 },
             { t: 'n', v: 0, z: '0%' },
-            { t: 'n', v: 40 },
-            { t: 'n', v: 1.333, z: '0.0%' },
+            { t: 'n', v: 10 },
+            { t: 'n', v: 1, z: '0%' },
+            { t: 'n', v: 50 },
+            { t: 'n', v: 1.25, z: '0%' },
         );
         const user2Row = generatedRows[1];
         validateUserExportRow(
@@ -497,16 +546,19 @@ describe('CourseScoresComponent', () => {
             { t: 'n', v: 0, z: '0%' },
             { t: 'n', v: 10 },
             { t: 'n', v: 0, z: '0%' },
+            { t: 'n', v: 0 },
+            { t: 'n', v: 0, z: '0%' },
             { t: 'n', v: 15 },
-            { t: 'n', v: 0.5, z: '0%' },
+            { t: 'n', v: 0.375, z: '0.0%' },
         );
         const maxRow = generatedRows[3];
-        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toEqual({ t: 'n', v: 30 });
+        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toEqual({ t: 'n', v: 40 });
     });
 
     it('should generate csv correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
@@ -532,13 +584,15 @@ describe('CourseScoresComponent', () => {
             '200%',
             '10',
             '0%',
-            '40',
-            roundScorePercentSpecifiedByCourseSettings(40 / 30, course).toLocaleString() + '%',
+            '10',
+            '100%',
+            '50',
+            roundScorePercentSpecifiedByCourseSettings(50 / 40, course).toLocaleString() + '%',
         );
         const user2Row = generatedRows[1];
-        validateUserExportRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
+        validateUserExportRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '0', '0%', '15', '37.5%');
         const maxRow = generatedRows[3];
-        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toBe('30');
+        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toBe('40');
     });
 
     it('should set grading scale properties correctly', () => {
@@ -546,7 +600,8 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
-        component.calculateGradingScaleInformation(gradingScale);
+        component.setUpGradingScale(gradingScale);
+        component.calculateGradingScaleInformation();
 
         expect(component.gradingScaleExists).toBeTrue();
         expect(component.gradingScale).toEqual(gradingScale);
@@ -590,6 +645,8 @@ describe('CourseScoresComponent', () => {
         expectedTextScore: string | CommonSpreadsheetCellObject,
         expectedFileUploadPoints: string | CommonSpreadsheetCellObject,
         expectedFileUploadScore: string | CommonSpreadsheetCellObject,
+        expectedPresentationPoints: string | CommonSpreadsheetCellObject,
+        expectedPresentationScore: string | CommonSpreadsheetCellObject,
         expectedOverallCoursePoints: string | CommonSpreadsheetCellObject,
         expectedOverallCourseScore: string | CommonSpreadsheetCellObject,
     ) {
@@ -603,6 +660,8 @@ describe('CourseScoresComponent', () => {
         expect(userRow['Modeling Score']).toEqual(expectedModelingScore);
         expect(userRow['File-upload Points']).toEqual(expectedFileUploadPoints);
         expect(userRow['File-upload Score']).toEqual(expectedFileUploadScore);
+        expect(userRow[PRESENTATION_POINTS_KEY]).toEqual(expectedPresentationPoints);
+        expect(userRow[PRESENTATION_SCORE_KEY]).toEqual(expectedPresentationScore);
         expect(userRow[COURSE_OVERALL_POINTS_KEY]).toEqual(expectedOverallCoursePoints);
         expect(userRow[COURSE_OVERALL_SCORE_KEY]).toEqual(expectedOverallCourseScore);
     }

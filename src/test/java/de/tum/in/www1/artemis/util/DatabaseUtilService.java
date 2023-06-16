@@ -1348,14 +1348,11 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
-    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures,
-            int numberOfTutorParticipations) throws Exception {
+    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercisesAndLectures, int numberOfTutorParticipations)
+            throws Exception {
         List<Course> courses = new ArrayList<>();
-        for (int i = 0; i < numberOfCoursesWithExercises; i++) {
-            var course = createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(userPrefix, true);
-            courses.add(course);
-        }
-        for (int i = 0; i < numberOfCoursesWithLectures; i++) {
+
+        for (int i = 0; i < numberOfCoursesWithExercisesAndLectures; i++) {
             var coursesWithLectures = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true, numberOfTutorParticipations);
             courses.addAll(coursesWithLectures);
         }
@@ -2890,7 +2887,7 @@ public class DatabaseUtilService {
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
         buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
         programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         assertThat(buildPlanOptional).isPresent();
