@@ -1,8 +1,8 @@
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, NumNewMessagesResetAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
@@ -14,9 +14,10 @@ import dayjs from 'dayjs';
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
 })
-export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
+export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
+    @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
 
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
@@ -27,6 +28,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     newMessageTextContent = '';
     isLoading: boolean;
     sessionId: number;
+    numNewMessages = 0;
+    unreadMessageIndex: number;
     error = '';
     dots = 1;
 
@@ -53,15 +56,24 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
     faXmark = faXmark;
 
     ngOnInit() {
-        this.scrollToBottom('auto');
         this.animateDots();
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
+            this.numNewMessages = state.numNewMessages;
         });
         this.loadFirstMessage();
+    }
+
+    ngAfterViewInit() {
+        this.unreadMessageIndex = this.messages.length === 0 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
+        if (this.numNewMessages > 0) {
+            this.scrollToUnread();
+        } else {
+            this.scrollToBottom('auto');
+        }
     }
 
     ngOnDestroy() {
@@ -103,7 +115,15 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy {
         });
     }
 
+    scrollToUnread() {
+        setTimeout(() => {
+            const unreadMessageElement: HTMLElement = this.unreadMessage.nativeElement;
+            unreadMessageElement.scrollIntoView({ behavior: 'auto' });
+        });
+    }
+
     closeChat() {
+        this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.dialog.closeAll();
     }
 

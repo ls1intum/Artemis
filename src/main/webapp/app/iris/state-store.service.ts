@@ -2,11 +2,17 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
+    ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
+    HistoryMessageLoadedAction,
     MessageStoreAction,
     MessageStoreState,
+    SessionReceivedAction,
+    StudentMessageSentAction,
     isActiveConversationMessageLoadedAction,
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
+    isNumNewMessagesResetAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
@@ -22,6 +28,7 @@ export class IrisStateStore implements OnDestroy {
         messages: [],
         sessionId: null,
         isLoading: false,
+        numNewMessages: 0,
         error: '',
     };
 
@@ -102,41 +109,58 @@ export class IrisStateStore implements OnDestroy {
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
-                messages: [...state.messages],
-                sessionId: state.sessionId,
+                ...state,
                 isLoading: false,
                 error: 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.', // TODO translate to German
             };
         }
-
-        if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
+        if (isNumNewMessagesResetAction(action)) {
             return {
-                messages: [...state.messages, action.message],
+                ...state,
+                numNewMessages: 0,
+            };
+        }
+        if (isHistoryMessageLoadedAction(action)) {
+            const castedAction = action as HistoryMessageLoadedAction;
+            return {
+                ...state,
+                messages: [...state.messages, castedAction.message],
+                isLoading: false,
+                error: '',
+            };
+        }
+        if (isActiveConversationMessageLoadedAction(action)) {
+            const castedAction = action as ActiveConversationMessageLoadedAction;
+            return {
+                messages: [...state.messages, castedAction.message],
                 sessionId: state.sessionId,
                 isLoading: false,
+                numNewMessages: state.numNewMessages + 1,
                 error: '',
             };
         }
         if (isConversationErrorOccurredAction(action)) {
+            const castedAction = action as ConversationErrorOccurredAction;
             return {
-                messages: state.messages,
-                sessionId: state.sessionId,
+                ...state,
                 isLoading: false,
-                error: action.errorMessage,
+                error: castedAction.errorMessage,
             };
         }
         if (isSessionReceivedAction(action)) {
+            const castedAction = action as SessionReceivedAction;
             return {
-                messages: action.messages,
-                sessionId: action.sessionId,
-                isLoading: state.isLoading,
+                ...state,
+                messages: castedAction.messages,
+                sessionId: castedAction.sessionId,
                 error: '',
             };
         }
         if (isStudentMessageSentAction(action)) {
+            const castedAction = action as StudentMessageSentAction;
             return {
-                messages: [...state.messages, action.message],
-                sessionId: state.sessionId,
+                ...state,
+                messages: [...state.messages, castedAction.message],
                 isLoading: true,
                 error: '',
             };
