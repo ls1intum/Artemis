@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
-import de.tum.in.www1.artemis.domain.PrivacyStatementLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import net.minidev.json.JSONObject;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +48,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
-            request.get("/api/privacy-statement-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
+            request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
 
         }
     }
@@ -61,8 +61,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             mockedFiles.when(
                     () -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE), eq(StandardOpenOption.TRUNCATE_EXISTING)))
                     .thenThrow(new IOException());
-            request.putWithResponseBody("/api/privacy-statement", new PrivacyStatement("text", PrivacyStatementLanguage.GERMAN), PrivacyStatement.class,
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            request.putWithResponseBody("/api/admin/privacy-statement", new PrivacyStatement("text", Language.GERMAN), PrivacyStatement.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -74,22 +73,21 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
 
-            response = request.putWithResponseBody("/api/privacy-statement", new PrivacyStatement("updatedText", PrivacyStatementLanguage.GERMAN), PrivacyStatement.class,
-                    HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/privacy-statement", new PrivacyStatement("updatedText", Language.GERMAN), PrivacyStatement.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.createDirectories(any()));
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
 
         }
         assertThat(response.getText()).isEqualTo("updatedText");
-        assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
+        assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
 
     }
 
     // no mock user as anonymous access should be allowed
     @ParameterizedTest
-    @EnumSource(value = PrivacyStatementLanguage.class, names = { "GERMAN", "ENGLISH" })
-    void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound(PrivacyStatementLanguage language) throws Exception {
+    @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
+    void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound(Language language) throws Exception {
         PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             if ("de".equals(language.getShortName())) {
@@ -106,17 +104,17 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             response = request.get("/api/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
         }
         if ("de".equals(language.getShortName())) {
-            assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.ENGLISH);
+            assertThat(response.getLanguage()).isEqualTo(Language.ENGLISH);
             assertThat(response.getText()).isEqualTo("Privacy Statement");
         }
         else {
-            assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
+            assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
             assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
         }
     }
 
     @Test
-    void testGetPrivacyStatementReturnsEmptyStringIfNoLanguageFound() throws Exception {
+    void testGetPrivacyStatement_noLanguageFound_badRequest() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
@@ -128,13 +126,13 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPrivacyStatementForUpdate_instructorAccessForbidden() throws Exception {
-        request.get("/api/privacy-statement-for-update?language=de", HttpStatus.FORBIDDEN, PrivacyStatement.class);
+        request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.FORBIDDEN, PrivacyStatement.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetPrivacyStatementForUpdate_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/privacy-statement-for-update?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
+        request.get("/api/admin/privacy-statement-for-update?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
     }
 
     @Test
@@ -143,19 +141,19 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatement.class);
         }
         assertThat(response.getText()).isEqualTo("");
-        assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
+        assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
     }
 
     @ParameterizedTest
-    @EnumSource(value = PrivacyStatementLanguage.class, names = { "GERMAN", "ENGLISH" })
-    void testGetPrivacyStatementReturnsCorrectFileContent(PrivacyStatementLanguage language) throws Exception {
+    @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
+    void testGetPrivacyStatementReturnsCorrectFileContent(Language language) throws Exception {
         PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            if (language == PrivacyStatementLanguage.ENGLISH) {
+            if (language == Language.ENGLISH) {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
             }
             else {
@@ -165,7 +163,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
-        if (language == PrivacyStatementLanguage.ENGLISH) {
+        if (language == Language.ENGLISH) {
             assertThat(response.getText()).isEqualTo("Privacy Statement");
         }
         else {
@@ -174,9 +172,9 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     }
 
     @ParameterizedTest
-    @EnumSource(value = PrivacyStatementLanguage.class, names = { "GERMAN", "ENGLISH" })
+    @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdateReturnsCorrectFileContent(PrivacyStatementLanguage language) throws Exception {
+    void testGetPrivacyStatementForUpdateReturnsCorrectFileContent(Language language) throws Exception {
         PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
@@ -186,7 +184,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             else {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
             }
-            response = request.get("/api/privacy-statement-for-update?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+            response = request.get("/api/admin/privacy-statement-for-update?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
@@ -201,19 +199,19 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdatePrivacyStatement_instructorAccessForbidden() throws Exception {
-        request.put("/api/privacy-statement", new PrivacyStatement(PrivacyStatementLanguage.GERMAN), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/privacy-statement", new PrivacyStatement(Language.GERMAN), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_writesFile_ReturnsUpdatedFileContent() throws Exception {
         PrivacyStatement response;
-        PrivacyStatement requestBody = new PrivacyStatement(PrivacyStatementLanguage.GERMAN);
+        PrivacyStatement requestBody = new PrivacyStatement(Language.GERMAN);
         requestBody.setText("Datenschutzerklärung");
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
 
-            response = request.putWithResponseBody("/api/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/admin/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
             // we explicitly check the method calls to ensure createDirectories is not called when the directory exists
@@ -221,7 +219,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             mockedFiles.verifyNoMoreInteractions();
 
         }
-        assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
+        assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
         assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
 
     }
@@ -232,15 +230,15 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         JSONObject body = new JSONObject();
         body.put("text", "test");
         body.put("language", "FRENCH");
-        request.put("/api/privacy-statement", body, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/privacy-statement", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_blankTextBadRequest() throws Exception {
-        PrivacyStatement requestBody = new PrivacyStatement(PrivacyStatementLanguage.GERMAN);
+        PrivacyStatement requestBody = new PrivacyStatement(Language.GERMAN);
         requestBody.setText("           ");
-        request.put("/api/privacy-statement", requestBody, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/privacy-statement", requestBody, HttpStatus.BAD_REQUEST);
     }
 
 }
