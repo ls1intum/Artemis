@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.open.UserJwtResource;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
@@ -43,6 +44,9 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     @BeforeEach
     void setup() {
@@ -128,7 +132,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         authenticate(createPrincipal(""));
 
         assertStudentExists();
-        assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
     }
 
     /**
@@ -150,7 +154,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
 
         assertStudentExists();
-        assertThat(this.database.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
     }
 
     /**
@@ -245,15 +249,15 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     }
 
     private void assertStudentNotExists() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME))
+        assertThatIllegalArgumentException().isThrownBy(() -> userUtilService.getUserByLogin(STUDENT_NAME))
                 .withMessage("Provided login " + STUDENT_NAME + " does not exist in database");
     }
 
     private void assertStudentExists() {
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
     }
 
     private void assertRegistrationNumber(String registrationNumber) {
-        assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
     }
 }

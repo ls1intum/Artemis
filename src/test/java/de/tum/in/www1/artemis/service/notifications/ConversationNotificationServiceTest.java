@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -50,6 +52,12 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private OneToOneChat oneToOneChat;
 
     private User user1;
@@ -58,8 +66,8 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     void setUp() {
-        this.database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course = this.database.createCourse();
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        Course course = courseUtilService.createCourse();
         user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
 

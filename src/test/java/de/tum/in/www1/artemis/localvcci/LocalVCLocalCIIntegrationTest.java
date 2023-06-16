@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Team;
@@ -22,6 +23,8 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -29,6 +32,12 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * assistant assignment, instructor assignment).
  */
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     // ---- Repository handles ----
     private String templateRepositorySlug;
@@ -224,7 +233,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
         lockRepositoryPolicy.setSubmissionLimit(0);
         lockRepositoryPolicy.setActive(true);
-        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
         localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Instructors should still be able to push
@@ -260,7 +269,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create participation.
-        database.addTeamParticipationForProgrammingExercise(programmingExercise, team);
+        participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, team);
 
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);
@@ -401,7 +410,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Tests for the exam mode ----
     @Test
     void testFetchPush_assignmentRepository_examMode() throws Exception {
-        Exam exam = database.addExamWithExerciseGroup(course, true);
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByExamId(exam.getId()).stream().findFirst().orElseThrow();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
@@ -413,7 +422,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         examRepository.save(exam);
 
         // Create StudentExam.
-        StudentExam studentExam = database.addStudentExam(exam);
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
         studentExam.setUser(student1);
         studentExam.setExercises(List.of(programmingExercise));
         studentExamRepository.save(studentExam);
@@ -466,7 +475,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Test
     void testFetchPush_instructorExamTestRun() throws Exception {
-        Exam exam = database.addExamWithExerciseGroup(course, true);
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByExamId(exam.getId()).stream().findFirst().orElseThrow();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
@@ -478,7 +487,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         examRepository.save(exam);
 
         // Create an exam test run.
-        StudentExam instructorExam = database.addStudentExam(exam);
+        StudentExam instructorExam = examUtilService.addStudentExam(exam);
         instructorExam.setUser(instructor1);
         instructorExam.setExercises(List.of(programmingExercise));
         instructorExam.setTestRun(true);
@@ -493,7 +502,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Add participation.
-        ProgrammingExerciseStudentParticipation instructorTestRunParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        ProgrammingExerciseStudentParticipation instructorTestRunParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                instructor1Login);
         instructorTestRunParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructor1Login).toLowerCase()));
         instructorTestRunParticipation.setBranch(defaultBranch);
         instructorTestRunParticipation.setTestRun(true);
@@ -550,7 +560,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create practice participation.
-        ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
+        ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
         practiceParticipation.setTestRun(true);
         practiceParticipation.setRepositoryUrl(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
@@ -595,7 +605,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create practice participation.
-        ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
+        ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         practiceParticipation.setTestRun(true);
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
@@ -632,7 +642,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create practice participation.
-        ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                instructor1Login);
         practiceParticipation.setTestRun(true);
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 

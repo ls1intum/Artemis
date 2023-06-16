@@ -13,14 +13,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
@@ -40,6 +45,21 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Course course;
 
     private Exam exam;
@@ -55,13 +75,13 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         // Student not belonging to any course
-        database.createAndSaveUser(TEST_PREFIX + "student2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student2");
 
-        course = database.addEmptyCourse();
-        exam = database.addExamWithExerciseGroup(course, true);
+        course = courseUtilService.addEmptyCourse();
+        exam = examUtilService.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
         examGradingScale = new GradingScale();
         gradeSteps = new HashSet<>();
@@ -264,11 +284,11 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // Add student participation to course to avoid receiving no-participation special grade.
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
-        database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        database.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
+        participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
 
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
 
@@ -312,10 +332,10 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // Add student participation to course to avoid receiving no-participation special grade.
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
         User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        database.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 50, true);
 
         var coursePlagiarismCase = new PlagiarismCase();
         coursePlagiarismCase.setStudent(student);
