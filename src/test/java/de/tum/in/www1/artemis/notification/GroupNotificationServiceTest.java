@@ -379,9 +379,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     /**
      * Checks if a push to android and iOS was created and send
      */
-    private void verifyPush() {
-        verify(applePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), any(Object.class));
-        verify(firebasePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), any(Object.class));
+    private void verifyPush(Object notificationSubject) {
+        verify(applePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
+        verify(firebasePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
     }
 
     /**
@@ -413,7 +413,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
 
         verifyEmail();
-        verifyPush();
+        verifyPush(attachment);
     }
 
     @Test
@@ -422,7 +422,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
         verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
         verifyEmail();
-        verifyPush();
+        verifyPush(exercise);
     }
 
     @Test
@@ -501,7 +501,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
         verifyEmail();
-        verifyPush();
+        // paste post subject
+        verifyPush(post);
     }
 
     /**
