@@ -55,7 +55,7 @@
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Information",
-                    "difficultyStepTitle": "Difficulty",
+                    "difficultyStepTitle": "Mode",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem",
@@ -64,8 +64,8 @@
                 "detailedSteps": {
                     "generalInfoStepTitle": "General Information",
                     "generalInfoStepMessage": "Add some general information about the new exercise.",
-                    "difficultyStepTitle": "Difficulty",
-                    "difficultyStepMessage": "Set the difficulty for the new exercise.",
+                    "difficultyStepTitle": "Mode",
+                    "difficultyStepMessage": "Set the mode for the new exercise.",
                     "languageStepTitle": "Programming Language",
                     "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
                     "gradingStepTitle": "Grading",
