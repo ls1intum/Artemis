@@ -18,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -65,7 +64,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private StudentExamRepository studentExamRepository;
 
-    @SpyBean
+    @Autowired
     private ExerciseRepository exerciseRepository;
 
     @Autowired
@@ -77,7 +76,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private DataExportCreationService dataExportCreationService;
 
-    @MockBean
+    @SpyBean
     private ApollonConversionService apollonConversionService;
 
     @SpyBean
@@ -89,7 +88,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
         // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
         var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
-        when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
+        doReturn(new ByteArrayInputStream(byteArray)).when(apollonConversionService).convertModel(anyString());
 
     }
 
@@ -319,7 +318,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
         verify(singleUserNotificationService).notifyUserAboutDataExportFailure(any(DataExport.class));
-        verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), dataExportFromDb, exception);
+        verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), eq(dataExportFromDb), eq(exception));
     }
 
     @Test
