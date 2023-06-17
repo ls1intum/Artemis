@@ -265,7 +265,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             )
             .subscribe({
                 next: (learningGoal) => {
-                    if (learningGoal && learningGoal.exercises) {
+                    if (learningGoal?.exercises?.length) {
                         this.canBeOptional = !learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
                     }
                     if (!this.canBeOptional) {
