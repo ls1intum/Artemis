@@ -879,5 +879,4 @@ public class CourseUtilService {
         return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
                 typeComplaint, numberComplaintResponses, validModel, false);
     }
-
 }
