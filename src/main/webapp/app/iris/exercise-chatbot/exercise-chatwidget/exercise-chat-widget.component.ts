@@ -34,7 +34,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     dots = 1;
 
     readonly firstMessageContent = {
-        textContent: "Hi, I'm Iris! I can help you with your programming exercise.You can know more about me here.",
+        textContent: "Hi, I'm Iris! I can help you with your programming exercise. You can know more about me here.",
         type: IrisMessageContentType.TEXT,
     } as IrisMessageContent;
 
@@ -68,7 +68,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngAfterViewInit() {
-        this.unreadMessageIndex = this.messages.length === 0 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
+        this.unreadMessageIndex = this.messages.length === 1 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
         if (this.numNewMessages > 0) {
             this.scrollToUnread();
         } else {
