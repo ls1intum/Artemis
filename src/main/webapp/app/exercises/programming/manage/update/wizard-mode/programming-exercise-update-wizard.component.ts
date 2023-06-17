@@ -35,15 +35,15 @@ export type LanguageStepInputs = {
     projectTypes: ProjectType[];
     selectedProjectType: ProjectType;
     onProjectTypeChange: (projectType: ProjectType) => ProjectType;
-};
-
-export type GradingStepInputs = {
     staticCodeAnalysisAllowed: boolean;
     onStaticCodeAnalysisChanged: () => void;
     maxPenaltyPattern: string;
     sequentialTestRunsAllowed: boolean;
     testwiseCoverageAnalysisSupported: boolean;
 };
+
+// Currently there are no inputs, however this can be used like the other inputs as well
+export type GradingStepInputs = object;
 
 export type ProblemStepInputs = {
     problemStatementLoaded: boolean;

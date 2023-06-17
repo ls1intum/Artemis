@@ -1026,17 +1026,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             projectTypes: this.projectTypes,
             selectedProjectType: this.selectedProjectType,
             onProjectTypeChange: this.projectTypeChanged,
-        };
-    }
 
-    getGradingStepInputs(): GradingStepInputs {
-        return {
+            // Inputs for the three checkboxes in the bottom
             sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
             testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,
         };
+    }
+
+    getGradingStepInputs(): GradingStepInputs {
+        return {};
     }
 
     getProblemStepInputs(): ProblemStepInputs {
