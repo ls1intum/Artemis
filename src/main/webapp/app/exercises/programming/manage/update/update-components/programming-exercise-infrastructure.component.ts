@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { InfrastructureStepInputs } from '../wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
@@ -11,7 +11,7 @@ import { InfrastructureStepInputs } from '../wizard-mode/programming-exercise-up
 export class ProgrammingExerciseInfrastructureComponent {
     readonly ProjectType = ProjectType;
 
-    @Input() shouldHidePreview = false;
+    @Input() programmingExercise: ProgrammingExercise;
     @Input() infrastructureStepInputs: InfrastructureStepInputs;
 
     faQuestionCircle = faQuestionCircle;

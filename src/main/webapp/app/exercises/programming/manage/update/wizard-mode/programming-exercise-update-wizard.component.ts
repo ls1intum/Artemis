@@ -10,16 +10,21 @@ import { ValidationReason } from 'app/entities/exercise.model';
 export type InfoStepInputs = {
     titleNamePattern: string;
     shortNamePattern: RegExp;
-    invalidRepositoryNamePattern: RegExp;
-    invalidDirectoryNamePattern: RegExp;
     updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
     updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
     refreshAuxiliaryRepositoryChecks: () => void;
-    auxiliaryRepositoryDuplicateNames: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     updateCategories: (categories: ExerciseCategory[]) => void;
+
+    // Auxiliary Repository settings
+    auxiliaryRepositoriesSupported: boolean;
+    auxiliaryRepositoryDuplicateDirectories: boolean;
+    auxiliaryRepositoryDuplicateNames: boolean;
+    checkoutSolutionRepositoryAllowed: boolean;
+    invalidDirectoryNamePattern: RegExp;
+    invalidRepositoryNamePattern: RegExp;
+    isImportFromExistingExercise: boolean;
 };
 
 export type LanguageStepInputs = {
@@ -60,18 +65,9 @@ export type ProblemStepInputs = {
 };
 
 export type InfrastructureStepInputs = {
-    // preview
-    auxiliaryRepositoriesSupported: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
-    auxiliaryRepositoryDuplicateNames: boolean;
-    checkoutSolutionRepositoryAllowed: boolean;
-    invalidDirectoryNamePattern: RegExp;
-    invalidRepositoryNamePattern: RegExp;
-    isEdit: boolean;
-    isImportFromExistingExercise: boolean;
-    programmingExercise: ProgrammingExercise;
-
     // checkbox things
+    checkoutSolutionRepositoryAllowed: boolean;
+    isImportFromExistingExercise: boolean;
     publishBuildPlanUrlAllowed: boolean;
     recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
     recreateBuildPlans: boolean;

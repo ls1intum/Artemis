@@ -997,15 +997,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     getInfoStepInputs(): InfoStepInputs {
         return {
+            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
+            isImportFromExistingExercise: false,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
             updateCategories: this.categoriesChanged,
@@ -1058,15 +1061,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     getInfrastructureStepInputs(): InfrastructureStepInputs {
         return {
-            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
             checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            isEdit: this.isEdit,
             isImportFromExistingExercise: this.isImportFromExistingExercise,
-            programmingExercise: this.programmingExercise,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             recreateBuildPlans: this.recreateBuildPlans,

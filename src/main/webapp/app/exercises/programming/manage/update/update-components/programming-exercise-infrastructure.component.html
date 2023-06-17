@@ -1,100 +1,8 @@
 <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.infrastructureStepTitle">Infrastructure</span></h1>
 <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.infrastructureStepMessage">Additional settings regarding infrastructure, etc</span></p>
 
-<div>
-    <div class="form-group mt-2 mb-0">
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
-        <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
-    </div>
-    <jhi-programming-exercise-plans-and-repositories-preview
-        [programmingExercise]="infrastructureStepInputs.programmingExercise"
-    ></jhi-programming-exercise-plans-and-repositories-preview>
-    <div *ngIf="!infrastructureStepInputs.isImportFromExistingExercise && infrastructureStepInputs.auxiliaryRepositoriesSupported" class="form-group">
-        <ngx-datatable
-            id="auxiliaryRepositoryTable"
-            class="bootstrap"
-            trackByProp="id"
-            [headerHeight]="50"
-            [limit]="20"
-            [columnMode]="'force'"
-            [rowHeight]="'auto'"
-            [rows]="infrastructureStepInputs.programmingExercise.auxiliaryRepositories"
-            *ngIf="infrastructureStepInputs.programmingExercise.auxiliaryRepositories && infrastructureStepInputs.programmingExercise.auxiliaryRepositories.length > 0"
-        >
-            <ngx-datatable-column name="Repository Name" prop="repositoryName">
-                <ng-template ngx-datatable-cell-template let-row="row">
-                    <jhi-table-editable-field
-                        [id]="row.id + '-repositoryName'"
-                        [value]="row.name || ''"
-                        [onValueUpdate]="infrastructureStepInputs.updateRepositoryName(row)"
-                        [pattern]="infrastructureStepInputs.invalidRepositoryNamePattern"
-                        [isRequired]="true"
-                        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
-                    >
-                    </jhi-table-editable-field>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
-                <ng-template ngx-datatable-cell-template let-row="row">
-                    <jhi-table-editable-field
-                        [id]="row.id + '-checkoutDirectory'"
-                        [value]="row.checkoutDirectory || ''"
-                        [onValueUpdate]="infrastructureStepInputs.updateCheckoutDirectory(row)"
-                        [pattern]="infrastructureStepInputs.invalidDirectoryNamePattern"
-                        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
-                    >
-                    </jhi-table-editable-field>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Description" prop="description">
-                <ng-template ngx-datatable-cell-template let-row="row">
-                    <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description" name="description"> </textarea>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="" prop="removeButton">
-                <ng-template ngx-datatable-cell-template let-row="row">
-                    <jhi-remove-auxiliary-repository-button
-                        placement="right auto"
-                        [programmingExercise]="infrastructureStepInputs.programmingExercise"
-                        (onRefresh)="infrastructureStepInputs.refreshAuxiliaryRepositoryChecks()"
-                        [row]="row"
-                        class="ml-2"
-                    ></jhi-remove-auxiliary-repository-button>
-                </ng-template>
-            </ngx-datatable-column>
-        </ngx-datatable>
-        <ngb-alert
-            [dismissible]="false"
-            [type]="'danger'"
-            *ngIf="infrastructureStepInputs.auxiliaryRepositoryDuplicateNames || infrastructureStepInputs.auxiliaryRepositoryDuplicateDirectories"
-        >
-            <span *ngIf="infrastructureStepInputs.auxiliaryRepositoryDuplicateNames">{{
-                'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate
-            }}</span>
-            <span *ngIf="infrastructureStepInputs.auxiliaryRepositoryDuplicateDirectories">{{
-                'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
-            }}</span>
-        </ngb-alert>
-        <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="infrastructureStepInputs.isEdit">
-            <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
-        </ngb-alert>
-        <jhi-add-auxiliary-repository-button
-            [programmingExercise]="infrastructureStepInputs.programmingExercise"
-            (onRefresh)="infrastructureStepInputs.refreshAuxiliaryRepositoryChecks()"
-            class="ml-2"
-        ></jhi-add-auxiliary-repository-button>
-    </div>
-</div>
-
 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-<div
-    class="form-group mb-0"
-    *ngIf="
-        !infrastructureStepInputs.programmingExercise.id &&
-        infrastructureStepInputs.programmingExercise.programmingLanguage &&
-        infrastructureStepInputs.checkoutSolutionRepositoryAllowed
-    "
->
+<div class="form-group mb-0" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && infrastructureStepInputs.checkoutSolutionRepositoryAllowed">
     <div class="form-check">
         <label class="form-check-label" for="field_checkoutSolutionRepository">
             <input
@@ -102,7 +10,7 @@
                 type="checkbox"
                 name="checkoutSolutionRepository"
                 id="field_checkoutSolutionRepository"
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.checkoutSolutionRepository"
+                [(ngModel)]="programmingExercise.checkoutSolutionRepository"
             />
             <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title">Checkout Solution repository</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
@@ -113,14 +21,7 @@
 <div class="form-group mb-0">
     <div class="form-check">
         <label [class]="!infrastructureStepInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="allowOfflineIde"
-                id="field_allowOfflineIde"
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.allowOfflineIde"
-                checked
-            />
+            <input class="form-check-input" type="checkbox" name="allowOfflineIde" id="field_allowOfflineIde" [(ngModel)]="programmingExercise.allowOfflineIde" checked />
             <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
             <fa-icon
                 *ngIf="!infrastructureStepInputs.validIdeSelection()"
@@ -136,14 +37,7 @@
 <div class="form-group mb-0" *ngIf="ProjectType.XCODE !== infrastructureStepInputs.selectedProjectType">
     <div class="form-check">
         <label [class]="!infrastructureStepInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="allowOnlineEditor"
-                id="field_allowOnlineEditor"
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.allowOnlineEditor"
-                checked
-            />
+            <input class="form-check-input" type="checkbox" name="allowOnlineEditor" id="field_allowOnlineEditor" [(ngModel)]="programmingExercise.allowOnlineEditor" checked />
             <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
             <fa-icon
                 *ngIf="!infrastructureStepInputs.validIdeSelection()"
@@ -164,7 +58,7 @@
                 type="checkbox"
                 name="showTestNamesToStudents"
                 id="field_showTestNamesToStudents"
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.showTestNamesToStudents"
+                [(ngModel)]="programmingExercise.showTestNamesToStudents"
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents">Show Test Names to Students</span>
@@ -186,7 +80,7 @@
                 type="checkbox"
                 name="publishBuildPlanUrl"
                 id="field_publishBuildPlanUrl"
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.publishBuildPlanUrl"
+                [(ngModel)]="programmingExercise.publishBuildPlanUrl"
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
@@ -215,8 +109,8 @@
     class="form-group mb-0"
     *ngIf="
         infrastructureStepInputs.isImportFromExistingExercise &&
-        infrastructureStepInputs.programmingExercise.projectType !== ProjectType.PLAIN_GRADLE &&
-        infrastructureStepInputs.programmingExercise.projectType !== ProjectType.GRADLE_GRADLE
+        programmingExercise.projectType !== ProjectType.PLAIN_GRADLE &&
+        programmingExercise.projectType !== ProjectType.GRADLE_GRADLE
     "
 >
     <div class="form-check">
