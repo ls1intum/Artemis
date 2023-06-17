@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -81,8 +85,29 @@ public class UserResource {
         if (loginOrName.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
+
+        User currentUser = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+
+        Page<UserDTO> page;
         // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
-        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        if (currentUser.getOrganizations().size() > 0 && !currentUser.getAuthorities().contains(Authority.ADMIN_AUTHORITY)) {
+            page = new PageImpl<>(userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName).stream().filter(user -> {
+                User userWithOrganizations = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(user.getId());
+                if (userWithOrganizations.getOrganizations().size() > 0) {
+                    for (Organization org : currentUser.getOrganizations()) {
+                        if (userWithOrganizations.getOrganizations().contains(org)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                return true;
+            }).collect(Collectors.toList()));
+        }
+        else {
+            page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        }
+
         page.forEach(user -> {
             // remove some values which are not needed in the client
             user.setLangKey(null);
