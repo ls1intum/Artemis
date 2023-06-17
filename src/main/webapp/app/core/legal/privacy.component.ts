@@ -9,7 +9,6 @@ import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 @Component({
     selector: 'jhi-privacy',
     template: `
-        <h3 jhiTranslate="legal.privacy.title">Datenschutzerklärung</h3>
         <div [innerHTML]="privacyStatement | htmlForMarkdown"></div>
         <a *ngIf="isAuthenticated" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-export']"> </a>
     `,
