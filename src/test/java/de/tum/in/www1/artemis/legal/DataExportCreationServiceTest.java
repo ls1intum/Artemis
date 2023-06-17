@@ -113,8 +113,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() throws IOException {
-        userUtilService.addUsers(TEST_PREFIX, 5, 4, 1, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 5, 5, 0, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 0, 1);
         // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
         var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
         doReturn(new ByteArrayInputStream(byteArray)).when(apollonConversionService).convertModel(anyString());
