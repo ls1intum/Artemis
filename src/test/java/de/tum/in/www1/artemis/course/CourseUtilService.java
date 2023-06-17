@@ -616,6 +616,12 @@ public class CourseUtilService {
         return course;
     }
 
+    public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
+            int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        return addCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+                typeComplaint, numberComplaintResponses, validModel, true);
+    }
+
     /**
      * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
      * exercises in a cyclic manner.
@@ -631,19 +637,29 @@ public class CourseUtilService {
      * @param typeComplaint                 true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
      * @param numberComplaintResponses      generates responses for the complaint/feedback request (as above)
      * @param validModel                    model for the modeling submission
+     * @param assessmentDueDateInThePast    if the assessment due date of all exercises is in the past or not
      * @return - the generated course
      */
-    public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
-            int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+    public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
+            int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast) {
+        Course course = CourseFactory.generateCourse(null, courseShortName, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        ZonedDateTime assessmentDueDate;
+        ZonedDateTime releaseDate = pastTimestamp;
+        ZonedDateTime dueDate = pastTimestamp.plusHours(1);
+        if (assessmentDueDateInThePast) {
+            assessmentDueDate = pastTimestamp.plusHours(2);
+        }
+        else {
+            assessmentDueDate = futureTimestamp.plusHours(2);
+
+        }
         var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 
             if ((i % 3) == 0) {
-                ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp,
-                        DiagramType.ClassDiagram, course);
+                ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(releaseDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
                 modelingExercise.setTitle("Modeling" + i);
                 course.addExercises(modelingExercise);
                 course = courseRepo.save(course);
@@ -666,7 +682,7 @@ public class CourseUtilService {
 
             }
             else if ((i % 3) == 1) {
-                TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, course);
+                TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
                 textExercise.setTitle("Text" + i);
                 course.addExercises(textExercise);
                 course = courseRepo.save(course);
@@ -684,8 +700,7 @@ public class CourseUtilService {
                 }
             }
             else { // i.e. (i % 3) == 2
-                FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf",
-                        course);
+                FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, dueDate, assessmentDueDate, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);
                 course = courseRepo.save(course);
@@ -857,5 +872,11 @@ public class CourseUtilService {
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         return courseRepo.save(course);
+    }
+
+    public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
+            int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+                typeComplaint, numberComplaintResponses, validModel, false);
     }
 }
