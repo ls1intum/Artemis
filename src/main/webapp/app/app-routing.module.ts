@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { AboutIrisComponent } from 'app/overview/exercise-chatbot/about-iris/about-iris.component';
+import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 

@@ -1,7 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
 import { faChevronDown, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 import { shakeAnimation } from 'angular-animations';
 

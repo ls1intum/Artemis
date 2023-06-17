@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseChatbotComponent } from 'app/overview/exercise-chatbot/exercise-chatbot.component';
+import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
