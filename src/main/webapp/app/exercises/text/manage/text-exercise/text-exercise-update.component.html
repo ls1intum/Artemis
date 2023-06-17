@@ -86,7 +86,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="textExercise.includedInOverallScore"
-                    (includedInOverallScoreChange)="validateDate(); updateLearningGoalSelection()"
+                    (includedInOverallScoreChange)="validateDate(); learningGoalSelectionComponent.updateIncludeOptionals(textExercise.includedInOverallScore)"
                     [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>

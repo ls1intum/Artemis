@@ -185,13 +185,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Updates selection of LearningGoalSelectionComponent
-     */
-    updateLearningGoalSelection() {
-        this.learningGoalSelectionComponent.includeOptionals = this.modelingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
-    }
-
-    /**
      * Validates if the date is correct
      */
     validateDate(): void {

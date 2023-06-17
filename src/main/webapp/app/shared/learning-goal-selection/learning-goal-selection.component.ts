@@ -5,6 +5,7 @@ import { LearningGoal, getIcon } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-learning-goal-selection',
@@ -20,7 +21,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 export class LearningGoalSelectionComponent implements OnInit, OnChanges, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
-    @Input() value: any = [];
+    @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() learningGoals: LearningGoal[];
@@ -71,8 +72,6 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
                 this.selectableLearningGoals = this.learningGoals;
             } else {
                 this.selectableLearningGoals = this.nonOptionalLearningGoals;
-                this.value = this.value.filter((learningGoal: LearningGoal) => !learningGoal.optional);
-                this.valueChange.emit();
             }
         }
     }
@@ -100,12 +99,22 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
     }
 
     writeValue(value?: LearningGoal[]): void {
-        if (value && this.learningGoals) {
+        if (value && this.selectableLearningGoals) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.id);
-            this.value = this.learningGoals.filter((learningGoal) => ids.includes(learningGoal.id));
+            this.value = this.selectableLearningGoals.filter((learningGoal) => ids.includes(learningGoal.id));
         } else {
             this.value = value;
+        }
+    }
+
+    updateIncludeOptionals(includedInOverallScore: IncludedInOverallScore | undefined) {
+        if (!includedInOverallScore) {
+            return;
+        }
+        this.includeOptionals = includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
+        if (!this.includeOptionals) {
+            this.updateField(this.value?.filter((learningGoal: LearningGoal) => !learningGoal.optional));
         }
     }
 

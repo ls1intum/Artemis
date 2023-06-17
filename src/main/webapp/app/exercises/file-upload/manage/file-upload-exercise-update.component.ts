@@ -176,18 +176,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Updates selection of LearningGoalSelectionComponent
-     */
-    updateLearningGoalSelection() {
-        this.learningGoalSelectionComponent.includeOptionals = this.fileUploadExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
-    }
-
-    /**
      * Validates if the date is correct
      */
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
+
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercise categories

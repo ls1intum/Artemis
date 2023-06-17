@@ -189,7 +189,9 @@
                             <jhi-included-in-overall-score-picker
                                 *ngIf="quizExercise.includedInOverallScore"
                                 [includedInOverallScore]="quizExercise.includedInOverallScore!"
-                                (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                                (includedInOverallScoreChange)="
+                                    includedInOverallScoreChange($event); learningGoalSelectionComponent.updateIncludeOptionals(quizExercise.includedInOverallScore)
+                                "
                                 [allowNotIncluded]="!isExamMode"
                             ></jhi-included-in-overall-score-picker>
                         </div>
