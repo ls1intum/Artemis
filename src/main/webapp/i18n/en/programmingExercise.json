@@ -105,6 +105,8 @@
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
+            "buildplan": "Build Plan",
+            "buildPlanEditor": "Build Plan Editor",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",

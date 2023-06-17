@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import javax.validation.constraints.NotNull;
 
@@ -36,7 +35,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -56,6 +55,12 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private SlideRepository slideRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private Lecture lecture1;
 
     private Attachment attachment;
@@ -67,18 +72,18 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.attachment = ModelFactory.generateAttachment(null);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("files/temp/example.txt");
-        this.lecture1 = this.database.createCourseWithLecture(true);
+        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -169,7 +174,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
         var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
@@ -177,8 +181,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(persistedAttachment.getId()).isNotNull();
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
-        latch.await(10, TimeUnit.SECONDS);
-        assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
     }
@@ -206,29 +209,25 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
         var createResult = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var attachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
         var attachment = attachmentUnit.getAttachment();
         attachmentUnit.setDescription("Changed");
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
-        latch.await(10, TimeUnit.SECONDS);
-        assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT));
         List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
-        CountDownLatch latch1 = new CountDownLatch(1);
         var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File")).andExpect(status().isOk()).andReturn();
-        attachmentUnit = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
-        assertThat(attachmentUnit.getDescription()).isEqualTo("Changed");
+        AttachmentUnit attachmentUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
+        assertThat(attachmentUnit1.getDescription()).isEqualTo("Changed");
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
-        latch1.await(10, TimeUnit.SECONDS);
-        assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
-        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit1.getId())).hasSize(SLIDE_COUNT));
+        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit1.getId());
         assertThat(oldSlides).isNotEqualTo(updatedSlides);
         // testing if bidirectional relationship is kept
-        attachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();
+        AttachmentUnit attachmentUnit2 = attachmentUnitRepository.findById(attachmentUnit1.getId()).get();
         attachment = attachmentRepository.findById(attachment.getId()).get();
-        assertThat(attachmentUnit.getAttachment()).isEqualTo(attachment);
-        assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit);
+        assertThat(attachmentUnit2.getAttachment()).isEqualTo(attachment);
+        assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit2);
     }
 
     @Test
@@ -237,7 +236,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         persistAttachmentUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(false);
         lecture1.addLectureUnit(attachmentUnit);
         lecture1 = lectureRepository.save(lecture1);
 

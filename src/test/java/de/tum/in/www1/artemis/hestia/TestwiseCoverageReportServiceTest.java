@@ -15,9 +15,12 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -43,6 +46,15 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private HestiaUtilTestService hestiaUtilTestService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingSubmission solutionSubmission;
@@ -51,9 +63,9 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         programmingExercise = hestiaUtilTestService.setupSolution(
                 Map.ofEntries(Map.entry("src/de/tum/in/ase/BubbleSort.java", "\n ".repeat(28)), Map.entry("src/de/tum/in/ase/Context.java", "\n ".repeat(18))), programmingExercise,
@@ -64,7 +76,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         var testCase2 = new ProgrammingExerciseTestCase().testName("test2()").exercise(programmingExercise).active(true).weight(1.0);
         programmingExerciseTestCaseRepository.save(testCase2);
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
+        solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
     }
 
