@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,10 +45,13 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 0);
     }
 
     @Test

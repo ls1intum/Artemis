@@ -280,9 +280,16 @@ public class ExamUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
         exam.setNumberOfCorrectionRoundsInExam(1);
         examRepository.save(exam);
         return exam;
+    }
+
+    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime resultsPublicationDate) {
+        Exam exam = addExam(course, user, visibleDate, startDate, endDate);
+        exam.setPublishResultsDate(resultsPublicationDate);
+        return examRepository.save(exam);
     }
 
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
@@ -404,6 +411,7 @@ public class ExamUtilService {
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -704,11 +712,5 @@ public class ExamUtilService {
         exerciseRepo.save(exercise);
 
         return studentExamRepository.save(studentExam);
-    }
-
-    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime resultsPublicationDate) {
-        Exam exam = addExam(course, user, visibleDate, startDate, endDate);
-        exam.setPublishResultsDate(resultsPublicationDate);
-        return examRepository.save(exam);
     }
 }

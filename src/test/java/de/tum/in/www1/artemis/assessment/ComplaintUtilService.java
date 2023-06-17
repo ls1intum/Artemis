@@ -38,7 +38,7 @@ public class ComplaintUtilService {
             complaint.setResult(result);
             complaint = complaintRepo.save(complaint);
             if (numberComplaintResponses >= j) {
-                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? userPrefix + "tutor5" : currentUser.getLogin(), complaint);
+                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? userPrefix + "tutor1" : currentUser.getLogin(), complaint);
                 complaintResponse.getComplaint().setAccepted(true);
                 complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
                 complaintResponseRepo.save(complaintResponse);

@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 @ExtendWith(MockitoExtension.class)
 class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -52,10 +53,13 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     @SpyBean
     private ProfileService profileService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 1, 0, 0, 0);
     }
 
     @ParameterizedTest
@@ -123,7 +127,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     private DataExport createDataExportWithState(DataExportState state) {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(state);
-        dataExport.setUser(database.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("path");
         return dataExportRepository.save(dataExport);
     }
@@ -132,7 +136,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         DataExport dataExport = new DataExport();
         dataExport.setCreationDate(creationDate);
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport.setUser(database.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("path");
         return dataExportRepository.save(dataExport);
     }

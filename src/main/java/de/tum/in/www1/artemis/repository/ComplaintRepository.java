@@ -52,15 +52,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
 
-    @Query("""
-                        SELECT c FROM Complaint c
-                            LEFT JOIN c.result r
-                            LEFT JOIN r.submission s
-                            LEFT JOIN FETCH c.complaintResponse
-                        WHERE s.id = :#{#submissionId}
-            """)
-    Optional<Complaint> findWithEagerComplaintResponseByResultSubmissionId(@Param("submissionId") long submissionId);
-
     /**
      * This magic method counts the number of complaints by complaint type associated to a course id
      *

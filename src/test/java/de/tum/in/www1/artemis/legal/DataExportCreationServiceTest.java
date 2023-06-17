@@ -23,6 +23,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
@@ -30,10 +31,17 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
@@ -59,6 +67,15 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
     @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -71,9 +88,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     private DataExportRepository dataExportRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private DataExportCreationService dataExportCreationService;
 
     @SpyBean
@@ -82,10 +96,25 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @SpyBean
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
     @BeforeEach
     void initTestCase() throws IOException {
-        database.addUsers(TEST_PREFIX, 5, 4, 1, 1);
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 5, 4, 1, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
         // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
         var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
         doReturn(new ByteArrayInputStream(byteArray)).when(apollonConversionService).convertModel(anyString());
@@ -140,35 +169,35 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         }
         Course course1;
         if (assessmentDueDateInTheFuture) {
-            course1 = database.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("future", TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("future", TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         else {
-            course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+            course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
         }
-        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
+        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         ProgrammingExercise programmingExercise;
         if (assessmentDueDateInTheFuture) {
-            programmingExercise = database.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().plusMinutes(1));
+            programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().plusMinutes(1));
         }
         else {
-            programmingExercise = database.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
+            programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
         }
-        var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
+        var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        var submission = database.createProgrammingSubmission(participation, false, "abc");
-        var submission2 = database.createProgrammingSubmission(participation, false, "def");
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
-        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
+        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "def");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
+        participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
-        database.addFeedbackToResult(feedback, submission.getFirstResult());
-        database.addSubmission(participation, submission);
-        database.addSubmission(participation, submission2);
-        var exercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
-        createPlagiarismData(userLogin, programmingExercise, exercises);
+        participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
+        participationUtilService.addSubmission(participation, submission);
+        participationUtilService.addSubmission(participation, submission2);
+        var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
+        createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         createCommunicationData(userLogin, course1);
 
         // Mock student repo
@@ -177,39 +206,41 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private void createCommunicationData(String userLogin, Course course1) {
-        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
-        database.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
-        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
+        conversationUtilService.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
+        conversationUtilService.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
+        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
     }
 
     private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
-        database.createPlagiarismCaseForUserForExercise(programmingExercise, database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
-        database.createPlagiarismCaseForUserForExercise(exercises.get(0), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
-        database.createPlagiarismCaseForUserForExercise(exercises.get(1), database.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(programmingExercise, userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(0), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
+        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
     }
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String login = TEST_PREFIX + "student1";
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var course = database.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", courseShortName, true, true);
+        var userForExport = userUtilService.getUserByLogin(login);
+        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", courseShortName, true,
+                true);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).get();
-        var studentExam = database.addStudentExamWithUser(exam, userForExport);
-        database.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
+        var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
+        examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userForExport.getId(),
                 exam.getId());
         var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
 
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
-        database.addFeedbackToResult(feedback, submission.getFirstResult());
+        participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
         return exam;
@@ -239,8 +270,13 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         if (exerciseDirPath.toString().contains("Programming")) {
             // zip file of the repository
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_ZIP));
+            // programming course exercise has a plagiarism case
+            if (courseExercise) {
+                assertThat(exerciseDirPath)
+                        .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
+            }
         }
-        else if (exerciseDirPath.toString().contains("Modeling")) {
+        if (exerciseDirPath.toString().contains("Modeling")) {
             // model as pdf file
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
             // modeling exercises in the course have plagiarism cases
@@ -249,14 +285,18 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                         .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
             }
         }
-        else if (exerciseDirPath.toString().contains("Text")) {
+        if (exerciseDirPath.toString().contains("Text")) {
             // submission text txt file
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("_text" + FILE_FORMAT_TXT));
         }
-        else if (exerciseDirPath.toString().contains("quiz")) {
+        if (exerciseDirPath.toString().contains("quiz")) {
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("short_answer_questions_answers" + FILE_FORMAT_TXT))
                     .isDirectoryContaining(path -> path.getFileName().toString().endsWith("multiple_choice_questions_answers" + FILE_FORMAT_TXT))
                     .isDirectoryContaining(path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
+        }
+        boolean notQuizOrProgramming = !exerciseDirPath.toString().contains("quiz") && !exerciseDirPath.toString().contains("Programming");
+        if (notQuizOrProgramming && courseExercise && !assessmentDueDateInTheFuture) {
+            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().contains("more_feedback"));
         }
 
     }
@@ -331,7 +371,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private DataExport initDataExport() {
         DataExport dataExport = new DataExport();
-        dataExport.setUser(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);
