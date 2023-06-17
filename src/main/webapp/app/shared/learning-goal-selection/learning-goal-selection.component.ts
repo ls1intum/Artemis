@@ -20,7 +20,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 export class LearningGoalSelectionComponent implements OnInit, OnChanges, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
-    @Input() value: any;
+    @Input() value: any = [];
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() learningGoals: LearningGoal[];
