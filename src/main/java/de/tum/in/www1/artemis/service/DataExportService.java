@@ -565,15 +565,25 @@ public class DataExportService {
             log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
             return;
         }
+        var fileName = "submission_" + modelingSubmission.getId();
         if (apollonConversionService.isEmpty()) {
-            log.warn("Cannot include modeling submission content in data export because apollon profile is not active");
+            log.warn("Cannot include modeling submission content in data export as pdf because apollon profile is not active. Going to include the json file");
+            addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
             return;
         }
 
         try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
-            Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
+            Files.write(outputDir.resolve(fileName + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
         }
 
+    }
+
+    private void addModelJsonWithExplanationHowToView(String model, Path outputDir, String fileName) throws IOException {
+        Files.writeString(outputDir.resolve(fileName + ".json"), model);
+        String explanation = """
+                You can view your model if you go to [Apollon Modeling Editor](https://www.apollon.ase.in.tum.de) and click on File --> Import and select the .json file.
+                """;
+        Files.writeString(outputDir.resolve("view_model.md"), explanation);
     }
 
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
