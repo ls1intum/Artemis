@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -312,7 +313,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         List<Competency> competenciesOfCourse = request.getList("/api/courses/" + course.getId() + "/competencies", HttpStatus.OK, Competency.class);
 
-        assertThat(competenciesOfCourse).anyMatch(competency -> competency.getId().equals(idOfCompetency));
+        assertThat(competenciesOfCourse).anyMatch(competency -> competency.getId().equals(this.competency.getId()));
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().get().getLectureUnits()).isEmpty();
     }
 
@@ -331,22 +332,22 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @MethodSource("competencyUpdateToOptionalProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore, HttpStatus httpStatus) throws Exception {
-        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Course course = courseRepository.findByIdElseThrow(competency.getId());
 
-        Competency competency = new Competency();
-        competency.setTitle("Title");
-        competency.setDescription("Description");
-        competency.setCourse(course);
-        competency = competencyRepository.save(competency);
+        Competency newCompetency = new Competency();
+        newCompetency.setTitle("Title");
+        newCompetency.setDescription("Description");
+        newCompetency.setCourse(course);
+        newCompetency = competencyRepository.save(newCompetency);
 
-        TextExercise exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
-        exercise.setCompetencies(Set.of(competency));
+        exercise.setCompetencies(Set.of(newCompetency));
         exerciseRepository.save(exercise);
 
-        competency.setOptional(true);
-        request.put("/api/courses/" + idOfCourse + "/competencies", competency, httpStatus);
+        newCompetency.setOptional(true);
+        request.put("/api/courses/" + competency.getId() + "/competencies", newCompetency, httpStatus);
     }
 
     @Test
@@ -359,8 +360,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteCompetency_withRelatedCompetencies_shouldReturnBadRequest() throws Exception {
-        Competency competency = competencyRepository.findByIdElseThrow(idOfCompetency);
-        Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Competency competency1 = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();

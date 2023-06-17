@@ -324,6 +324,7 @@ class ExerciseTest {
         else {
             assertThatCode(() -> exercise.validateGeneralSettings()).doesNotThrowAnyException();
         }
+    }
 
     @Test
     void testSanitizedExerciseTitleDoesntContainAnyIllegalCharacters() {
