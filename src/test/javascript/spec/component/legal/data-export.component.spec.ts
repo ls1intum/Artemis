@@ -14,7 +14,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DataExport } from 'app/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
