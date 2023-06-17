@@ -62,11 +62,11 @@ public class DataExportScheduleService {
     // @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
     @Scheduled(cron = "0 0/2 * * * *") // execute this every 2 minutes
     public void createDataExportsAndDeleteOldOnes() {
-        // if (profileService.isDev()) {
-        // // do not execute this in a development environment
-        // // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-        // return;
-        // }
+        if (profileService.isDev()) {
+            // do not execute this in a development environment
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            return;
+        }
 
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
