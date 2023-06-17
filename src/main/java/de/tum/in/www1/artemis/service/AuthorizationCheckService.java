@@ -526,63 +526,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged-in user is the owner of the given data export
-     *
-     * @param dataExport the data export that needs to be checked
-     * @throws AccessForbiddenException if logged-in user isn't the owner of the data export
-     */
-    public void currentlyLoggedInUserIsOwnerOfDataExportElseThrow(@NotNull DataExport dataExport) {
-        if (!currentlyLoggedInUserIsOwnerOfDataExport(dataExport)) {
-            throw new AccessForbiddenException("data export", dataExport.getId());
-        }
-    }
-
-    /**
-     * checks if the currently logged-in user is owner of the given data export
-     *
-     * @param dataExport the data export that needs to be checked
-     * @return true if the user is the owner of the data export, false otherwise
-     */
-    public boolean currentlyLoggedInUserIsOwnerOfDataExport(DataExport dataExport) {
-        if (dataExport.getUser() == null) {
-            return false;
-        }
-        else {
-            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
-        }
-    }
-
-    /**
-     * checks if the given user is owner of the given data export
-     *
-     * @param dataExport the data export that needs to be checked
-     * @param user       the user whose permissions should be checked
-     * @return true if the user is the owner of the data export, false otherwise
-     */
-    public boolean isOwnerOfDataExport(DataExport dataExport, @Nullable User user) {
-        user = loadUserIfNeeded(user);
-        if (dataExport.getUser() == null) {
-            return false;
-        }
-        else {
-            return dataExport.getUser().equals(user);
-        }
-    }
-
-    /**
-     * checks if the given user is the owner of the given data export
-     *
-     * @param dataExport the data export that needs to be checked
-     * @param user       the user whose permissions should be checked
-     * @throws AccessForbiddenException if the user is not the owner of the data export
-     */
-    public void isOwnerOfDataExportElseThrow(DataExport dataExport, @Nullable User user) {
-        if (!isOwnerOfDataExport(dataExport, user)) {
-            throw new AccessForbiddenException("data export", dataExport.getId());
-        }
-    }
-
-    /**
      * checks if the currently logged-in user is owner of the given team
      *
      * @param team the team that needs to be checked

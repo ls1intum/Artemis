@@ -1,21 +1,26 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
@@ -24,20 +29,18 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 public class DataExportService {
 
     @Value("${artemis.data-export.days-between-data-exports:14}")
-    private int DAYS_BETWEEN_DATA_EXPORTS;
+    public int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     private final DataExportRepository dataExportRepository;
 
     private final FileService fileService;
 
-    public DataExportService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService, DataExportRepository dataExportRepository,
-            FileService fileService) {
+    private final Logger log = LoggerFactory.getLogger(DataExportService.class);
+
+    public DataExportService(UserRepository userRepository, DataExportRepository dataExportRepository, FileService fileService) {
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.dataExportRepository = dataExportRepository;
         this.fileService = fileService;
     }
@@ -49,9 +52,7 @@ public class DataExportService {
      * @return the created DataExport object
      */
     public DataExport requestDataExport() throws IOException {
-        if (!canRequestDataExport()) {
-            throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
-        }
+
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
         User user = userRepository.getUser();
@@ -63,57 +64,24 @@ public class DataExportService {
     /**
      * Download the data export for the given data export id.
      *
-     * @param dataExportId the id of the data export to download
+     * @param dataExport the data export to download
      * @return the file path where the data export is stored
      * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
      * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    public Path downloadDataExport(long dataExportId) {
-        var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
-        authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
-        checkDataExportCanBeDownloaded(dataExport);
-
+    public Resource downloadDataExport(DataExport dataExport) {
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
-        return Path.of(dataExport.getFilePath());
-    }
-
-    private void checkDataExportCanBeDownloaded(DataExport dataExport) {
-        if (!dataExport.getDataExportState().isDownloadable()) {
-            throw new AccessForbiddenException("Data export has either not been created or already been deleted");
+        var filePath = Path.of(dataExport.getFilePath());
+        var finalZipFile = filePath.toFile();
+        try {
+            return new InputStreamResource(new FileInputStream(finalZipFile));
         }
-    }
-
-    /**
-     * Checks if the user can request a new data export.
-     *
-     * @return true if the user can request a new data export, false otherwise
-     */
-    public boolean canRequestDataExport() {
-        var user = userRepository.getUser();
-        var dataExports = dataExportRepository.findAllDataExportsByUserId(user.getId());
-        if (dataExports.isEmpty()) {
-            return true;
+        catch (FileNotFoundException e) {
+            log.error("Could not find data export file", e);
+            throw new InternalServerErrorException("Could not find data export file");
         }
-        return checkAllDataExportsIfCurrentlyDataExportCanBeRequested(dataExports);
-
-    }
-
-    private boolean checkAllDataExportsIfCurrentlyDataExportCanBeRequested(Set<DataExport> dataExports) {
-        for (var dataExport : dataExports) {
-            // we need to distinguish between these two cases as the creation date might not have been set yet (if the export hasn't been created yet).
-            // allow requesting a new data export if the latest data export is older than the configured DAYS_BETWEEN_DATA_EXPORTS or its creation has failed
-            if (dataExport.getCreationDate() != null && (Duration.between(dataExport.getCreationDate(), ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS)
-                    || dataExport.getDataExportState().hasFailed()) {
-                return true;
-            }
-            if (dataExport.getCreationDate() == null && (Duration.between(dataExport.getCreatedDate(), ZonedDateTime.now()).toDays() >= DAYS_BETWEEN_DATA_EXPORTS)
-                    || dataExport.getDataExportState().hasFailed()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -149,20 +117,6 @@ public class DataExportService {
             nextRequestDate = dataExport.getCreationDate().plusDays(DAYS_BETWEEN_DATA_EXPORTS);
         }
         return nextRequestDate;
-    }
-
-    /**
-     * Checks if the data export with the given id can be downloaded.
-     *
-     * @param dataExportId the id of the data export to check
-     * @return true if the data export can be downloaded, false otherwise
-     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
-     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
-     */
-    public boolean canDownloadSpecificDataExport(long dataExportId) {
-        var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
-        authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
-        return dataExport.getDataExportState().isDownloadable();
     }
 
     /**
