@@ -1,0 +1,40 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.title' | artemisTranslate }}
+    </h4>
+</div>
+<div class="modal-body">
+    <div class="unenrollment-info">
+        <div>
+            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationQuestion' | artemisTranslate }}
+            <b>{{ course?.title }}</b> ?
+        </div>
+
+        <div *ngIf="!canEnrollAgain">
+            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentNotPossible' | artemisTranslate }}
+        </div>
+        <div *ngIf="canEnrollAgain">
+            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.reenrollmentPossible' | artemisTranslate }}
+            <b>{{ course?.enrollmentEndDate | artemisDate }}</b>
+        </div>
+    </div>
+    <form class="unenrollment-confirmation" [formGroup]="confirmationForm" style="margin-top: 1rem">
+        <label class="form-control-label" for="field_confirmation_input">
+            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput' | artemisTranslate }}
+        </label>
+        <input type="text" class="form-control" name="confirmationInput" id="field_confirmation_input" formControlName="confirmationInput" required />
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-outline-secondary" id="course-unenrollment-cancel-button" (click)="onCancel()">
+        <fa-icon [icon]="faXmark"></fa-icon>
+        <span class="d-sm-inline">
+            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.cancelButton' | artemisTranslate }}
+        </span>
+    </button>
+    <button class="btn btn-danger" id="course-unenrollment-accept-button" [disabled]="!isValidInput" (click)="onUnenroll()">
+        <span class="d-sm-inline">
+            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.acceptButton' | artemisTranslate }}
+        </span>
+    </button>
+</div>

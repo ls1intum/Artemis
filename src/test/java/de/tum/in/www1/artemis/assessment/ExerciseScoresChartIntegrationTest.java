@@ -15,14 +15,34 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
+import de.tum.in.www1.artemis.team.TeamUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "exercisescoreschart";
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     Long idOfCourse;
 
@@ -56,39 +76,39 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        this.database.addUsers(TEST_PREFIX, 3, 2, 0, 0);
-        Course course = this.database.createCourse();
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 0);
+        Course course = courseUtilService.createCourse();
         idOfCourse = course.getId();
-        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfIndividualTextExercise = textExercise.getId();
-        TextExercise exerciseWithoutParticipants = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise exerciseWithoutParticipants = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfIndividualTextExerciseWithoutParticipants = exerciseWithoutParticipants.getId();
 
-        Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
+        idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
         User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
         idOfStudent2 = student2.getId();
         User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         idOfStudent3 = student3.getId();
         User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").get();
-        idOfTeam2 = database.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
+        idOfTeam2 = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         // Creating result for student1
-        database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
         // Creating result for team1
         Team team1 = teamRepository.findById(idOfTeam1).get();
-        database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team1, 10.0, 10.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team1, 10.0, 10.0, 50, true);
         // Creating result for student2
-        database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student2, 10.0, 10.0, 40, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student2, 10.0, 10.0, 40, true);
         // Creating result for student3
-        database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student3, 10.0, 10.0, 30, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student3, 10.0, 10.0, 30, true);
         // Creating result for team2
         Team team2 = teamRepository.findById(idOfTeam2).get();
-        database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
+        participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
 
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);

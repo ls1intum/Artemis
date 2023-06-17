@@ -20,6 +20,7 @@ services:
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
+            - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
 
     postgresql:
         extends:
