@@ -155,7 +155,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false, irisEnabled: false } as ProfileInfo;
+                const profileInfo = { inProduction: false, irisEnabled: true } as ProfileInfo;
                 const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
                 getProfileInfoMock.mockReturnValue(profileInfoSubject);
 
@@ -192,7 +192,7 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         tick(500);
         expect(comp.inProductionEnvironment).toBeFalse();
-        expect(comp.irisProfileEnabled).toBeFalse();
+        expect(comp.irisProfileEnabled).toBeTrue();
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.hasMoreResults).toBeFalse();
@@ -300,7 +300,25 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.activatedExerciseHints).toContain(activatedHint);
     });
 
-    it('should handle new programming exercise', () => {
+    it('should handle new programming exercise', fakeAsync(() => {
+        const studentParticipation = new StudentParticipation();
+        studentParticipation.student = new User(99);
+        studentParticipation.submissions = [new TextSubmission()];
+        studentParticipation.type = ParticipationType.STUDENT;
+        studentParticipation.id = 42;
+        const result = new Result();
+        result.id = 1;
+        result.completionDate = dayjs();
+        studentParticipation.results = [result];
+        studentParticipation.exercise = exercise;
+
+        participationService = TestBed.inject(ParticipationService);
+        mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
+        mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
+
+        fixture.detectChanges();
+        tick(500);
+
         const submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
         const submissionPolicy = new LockRepositoryPolicy();
         const submissionPolicyServiceSpy = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
@@ -329,11 +347,11 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.hasSubmissionPolicy).toBeTrue();
-        expect(comp.irisActivated).toBeFalse();
+        expect(comp.irisActivated).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
-    });
+    }));
 
     it('should handle error when getting latest rated result', fakeAsync(() => {
         const alertService = fixture.debugElement.injector.get(AlertService);
