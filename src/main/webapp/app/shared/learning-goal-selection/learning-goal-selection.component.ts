@@ -42,7 +42,7 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (this.learningGoals === undefined && courseId) {
+        if (!this.learningGoals && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             if (course?.competencies) {
                 this.setLearningGoals(course.competencies!);
