@@ -147,6 +147,17 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    public Course createCourseWithCustomStudentGroupName(String studentGroupName) {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor");
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
+        Course course = CourseFactory.generateCourse(null, shortName, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
+                500, 500, true, true, 7);
+        return courseRepo.save(course);
+    }
+
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -836,5 +847,15 @@ public class CourseUtilService {
         course.setEditorGroupName(userPrefix + "editor" + suffix);
         course.setInstructorGroupName(userPrefix + "instructor" + suffix);
         courseRepo.save(course);
+    }
+
+    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(User user, String studentGroupName, String shortName, boolean withProgrammingExercise,
+            boolean withAllQuizQuestionTypes) {
+        Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName);
+        Exam exam = examUtilService.addExam(course, user, ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
+                ZonedDateTime.now().minusMinutes(1));
+        course.addExam(exam);
+        examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
+        return courseRepo.save(course);
     }
 }

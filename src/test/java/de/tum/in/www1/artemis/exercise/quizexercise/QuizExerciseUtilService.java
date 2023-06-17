@@ -434,6 +434,13 @@ public class QuizExerciseUtilService {
         return quizExercise;
     }
 
+    @NotNull
+    public QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
+        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        return quizExercise;
+    }
+
     /**
      * initializes a quiz with all different types of questions
      *

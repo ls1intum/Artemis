@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -62,6 +63,12 @@ public class QuizExerciseFactory {
         }
         quizExercise.setRandomizeQuestionOrder(true);
 
+        return quizExercise;
+    }
+
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var quizExercise = generateQuizExerciseForExam(exerciseGroup);
+        quizExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
         return quizExercise;
     }
 }

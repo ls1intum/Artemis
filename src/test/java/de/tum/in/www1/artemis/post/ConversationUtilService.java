@@ -233,7 +233,7 @@ public class ConversationUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
+    public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = createBasicPost(0, userPrefix + "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
