@@ -171,7 +171,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
             course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("future", TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         else {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+            course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
@@ -293,7 +293,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         }
         boolean notQuizOrProgramming = !exerciseDirPath.toString().contains("quiz") && !exerciseDirPath.toString().contains("Programming");
         if (notQuizOrProgramming && courseExercise && !assessmentDueDateInTheFuture) {
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().contains("more_feedback"));
+            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().contains("complaint"));
         }
     }
 
@@ -341,6 +341,19 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportDoesntLeakResultsIfAssessmentDueDateInTheFuture() throws Exception {
+        boolean assessmentDueDateInTheFuture = true;
+        prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "future");
+        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
     }
 
     @Test
