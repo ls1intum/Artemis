@@ -7,19 +7,24 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "gtsettingtest";
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
     }
 
     private Set<GuidedTourSetting> createGuidedTourSettings() {
@@ -43,7 +48,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void guidedTourSettingsIsInitiallyNull() throws Exception {
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isEmpty();
     }
 
@@ -54,7 +59,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
         Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).hasSize(2);
 
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).hasSize(2);
     }
 
@@ -65,7 +70,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
 
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).hasSize(1);
     }
 }

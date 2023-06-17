@@ -6,6 +6,8 @@ import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 
@@ -50,5 +52,19 @@ class ArchitectureTest {
 
         stringUtils.check(allClasses);
         randomStringUtils.check(allClasses);
+    }
+
+    @Test
+    void testNoJunitJupiterAssertions() {
+        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
+
+        noJunitJupiterAssertions.check(testClasses);
+    }
+
+    @Test
+    void testNoCollectorsToList() {
+        ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
+                .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
+        toListUsage.check(allClasses);
     }
 }

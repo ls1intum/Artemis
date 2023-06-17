@@ -96,6 +96,8 @@
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
             "buildplans": "Build-Pläne",
+            "buildplan": "Build-Plan",
+            "buildPlanEditor": "Build-Plan-Editor",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
@@ -469,7 +471,7 @@
                 "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
                 "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
                 "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
-                "submissionsAllowed": "erlaubte Abgaben",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} erlaubte Abgaben",
                 "none": {
                     "optionLabel": "Keine"
                 },

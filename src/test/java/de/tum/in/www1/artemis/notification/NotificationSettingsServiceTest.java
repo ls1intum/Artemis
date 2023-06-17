@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -34,6 +35,9 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private Notification notification;
 
@@ -52,8 +56,8 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     void setUp() {
         SecurityUtils.setAuthorizationObject();
 
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         NotificationSetting unsavedNotificationSettingA = new NotificationSetting(false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         NotificationSetting unsavedNotificationSettingB = new NotificationSetting(true, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);

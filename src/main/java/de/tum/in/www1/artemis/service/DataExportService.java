@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
@@ -172,26 +171,14 @@ public class DataExportService {
     /**
      * Download the data export for the given data export id.
      *
-     * @param dataExportId the id of the data export to download
+     * @param dataExport the data export to download
      * @return the file path where the data export is stored
-     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
-     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    public Path downloadDataExport(long dataExportId) {
-        var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
-        authorizationCheckService.currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
-        checkDataExportCanBeDownloaded(dataExport);
-
+    public Path downloadDataExport(DataExport dataExport) {
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
         return Path.of(dataExport.getFilePath());
-    }
-
-    private void checkDataExportCanBeDownloaded(DataExport dataExport) {
-        if (!dataExport.getDataExportState().isDownloadable()) {
-            throw new AccessForbiddenException("Data export has either not been created or already been deleted");
-        }
     }
 
     /**

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

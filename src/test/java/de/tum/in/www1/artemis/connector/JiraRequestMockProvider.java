@@ -87,6 +87,12 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(status));
     }
 
+    public void mockRemoveAnyUserFromAnyGroups() {
+        final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=.*");
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE))
+                .andRespond(withStatus(HttpStatus.OK));
+    }
+
     public void mockGetUsernameForEmail(String email, String emailToReturn, String usernameToBeReturned) throws IOException {
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/user/search\\?username=" + URLEncoder.encode(email, StandardCharsets.UTF_8));
         JiraUserDTO userDTO = new JiraUserDTO(usernameToBeReturned);
