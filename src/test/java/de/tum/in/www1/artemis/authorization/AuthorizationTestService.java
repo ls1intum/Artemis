@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.security.annotations.*;
 @Service
 public class AuthorizationTestService {
 
-    private static final Set<Class<? extends Annotation>> ALLOWED_AUTH_METHOD_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,
+    private static final Set<Class<? extends Annotation>> AUTHORIZATION_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,
             EnforceAtLeastTutor.class, EnforceAtLeastStudent.class, EnforceNothing.class, PreAuthorize.class);
 
     private final Method preAuthorizeValueAnnotation = PreAuthorize.class.getDeclaredMethod("value");
@@ -135,7 +135,7 @@ public class AuthorizationTestService {
      */
     private List<Annotation> getAuthAnnotations(Method method) {
         var annotations = Arrays.asList(method.getAnnotations());
-        return annotations.stream().filter(annotation -> ALLOWED_AUTH_METHOD_ANNOTATIONS.contains(annotation.annotationType())).toList();
+        return annotations.stream().filter(annotation -> AUTHORIZATION_ANNOTATIONS.contains(annotation.annotationType())).toList();
     }
 
     /**
