@@ -33,8 +33,8 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
             """)
     List<TextExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
-    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismChecksConfig" })
+    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismChecksConfigById(Long exerciseId);
 
     List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 
@@ -43,6 +43,10 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results",
+            "plagiarismChecksConfig" })
+    Optional<TextExercise> findWithStudentParticipationsAndSubmissionsAndPlagiarismChecksConfigById(Long exerciseId);
 
     @NotNull
     default TextExercise findByIdElseThrow(long exerciseId) {
@@ -57,6 +61,11 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @NotNull
     default TextExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long exerciseId) {
         return findWithStudentParticipationsAndSubmissionsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
+    @NotNull
+    default TextExercise findByIdWithStudentParticipationsAndSubmissionsAndPlagiarismChecksConfigElseThrow(long exerciseId) {
+        return findWithStudentParticipationsAndSubmissionsAndPlagiarismChecksConfigById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     /**
