@@ -17,9 +17,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -35,6 +38,15 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private static final int TUTOR_COUNT = 1;
 
     private static final int ASSESSMENT_COUNT = 2;
@@ -48,29 +60,29 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
      */
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, TUTOR_COUNT, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, TUTOR_COUNT, 0, 1);
         // Tutors should only be part of "leaderboardgroup"
         for (int i = 1; i <= TUTOR_COUNT; i++) {
-            var tutor = database.getUserByLogin(TEST_PREFIX + "tutor" + i);
+            var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor" + i);
             tutor.setGroups(Set.of("leaderboardgroup"));
             userRepository.save(tutor);
         }
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        var tutor1 = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
 
-        course = database.addCourseWithOneModelingExercise();
+        course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         course.setTeachingAssistantGroupName("leaderboardgroup");
         courseRepository.save(course);
 
         exercise = course.getExercises().iterator().next();
 
-        var modelingSubmission = database.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
-        var result = database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 40.0, true).getLatestResult();
-        database.addRatingToResult(result, 2);
+        var modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
+        var result = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 40.0, true).getLatestResult();
+        participationUtilService.addRatingToResult(result, 2);
 
-        modelingSubmission = database.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
-        result = database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 60.0, true).getLatestResult();
-        database.addRatingToResult(result, 5);
+        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
+        result = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 60.0, true).getLatestResult();
+        participationUtilService.addRatingToResult(result, 5);
     }
 
     private void assertLeaderboardData(List<TutorLeaderboardDTO> leaderboardData) {

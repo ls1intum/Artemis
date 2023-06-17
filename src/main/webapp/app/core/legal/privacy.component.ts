@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
-import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 @Component({
     selector: 'jhi-privacy',
@@ -21,7 +21,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private privacyStatementService: PrivacyStatementService,
+        private legalDocumentService: LegalDocumentService,
         private languageHelper: JhiLanguageHelper,
         private accountService: AccountService,
     ) {}
@@ -33,7 +33,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
         this.isAuthenticated = this.accountService.isAuthenticated();
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            this.privacyStatementService.getPrivacyStatement(lang as PrivacyStatementLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
+            this.legalDocumentService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
         });
     }
 

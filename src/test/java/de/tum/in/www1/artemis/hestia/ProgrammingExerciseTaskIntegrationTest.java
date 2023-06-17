@@ -18,11 +18,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -43,16 +46,25 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private Set<ProgrammingExerciseTestCase> testCases;
 
     @BeforeEach
     void initTestCases() {
-        database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         this.testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntry = new ProgrammingExerciseSolutionEntry();

@@ -27,9 +27,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @BeforeEach
     void setupTestScenario() {
         super.setupTestScenario();
-        this.database.addUsers(this.testPrefix, 1, 2, 1, 1);
-        exampleTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
+        userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
+        exampleTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
+                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
 
     }
 
@@ -97,7 +97,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewSession_onTutorialGroupFreeDay_shouldCreateAsCancelled() throws Exception {
         // given
-        databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
+        tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
         var dto = createSessionDTO(firstAugustMonday);
         // when
         var sessionId = request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
@@ -112,9 +112,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateSession_scheduledSession_shouldBeDisconnectedFromSchedule() throws Exception {
         // given
-        databaseUtilService.changeUser(testPrefix + "instructor1");
+        userUtilService.changeUser(testPrefix + "instructor1");
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        databaseUtilService.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
@@ -301,7 +301,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOnTutorialGroupFreeDay_shouldUpdateAsCancelled() throws Exception {
         // given
-        var freeDay = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, thirdAugustMonday, "Holiday");
+        var freeDay = tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, thirdAugustMonday, "Holiday");
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
 
         var dto = createSessionDTO(thirdAugustMonday);

@@ -20,12 +20,15 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageFileReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -53,6 +56,15 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private RequestUtilService request;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingSubmission latestSolutionSubmission;
@@ -61,9 +73,9 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setup() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 0);
-        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 0);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         var unsavedPreviousSubmission = new ProgrammingSubmission();
         unsavedPreviousSubmission.setParticipation(solutionParticipation);

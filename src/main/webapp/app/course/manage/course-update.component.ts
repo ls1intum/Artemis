@@ -51,11 +51,9 @@ export class CourseUpdateComponent implements OnInit {
     courseImageUploadFile?: File;
     croppedImage?: string;
     showCropper = false;
-    presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
-    presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     isAdmin = false;
     // Icons
@@ -192,20 +190,19 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 registrationEnabled: new FormControl(this.course.enrollmentEnabled),
+                enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
+                enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
                 registrationConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
-                presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
-                    Validators.min(1),
-                    regexValidator(this.presentationScorePattern),
-                ]),
+                unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
+                unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
             },
             { validators: CourseValidator },
         );
         this.croppedImage = this.course.courseIcon;
-        this.presentationScoreEnabled = this.course.presentationScore !== 0;
 
         this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.TutorialGroups)
@@ -371,20 +368,6 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Enable or disable presentation score input field based on presentationScoreEnabled checkbox
-     */
-    changePresentationScoreInput() {
-        const presentationScoreControl = this.courseForm.controls['presentationScore'];
-        if (presentationScoreControl.disabled) {
-            presentationScoreControl.enable();
-            this.presentationScoreEnabled = true;
-        } else {
-            presentationScoreControl.reset({ value: 0, disabled: true });
-            this.presentationScoreEnabled = false;
-        }
-    }
-
-    /**
      * Enable or disable online course
      */
     changeOnlineCourse() {
@@ -403,8 +386,30 @@ export class CourseUpdateComponent implements OnInit {
         if (this.course.enrollmentEnabled) {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
+            if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+                this.course.enrollmentStartDate = this.course.startDate;
+                this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
+                this.course.enrollmentEndDate = this.course.endDate;
+                this.courseForm.controls['enrollmentEndDate'].setValue(this.course.endDate);
+            }
+        } else {
+            if (this.course.unenrollmentEnabled) {
+                this.changeUnenrollmentEnabled();
+            }
         }
         this.courseForm.controls['registrationEnabled'].setValue(this.course.enrollmentEnabled);
+    }
+
+    /**
+     * Enable or disable student course unenrollment
+     */
+    changeUnenrollmentEnabled() {
+        this.course.unenrollmentEnabled = !this.course.unenrollmentEnabled;
+        this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.unenrollmentEnabled);
+        if (this.course.unenrollmentEnabled && !this.course.unenrollmentEndDate) {
+            this.course.unenrollmentEndDate = this.course.endDate;
+            this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
+        }
     }
 
     /**
@@ -534,6 +539,46 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Returns whether the enrollment start and end dates are valid
+     * @return true if the dates are valid
+     */
+    get isValidEnrollmentPeriod(): boolean {
+        // allow instructors to set enrollment dates later
+        if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+            return true;
+        }
+
+        // enrollment period requires configured start and end date of the course
+        if (this.atLeastOneDateNotExisting() || !this.isValidDate) {
+            return false;
+        }
+
+        return (
+            dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) &&
+            !dayjs(this.course.enrollmentStartDate).isAfter(this.course.startDate) &&
+            !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate)
+        );
+    }
+
+    /**
+     * Returns whether the unenrollment end date is valid or not
+     * @return true if the date is valid
+     */
+    get isValidUnenrollmentEndDate(): boolean {
+        // allow instructors to set unenrollment end date later
+        if (!this.course.unenrollmentEndDate) {
+            return true;
+        }
+
+        // course enrollment period is required to configure unenrollment end date
+        if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate || !this.isValidEnrollmentPeriod) {
+            return false;
+        }
+
+        return !dayjs(this.course.unenrollmentEndDate).isBefore(this.course.enrollmentEndDate) && !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.endDate);
+    }
+
+    /**
      * Auxiliary method checking if at least one date is not set or simply deleted by the user
      * @private
      */
@@ -543,7 +588,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     get isValidConfiguration(): boolean {
-        return this.isValidDate;
+        return this.isValidDate && this.isValidEnrollmentPeriod && this.isValidUnenrollmentEndDate;
     }
 
     /**

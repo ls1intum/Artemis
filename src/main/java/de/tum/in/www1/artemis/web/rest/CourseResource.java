@@ -36,10 +36,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -109,6 +106,8 @@ public class CourseResource {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
+    private final GradingScaleRepository gradingScaleRepository;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -118,8 +117,8 @@ public class CourseResource {
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
-            GradingScaleService gradingScaleService, ChannelService channelService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -137,6 +136,7 @@ public class CourseResource {
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
         this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
+        this.gradingScaleRepository = gradingScaleRepository;
         this.channelService = channelService;
     }
 
@@ -195,11 +195,14 @@ public class CourseResource {
             }
         }
 
-        if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() > 0) {
+        if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() != 0) {
             Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
             if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
                 throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
                         "gradedPresentationAlreadySet", true);
+            }
+            if (courseUpdate.getPresentationScore() < 0) {
+                throw new BadRequestAlertException("The presentation score cannot be negative", Course.ENTITY_NAME, "negativePresentationScore", true);
             }
         }
 
@@ -214,9 +217,9 @@ public class CourseResource {
         courseUpdate.validateOnlineCourseAndEnrollmentEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
-        if (!courseUpdate.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+        courseUpdate.validateStartAndEndDate();
+        courseUpdate.validateEnrollmentStartAndEndDate();
+        courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
             String pathString = fileService.handleSaveFile(file, false, false);
@@ -306,6 +309,25 @@ public class CourseResource {
     }
 
     /**
+     * POST /courses/{courseId}/unenroll : Unenroll from an existing course. This method unenrolls the current user for the given course id in case the student is currently
+     * enrolled.
+     * The user is removed from the course student group in the Authentication System and the course student group is removed from the user's groups in the Artemis
+     * database.
+     *
+     * @param courseId to find the course
+     * @return response entity for user who has been unenrolled from the course
+     */
+    @PostMapping("courses/{courseId}/unenroll")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<User> unenrollFromCourse(@PathVariable Long courseId) {
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
+        courseService.unenrollUserForCourseOrThrow(user, course);
+        return ResponseEntity.ok(user);
+    }
+
+    /**
      * GET /courses : get all courses for administration purposes.
      *
      * @param onlyActive if true, only active courses will be considered in the result
@@ -325,26 +347,6 @@ public class CourseResource {
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
         return userCourses.toList();
-    }
-
-    /**
-     * GET /courses/groups : get all groups for all courses for administration purposes.
-     *
-     * @return the list of groups (the user has access to)
-     */
-    @GetMapping("courses/groups")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
-        log.debug("REST request to get all Groups for all Courses");
-        List<Course> courses = courseRepository.findAll();
-        Set<String> groups = new LinkedHashSet<>();
-        for (Course course : courses) {
-            groups.add(course.getInstructorGroupName());
-            groups.add(course.getEditorGroupName());
-            groups.add(course.getTeachingAssistantGroupName());
-            groups.add(course.getStudentGroupName());
-        }
-        return ResponseEntity.ok().body(groups);
     }
 
     /**
@@ -426,14 +428,7 @@ public class CourseResource {
     public List<Course> getAllCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-
-        Set<Course> allEnrolledCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyEnroll = courseRepository.findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites();
-        // check whether enrollment is actually possible for each of the courses
-        return allCoursesToPotentiallyEnroll.stream().filter(course -> {
-            boolean isAlreadyInCourse = allEnrolledCourses.contains(course);
-            return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
-        }).toList();
+        return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
     }
 
     /**
@@ -471,7 +466,9 @@ public class CourseResource {
 
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
         courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
-        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+        GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
+
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
         logDuration(List.of(course), user, timeNanoStart);
         return ResponseEntity.ok(courseForDashboardDTO);
     }
@@ -494,9 +491,12 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+        Set<GradingScale> gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
+
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
         for (Course course : courses) {
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+            GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart);
@@ -1136,7 +1136,8 @@ public class CourseResource {
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course);
+        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(courseId).orElse(null);
+        CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course, gradingScale);
         return ResponseEntity.ok(managementDetailViewDTO);
     }
 
