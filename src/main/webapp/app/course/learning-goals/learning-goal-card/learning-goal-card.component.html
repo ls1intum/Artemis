@@ -22,7 +22,7 @@
                 <h4 class="m-0">
                     {{ learningGoal.title }}
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
-                    <span *ngIf="learningGoal.optional === true" id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.learningGoal.optional">
+                    <span *ngIf="learningGoal.optional" id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.learningGoal.optional">
                         Optional
                     </span>
                 </h4>
