@@ -10,7 +10,7 @@
             "taxonomy": "Taxonomy",
             "masteryThreshold": "Mastery threshold",
             "optional": "Optional",
-            "optionalDescription": "Optional competencies are not required to complete the learning path. They can provice additional practice or may cover material that exceeds the courses requirements.",
+            "optionalDescription": "Optional competencies are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
             "course": "Course",
             "progress": "Progress",
             "progressDescription": "The percentage of completed lecture units and exercises linked to this competency.",
