@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
-import java.util.Optional;
-
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHook;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPrePushHook;
@@ -20,10 +17,9 @@ public class ArtemisGitServlet extends GitServlet {
     /**
      * Constructor for ArtemisGitServlet.
      *
-     * @param localVCServletService   the service for authenticating and authorizing users and retrieving the repository from disk
-     * @param localCIConnectorService the service for triggering a new build after a successful push
+     * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
      */
-    public ArtemisGitServlet(LocalVCServletService localVCServletService, Optional<LocalCIConnectorService> localCIConnectorService) {
+    public ArtemisGitServlet(LocalVCServletService localVCServletService) {
         this.setRepositoryResolver((req, name) -> {
             // req – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).
@@ -41,7 +37,7 @@ public class ArtemisGitServlet extends GitServlet {
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
             receivePack.setPreReceiveHook(new LocalVCPrePushHook());
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
-            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localCIConnectorService));
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
             return receivePack;
         });
     }

@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -294,6 +295,12 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    /**
+     * Getter for the stored default branch of the exercise.
+     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
+     *
+     * @return the name of the default branch or null if not yet stored in Artemis
+     */
     @JsonIgnore
     public String getBranch() {
         return branch;
@@ -568,6 +575,10 @@ public class ProgrammingExercise extends Exercise {
         this.staticCodeAnalysisCategories = staticCodeAnalysisCategories;
     }
 
+    public void addStaticCodeAnalysisCategory(final StaticCodeAnalysisCategory category) {
+        staticCodeAnalysisCategories.add(category);
+    }
+
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
         return Objects.requireNonNullElse(sequentialTestRuns, false);
@@ -838,5 +849,15 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void disconnectRelatedEntities() {
+        Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
+
+        super.disconnectRelatedEntities();
     }
 }

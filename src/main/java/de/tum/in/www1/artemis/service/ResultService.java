@@ -3,25 +3,26 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ResultService {
@@ -42,8 +43,6 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     private final ComplaintRepository complaintRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -52,27 +51,38 @@ public class ResultService {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     private final StudentExamRepository studentExamRepository;
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
+            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
             FeedbackConflictRepository feedbackConflictRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
         this.websocketMessagingService = websocketMessagingService;
-        this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.submissionRepository = submissionRepository;
-        this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
         this.feedbackConflictRepository = feedbackConflictRepository;
     }
@@ -80,12 +90,11 @@ public class ResultService {
     /**
      * Handle the manual creation of a new result potentially including feedback
      *
-     * @param result                            newly created Result
-     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
-     * @param ratedResult                       override value for rated property of result
+     * @param result      newly created Result
+     * @param ratedResult override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
-    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
+    public Result createNewManualResult(Result result, boolean ratedResult) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -114,8 +123,8 @@ public class ResultService {
         return savedResult;
     }
 
-    public Result createNewRatedManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
-        return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
+    public Result createNewRatedManualResult(Result result) {
+        return createNewManualResult(result, true);
     }
 
     /**
@@ -150,26 +159,6 @@ public class ResultService {
             participantScoreRepository.clearAllByResultId(resultId);
         }
         feedbackConflictRepository.deleteAllByResultId(resultId);
-    }
-
-    /**
-     * Create a new example result for the provided submission ID.
-     *
-     * @param submissionId                      The ID of the submission (that is connected to an example submission) for which a result should get created
-     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
-     * @return The newly created (and empty) example result
-     */
-    public Result createNewExampleResultForSubmissionWithExampleSubmission(long submissionId, boolean isProgrammingExerciseWithFeedback) {
-        final var submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("No example submission with ID " + submissionId + " found!"));
-        if (!submission.isExampleSubmission()) {
-            throw new IllegalArgumentException("Submission is no example submission! Example results are not allowed!");
-        }
-
-        final var newResult = new Result();
-        newResult.setSubmission(submission);
-        newResult.setExampleResult(true);
-        return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
     }
 
     /**
@@ -296,6 +285,100 @@ public class ResultService {
         for (Result result : results) {
             result.filterSensitiveFeedbacks(!shouldResultsBePublished);
         }
+    }
+
+    /**
+     * Returns the matching template, solution or student participation for a given build plan key.
+     *
+     * @param planKey the build plan key
+     * @return the matching participation
+     */
+    @Nullable
+    public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
+        // we have to support template, solution and student build plans here
+        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
+            return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
+            return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
+        ProgrammingExerciseStudentParticipation participation = null;
+        if (!participations.isEmpty()) {
+            participation = participations.get(0);
+            if (participations.size() > 1) {
+                // in the rare case of multiple participations, take the latest one.
+                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
+                    }
+                }
+            }
+        }
+        return participation;
+    }
+
+    /**
+     * Get the successful results for an exercise, ordered ascending by build completion date.
+     *
+     * @param exercise        which the results belong to.
+     * @param participations  the participations for which the results should be returned
+     * @param withSubmissions true, if each result should also contain the submissions.
+     * @return a list of results as described above for the given exercise.
+     */
+    public List<Result> resultsForExercise(Exercise exercise, List<StudentParticipation> participations, boolean withSubmissions) {
+        final List<Result> results = new ArrayList<>();
+
+        for (StudentParticipation participation : participations) {
+            // Filter out participations without students / teams
+            if (participation.getParticipant() == null) {
+                continue;
+            }
+
+            Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
+            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getLatestResult() == null) {
+                continue;
+            }
+
+            participation.setSubmissionCount(participation.getSubmissions().size());
+            if (withSubmissions) {
+                relevantSubmissionWithResult.getLatestResult().setSubmission(relevantSubmissionWithResult);
+            }
+            results.add(relevantSubmissionWithResult.getLatestResult());
+        }
+
+        if (withSubmissions) {
+            results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
+        }
+
+        // remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+            result.getParticipation().setExercise(null);
+        });
+
+        return results;
+    }
+
+    /**
+     * Returns the result for the given id with authorization checks.
+     *
+     * @param participationId the id of the participation
+     * @param resultId        the id of the result
+     * @param role            the minimum role required to access the result
+     * @return the result
+     */
+    public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
+        Result result = resultRepository.findByIdElseThrow(resultId);
+        Participation participation = result.getParticipation();
+        if (!participation.getId().equals(participationId)) {
+            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
+                    "Participation", "400");
+        }
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+        return result;
     }
 
     @NotNull
