@@ -12,7 +12,7 @@
                     <div class="form-group">
                         <label [for]="propertyName">{{ translationKeys.labelKey | artemisTranslate }}</label>
                         <input type="text" class="form-control" [id]="propertyName" [formControlName]="propertyName" />
-                        <small [id]="propertyName + '-help'" class="form-text text-muted">{{ translationKeys.helpKey | artemisTranslate }}</small>
+                        <small [id]="propertyName + '-help'" class="form-text text-body-secondary">{{ translationKeys.helpKey | artemisTranslate }}</small>
                         <div *ngIf="control?.invalid && (control?.dirty || control?.touched)" class="alert alert-danger">
                             <div *ngIf="control?.errors?.required">
                                 {{ translationKeys.requiredErrorKey | artemisTranslate }}
