@@ -16,9 +16,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -33,6 +36,15 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ProgrammingExercise exercise;
 
     private CodeHint codeHint;
@@ -41,10 +53,10 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @Test
@@ -72,11 +84,11 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private void addCodeHints() {
-        exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
-        database.addHintsToExercise(exercise);
-        database.addTasksToProgrammingExercise(exercise);
-        database.addSolutionEntriesToProgrammingExercise(exercise);
-        database.addCodeHintsToProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exercise);
+        programmingExerciseUtilService.addHintsToExercise(exercise);
+        programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
+        programmingExerciseUtilService.addSolutionEntriesToProgrammingExercise(exercise);
+        programmingExerciseUtilService.addCodeHintsToProgrammingExercise(exercise);
         codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintRepository.findByExerciseId(exercise.getId()).stream().findAny().orElseThrow().getId());
         solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }

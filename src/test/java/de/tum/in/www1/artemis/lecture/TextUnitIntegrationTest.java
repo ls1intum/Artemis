@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -27,23 +28,29 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private Lecture lecture;
 
     private TextUnit textUnit;
 
     @BeforeEach
     void initTestCase() {
-        this.database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        this.lecture = this.database.createCourseWithLecture(true);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        this.lecture = lectureUtilService.createCourseWithLecture(true);
         this.textUnit = new TextUnit();
         this.textUnit.setName("LoremIpsum     ");
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "editor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "editor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -99,7 +106,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         persistTextUnitWithLecture();
 
         // Add a second lecture unit
-        TextUnit textUnit = database.createTextUnit();
+        TextUnit textUnit = lectureUtilService.createTextUnit();
         lecture.addLectureUnit(textUnit);
         lecture = lectureRepository.save(lecture);
 

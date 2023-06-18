@@ -18,6 +18,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -26,6 +30,18 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private ParticipationTeamWebsocketService participationTeamWebsocketService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     private StudentParticipation participation;
 
@@ -37,10 +53,10 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
-        Course course = database.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        participation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
 
         closeable = MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();
