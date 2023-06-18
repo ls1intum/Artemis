@@ -6,6 +6,7 @@
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
+            "unreadMessages": "Ungelesene Nachrichten",
             "buttonTooltip": "Beginne mit Iris zu chatten!",
             "errors": {
                 "invalidSessionState": "Der Iris-Sitzungszustand ist ungültig. Es ist unmöglich, in diesem Zustand Nachrichten zu senden.",

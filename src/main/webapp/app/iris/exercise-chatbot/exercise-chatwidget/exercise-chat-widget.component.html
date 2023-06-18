@@ -16,10 +16,29 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody>
-            <div *ngFor="let message of messages">
+            <div *ngFor="let message of messages; let i = index">
+                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</span>
                 <div *ngFor="let content of message.content">
-                    <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
+                    <div *ngIf="message.sender === SENDER_USER" class="my-chat">
                         <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                    </div>
+                    <div *ngIf="message.sender === SENDER_SERVER" style="width: fit-content">
+                        <div class="client-chat">
+                            <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                        </div>
+                        <div class="rate-message-buttons">
+                            <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
+                                <fa-icon
+                                    [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
+                                    style="margin-right: 15px"
+                                    [icon]="faThumbsUp"
+                                    size="sm"
+                                />
+                            </button>
+                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="message.helpful === false">
+                                <fa-icon [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'" [icon]="faThumbsDown" size="sm" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

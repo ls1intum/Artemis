@@ -33,6 +33,8 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -1286,6 +1288,10 @@ class ProgrammingExerciseIntegrationTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
         params.add("updateTemplate", String.valueOf(updateTemplate));
+        var programmingExerciseSca = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+
+        setupMocksForConsistencyChecksOnImport(programmingExercise);
+        setupMocksForConsistencyChecksOnImport(programmingExerciseSca);
 
         // false -> true
         var sourceId = programmingExercise.getId();
@@ -1297,7 +1303,6 @@ class ProgrammingExerciseIntegrationTestService {
                 HttpStatus.BAD_REQUEST);
 
         // true -> false
-        var programmingExerciseSca = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceId = programmingExerciseSca.getId();
         programmingExerciseSca.setId(null);
         programmingExerciseSca.setStaticCodeAnalysisEnabled(false);
@@ -2161,6 +2166,27 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private long getMaxProgrammingExerciseId() {
-        return programmingExerciseRepository.findAll().stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
+        return programmingExerciseRepository.findAll(PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))).stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
+    }
+
+    private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).get();
+
+        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(),
+                urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl()), true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(),
+                urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsSolutionRepositoryUrl()), true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTestRepositoryUrl(),
+                urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTestRepositoryUrl()), true);
+        for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
+            mockDelegate.mockGetRepositorySlugFromRepositoryUrl(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUrl());
+            mockDelegate.mockRepositoryUrlIsValid(auxiliaryRepository.getVcsRepositoryUrl(), urlService.getProjectKeyFromRepositoryUrl(auxiliaryRepository.getVcsRepositoryUrl()),
+                    true);
+        }
+        mockDelegate.mockCheckIfBuildPlanExists(urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl()),
+                programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(urlService.getProjectKeyFromRepositoryUrl(programmingExercise.getVcsSolutionRepositoryUrl()),
+                programmingExercise.getSolutionBuildPlanId(), true, false);
     }
 }

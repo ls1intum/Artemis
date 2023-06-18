@@ -25,6 +25,9 @@ import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-r
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
 import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.module';
+import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 
 @NgModule({
     imports: [
@@ -49,6 +52,8 @@ import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programmi
         GitDiffReportModule,
         TestwiseCoverageReportModule,
         ArtemisCodeHintGenerationOverviewModule,
+        AceEditorModule,
+        ArtemisCodeEditorModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,
@@ -56,6 +61,7 @@ import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programmi
         ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
+        BuildPlanEditorComponent,
     ],
     exports: [ProgrammingExerciseExampleSolutionRepoDownloadComponent],
 })

@@ -5,6 +5,8 @@ import {
     ConversationErrorOccurredAction,
     HistoryMessageLoadedAction,
     MessageStoreState,
+    NumNewMessagesResetAction,
+    RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
@@ -24,6 +26,61 @@ describe('IrisStateStore', () => {
         });
         stateStore = TestBed.inject(IrisStateStore);
         stateStore.dispatch(new SessionReceivedAction(0, []));
+    });
+
+    describe('RateMessageSuccessAction', () => {
+        it('should keep the state when index is out of range', async () => {
+            const action: RateMessageSuccessAction = new RateMessageSuccessAction(0, true);
+            const obs = stateStore.getState();
+            const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+            stateStore.dispatch(action);
+
+            const state = (await promise) as MessageStoreState;
+            expect(state).toEqual(mockState);
+        });
+
+        it('should change helpful attribute of message position when index is in range', async () => {
+            const obs = stateStore.getState();
+            stateStore.dispatch(new SessionReceivedAction(123, [mockServerMessage, mockServerMessage]));
+
+            const action: RateMessageSuccessAction = new RateMessageSuccessAction(0, true);
+            const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+            stateStore.dispatch(action);
+
+            const state = (await promise) as MessageStoreState;
+            expect(state).toEqual({
+                ...mockState,
+                sessionId: 123,
+                messages: [
+                    {
+                        ...mockServerMessage,
+                        helpful: true,
+                    },
+                    {
+                        ...mockServerMessage,
+                    },
+                ],
+            });
+        });
+    });
+
+    it('should dispatch and handle NumNewMessagesResetAction', async () => {
+        const action: NumNewMessagesResetAction = new NumNewMessagesResetAction();
+
+        const obs = stateStore.getState();
+
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action);
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toEqual({
+            ...mockState,
+            numNewMessages: 0,
+        });
     });
 
     it('should dispatch and handle HistoryMessageLoadedAction', async () => {
@@ -56,6 +113,7 @@ describe('IrisStateStore', () => {
 
         expect(state).toEqual({
             ...mockState,
+            numNewMessages: 1,
             messages: [action.message],
         });
     });
@@ -81,7 +139,7 @@ describe('IrisStateStore', () => {
         });
     });
 
-    it('should dispatch and handle 3 messages', async () => {
+    it('should dispatch and handle 4 messages', async () => {
         const action1: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
@@ -96,6 +154,8 @@ describe('IrisStateStore', () => {
             type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
             message: mockServerMessage,
         };
+
+        const action4: NumNewMessagesResetAction = new NumNewMessagesResetAction();
 
         const obs = stateStore.getState();
 
@@ -119,6 +179,7 @@ describe('IrisStateStore', () => {
 
         expect(state2).toEqual({
             ...mockState,
+            numNewMessages: 1,
             messages: [action1.message, action2.message],
         });
 
@@ -131,6 +192,19 @@ describe('IrisStateStore', () => {
 
         expect(state3).toEqual({
             ...mockState,
+            numNewMessages: 2,
+            messages: [action1.message, action2.message, action3.message],
+        });
+
+        const promise4 = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action4);
+
+        const state4 = (await promise4) as MessageStoreState;
+
+        expect(state4).toEqual({
+            ...mockState,
+            numNewMessages: 0,
             messages: [action1.message, action2.message, action3.message],
         });
     });

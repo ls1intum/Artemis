@@ -35,5 +35,6 @@ export const mockState = {
     messages: [],
     isLoading: false,
     error: null,
+    numNewMessages: 0,
     sessionId: 0,
 };

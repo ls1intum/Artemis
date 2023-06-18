@@ -2,15 +2,24 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import {
+    ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
+    HistoryMessageLoadedAction,
     MessageStoreAction,
     MessageStoreState,
+    RateMessageSuccessAction,
+    SessionReceivedAction,
+    StudentMessageSentAction,
     isActiveConversationMessageLoadedAction,
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
+    isNumNewMessagesResetAction,
+    isRateMessageSuccessAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: IrisErrorType) => void };
 
@@ -23,7 +32,8 @@ export class IrisStateStore implements OnDestroy {
         messages: [],
         sessionId: null,
         isLoading: false,
-        error: null,
+        numNewMessages: 0,
+        error: '',
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -112,31 +122,53 @@ export class IrisStateStore implements OnDestroy {
 
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
-                messages: [...state.messages],
-                sessionId: state.sessionId,
+                ...state,
                 isLoading: false,
                 error: errorMessages[IrisErrorMessageKey.INVALID_SESSION_STATE],
             };
         }
-
-        if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
+        if (isNumNewMessagesResetAction(action)) {
             return {
-                messages: [...state.messages, action.message],
+                ...state,
+                numNewMessages: 0,
+            };
+        }
+        if (isHistoryMessageLoadedAction(action)) {
+            const castedAction = action as HistoryMessageLoadedAction;
+            return {
+                ...state,
+                messages: [...state.messages, castedAction.message],
+                isLoading: false,
+                error: '',
+            };
+        }
+        if (isActiveConversationMessageLoadedAction(action)) {
+            const castedAction = action as ActiveConversationMessageLoadedAction;
+            return {
+                messages: [...state.messages, castedAction.message],
                 sessionId: state.sessionId,
                 isLoading: false,
                 error: null,
+                numNewMessages: state.numNewMessages + 1,
+                error: '',
             };
         }
         if (isConversationErrorOccurredAction(action)) {
+            const castedAction = action as ConversationErrorOccurredAction;
             return {
-                messages: state.messages,
-                sessionId: state.sessionId,
+                ...state,
                 isLoading: false,
                 error: action.errorType,
+                error: castedAction.errorMessage,
             };
         }
         if (isSessionReceivedAction(action)) {
+            const castedAction = action as SessionReceivedAction;
             return {
+                ...state,
+                messages: castedAction.messages,
+                sessionId: castedAction.sessionId,
+                error: '',
                 messages: action.messages,
                 sessionId: action.sessionId,
                 isLoading: state.isLoading,
@@ -144,12 +176,26 @@ export class IrisStateStore implements OnDestroy {
             };
         }
         if (isStudentMessageSentAction(action)) {
+            const castedAction = action as StudentMessageSentAction;
             return {
-                messages: [...state.messages, action.message],
-                sessionId: state.sessionId,
+                ...state,
+                messages: [...state.messages, castedAction.message],
                 isLoading: true,
                 error: null,
             };
+        }
+        if (isRateMessageSuccessAction(action)) {
+            const castedAction = action as RateMessageSuccessAction;
+            const newMessages = state.messages;
+            if (castedAction.index < state.messages.length) {
+                (newMessages[castedAction.index] as IrisServerMessage).helpful = castedAction.helpful;
+                return {
+                    ...state,
+                    messages: newMessages,
+                };
+            }
+
+            return state;
         }
 
         IrisStateStore.exhaustiveCheck(action);

@@ -496,7 +496,7 @@ public class RequestUtilService {
         if (responseType == Void.class && contentAsString.isEmpty()) {
             return (T) "";
         }
-        if (res.getResponse().getContentType() == null) {
+        if (contentAsString.isEmpty() || res.getResponse().getContentType() == null) {
             return null;
         }
         return mapper.readValue(contentAsString, responseType);
@@ -589,6 +589,13 @@ public class RequestUtilService {
 
     public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+    }
+
+    public <T> void delete(String path, HttpStatus expectedStatus, T body) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
     }
 

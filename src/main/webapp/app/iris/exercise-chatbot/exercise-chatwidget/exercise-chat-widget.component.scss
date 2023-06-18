@@ -37,12 +37,11 @@
 }
 
 .client-chat {
-    width: fit-content;
     background-color: var(--iris-client-chat-background);
     color: var(--bs-body-color);
     padding: 10px;
     border-radius: 10px;
-    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 .client-chat-error {
@@ -51,7 +50,7 @@
     padding: 10px;
     border: 1px solid var(--artemis-alert-danger-border);
     border-radius: 10px;
-    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 .my-chat {
@@ -61,7 +60,6 @@
     color: var(--bs-body-color);
     padding: 10px;
     border-radius: 10px;
-    margin-bottom: 10px;
 }
 
 .chat-input {
@@ -97,9 +95,11 @@
     0% {
         opacity: 1;
     }
+
     50% {
         opacity: 0;
     }
+
     100% {
         opacity: 1;
     }
@@ -107,4 +107,30 @@
 
 .blinking-dots {
     animation: blink 1s infinite;
+}
+
+.unread-message {
+    display: flex;
+    justify-content: center;
+    color: var(--gray-600);
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.rate-message-buttons {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.thumbs-up-clicked {
+    color: var(--yellow);
+}
+
+.thumbs-down-clicked {
+    color: var(--red);
+}
+
+.rate-button-not-clicked {
+    color: var(--secondary);
 }
