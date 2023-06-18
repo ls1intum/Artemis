@@ -24,7 +24,9 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.plagiarism.*;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismChecksConfigHelper;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismChecksService;
+import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedFroPlagiarismChecksException;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
