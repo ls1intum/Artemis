@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -144,8 +145,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "continuous_plagiarism_control_enabled")
     private boolean continuousPlagiarismControlEnabled = false;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("exercise")
     private PlagiarismChecksConfig plagiarismChecksConfig = new PlagiarismChecksConfig();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
@@ -987,4 +989,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public abstract ExerciseType getExerciseType();
+
+    /**
+     * Disconnects child entities from the exercise.
+     * <p>
+     * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
+     */
+    public void disconnectRelatedEntities() {
+        Stream.of(competencies, teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases)
+                .filter(Objects::nonNull).forEach(Collection::clear);
+    }
 }

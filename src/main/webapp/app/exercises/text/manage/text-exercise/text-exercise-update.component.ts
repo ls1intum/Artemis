@@ -47,7 +47,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
-    plagiarismChecksSimilarityThresholdPercentage = 50;
+    plagiarismChecksSimilarityThresholdPercentage: number;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -94,6 +94,7 @@ export class TextExerciseUpdateComponent implements OnInit {
             this.textExercise = textExercise;
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
+            this.plagiarismChecksSimilarityThresholdPercentage = this.textExercise.plagiarismChecksConfig!.similarityThreshold! * 100;
         });
 
         this.activatedRoute.url

@@ -61,6 +61,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
+            "submissionPolicy", "plagiarismChecksConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismChecksConfigById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
@@ -218,6 +222,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation LEFT JOIN FETCH pe.solutionParticipation")
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
+
+    @Query("""
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.templateParticipation
+                LEFT JOIN FETCH pe.solutionParticipation
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
@@ -439,6 +452,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismChecksConfig" })
+    Optional<ProgrammingExercise> findWithPlagiarismChecksConfigById(long id);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);
@@ -465,6 +481,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise with plagiarism checks config by its id and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithPlagiarismChecksConfigElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findWithPlagiarismChecksConfigById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**
@@ -579,6 +606,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismChecksConfigElseThrow(
+            long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismChecksConfigById(
+                programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 

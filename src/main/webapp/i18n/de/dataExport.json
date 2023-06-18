@@ -1,0 +1,15 @@
+{
+    "artemisApp": {
+        "dataExport": {
+            "title": "Datenexport",
+            "description": "Hier kannst du einen Datenexport gemäß Art.15 DSGVO Auskunftsrecht der betroffenen Person anfordern. Sobald der Export erstellt wurde, erhältst du eine Email mit einem Link um diesen herunterzuladen. Du kannst den Export sieben Tage lang herunterladen, danach wird er gelöscht. ",
+            "request": "Datenexport anfordern",
+            "download": "Datenexport herunterladen",
+            "requestSuccess": "Datenexport erfolgreich angefordert",
+            "downloadSuccess": "Datenexport erfolgreich heruntergeladen",
+            "typeLoginToConfirm": "Bitte gib deine Login-Kennung ein, um den Datenexport zu bestätigen",
+            "confirmationQuestion": "Willst du wirklich den Datenexport anfordern?",
+            "confirmationHeader": "Datenexport anfordern"
+        }
+    }
+}

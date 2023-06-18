@@ -70,7 +70,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
-    plagiarismChecksSimilarityThresholdPercentage = 50;
+    plagiarismChecksSimilarityThresholdPercentage: number;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -371,6 +371,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             } else {
                 this.selectedProjectTypeValue = this.programmingExercise.projectType!;
             }
+            this.plagiarismChecksSimilarityThresholdPercentage = this.programmingExercise.plagiarismChecksConfig!.similarityThreshold! * 100;
         });
 
         // If it is an import from this instance, just get the course, otherwise handle the edit and new cases

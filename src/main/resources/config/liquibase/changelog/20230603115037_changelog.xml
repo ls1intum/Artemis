@@ -14,7 +14,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="similarity_threshold" type="FLOAT">
-                <constraints nullable="false"/>
+                <constraints nullable="false" />
             </column>
         </createTable>
         <addColumn tableName="exercise">
@@ -23,5 +23,6 @@
         <addColumn tableName="exercise">
             <column name="plagiarism_checks_config_id" type="bigint"/>
         </addColumn>
+        <addForeignKeyConstraint baseColumnNames="plagiarism_checks_config_id" baseTableName="exercise" constraintName="FKn7tayuod73b6e8rlihn2o8bah" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="plagiarism_checks_config" validate="true"/>
     </changeSet>
 </databaseChangeLog>

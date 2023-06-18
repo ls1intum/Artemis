@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -26,9 +24,9 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.plagiarism.ProgrammingPlagiarismDetectionService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismChecksConfigHelper;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismChecksService;
+import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedFroPlagiarismChecksException;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -52,18 +50,14 @@ public class ProgrammingExercisePlagiarismResource {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
-
-    private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
+    private final PlagiarismChecksService plagiarismChecksService;
 
     public ProgrammingExercisePlagiarismResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            PlagiarismResultRepository plagiarismResultRepository, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
-            ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService) {
+            PlagiarismResultRepository plagiarismResultRepository, PlagiarismChecksService plagiarismChecksService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
+        this.plagiarismChecksService = plagiarismChecksService;
     }
 
     /**
@@ -96,25 +90,22 @@ public class ProgrammingExercisePlagiarismResource {
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) throws ExitException, IOException {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismChecksConfigElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language);
-
-        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
-            throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
-                    ENTITY_NAME, "programmingLanguageNotSupported");
-        }
 
         long start = System.nanoTime();
-        log.info("Start programmingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
-        var plagiarismChecksConfig = programmingExerciseRepository.findByIdElseThrow(exerciseId).getPlagiarismChecksConfig();
-        var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, plagiarismChecksConfig.getSimilarityThreshold(),
-                plagiarismChecksConfig.getMinimumScore());
-        log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", plagiarismResult.getComparisons().size(),
-                TimeLogUtil.formatDurationFrom(start));
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
-        return ResponseEntity.ok(plagiarismResult);
+        log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
+        PlagiarismChecksConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
+        try {
+            var plagiarismResult = plagiarismChecksService.checkProgrammingExercise(programmingExercise);
+            return ResponseEntity.ok(plagiarismResult);
+        }
+        catch (ProgrammingLanguageNotSupportedFroPlagiarismChecksException e) {
+            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "programmingLanguageNotSupported");
+        }
+        finally {
+            log.info("Finished manual plagiarism checks for programming exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
+        }
     }
 
     /**
@@ -129,22 +120,27 @@ public class ProgrammingExercisePlagiarismResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId) throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismChecksConfigElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        var programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
-            throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
-                    "Plagiarism Check", "programmingLanguageNotSupported");
-        }
 
-        var plagiarismChecksConfig = programmingExerciseRepository.findByIdElseThrow(exerciseId).getPlagiarismChecksConfig();
-        var zipFile = programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exerciseId, plagiarismChecksConfig.getSimilarityThreshold(),
-                plagiarismChecksConfig.getMinimumScore());
-        if (zipFile == null) {
-            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison.", "Plagiarism Check", "notEnoughSubmissions");
-        }
+        long start = System.nanoTime();
+        log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);
+        PlagiarismChecksConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
+        try {
+            var zipFile = plagiarismChecksService.checkProgrammingExerciseWithJplagReport(programmingExercise);
+            if (zipFile == null) {
+                throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison.", "Plagiarism Check",
+                        "notEnoughSubmissions");
+            }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+            var resource = new InputStreamResource(new FileInputStream(zipFile));
+            return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        }
+        catch (ProgrammingLanguageNotSupportedFroPlagiarismChecksException e) {
+            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "programmingLanguageNotSupported");
+        }
+        finally {
+            log.info("Finished manual plagiarism checks with Jplag report for programming exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
+        }
     }
 }
