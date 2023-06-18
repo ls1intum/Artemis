@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
-import javax.persistence.DiscriminatorValue;
-
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;

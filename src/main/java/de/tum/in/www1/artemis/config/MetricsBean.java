@@ -367,9 +367,10 @@ public class MetricsBean {
 
         List<Exam> examsInActiveCourses = new ArrayList<>();
         activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
-        studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(
-                // TODO: Add semester here
-                Tags.of("examName", exam.getTitle(), "semester", exam.getCourse().getSemester()), studentExamRepository.findByExamId(exam.getId()).size()))
+        studentsExamGauge.register(examsInActiveCourses.stream()
+                .map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(), "semester",
+                        courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
+                        studentExamRepository.findByExamId(exam.getId()).size()))
                 .collect(Collectors.toList()));
 
         activeExerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
