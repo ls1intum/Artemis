@@ -80,13 +80,13 @@ describe('DataExportComponent', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'success');
         component.requestExport();
         expect(dataExportServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledOnceWith('artemisApp.dataExport.requestSuccess');
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.dataExport.requestSuccess');
     });
     it('should call alert service when requesting fails', () => {
         jest.spyOn(dataExportService, 'requestDataExport').mockReturnValue(throwError({ status: 500 }));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.requestExport();
-        expect(alertServiceSpy).toHaveBeenCalledOnceWith('artemisApp.dataExport.requestError');
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.dataExport.requestError');
         expect(component.canDownload).toBeFalse();
     });
     it('should call data export service when data export is downloaded', () => {
@@ -94,7 +94,8 @@ describe('DataExportComponent', () => {
         component.canDownload = true;
         component.dataExportId = 1;
         component.downloadDataExport();
-        expect(dataExportServiceSpy).toHaveBeenCalledOnceWith(1);
+        expect(dataExportServiceSpy).toHaveBeenCalledOnce();
+        expect(dataExportServiceSpy).toHaveBeenCalledWith(1);
     });
     it.each([true, false])('should execute correct checks on init on init', (downloadMode: boolean) => {
         if (downloadMode) {
@@ -108,7 +109,8 @@ describe('DataExportComponent', () => {
             expect(component.canRequestDataExport).toBeFalse();
             expect(canRequestSpy).not.toHaveBeenCalled();
             expect(canDownloadAnyDataExportSpy).not.toHaveBeenCalled();
-            expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnceWith(1);
+            expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
+            expect(canDownloadSpecificDataExportSpy).toHaveBeenCalledOnce();
             expect(component.canDownload).toBeTrue();
             expect(component.dataExportId).toBe(1);
         } else {
