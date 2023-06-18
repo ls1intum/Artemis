@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -100,9 +99,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
-
-    @Autowired
-    private PlagiarismUtilService plagiarismUtilService;
 
     @BeforeEach
     void initTestCase() {
