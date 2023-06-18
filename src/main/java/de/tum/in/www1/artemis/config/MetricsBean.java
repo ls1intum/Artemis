@@ -331,16 +331,18 @@ public class MetricsBean {
 
     @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
     private void calculatePublicArtemisMetrics() {
+        // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
-
-        var activeUserPeriodInDays = new Integer[] { 1, 7, 14, 30 };
-        activeUserMultiGauge.register(Stream.of(activeUserPeriodInDays)
-                .map(days -> MultiGauge.Row.of(Tags.of("period", days + ""), statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(days), ZonedDateTime.now())))
-                .collect(Collectors.toList()));
 
         ZonedDateTime now = ZonedDateTime.now();
 
+        var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
+        activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
+                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
+                .collect(Collectors.toList()));
+
         var courses = courseRepository.findAll();
+        // We set the number of students once to prevent multiple queries for the same date
         courses.forEach(course -> course.setNumberOfStudents((long) userRepository.getStudents(course).size()));
 
         var activeCourses = courses.stream()
@@ -357,21 +359,18 @@ public class MetricsBean {
                 activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
                         .collect(Collectors.toList()));
 
-        var coursesGroupedBySemester = courses.stream().collect(Collectors.groupingBy(Course::getSemester));
-
         activeCoursesGauge.set(activeCourses.size());
         coursesGauge.set(courseRepository.findAll().size());
 
-        activeExamsGauge.set(examRepository.countAllActiveExams(ZonedDateTime.now()));
+        activeExamsGauge.set(examRepository.countAllActiveExams(now));
         examsGauge.set(examRepository.findAll().size());
 
         List<Exam> examsInActiveCourses = new ArrayList<>();
         activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
-        studentsExamGauge.register(examsInActiveCourses.stream()
-                .map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(), "semester",
-                        courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
-                        studentExamRepository.findByExamId(exam.getId()).size()))
-                .collect(Collectors.toList()));
+        studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
+                // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contians the semester
+                "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
+                studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toList()));
 
         activeExerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
                 exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass()))).collect(Collectors.toList()));
