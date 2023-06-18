@@ -68,6 +68,11 @@
     ></jhi-programming-exercise-lifecycle>
 </div>
 
+<div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
+    <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+    <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
+</div>
+
 <div class="form-group">
     <jhi-submission-policy-update #submissionPolicyForm [editable]="true" [programmingExercise]="programmingExercise"></jhi-submission-policy-update>
     <ng-container *ngIf="programmingExercise.submissionPolicy !== undefined && programmingExerciseCreationConfig.isEdit">

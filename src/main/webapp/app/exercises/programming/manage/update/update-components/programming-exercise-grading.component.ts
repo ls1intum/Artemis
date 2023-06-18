@@ -13,6 +13,7 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 })
 export class ProgrammingExerciseGradingComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly AssessmentType = AssessmentType;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
