@@ -62,9 +62,11 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         if (shouldBeCreated) {
             assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
+            assertThat(dataExport.getCreationDate()).isNotNull();
         }
         else {
             assertThat(dataExport.getDataExportState()).isEqualTo(state);
+            assertThat(dataExport.getCreationDate()).isNull();
         }
     }
 
