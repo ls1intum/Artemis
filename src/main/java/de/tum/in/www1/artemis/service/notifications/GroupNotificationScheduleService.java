@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import java.time.ZonedDateTime;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -137,7 +138,9 @@ public class GroupNotificationScheduleService {
      *
      * @param exercise that is created
      */
+    @Async
     public void checkNotificationsForNewExercise(Exercise exercise) {
+        // TODO: in a course with 2000 participants, this can take really long, we should optimize this
         checkNotificationForExerciseRelease(exercise);
         checkNotificationForAssessmentDueDate(exercise);
     }

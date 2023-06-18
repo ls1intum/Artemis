@@ -87,7 +87,7 @@
 
             <div *ngIf="processUnitMode" class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
                 <fa-icon
                     [icon]="faQuestionCircle"
                     [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate : { extensions: allowedFileExtensions }"

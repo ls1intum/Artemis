@@ -44,8 +44,6 @@ public class ApollonRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(true);
         mockServer = builder.build();
