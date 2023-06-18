@@ -16,6 +16,10 @@ public class PlagiarismChecksConfigHelper {
 
     /**
      * Ads missing plagiarism checks config
+     *
+     * @param <T>        type of Exercise
+     * @param exercise   exercise without plagiarism checks config
+     * @param repository repository used for saving exercises of type T
      */
     public static <T extends Exercise> void createAndSaveDefaultIfNull(T exercise, JpaRepository<T, Long> repository) {
         if (exercise.getPlagiarismChecksConfig() == null) {

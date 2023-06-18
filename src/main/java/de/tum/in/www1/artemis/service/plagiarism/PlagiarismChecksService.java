@@ -43,6 +43,12 @@ public class PlagiarismChecksService {
         this.plagiarismResultRepository = plagiarismResultRepository;
     }
 
+    /**
+     * Check plagiarism in given text exercise
+     *
+     * @param exercise exercise to check plagiarism
+     * @return result of plagiarism checks
+     */
     public TextPlagiarismResult checkTextExercise(TextExercise exercise) throws ExitException {
         var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(exercise, exercise.getPlagiarismChecksConfig().getSimilarityThreshold(),
                 exercise.getPlagiarismChecksConfig().getMinimumScore(), exercise.getPlagiarismChecksConfig().getMinimumSize());
@@ -64,6 +70,12 @@ public class PlagiarismChecksService {
         }
     }
 
+    /**
+     * Check plagiarism in given programing exercise
+     *
+     * @param exercise exercise to check plagiarism
+     * @return result of plagiarism checks
+     */
     public TextPlagiarismResult checkProgrammingExercise(ProgrammingExercise exercise)
             throws ExitException, IOException, ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
         checkProgrammingLanguageSupport(exercise);
@@ -76,12 +88,24 @@ public class PlagiarismChecksService {
         return plagiarismResult;
     }
 
+    /**
+     * Check plagiarism in given programing exercise and outputs a Jplag report
+     *
+     * @param exercise exercise to check plagiarism
+     * @return Jplag report of plagiarism checks
+     */
     public File checkProgrammingExerciseWithJplagReport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
         checkProgrammingLanguageSupport(exercise);
         return programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exercise.getId(), exercise.getPlagiarismChecksConfig().getSimilarityThreshold(),
                 exercise.getPlagiarismChecksConfig().getMinimumScore());
     }
 
+    /**
+     * Check plagiarism in given modeling exercise
+     *
+     * @param exercise exercise to check plagiarism
+     * @return result of plagiarism checks
+     */
     public ModelingPlagiarismResult checkModelingExercise(ModelingExercise exercise) {
         var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(exercise, exercise.getPlagiarismChecksConfig().getSimilarityThreshold(),
                 exercise.getPlagiarismChecksConfig().getMinimumSize(), exercise.getPlagiarismChecksConfig().getMinimumScore());
