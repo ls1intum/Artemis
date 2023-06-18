@@ -5,6 +5,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -14,6 +15,7 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 export class ProgrammingExerciseGradingComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
+    readonly faQuestionCircle = faQuestionCircle;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 

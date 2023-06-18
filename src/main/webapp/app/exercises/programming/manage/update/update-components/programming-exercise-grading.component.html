@@ -55,6 +55,35 @@
     </div>
 </div>
 
+<div class="mt-2 mb-4" *ngIf="programmingExercise.staticCodeAnalysisEnabled">
+    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty">Max Static Code Analysis Penalty</label>
+    <fa-icon
+        [icon]="faQuestionCircle"
+        class="text-secondary"
+        placement="auto"
+        ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
+    ></fa-icon>
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text">%</span>
+        </div>
+        <input
+            type="number"
+            [pattern]="programmingExerciseCreationConfig.maxPenaltyPattern"
+            class="form-control"
+            name="maxPenalty"
+            id="field_maxPenalty"
+            [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+            #maxPenalty="ngModel"
+        />
+    </div>
+    <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
+        <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
+            <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
+        </div>
+    </ng-container>
+</div>
+
 <div class="form-group mt-2">
     <div>
         <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
