@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,23 +13,25 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.jgit.lib.Repository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -55,7 +56,6 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
-@ExtendWith(MockitoExtension.class)
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "dataexport";
@@ -105,9 +105,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private ConversationUtilService conversationUtilService;
 
-    @MockBean
-    private ApollonConversionService apollonConversionService;
-
     @Autowired
     private ExamUtilService examUtilService;
 
@@ -124,14 +121,42 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private StudentExamRepository studentExamRepository;
 
+    @Autowired
+    private ApollonRequestMockProvider apollonRequestMockProvider;
+
+    @Autowired
+    @Qualifier("apollonRestTemplate")
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private ApollonConversionService apollonConversionService;
+
     @BeforeEach
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 5, 5, 0, 1);
         userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 0, 1);
-        // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
-        var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
-        when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
+        apollonConversionService.setRestTemplate(restTemplate);
 
+        apollonRequestMockProvider.enableMockingOfRequests();
+
+        // mock apollon conversion six times
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+    }
+
+    private void mockApollonConversion() throws IOException {
+        Resource mockResource = Mockito.mock(Resource.class);
+        Mockito.when(mockResource.getInputStream()).thenReturn(new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream());
+        apollonRequestMockProvider.mockConvertModel(true, mockResource);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        apollonRequestMockProvider.reset();
     }
 
     @Test
