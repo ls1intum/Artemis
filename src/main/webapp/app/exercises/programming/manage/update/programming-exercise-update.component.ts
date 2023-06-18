@@ -991,6 +991,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
+            isEdit: this.isEdit,
+            isExamMode: this.isExamMode,
             auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,

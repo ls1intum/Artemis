@@ -44,13 +44,7 @@
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
             </div>
-            <jhi-programming-exercise-info
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
-                [isEdit]="isEdit"
-                [isExamMode]="isExamMode"
-                [programmingExercise]="programmingExercise"
-                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-            >
+            <jhi-programming-exercise-info [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty
                 [programmingExercise]="programmingExercise"

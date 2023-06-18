@@ -2,7 +2,6 @@
     <jhi-programming-exercise-info
         class="form-step"
         *ngIf="currentStep >= 1"
-        [isExamMode]="isExamMode"
         [programmingExercise]="programmingExercise"
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-info>
@@ -10,6 +9,7 @@
     <jhi-programming-exercise-difficulty
         class="form-step"
         *ngIf="currentStep >= 2"
+        [programmingExercise]="programmingExercise"
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-difficulty>
 
