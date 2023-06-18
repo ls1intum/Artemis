@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.*;
 
 import javax.ws.rs.BadRequestException;
 
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,6 +123,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         var exercise = chatSession.getExercise();
         parameters.put("exercise", exercise);
         parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
+        parameters.put("latestSubmission", "");
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), chatSession.getUser().getId());
         if (participations.size() >= 1) {
             var latestSubmission = participations.get(0).getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
@@ -168,7 +167,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             try {
                 templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
             }
-            catch (GitAPIException e) {
+            catch (Exception e) {
                 log.error("Could not checkout template repository", e);
                 return;
             }
@@ -179,7 +178,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             try {
                 studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
             }
-            catch (GitAPIException e) {
+            catch (Exception e) {
                 log.error("Could not checkout student repository", e);
                 return;
             }
@@ -191,7 +190,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
             studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
         }
-        catch (GitAPIException e) {
+        catch (Exception e) {
             log.error("Could not fetch repositories", e);
             return;
         }
@@ -210,7 +209,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             parameters.put("gitDiff", diffOutputStream.toString());
         }
-        catch (IOException | GitAPIException e) {
+        catch (Exception e) {
             log.error("Could not generate diff", e);
         }
     }

@@ -37,7 +37,7 @@ public class IrisRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    @Value("${artemis.iris.url}")
+    @Value("${artemis.iris.url}/api/v1/messages")
     private URL apiURL;
 
     @Autowired

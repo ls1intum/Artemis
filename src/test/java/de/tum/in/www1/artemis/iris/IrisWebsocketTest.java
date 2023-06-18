@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 
+@ActiveProfiles("iris")
 class IrisWebsocketTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "iriswebsocketintegration";
