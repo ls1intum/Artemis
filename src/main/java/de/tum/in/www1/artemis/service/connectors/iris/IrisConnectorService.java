@@ -58,7 +58,7 @@ public class IrisConnectorService {
     }
 
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
-        var response = restTemplate.postForEntity(irisUrl + "/request", request, JsonNode.class);
+        var response = restTemplate.postForEntity(irisUrl + "/api/v1/messages", objectMapper.valueToTree(request), JsonNode.class);
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
             return CompletableFuture.failedFuture(new IrisConnectorException(parseResponse(response, IrisErrorResponseDTO.class).errorMessage()));
         }

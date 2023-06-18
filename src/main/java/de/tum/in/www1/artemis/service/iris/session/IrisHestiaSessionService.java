@@ -10,6 +10,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * Service to handle the Hestia integration of Iris.
  */
 @Service
+@Profile("iris")
 public class IrisHestiaSessionService implements IrisSessionSubServiceInterface {
 
     // TODO: Make configurable in future

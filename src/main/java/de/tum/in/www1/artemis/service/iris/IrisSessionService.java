@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterfac
  * Service for managing Iris sessions.
  */
 @Service
+@Profile("iris")
 public class IrisSessionService {
 
     private static final String INITIAL_PROMPT_TEMPLATE = """

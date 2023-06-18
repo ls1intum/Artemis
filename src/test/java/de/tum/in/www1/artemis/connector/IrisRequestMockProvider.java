@@ -75,7 +75,7 @@ public class IrisRequestMockProvider {
         irisMessage.setSender(IrisMessageSender.LLM);
         irisMessage.setSentAt(ZonedDateTime.now());
 
-        var response = new IrisMessageResponseDTO(IrisModel.GPT35, irisMessage);
+        var response = new IrisMessageResponseDTO(IrisModel.GPT35_TURBO, irisMessage);
         var json = mapper.writeValueAsString(response);
 
         mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));

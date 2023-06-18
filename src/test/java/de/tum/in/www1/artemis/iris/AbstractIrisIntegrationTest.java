@@ -57,9 +57,9 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
         globalSettings.getIrisChatSettings().setEnabled(true);
-        globalSettings.getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        globalSettings.getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         globalSettings.getIrisHestiaSettings().setEnabled(true);
-        globalSettings.getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35);
+        globalSettings.getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         irisSettingsService.saveGlobalIrisSettings(globalSettings);
     }
 
@@ -67,10 +67,10 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
         var courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(course);
         courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
         courseWithSettings.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         courseWithSettings.getIrisSettings().getIrisHestiaSettings().setEnabled(true);
         courseWithSettings.getIrisSettings().getIrisHestiaSettings().setTemplate(createDummyTemplate());
-        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35);
+        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         courseRepository.save(courseWithSettings);
     }
 
@@ -78,7 +78,7 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
         var exerciseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(exercise);
         exerciseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
         exerciseWithSettings.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         programmingExerciseRepository.save(exerciseWithSettings);
     }
 

@@ -11,6 +11,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
  * Service to handle the chat subsystem of Iris.
  */
 @Service
+@Profile("iris")
 public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
@@ -123,7 +125,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         var exercise = chatSession.getExercise();
         parameters.put("exercise", exercise);
         parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), chatSession.getUser().getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), chatSession.getUser().getId());
         if (participations.size() >= 1) {
             var latestSubmission = participations.get(0).getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
             latestSubmission.ifPresent(submission -> parameters.put("latestSubmission", submission));

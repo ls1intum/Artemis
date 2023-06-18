@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import javax.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
  * Service for managing Iris messages.
  */
 @Service
+@Profile("iris")
 public class IrisMessageService {
 
     private final IrisSessionRepository irisSessionRepository;
