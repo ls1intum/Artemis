@@ -87,7 +87,9 @@
                     </div>
                     <div class="col-1"></div>
                     <div class="col-7">
-                        <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
+                        <small id="urlHelperExplanation" class="form-text text-body-secondary">{{
+                            'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate
+                        }}</small>
                         <div *ngIf="urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)" class="alert alert-danger">
                             <div *ngIf="urlHelperControl?.errors?.invalidVideoUrl">
                                 {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | artemisTranslate }}
