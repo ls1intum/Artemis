@@ -240,12 +240,14 @@ describe('Notification Service', () => {
         it('should navigate to data export success notification target', () => {
             const navigationSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
             notificationService.interpretNotification(generateDataExportCreationSuccessNotification());
-            expect(navigationSpy).toHaveBeenCalledOnceWith(['privacy', 'data-exports', 1]);
+            expect(navigationSpy).toHaveBeenCalledOnce();
+            expect(navigationSpy).toHaveBeenCalledWith(['privacy', 'data-exports', 1]);
         });
         it('should navigate to data export creation failure notification target', () => {
-            jest.spyOn(router, 'navigate');
+            const navigationSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
             notificationService.interpretNotification(generateDataExportCreationFailureNotification());
-            expect(router.navigate).toHaveBeenCalledOnceWith(['privacy', 'data-exports']);
+            expect(navigationSpy).toHaveBeenCalledOnce();
+            expect(navigationSpy).toHaveBeenCalledWith(['privacy', 'data-exports']);
         });
 
         it('should convert date array from server', fakeAsync(() => {
