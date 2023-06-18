@@ -80,7 +80,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
-        verify(mailService).sendSuccessfulDataExportCreationsEmailForAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
+        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
 
     }
 

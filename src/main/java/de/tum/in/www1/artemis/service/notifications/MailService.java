@@ -161,7 +161,7 @@ public class MailService implements InstantNotificationService {
         prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
     }
 
-    public void sendSuccessfulDataExportCreationsEmailForAdmin(User admin, String templateName, String titleKey, Set<DataExport> dataExports) {
+    public void sendSuccessfulDataExportsEmailToAdmin(User admin, String templateName, String titleKey, Set<DataExport> dataExports) {
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
         Context context = createBaseContext(admin, locale);
         context.setVariable(DATA_EXPORTS, dataExports);
@@ -209,7 +209,7 @@ public class MailService implements InstantNotificationService {
 
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
         log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
-        sendSuccessfulDataExportCreationsEmailForAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
+        sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
     }
 
     // notification related

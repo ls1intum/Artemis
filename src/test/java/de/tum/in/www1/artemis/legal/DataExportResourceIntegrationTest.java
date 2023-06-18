@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
@@ -38,9 +37,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private DataExportRepository dataExportRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -57,7 +53,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDownloadSuccess() throws Exception {
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         // create an export
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userForExport);
@@ -90,7 +86,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntBelongToUser_forbidden() throws Exception {
-        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        var user2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
@@ -102,7 +98,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDownload_fileDoesntExist_internalServerError() throws Exception {
-        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         DataExport dataExport = new DataExport();
         dataExport.setUser(userForExport);
         dataExport.setFilePath("not-existent");
@@ -116,7 +112,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "DELETED", "DOWNLOADED_DELETED", "FAILED" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExport_notYetFullyCreatedOrDeleted_accessForbidden(DataExportState state) throws Exception {
-        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         DataExport dataExport = new DataExport();
         dataExport.setUser(userForExport);
         dataExport.setFilePath("not-existent");
@@ -139,7 +135,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(state);
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isNull();
@@ -152,7 +148,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
         var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isEqualTo(dataExport.getId());
@@ -178,7 +174,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void testCanDownloadSpecificExport_dataExportNotDownloadable_false() throws Exception {
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
         var canDownload = request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.OK, Boolean.class);
         assertThat(canDownload).isFalse();
@@ -198,7 +194,20 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.FAILED);
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequestDataExportIfCreationDateOlderThan14Days() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setCreationDate(ZonedDateTime.now().minusDays(15));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
@@ -207,7 +216,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanDownloadSpecificExport_dataExportBelongsToOtherUser_forbidden() throws Exception {
-        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        var user2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
@@ -222,7 +231,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setCreationDate(ZonedDateTime.now().minusDays(15));
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
@@ -235,7 +244,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setCreationDate(ZonedDateTime.now().minusDays(10));
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isFalse();
@@ -247,7 +256,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isFalse();
@@ -260,7 +269,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setCreationDate(ZonedDateTime.now().minusDays(10));
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
     }
@@ -271,7 +280,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setUser(userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1"));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
         request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
     }
@@ -312,7 +321,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private DataExport initDataExport(DataExportState state) {
         DataExport dataExport = new DataExport();
-        dataExport.setUser(userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get());
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setDataExportState(state);
         dataExport.setFilePath("path");
         dataExport = dataExportRepository.save(dataExport);
