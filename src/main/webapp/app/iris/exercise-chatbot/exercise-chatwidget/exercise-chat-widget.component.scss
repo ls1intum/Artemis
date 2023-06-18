@@ -14,20 +14,10 @@
 
 .chat-widget {
     position: fixed;
-    bottom: 90px;
+    bottom: 100px;
     right: 60px;
     width: 330px;
     height: 430px;
-    background-color: var(--iris-chat-widget-background);
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
-}
-
-.chat-widget-fullscreen {
-    position: fixed;
-    bottom: 90px;
-    right: 60px;
-    width: 95vw;
-    height: 85vh;
     background-color: var(--iris-chat-widget-background);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
 }
@@ -92,6 +82,15 @@
     background-color: var(--iris-my-chat-background);
 }
 
+.client-chat-error {
+    background-color: var(--artemis-alert-danger-background);
+    color: var(--bs-body-color);
+    padding: 10px;
+    border: 1px solid var(--artemis-alert-danger-border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
 pre {
     background: transparent;
     white-space: pre-wrap;
@@ -127,6 +126,32 @@ pre {
 .btn-circle:hover,
 .btn-circle:active {
     background-color: var(--iris-btn-circle-hover);
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.blinking-dots {
+    animation: blink 1s infinite;
+}
+
+.unread-message {
+    display: flex;
+    justify-content: center;
+    color: var(--gray-600);
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .p-chat {

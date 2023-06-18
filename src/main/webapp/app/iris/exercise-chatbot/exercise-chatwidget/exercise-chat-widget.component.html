@@ -27,7 +27,7 @@
         </div>
 
         <!-- main chat section -->
-        <div class="chat-body" #chatBody (scroll)="onChatScroll()">
+        <div class="chat-body" #chatBody>
             <div class="p-chat" *ngIf="!userAccepted">
                 <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
                 <div class="button-container">
@@ -35,21 +35,33 @@
                     <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
                 </div>
             </div>
-            <div *ngFor="let message of irisMessages" class="bubble left">
-                <pre>{{ message }}</pre>
+            <div *ngFor="let message of messages; let i = index">
+                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
+                <div *ngFor="let content of message.content">
+                    <div [ngClass]="{ 'bubble right': message.sender === SENDER_USER, 'bubble left': message.sender === SENDER_SERVER }">
+                        <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                    </div>
+                </div>
             </div>
-            <div *ngFor="let message of userMessages" class="bubble right">
-                <pre>{{ message }}</pre>
+            <div class="bubble left" *ngIf="isLoading">
+                <div class="blinking-dots">
+                    <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
+                        <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                    </div>
+                </div>
             </div>
             <div class="scroll-to-bottom" *ngIf="!isScrolledToBottom" (click)="scrollToBottomOnClick()">
                 <fa-icon [icon]="faArrowDown"></fa-icon>
+            </div>
+            <div class="client-chat-error" *ngIf="error">
+                {{ error }}
             </div>
         </div>
 
         <!-- input field section -->
         <div class="chat-input">
             <textarea
-                [(ngModel)]="newMessage"
+                [(ngModel)]="newMessageTextContent"
                 (ngModelChange)="onRowChange()"
                 type="text"
                 rows="1"
@@ -59,7 +71,13 @@
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button [disabled]="!userAccepted" [btnType]="ButtonType.SECONDARY" [icon]="faPaperPlane" (onClick)="onSend()" style="margin-bottom: auto"></jhi-button>
+            <jhi-button
+                [disabled]="!userAccepted || isLoading"
+                [btnType]="ButtonType.SECONDARY"
+                [icon]="faPaperPlane"
+                (onClick)="onSend()"
+                style="margin-bottom: auto"
+            ></jhi-button>
         </div>
     </div>
 </div>
