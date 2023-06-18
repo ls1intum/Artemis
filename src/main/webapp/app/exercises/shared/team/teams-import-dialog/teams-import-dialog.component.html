@@ -93,7 +93,7 @@
                         </div>
                     </li>
                     <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center">
-                        <div class="list-group-item-index text-muted">1</div>
+                        <div class="list-group-item-index text-body-secondary">1</div>
                         <div class="list-group-item list-group-item--teams py-5" [class.has-warning]="sourceTeams?.length === 0">
                             <span *ngIf="showImportFromExercise && sourceTeams?.length === 0" jhiTranslate="artemisApp.team.noTeamsInSourceExercise">
                                 The source exercise has no teams.
@@ -172,7 +172,7 @@
                                 {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | artemisTranslate }}
                                 <span class="badge bg-danger ms-1">{{ 'artemisApp.team.importStrategy.options.purgeExisting.badge' | artemisTranslate }}</span>
                             </strong>
-                            <p [class.text-muted]="importStrategy !== ImportStrategy.PURGE_EXISTING" class="explanation mb-2">
+                            <p [class.text-body-secondary]="importStrategy !== ImportStrategy.PURGE_EXISTING" class="explanation mb-2">
                                 {{ 'artemisApp.team.importStrategy.options.purgeExisting.explanation' | artemisTranslate }}
                             </p>
                         </div>
@@ -191,7 +191,7 @@
                                 {{ 'artemisApp.team.importStrategy.options.createOnly.label' | artemisTranslate }}
                                 <span class="badge bg-success ms-1">{{ 'artemisApp.team.importStrategy.options.createOnly.badge' | artemisTranslate }}</span>
                             </strong>
-                            <p [class.text-muted]="importStrategy !== ImportStrategy.CREATE_ONLY" class="explanation mb-0">
+                            <p [class.text-body-secondary]="importStrategy !== ImportStrategy.CREATE_ONLY" class="explanation mb-0">
                                 {{ 'artemisApp.team.importStrategy.options.createOnly.explanation' | artemisTranslate }}
                             </p>
                         </div>

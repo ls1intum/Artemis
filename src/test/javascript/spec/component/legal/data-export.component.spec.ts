@@ -68,7 +68,7 @@ describe('DataExportComponent', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'success');
         component.requestExport();
         expect(dataExportServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledOnceWith('artemisApp.dataExport.requestSuccess');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.dataExport.requestSuccess');
 
         expect(component.canDownload).toBeTrue();
     });
@@ -76,7 +76,7 @@ describe('DataExportComponent', () => {
         jest.spyOn(dataExportService, 'requestDataExport').mockReturnValue(throwError({ status: 500 }));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.requestExport();
-        expect(alertServiceSpy).toHaveBeenCalledOnceWith('artemisApp.dataExport.requestError');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.dataExport.requestError');
         expect(component.canDownload).toBeFalse();
     });
     it('should call data export service when data export is downloaded', fakeAsync(() => {
@@ -84,6 +84,6 @@ describe('DataExportComponent', () => {
         component.canDownload = true;
         component.dataExportId = 1;
         component.downloadDataExport();
-        expect(dataExportServiceSpy).toHaveBeenCalledOnceWith(1);
+        expect(dataExportServiceSpy).toHaveBeenCalledExactlyOnceWith(1);
     }));
 });

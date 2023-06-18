@@ -19,8 +19,8 @@
         }
     }
 
-    .text-muted {
-        color: #f6f6f6 !important;
+    .text-body-secondary {
+        color: var(--white) !important;
     }
 
     button[disabled] {
