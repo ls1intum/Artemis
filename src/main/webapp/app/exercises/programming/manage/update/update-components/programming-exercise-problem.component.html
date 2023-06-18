@@ -3,33 +3,37 @@
 
 <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ngb-alert *ngIf="isImportFromExistingExercise || isImportFromFile" [dismissible]="false">
+    <ngb-alert *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile" [dismissible]="false">
         <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
         ><span>{{
-            isImportFromExistingExercise
+            programmingExerciseCreationConfig.isImportFromExistingExercise
                 ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
                 : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
         }}</span>
     </ngb-alert>
     <jhi-programming-exercise-instructions
-        *ngIf="isImportFromExistingExercise"
+        *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise"
         [exercise]="programmingExercise"
         [participation]="programmingExercise.templateParticipation!"
         [personalParticipation]="false"
     ></jhi-programming-exercise-instructions>
 
     <jhi-programming-exercise-editable-instructions
-        *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImportFromExistingExercise"
+        *ngIf="
+            programmingExerciseCreationConfig.problemStatementLoaded &&
+            programmingExerciseCreationConfig.templateParticipationResultLoaded &&
+            !programmingExerciseCreationConfig.isImportFromExistingExercise
+        "
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"
         [editMode]="!!programmingExercise?.id"
-        (hasUnsavedChanges)="hasUnsavedChanges = $event"
-        [forceRender]="rerenderSubject"
+        (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
+        [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
         class="form__editable-instructions"
     ></jhi-programming-exercise-editable-instructions>
 </div>
-<div class="form-group" *ngIf="!isExamMode">
+<div class="form-group" *ngIf="!programmingExerciseCreationConfig.isExamMode">
     <jhi-learning-goal-selection
         id="learning-goals"
         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"

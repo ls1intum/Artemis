@@ -23,7 +23,6 @@
     <jhi-programming-exercise-grading
         class="form-step"
         *ngIf="currentStep >= 4"
-        [isImportFromExistingExercise]="isImportFromExistingExercise"
         [programmingExercise]="programmingExercise"
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-grading>
@@ -31,7 +30,6 @@
     <jhi-programming-exercise-problem
         class="form-step"
         *ngIf="currentStep >= 5"
-        [isImportFromExistingExercise]="isImportFromExistingExercise"
         [(exercise)]="exercise"
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-problem>

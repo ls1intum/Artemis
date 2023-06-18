@@ -11,7 +11,7 @@
         (ngModelChange)="select.value = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
         name="programmingLanguage"
         id="field_programmingLanguage"
-        [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
+        [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
     >
         <option *ngFor="let supportedLanguage of programmingExerciseCreationConfig.supportedLanguages" [value]="supportedLanguage">
             {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
@@ -29,13 +29,18 @@
         [options]="programmingExerciseCreationConfig.modePickerOptions"
         [value]="programmingExerciseCreationConfig.selectedProjectType"
         (valueChange)="programmingExerciseCreationConfig.onProjectTypeChange($event!)"
-        [disabled]="isImportFromExistingExercise || isImportFromFile || !!programmingExercise.id"
+        [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile || !!programmingExercise.id"
         name="projectType"
         id="field_projectType"
     ></jhi-mode-picker>
     <div
         class="form-check mt-2"
-        *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA"
+        *ngIf="
+            !programmingExerciseCreationConfig.isImportFromExistingExercise &&
+            !programmingExerciseCreationConfig.isImportFromFile &&
+            !programmingExercise.id &&
+            programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA
+        "
     >
         <input
             class="form-check-input"
@@ -66,7 +71,7 @@
         [(ngModel)]="programmingExercise.packageName"
         [readonly]="programmingExercise.id"
         #packageName="ngModel"
-        [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
+        [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
     />
     <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
         <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
@@ -87,7 +92,7 @@
         [(ngModel)]="programmingExercise.packageName"
         [readonly]="programmingExercise.id"
         #packageName="ngModel"
-        [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
+        [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
     />
     <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
         <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
@@ -104,7 +109,7 @@
             class="form-check-input custom-control-input"
             id="field_staticCodeAnalysisEnabled"
             name="staticCodeAnalysisEnabled"
-            [disabled]="!!programmingExercise.sequentialTestRuns || (!isImportFromExistingExercise && !!programmingExercise.id)"
+            [disabled]="!!programmingExercise.sequentialTestRuns || (!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id)"
             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
             (change)="programmingExerciseCreationConfig.onStaticCodeAnalysisChanged()"
         />

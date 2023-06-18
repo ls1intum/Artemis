@@ -53,6 +53,8 @@ export type ProgrammingExerciseCreationConfig = {
     recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;
+    isImportFromFile: boolean;
+    showSummary: boolean;
 };
 
 @Component({
