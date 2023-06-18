@@ -5,7 +5,6 @@
             "inputMessage": "Write a message...",
             "accept": "Accept",
             "decline": "Decline",
-            "buttonTooltip": "Start chatting with Iris!",
             "title": "Iris: The Chatbot Powered by a Large Language Model for Artemis",
             "subtext": "Iris is specifically designed to offer comprehensive support for your programming exercises. It leverages its advanced language understanding capabilities to address your inquiries and provide guidance throughout your learning process.",
             "f1": "The interactions conducted with Iris will be subject to processing by Microsoft and OpenAI, entailing the transfer of data beyond the confines of our university's data center.",
@@ -17,6 +16,8 @@
             "f7": "The widget is designed with draggable functionality, allowing users to move it freely to different positions on the page.",
             "f8": "The widget supports resizing, enabling users to adjust its dimensions by expanding or shrinking its borders.",
             "f9": "The widget offers a full-screen feature, accessible by clicking on the button adjacent to the 'X' button. This expands the widget to occupy the entire page, resembling a full-page display. To revert back to its previous size, you can click the button again, returning the widget to its original dimensions."
+            "unreadMessages": "Unread messages",
+            "buttonTooltip": "Start chatting with Iris!"
         }
     }
 }

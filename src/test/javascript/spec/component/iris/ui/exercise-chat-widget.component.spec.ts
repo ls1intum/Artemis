@@ -8,7 +8,7 @@ import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -169,4 +169,62 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
     }));
+
+    it('should render unread message line with correct position', () => {
+        // given
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage])); // 2 old messages
+        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage)); // 1 new message
+
+        // when
+        component.ngAfterViewInit();
+
+        // then
+        expect(component.unreadMessageIndex).toBe(2);
+
+        fixture.detectChanges();
+        const unreadMessageLine: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-message');
+        expect(unreadMessageLine).not.toBeNull();
+    });
+
+    it('should scroll to unread message position when there is new unread messages', () => {
+        // given
+        jest.spyOn(component, 'scrollToUnread');
+        jest.spyOn(component, 'scrollToBottom');
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage])); // 2 old messages
+        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage)); // 1 new message
+
+        // when
+        component.ngAfterViewInit();
+
+        // then
+        expect(component.numNewMessages).toBe(1);
+        expect(component.scrollToUnread).toHaveBeenCalled();
+        expect(component.scrollToBottom).not.toHaveBeenCalled();
+    });
+
+    it('should scroll to bottom when there is no new unread messages', () => {
+        // given
+        jest.spyOn(component, 'scrollToUnread');
+        jest.spyOn(component, 'scrollToBottom');
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage])); // 2 old messages
+
+        // when
+        component.ngAfterViewInit();
+
+        // then
+        expect(component.numNewMessages).toBe(0);
+        expect(component.scrollToBottom).toHaveBeenCalled();
+        expect(component.scrollToUnread).not.toHaveBeenCalled();
+    });
+
+    it('should call action to reset number of new messages when close chat', () => {
+        // given
+        jest.spyOn(stateStore, 'dispatch');
+
+        // when
+        component.closeChat();
+
+        // then
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
+    });
 });

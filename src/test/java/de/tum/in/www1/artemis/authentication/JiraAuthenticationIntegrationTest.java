@@ -123,7 +123,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
         jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
 
-        request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
+        request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
         final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
 
@@ -159,7 +159,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
     }
 
@@ -178,7 +178,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         var expectedResponseHeaders = new HashMap<String, String>();
         expectedResponseHeaders.put("x-artemisapp-error", "CAPTCHA required");
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.FORBIDDEN, httpHeaders, expectedResponseHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.FORBIDDEN, httpHeaders, expectedResponseHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 
@@ -196,7 +196,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         // validation fails due to empty password is validated against min size
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.BAD_REQUEST, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.BAD_REQUEST, httpHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 }

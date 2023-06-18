@@ -1,4 +1,5 @@
 import { faChevronDown, faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
@@ -32,6 +33,9 @@ export class ExerciseChatbotComponent implements OnDestroy {
     faCircle = faCircle;
     faCommentDots = faCommentDots;
     faChevronDown = faChevronDown;
+
+    hasNewMessages = false;
+    chatOpen = false;
 
     constructor(
         public dialog: MatDialog,

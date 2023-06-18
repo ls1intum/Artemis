@@ -5,7 +5,6 @@
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
-            "buttonTooltip": "Beginne mit Iris zu chatten!",
             "title": "Iris: Der Chatbot, der von einem großen Sprachmodell für Artemis unterstützt wird",
             "subtext": "Iris ist speziell darauf ausgelegt, umfassende Unterstützung für Ihre Programmieraufgaben zu bieten. Es nutzt seine fortschrittlichen Sprachverständnisfähigkeiten, um Ihre Anfragen zu bearbeiten und Sie während Ihres Lernprozesses zu unterstützen.",
             "f1": "Die Interaktionen mit Iris unterliegen der Verarbeitung durch Microsoft und OpenAI, was den Transfer von Daten über die Grenzen unseres Universitätsrechenzentrums hinaus bedeutet.",
@@ -17,6 +16,8 @@
             "f7": "Das Widget ist mit einer Funktion zum Verschieben ausgestattet, die es den Benutzern ermöglicht, es frei an verschiedene Positionen auf der Seite zu bewegen.",
             "f8": "Das Widget unterstützt die Größenanpassung, sodass die Benutzer seine Abmessungen durch das Vergrößern oder Verkleinern der Ränder anpassen können.",
             "f9": "Das Widget bietet eine Vollbildfunktion, die durch Klicken auf die Schaltfläche neben der 'X'-Schaltfläche aktiviert wird. Dadurch wird das Widget auf die gesamte Seite erweitert und ähnelt einer Vollbildanzeige. Um zur vorherigen Größe zurückzukehren, können Sie die Schaltfläche erneut klicken"
+            "unreadMessages": "Ungelesene Nachrichten",
+            "buttonTooltip": "Beginne mit Iris zu chatten!"
         }
     }
 }
