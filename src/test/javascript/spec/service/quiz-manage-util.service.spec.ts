@@ -3,7 +3,6 @@ import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
 describe('QuizManageUtil', () => {

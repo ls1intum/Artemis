@@ -85,7 +85,7 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    learningGoals: [new LearningGoal()],
+    competencies: [new LearningGoal()],
     tutorialGroups: [new TutorialGroup()],
     prerequisites: [new LearningGoal()],
 };
@@ -377,7 +377,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasLearningGoals()).toBeTrue();
         expect(component.hasTutorialGroups()).toBeTrue();
-        expect(component.course?.learningGoals).not.toBeEmpty();
+        expect(component.course?.competencies).not.toBeEmpty();
         expect(component.course?.prerequisites).not.toBeEmpty();
         expect(component.course?.tutorialGroups).not.toBeEmpty();
     });

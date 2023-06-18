@@ -5,8 +5,12 @@ import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -54,40 +58,36 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachment() throws Exception {
-        var actualAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
-        var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
+        Attachment actualAttachment = request.postWithMultipartFile("/api/attachments", attachment, "attachment",
+                new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()), Attachment.class, HttpStatus.CREATED);
+        var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
         assertThat(actualAttachment).isEqualTo(expectedAttachment);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachment_idExists() throws Exception {
-        attachment.setId(1L);
-        request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.BAD_REQUEST);
+    void createAttachment_noFile() throws Exception {
+        request.postWithMultipartFile("/api/attachments", attachment, "attachment", null, Attachment.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachment() throws Exception {
+    @ValueSource(booleans = { true, false })
+    void updateAttachment(boolean fileUpdate) throws Exception {
         attachment = attachmentRepository.save(attachment);
         attachment.setName("new name");
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
+        MockMultipartFile file = fileUpdate ? new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()) : null;
 
-        var actualAttachment = request.putWithResponseBodyAndParams("/api/attachments", attachment, Attachment.class, HttpStatus.OK, params);
-        var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
+        var actualAttachment = request.putWithMultipartFile("/api/attachments/" + attachment.getId(), attachment, "attachment", file, Attachment.class, HttpStatus.OK, params);
+        var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
+
         assertThat(actualAttachment.getName()).isEqualTo("new name");
         var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course", "lecture.attachments" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachment_noId() throws Exception {
-        attachment.setName("new name");
-        request.putWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +54,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     @Test
     void calculateAddedDistancesTest() {
         var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(4));
-        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
+        TextCluster textCluster = addTextBlocksToCluster(textBlocks).get(0);
         double[][] distanceMatrix = new double[][] { { 0, 0.1, 0.2, 0.3 }, { 0.1, 0, 0.4, 0.5 }, { 0.2, 0.4, 0, 0.6 }, { 0.3, 0.5, 0.6, 0 } };
         textCluster.setDistanceMatrix(distanceMatrix);
         textAssessmentQueueService.setAddedDistances(textBlocks, textCluster);
@@ -68,7 +67,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     @Test
     void testTextBlockProbabilities() {
         var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(4));
-        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
+        TextCluster textCluster = addTextBlocksToCluster(textBlocks).get(0);
         var probabilities = new double[] { 1.0d, 2.0d };
         textCluster.setProbabilities(probabilities);
         assertThat(textCluster.getProbabilities()).isEqualTo(probabilities);
@@ -120,13 +119,12 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
         });
     }
 
-    private List<TextCluster> addTextBlocksToRandomCluster(List<TextBlock> textBlocks, int clusterCount) {
+    private List<TextCluster> addTextBlocksToCluster(List<TextBlock> textBlocks) {
+        var textCluster = new TextCluster();
         ArrayList<TextCluster> clusters = new ArrayList<>();
-        for (int i = 0; i < clusterCount; i++) {
-            clusters.add(new TextCluster());
-        }
-        // Add all text blocks to a random cluster
-        textBlocks.forEach(textBlock -> clusters.get(ThreadLocalRandom.current().nextInt(clusterCount)).addBlocks(textBlock));
+        clusters.add(textCluster);
+
+        textBlocks.forEach(textCluster::addBlocks);
         return clusters;
     }
 

@@ -45,6 +45,9 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Autowired
     private AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
 
+    @Autowired
+    private ResultService resultService;
+
     private TextExercise textExercise;
 
     @BeforeEach
@@ -199,21 +202,6 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     }
 
     /**
-     * Checks if deletion of submission delete the text assessment conflicts from the database.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testSubmissionDelete() {
-        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
-
-        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isNotEmpty();
-
-        textSubmissionRepository.deleteById(textSubmission.getId());
-
-        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isEmpty();
-    }
-
-    /**
      * Checks if deletion of a result delete the text assessment conflicts from the database.
      */
     @Test
@@ -223,22 +211,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
         assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isNotEmpty();
 
-        resultRepository.deleteById(textSubmission.getLatestResult().getId());
-
-        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isEmpty();
-    }
-
-    /**
-     * Checks if deletion of feedback delete the text assessment conflicts from the database.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testFeedbackDelete() {
-        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
-
-        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isNotEmpty();
-
-        feedbackRepository.deleteAll();
+        resultService.deleteResult(textSubmission.getLatestResult(), true);
 
         assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isEmpty();
     }

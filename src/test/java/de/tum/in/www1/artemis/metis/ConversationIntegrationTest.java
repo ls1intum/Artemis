@@ -55,7 +55,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getConversationsOfUser_shouldReturnConversationsWhereMember() throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
@@ -64,7 +64,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
-        var channel2 = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
+        var channel2 = createChannel(false, TEST_PREFIX + "2");
 
         // then
         database.changeUser(testPrefix + "tutor1");
@@ -113,7 +113,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchFavoriteStatus_shouldSwitchFavoriteStatus() throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
         database.changeUser(testPrefix + "tutor1");
@@ -140,7 +140,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     void switchFavoriteStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -158,7 +158,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchHiddenStatus_shouldSwitchHiddenStatus() throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
         database.changeUser(testPrefix + "tutor1");
@@ -185,7 +185,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     void switchHiddenStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -209,7 +209,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     void searchConversationMembers_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -230,7 +230,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "student1");
         addUsersToConversation(channel.getId(), "editor1");
         addUsersToConversation(channel.getId(), "tutor1");

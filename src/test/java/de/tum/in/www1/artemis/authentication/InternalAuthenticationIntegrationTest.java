@@ -168,11 +168,11 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
         var course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
         course1 = courseRepository.save(course1);
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
-        final var updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
+        final var updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 

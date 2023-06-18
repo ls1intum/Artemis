@@ -389,7 +389,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
-        textSubmission.getResults().forEach(r -> r.setSubmission(null));
+        textSubmission.getResults().forEach(res -> res.setSubmission(null));
 
         // set result again as it was changed
         if (resultId != null) {

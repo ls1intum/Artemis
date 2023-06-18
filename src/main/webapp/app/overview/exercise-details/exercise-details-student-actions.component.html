@@ -174,7 +174,9 @@
                 target="_blank"
                 rel="noreferrer"
                 href="{{ buildPlanUrl(gradedParticipation!) }}"
-                *ngIf="programmingExercise?.publishBuildPlanUrl && gradedParticipation && gradedParticipation.initializationState !== InitializationState.INACTIVE"
+                *ngIf="
+                    programmingExercise?.publishBuildPlanUrl && gradedParticipation && gradedParticipation.initializationState !== InitializationState.INACTIVE && !localVCEnabled
+                "
             >
                 <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan">Go to build plan</span>

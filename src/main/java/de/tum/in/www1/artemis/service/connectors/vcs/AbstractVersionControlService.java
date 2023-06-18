@@ -37,7 +37,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private final ApplicationContext applicationContext;
 
-    private final GitService gitService;
+    protected final GitService gitService;
 
     protected final UrlService urlService;
 
@@ -117,7 +117,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | VersionControlException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
             try {
                 if (targetRepo != null) {

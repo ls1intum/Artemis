@@ -14,7 +14,6 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { MatChipInputEvent } from '@angular/material/chips';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 
 @Component({
@@ -80,7 +79,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 });
             }
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
         });
         this.authorities = [];

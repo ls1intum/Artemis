@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Course } from 'app/entities/course.model';
+import { MockProvider } from 'ng-mocks';
+import { Router } from '@angular/router';
 
 describe('Header Course Component', () => {
     let component: HeaderCourseComponent;
@@ -22,7 +24,7 @@ describe('Header Course Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [HeaderCourseComponent],
+            providers: [HeaderCourseComponent, MockProvider(Router)],
             imports: [ArtemisTestModule],
         })
             .compileComponents()
@@ -73,5 +75,47 @@ describe('Header Course Component', () => {
         component.onResize();
         expect(component.enableShowMore).toBeFalse();
         expect(component.courseDescription).toBe(courseWithShortDescription.description);
+    });
+
+    it('should display manage button', () => {
+        component.course = courseWithShortDescription;
+        component.course.isAtLeastTutor = true;
+        const router = TestBed.inject(Router);
+        const urlSpy = jest.spyOn(router, 'url', 'get');
+        urlSpy.mockReturnValue('/some-url');
+
+        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
+        expect(showManageLectureButton).toBeTrue();
+    });
+
+    it('should not display manage button in course management', () => {
+        component.course = courseWithShortDescription;
+        component.course!.isAtLeastTutor = true;
+        const router = TestBed.inject(Router);
+        const urlSpy = jest.spyOn(router, 'url', 'get');
+        urlSpy.mockReturnValue('/course-management/some-path');
+
+        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
+        expect(showManageLectureButton).toBeFalse();
+    });
+
+    it('should not display manage button to student', () => {
+        component.course = courseWithShortDescription;
+        component.course!.isAtLeastTutor = false;
+        const router = TestBed.inject(Router);
+        const urlSpy = jest.spyOn(router, 'url', 'get');
+        urlSpy.mockReturnValue('/some-url');
+
+        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
+        expect(showManageLectureButton).toBeFalse();
+    });
+
+    it('should redirect to course management', () => {
+        component.course = courseWithShortDescription;
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        component.redirectToCourseManagement();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 234]);
     });
 });

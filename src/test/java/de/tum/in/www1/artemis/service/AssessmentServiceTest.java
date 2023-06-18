@@ -60,7 +60,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     void init() {
         database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course1.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
         courseRepository.save(course1);
     }
 

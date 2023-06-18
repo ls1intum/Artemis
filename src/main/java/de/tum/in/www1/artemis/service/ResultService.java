@@ -54,10 +54,13 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final FeedbackConflictRepository feedbackConflictRepository;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository) {
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
+            FeedbackConflictRepository feedbackConflictRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -71,6 +74,7 @@ public class ResultService {
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
         this.studentExamRepository = studentExamRepository;
+        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
@@ -145,6 +149,7 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
+        feedbackConflictRepository.deleteAllByResultId(resultId);
     }
 
     /**

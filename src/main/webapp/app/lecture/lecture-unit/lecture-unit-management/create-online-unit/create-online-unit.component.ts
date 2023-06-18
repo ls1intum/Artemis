@@ -42,7 +42,7 @@ export class CreateOnlineUnitComponent implements OnInit {
         this.onlineUnitToCreate.releaseDate = releaseDate || undefined;
         this.onlineUnitToCreate.description = description || undefined;
         this.onlineUnitToCreate.source = source || undefined;
-        this.onlineUnitToCreate.learningGoals = learningGoals || [];
+        this.onlineUnitToCreate.competencies = learningGoals || [];
 
         this.isLoading = true;
 

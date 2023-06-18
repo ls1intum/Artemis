@@ -1114,7 +1114,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Team createTeamForExercise(User student, Exercise exercise) {
         var team = new Team();
-        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        team.setShortName(TEST_PREFIX + "createTeamForExercise");
         team.addStudents(student);
         team.setExercise(exercise);
         return teamRepository.save(team);

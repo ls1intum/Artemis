@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -139,8 +138,8 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         jiraRequestMockProvider.enableMockingOfRequests();
     }
 
-    private String generateRandomEmail() {
-        return RandomStringUtils.random(12, true, true) + "@email.com";
+    private String generateEmail(String username) {
+        return username + "@email.com";
     }
 
     private String replaceEmail(String requestBody, String email) {
@@ -163,7 +162,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_noOnlineCourseConfigurationException(String requestBody) throws Exception {
-        requestBody = replaceEmail(requestBody, generateRandomEmail());
+        requestBody = replaceEmail(requestBody, generateEmail("launchAsAnonymousUser_noOnlineCourseConfigurationException"));
 
         course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
@@ -176,7 +175,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithoutExistingEmail(String requestBody) throws Exception {
-        String email = generateRandomEmail();
+        String email = generateEmail("launchAsAnonymousUser_WithoutExistingEmail");
         requestBody = replaceEmail(requestBody, email);
         addJiraMocks(email, null);
 
@@ -193,7 +192,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithExistingEmail(String requestBody) throws Exception {
-        String email = generateRandomEmail();
+        String email = generateEmail("launchAsAnonymousUser_WithExistingEmail");
         requestBody = replaceEmail(requestBody, email);
         addJiraMocks(email, TEST_PREFIX + "student1");
 
@@ -210,7 +209,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_RequireExistingUser(String requestBody) throws Exception {
-        String email = generateRandomEmail();
+        String email = generateEmail("launchAsAnonymousUser_RequireExistingUser");
         requestBody = replaceEmail(requestBody, email);
 
         course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
@@ -228,7 +227,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_checkExceptions(String requestBody) throws Exception {
-        requestBody = replaceEmail(requestBody, generateRandomEmail());
+        requestBody = replaceEmail(requestBody, generateEmail("launchAsAnonymousUser_checkExceptions"));
 
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
