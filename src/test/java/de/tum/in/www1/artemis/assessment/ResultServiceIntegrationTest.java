@@ -27,6 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -35,9 +36,20 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -87,6 +99,27 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
@@ -105,30 +138,31 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void setupTest() {
-        database.addUsers(TEST_PREFIX, numberOfStudents, 2, 0, 2);
-        course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
+        userUtilService.addUsers(TEST_PREFIX, numberOfStudents, 2, 0, 2);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, TEST_PREFIX + "student1");
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, TEST_PREFIX + "student1");
 
-        Course secondCourse = database.addCourseWithOneModelingExercise();
-        modelingExercise = database.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
+        Course secondCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        modelingExercise = exerciseUtilService.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
-        studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
+        studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
 
-        Exam exam = database.addExamWithExerciseGroup(this.course, true);
+        Exam exam = examUtilService.addExamWithExerciseGroup(this.course, true);
         this.examModelingExercise = new ModelingExercise();
         this.examModelingExercise.setMaxPoints(100D);
         this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
         this.modelingExerciseRepository.save(this.examModelingExercise);
         this.examRepository.save(exam);
 
-        Result result = ModelFactory.generateResult(true, 200D).participation(programmingExerciseStudentParticipation);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
+        Result result = ParticipationFactory.generateResult(true, 200D).participation(programmingExerciseStudentParticipation);
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
@@ -142,7 +176,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
         String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
 
-        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+        var resultNotification1 = ProgrammingExerciseFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
                 ProgrammingLanguage.JAVA);
         for (var reports : resultNotification1.getBuild().jobs().iterator().next().staticCodeAnalysisReports()) {
             for (var issue : reports.getIssues()) {
@@ -157,7 +191,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
 
         // 2. Test that null or empty paths default to FeedbackRepository.DEFAULT_FILEPATH
-        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+        var resultNotification2 = ProgrammingExerciseFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
                 ProgrammingLanguage.JAVA);
         var reports2 = resultNotification2.getBuild().jobs().iterator().next().staticCodeAnalysisReports();
         for (int i = 0; i < reports2.size(); i++) {
@@ -186,12 +220,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
-        result = database.addVariousVisibilityFeedbackToResult(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         // Set programming exercise due date in future.
-        database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
+        exerciseUtilService.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
                 Feedback.class);
@@ -202,8 +236,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
 
         request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
@@ -211,24 +245,24 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
-        Result result = database.addResultToParticipation(null, null, solutionParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
-        Result result = database.addResultToParticipation(null, null, solutionParticipation);
-        database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
+        participationUtilService.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestForNonMatchingParticipationId() throws Exception {
-        Result result = database.addResultToParticipation(null, null, solutionParticipation);
-        database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
+        participationUtilService.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
     }
 
@@ -238,8 +272,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
                 .submissionDate(ZonedDateTime.now());
-        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
-        Result result = database.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExercise.setDueDate(dueDate);
         programmingExerciseRepository.save(programmingExercise);
@@ -335,7 +369,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private FileUploadExercise setupFileUploadExerciseWithResults() {
         var now = ZonedDateTime.now();
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
         course.addExercises(fileUploadExercise);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
@@ -343,14 +377,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.submitted(true);
             fileUploadSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
+            participationUtilService.addSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
             fileUploadExercise.addParticipation((StudentParticipation) fileUploadSubmission.getParticipation());
 
             if (i % 3 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
+                participationUtilService.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
+                participationUtilService.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
             }
             submissionRepository.save(fileUploadSubmission);
         }
@@ -361,7 +395,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void addFeedbacksWithGradingCriteriaToExercise(FileUploadExercise fileUploadExercise) {
-        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
+        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
@@ -378,32 +412,32 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                     final Feedback feedback1 = new Feedback().credits(2.0);
                     feedback1.setGradingInstruction(instruction1a);
                     feedbackRepository.save(feedback1);
-                    database.addFeedbackToResult(feedback1, result);
+                    participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction1b);
                     feedbackRepository.save(feedback2);
-                    database.addFeedbackToResult(feedback2, result);
+                    participationUtilService.addFeedbackToResult(feedback2, result);
 
                     // one feedback without grading instruction should be included in total score calculation
                     final Feedback feedback3 = new Feedback().credits(1.111);
                     feedbackRepository.save(feedback3);
-                    database.addFeedbackToResult(feedback3, result);
+                    participationUtilService.addFeedbackToResult(feedback3, result);
                 }
                 else {
                     final Feedback feedback1 = new Feedback().credits(1.0);
                     feedback1.setGradingInstruction(instruction1a);
                     feedbackRepository.save(feedback1);
-                    database.addFeedbackToResult(feedback1, result);
+                    participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction2);
                     feedbackRepository.save(feedback2);
-                    database.addFeedbackToResult(feedback2, result);
+                    participationUtilService.addFeedbackToResult(feedback2, result);
 
                     final Feedback feedback3 = new Feedback().credits(10.0);
                     feedbackRepository.save(feedback3);
-                    database.addFeedbackToResult(feedback3, result);
+                    participationUtilService.addFeedbackToResult(feedback3, result);
                 }
             }
         }
@@ -416,8 +450,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull().isEqualTo(result);
     }
@@ -425,7 +459,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getResult_asStudent() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -463,8 +497,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             modelingSubmission.model("TestingSubmission");
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(2));
-            database.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
-            Submission submission = database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
+            participationUtilService.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
+            Submission submission = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL,
+                    userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
             results.addAll(submission.getResults());
         }
 
@@ -498,8 +533,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
 
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
         request.delete("api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
@@ -508,8 +543,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult_wrongParticipationId() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
         long randomId = 1653;
         request.delete("/api/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
         assertThat(resultRepository.existsById(result.getId())).isTrue();
@@ -518,8 +553,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteResultStudent() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result = database.addSampleFeedbackToResults(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        result = participationUtilService.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -568,7 +603,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @EnumSource(QuizMode.class)
     void createResultForExternalSubmission_quizExercise(QuizMode quizMode) throws Exception {
         var now = ZonedDateTime.now();
-        var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), quizMode, course);
+        var quizExercise = QuizExerciseFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), quizMode, course);
         course.addExercises(quizExercise);
         quizExerciseRepository.save(quizExercise);
         Result result = new Result().rated(false);
@@ -607,11 +642,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_resultExists() throws Exception {
         var now = ZonedDateTime.now();
-        var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        var modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
-        var participation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        var result = database.addResultToParticipation(null, null, participation);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        var result = participationUtilService.addResultToParticipation(null, null, participation);
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -620,7 +655,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void testGetAssessmentCountByCorrectionRound() {
         // exercise
         var now = ZonedDateTime.now();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(2), course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(2), course);
         textExercise = textExerciseRepository.save(textExercise);
 
         // participation
@@ -637,15 +672,17 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         textSubmission = submissionRepository.save(textSubmission);
 
         // result 1
-        var result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "instructor1", new ArrayList<>());
+        var result1 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "instructor1",
+                new ArrayList<>());
         result1.setRated(true);
-        result1 = database.addFeedbackToResults(result1);
+        result1 = participationUtilService.addFeedbackToResults(result1);
         result1.setSubmission(textSubmission);
 
         // result 2
-        var result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "tutor1", new ArrayList<>());
+        var result2 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "tutor1",
+                new ArrayList<>());
         result2.setRated(true);
-        result2 = database.addFeedbackToResults(result2);
+        result2 = participationUtilService.addFeedbackToResults(result2);
         result2.setSubmission(textSubmission);
 
         textSubmission.addResult(result1);
@@ -663,8 +700,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
         // exercise
-        Course course = database.createCourse();
-        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        Course course = courseUtilService.createCourse();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         programmingExercise.setDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -682,17 +719,17 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // result 1
-        Result result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, TEST_PREFIX + "instructor1",
-                new ArrayList<>());
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation,
+                TEST_PREFIX + "instructor1", new ArrayList<>());
         result1.setRated(true);
-        result1 = database.addFeedbackToResults(result1);
+        result1 = participationUtilService.addFeedbackToResults(result1);
         result1.setSubmission(programmingSubmission);
 
         // result 2
-        Result result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, TEST_PREFIX + "tutor1",
-                new ArrayList<>());
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation,
+                TEST_PREFIX + "tutor1", new ArrayList<>());
         result2.setRated(true);
-        result2 = database.addFeedbackToResults(result2);
+        result2 = participationUtilService.addFeedbackToResults(result2);
         result2.setSubmission(programmingSubmission);
 
         programmingSubmission.addResult(result1);

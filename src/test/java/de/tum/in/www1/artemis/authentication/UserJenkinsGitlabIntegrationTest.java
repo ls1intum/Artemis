@@ -18,15 +18,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.UserTestService;
+import de.tum.in.www1.artemis.user.UserFactory;
+import de.tum.in.www1.artemis.user.UserTestService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -56,6 +59,15 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private GitLabUserManagementService gitLabUserManagementService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -336,8 +348,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
-        Course course = database.addEmptyCourse();
-        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        Course course = courseUtilService.addEmptyCourse();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -353,8 +365,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
-        Course course = database.addEmptyCourse();
-        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        Course course = courseUtilService.addEmptyCourse();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -396,7 +408,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldFailIfCannotUpdateDeactivatedUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = UserFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -459,7 +471,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(user.getLogin(), user, Collections.emptySet(), Collections.emptySet(), true);
         userTestService.initializeUserNonLTI();
     }

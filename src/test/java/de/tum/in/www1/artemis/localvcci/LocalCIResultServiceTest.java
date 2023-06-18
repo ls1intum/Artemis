@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIResultService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
 
@@ -20,8 +20,8 @@ class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testThrowsExceptionWhenResultIsNotLocalCIBuildResult() {
-        BambooBuildResultNotificationDTO wrongBuildResult = ModelFactory.generateBambooBuildResult("some-repository", "SOME-PLAN", "", ZonedDateTime.now().minusSeconds(10),
-                List.of(), List.of(), List.of());
+        BambooBuildResultNotificationDTO wrongBuildResult = ProgrammingExerciseFactory.generateBambooBuildResult("some-repository", "SOME-PLAN", "",
+                ZonedDateTime.now().minusSeconds(10), List.of(), List.of(), List.of());
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIResultService.convertBuildResult(wrongBuildResult))
                 .withMessage("The request body is not of type LocalCIBuildResult");
     }

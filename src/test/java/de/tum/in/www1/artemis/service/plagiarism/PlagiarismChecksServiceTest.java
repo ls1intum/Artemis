@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.plagiarism;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -96,7 +96,7 @@ class PlagiarismChecksServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
-        assertThrowsExactly(ProgrammingLanguageNotSupportedFroPlagiarismChecksException.class, () -> service.checkProgrammingExercise(programmingExercise));
+        assertThatThrownBy(() -> service.checkProgrammingExercise(programmingExercise)).isInstanceOf(ProgrammingLanguageNotSupportedFroPlagiarismChecksException.class);
     }
 
     @Test
@@ -126,6 +126,7 @@ class PlagiarismChecksServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
-        assertThrowsExactly(ProgrammingLanguageNotSupportedFroPlagiarismChecksException.class, () -> service.checkProgrammingExerciseWithJplagReport(programmingExercise));
+        assertThatThrownBy(() -> service.checkProgrammingExerciseWithJplagReport(programmingExercise))
+                .isInstanceOf(ProgrammingLanguageNotSupportedFroPlagiarismChecksException.class);
     }
 }

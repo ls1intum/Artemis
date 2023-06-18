@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -21,11 +22,13 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,6 +43,15 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private ExamRepository examRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course1;
 
     private Exam exam1;
@@ -52,12 +64,12 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        course1 = database.addEmptyCourse();
-        exam1 = database.addExamWithExerciseGroup(course1, true);
-        exam2 = database.addExamWithExerciseGroup(course1, true);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        course1 = courseUtilService.addEmptyCourse();
+        exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
+        exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
-        var textEx = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        var textEx = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         textExercise1 = textExerciseRepository.save(textEx);
     }
 
@@ -74,7 +86,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void testAllPreAuthorize() throws Exception {
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.FORBIDDEN);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
@@ -87,13 +99,13 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCreateExerciseGroup_asEditor() throws Exception {
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
-        exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
+        exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
-        exerciseGroup = ModelFactory.generateExerciseGroup(true, exam2);
+        exerciseGroup = ExamFactory.generateExerciseGroup(true, exam2);
         exerciseGroup.setTitle("      ExerciseGroup 123       ");
         URI exerciseGroupUri = request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam2.getId());
@@ -105,7 +117,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateExerciseGroup_asEditor() throws Exception {
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup1, HttpStatus.OK);
@@ -149,7 +161,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
-        Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
         final List<ExerciseGroup> listExpected = targetExam.getExerciseGroups();
 
@@ -176,9 +188,9 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
-        Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
-        Exam secondExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
         final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
@@ -202,10 +214,10 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
-        Course course2 = database.addEmptyCourse();
-        Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
+        Course course2 = courseUtilService.addEmptyCourse();
+        Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
 
-        Exam secondExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
         final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
@@ -235,10 +247,10 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_preCheckFailed() throws Exception {
-        Exam exam = ModelFactory.generateExam(course1);
-        ExerciseGroup programmingGroup = ModelFactory.generateExerciseGroup(false, exam);
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);
         exam = examRepository.save(exam);
-        ProgrammingExercise programming = ModelFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
+        ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
         exerciseRepository.save(programming);
 
