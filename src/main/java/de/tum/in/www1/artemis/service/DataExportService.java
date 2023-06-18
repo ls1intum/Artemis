@@ -52,7 +52,6 @@ public class DataExportService {
      * @return the created DataExport object
      */
     public DataExport requestDataExport() throws IOException {
-
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
         User user = userRepository.getUser();

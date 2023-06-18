@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.legal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.nio.file.Path;
 import java.time.*;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -16,18 +17,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.service.DataExportCreationService;
-import de.tum.in.www1.artemis.service.DataExportService;
-import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -36,23 +34,14 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private static final String TEST_PREFIX = "dataexportscheduleservice";
 
-    @SpyBean
+    @Autowired
     private DataExportRepository dataExportRepository;
 
     @Autowired
     private DataExportScheduleService dataExportScheduleService;
 
-    @SpyBean
-    private DataExportCreationService dataExportCreationService;
-
-    @SpyBean
-    private DataExportService dataExportService;
-
     @Autowired
     private ScheduledTaskHolder scheduledTaskHolder;
-
-    @SpyBean
-    private ProfileService profileService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -66,16 +55,31 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     @ParameterizedTest
     @MethodSource("provideDataExportStatesAndExpectedToBeCreated")
     void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) {
-        doReturn(true).when(dataExportCreationService).createDataExport(any(DataExport.class));
         dataExportRepository.deleteAll();
-        createDataExportWithState(state);
+        var dataExport = createDataExportWithState(state);
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
+        dataExport = dataExportRepository.findByIdElseThrow(dataExport.getId());
+
         if (shouldBeCreated) {
-            verify(dataExportCreationService).createDataExport(any(DataExport.class));
+            assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         }
         else {
-            verify(dataExportCreationService, never()).createDataExport(any(DataExport.class));
+            assertThat(dataExport.getDataExportState()).isEqualTo(state);
         }
+    }
+
+    @Test
+    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() {
+        dataExportRepository.deleteAll();
+        createDataExportWithState(DataExportState.REQUESTED);
+        createDataExportWithState(DataExportState.REQUESTED);
+        createDataExportWithState(DataExportState.REQUESTED);
+        // first data export creation should fail, the subsequent ones should succeed
+        doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        dataExportScheduleService.createDataExportsAndDeleteOldOnes();
+        var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
+        verify(mailService).sendSuccessfulDataExportCreationsEmailForAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
+
     }
 
     private static Stream<Arguments> provideDataExportStatesAndExpectedToBeCreated() {
@@ -85,22 +89,31 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest
     @MethodSource("provideCreationDatesAndExpectedToDelete")
-    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, boolean shouldDelete) {
-        var dataExport = createDataExportWithCreationDate(creationDate);
-        doNothing().when(dataExportService).deleteDataExportAndSetDataExportState(any(DataExport.class));
+    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) {
+        var dataExport = createDataExportWithCreationDateAndState(creationDate, state);
+        doNothing().when(fileService).scheduleForDirectoryDeletion(any(), any());
+        var dataExportId = dataExport.getId();
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExportId);
         if (shouldDelete) {
-            verify(dataExportService).deleteDataExportAndSetDataExportState(dataExport);
+            if (state == DataExportState.EMAIL_SENT) {
+                assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
+            }
+            else {
+                assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED_DELETED);
+            }
         }
         else {
-            verify(dataExportService, never()).deleteDataExportAndSetDataExportState(dataExport);
+            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(state);
         }
 
     }
 
     private static Stream<Arguments> provideCreationDatesAndExpectedToDelete() {
-        return Stream.of(Arguments.of(ZonedDateTime.now().minusDays(10), true), Arguments.of(ZonedDateTime.now().minusDays(7).minusMinutes(1), true),
-                Arguments.of(ZonedDateTime.now().minusDays(5), false), Arguments.of(ZonedDateTime.now().minusDays(1), false));
+        return Stream.of(Arguments.of(ZonedDateTime.now().minusDays(10), DataExportState.EMAIL_SENT, true),
+                Arguments.of(ZonedDateTime.now().minusDays(7).minusMinutes(1), DataExportState.DOWNLOADED, true),
+                Arguments.of(ZonedDateTime.now().minusDays(5), DataExportState.EMAIL_SENT, false),
+                Arguments.of(ZonedDateTime.now().minusDays(1), DataExportState.DOWNLOADED, false));
 
     }
 
@@ -116,16 +129,6 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(scheduledCronTasksToCreateDataExportsAt4AM).isOne();
     }
 
-    @Test
-    void testDoesntExecuteCronJobInDevMode() {
-        when(profileService.isDev()).thenReturn(true);
-        dataExportScheduleService.createDataExportsAndDeleteOldOnes();
-        verify(dataExportCreationService, never()).createDataExport(any(DataExport.class));
-        verify(dataExportService, never()).deleteDataExportAndSetDataExportState(any(DataExport.class));
-        verify(dataExportRepository, never()).findAllToBeCreated();
-        verify(dataExportRepository, never()).findAllToBeDeleted();
-    }
-
     private DataExport createDataExportWithState(DataExportState state) {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(state);
@@ -134,10 +137,10 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         return dataExportRepository.save(dataExport);
     }
 
-    private DataExport createDataExportWithCreationDate(ZonedDateTime creationDate) {
+    private DataExport createDataExportWithCreationDateAndState(ZonedDateTime creationDate, DataExportState state) {
         DataExport dataExport = new DataExport();
         dataExport.setCreationDate(creationDate);
-        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setDataExportState(state);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("path");
         return dataExportRepository.save(dataExport);

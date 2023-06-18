@@ -15,16 +15,16 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.DataExportRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
@@ -39,14 +39,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private DataExportRepository dataExportRepository;
 
-    @SpyBean
-    private DataExportService dataExportService;
-
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private DataExportService dataExportService;
 
     @BeforeEach
     void initTestCase() {
@@ -291,13 +291,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var dataExport = request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
         assertThat(dataExport.getCreatedDate()).isNotNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRequestDataExport_error_internalServerError() throws Exception {
-        doThrow(new RuntimeException("error")).when(dataExportService).requestDataExport();
-        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ParameterizedTest

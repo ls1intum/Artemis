@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,15 +13,20 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.jgit.lib.Repository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -90,11 +94,15 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private DataExportCreationService dataExportCreationService;
 
-    @SpyBean
-    private ApollonConversionService apollonConversionService;
+    @Autowired
+    private ApollonRequestMockProvider apollonRequestMockProvider;
 
-    @SpyBean
-    private CourseRepository courseRepository;
+    @Autowired
+    @Qualifier("apollonRestTemplate")
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private ApollonConversionService apollonConversionService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -113,12 +121,31 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() throws IOException {
-        userUtilService.addUsers(TEST_PREFIX, 5, 5, 0, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 0, 1);
-        // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
-        var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
-        doReturn(new ByteArrayInputStream(byteArray)).when(apollonConversionService).convertModel(anyString());
+        userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
 
+        apollonConversionService.setRestTemplate(restTemplate);
+
+        apollonRequestMockProvider.enableMockingOfRequests();
+
+        // mock apollon conversion 6 times, because the last test includes 6 modeling exercises
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+        mockApollonConversion();
+    }
+
+    void mockApollonConversion() throws IOException {
+        Resource mockResource = Mockito.mock(Resource.class);
+        Mockito.when(mockResource.getInputStream()).thenReturn(new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream());
+        apollonRequestMockProvider.mockConvertModel(true, mockResource);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        apollonRequestMockProvider.reset();
     }
 
     @Test
@@ -349,11 +376,12 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportCreationError_handlesErrorAndInformsUser() {
+    void testDataExportCreationError_handlesErrorAndInformsUserAndAdmin() {
         var dataExport = initDataExport();
         Exception exception = new RuntimeException("error");
-        doThrow(exception).when(courseRepository).getAllCoursesWithExamsUserIsMemberOf(anyBoolean(), anySet());
+        doThrow(exception).when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
         doNothing().when(mailService).sendDataExportFailedEmailToAdmin(any(), any(), any());
+        doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);

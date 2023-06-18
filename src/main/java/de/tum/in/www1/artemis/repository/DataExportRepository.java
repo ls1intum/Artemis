@@ -61,4 +61,11 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             WHERE dataExport.user.id = :userId
             """)
     Set<DataExport> findAllDataExportsByUserId(long userId);
+
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.dataExportState = 2
+            """)
+    Set<DataExport> findAllSuccessfullyCreatedDataExports();
 }
