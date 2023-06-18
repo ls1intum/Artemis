@@ -3,6 +3,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -15,6 +16,8 @@ export class ProgrammingExerciseProblemComponent {
     readonly AssessmentType = AssessmentType;
 
     programmingExercise: ProgrammingExercise;
+
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     @Input() isImportFromExistingExercise: boolean;
     @Input() isImportFromFile: boolean;

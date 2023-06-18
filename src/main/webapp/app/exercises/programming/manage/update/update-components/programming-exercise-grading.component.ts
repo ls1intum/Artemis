@@ -4,7 +4,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -21,8 +21,7 @@ export class ProgrammingExerciseGradingComponent {
     @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
     @Input() showSummary = false;
-
-    @Input() gradingInputs: GradingStepInputs;
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     constructor(private translateService: TranslateService) {}
 

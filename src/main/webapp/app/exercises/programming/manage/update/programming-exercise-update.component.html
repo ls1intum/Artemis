@@ -9,12 +9,7 @@
         [isImportFromExistingExercise]="isImportFromExistingExercise"
         [isExamMode]="isExamMode"
         [(exercise)]="programmingExercise"
-        [infoStepInputs]="getInfoStepInputs()"
-        [languageStepInputs]="getLanguageStepInputs()"
-        [gradingStepInputs]="getGradingStepInputs()"
-        [problemStepInputs]="getProblemStepInputs()"
-        [infrastructureStepInputs]="getInfrastructureStepInputs()"
-        [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
+        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
@@ -54,19 +49,18 @@
                 [isEdit]="isEdit"
                 [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
-                [infoInputs]="getInfoStepInputs()"
-                [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
                 [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-difficulty>
             <jhi-programming-exercise-language
                 [isImportFromExistingExercise]="isImportFromExistingExercise"
                 [isImportFromFile]="isImportFromFile"
                 [programmingExercise]="programmingExercise"
-                [languageStepInputs]="getLanguageStepInputs()"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             >
             </jhi-programming-exercise-language>
             <jhi-programming-exercise-grading
@@ -74,7 +68,7 @@
                 [isImportFromExistingExercise]="isImportFromExistingExercise"
                 [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
-                [gradingInputs]="getGradingStepInputs()"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-grading>
             <jhi-programming-exercise-problem
                 [isImportFromExistingExercise]="isImportFromExistingExercise"
@@ -95,7 +89,10 @@
                 [updateTemplate]="updateTemplate"
                 [selectedProjectType]="selectedProjectType"
             ></jhi-programming-exercise-problem>
-            <jhi-programming-exercise-infrastructure [infrastructureStepInputs]="getInfrastructureStepInputs()"> </jhi-programming-exercise-infrastructure>
+            <jhi-programming-exercise-infrastructure
+                [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+            ></jhi-programming-exercise-infrastructure>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">

@@ -7,7 +7,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { Observable } from 'rxjs';
 import { ValidationReason } from 'app/entities/exercise.model';
 
-export type InfoStepInputs = {
+export type ProgrammingExerciseCreationConfig = {
     titleNamePattern: string;
     shortNamePattern: RegExp;
     updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
@@ -16,8 +16,6 @@ export type InfoStepInputs = {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     updateCategories: (categories: ExerciseCategory[]) => void;
-
-    // Auxiliary Repository settings
     auxiliaryRepositoriesSupported: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryDuplicateNames: boolean;
@@ -25,9 +23,6 @@ export type InfoStepInputs = {
     invalidDirectoryNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
-};
-
-export type LanguageStepInputs = {
     appNamePatternForSwift: string;
     modePickerOptions: ModePickerOption<ProjectType>[];
     withDependencies: boolean;
@@ -45,38 +40,17 @@ export type LanguageStepInputs = {
     maxPenaltyPattern: string;
     sequentialTestRunsAllowed: boolean;
     testwiseCoverageAnalysisSupported: boolean;
-};
-
-// Currently there are no inputs, however this can be used like the other inputs as well
-export type GradingStepInputs = object;
-
-export type ProblemStepInputs = {
     problemStatementLoaded: boolean;
     templateParticipationResultLoaded: boolean;
     hasUnsavedChanges: boolean;
     rerenderSubject: Observable<void>;
-    checkoutSolutionRepositoryAllowed: boolean;
     validIdeSelection: () => boolean | undefined;
     inProductionEnvironment: boolean;
     recreateBuildPlans: boolean;
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     updateTemplate: boolean;
-    selectedProjectType: ProjectType;
-};
-
-export type InfrastructureStepInputs = {
-    // checkbox things
-    checkoutSolutionRepositoryAllowed: boolean;
-    isImportFromExistingExercise: boolean;
     publishBuildPlanUrlAllowed: boolean;
     recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
-    recreateBuildPlans: boolean;
-    refreshAuxiliaryRepositoryChecks: () => void;
-    selectedProjectType: ProjectType;
-    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateTemplate: boolean;
-    validIdeSelection: () => boolean | undefined;
 };
 
 @Component({
@@ -107,12 +81,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() isExamMode: boolean;
     @Input() isImportFromExistingExercise: boolean;
 
-    @Input() infoStepInputs: InfoStepInputs;
-    @Input() languageStepInputs: LanguageStepInputs;
-    @Input() gradingStepInputs: GradingStepInputs;
-    @Input() problemStepInputs: ProblemStepInputs;
-    @Input() infrastructureStepInputs: InfrastructureStepInputs;
-    @Input() auxiliaryRepositoriesSupported: boolean;
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     constructor(protected activatedRoute: ActivatedRoute) {}
 

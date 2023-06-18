@@ -7,25 +7,28 @@
         #select
         required
         class="form-select"
-        [ngModel]="languageStepInputs.selectedProgrammingLanguage"
-        (ngModelChange)="select.value = languageStepInputs.onProgrammingLanguageChange($event)"
+        [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
+        (ngModelChange)="select.value = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
         name="programmingLanguage"
         id="field_programmingLanguage"
         [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
     >
-        <option *ngFor="let supportedLanguage of languageStepInputs.supportedLanguages" [value]="supportedLanguage">
+        <option *ngFor="let supportedLanguage of programmingExerciseCreationConfig.supportedLanguages" [value]="supportedLanguage">
             {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
         </option>
     </select>
 </div>
 
-<div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.projectTypes && languageStepInputs.projectTypes.length > 0">
+<div
+    class="form-group mt-2"
+    *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0"
+>
     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
     <jhi-mode-picker
         required
-        [options]="languageStepInputs.modePickerOptions"
-        [value]="languageStepInputs.selectedProjectType"
-        (valueChange)="languageStepInputs.onProjectTypeChange($event!)"
+        [options]="programmingExerciseCreationConfig.modePickerOptions"
+        [value]="programmingExerciseCreationConfig.selectedProjectType"
+        (valueChange)="programmingExerciseCreationConfig.onProjectTypeChange($event!)"
         [disabled]="isImportFromExistingExercise || isImportFromFile || !!programmingExercise.id"
         name="projectType"
         id="field_projectType"
@@ -39,8 +42,8 @@
             type="checkbox"
             name="withDependencies"
             id="field_with_dependencies"
-            [(ngModel)]="languageStepInputs.withDependencies"
-            (ngModelChange)="languageStepInputs.onWithDependenciesChanged($event)"
+            [(ngModel)]="programmingExerciseCreationConfig.withDependencies"
+            (ngModelChange)="programmingExerciseCreationConfig.onWithDependenciesChanged($event)"
             checked
         />
         <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
@@ -48,12 +51,15 @@
     </div>
 </div>
 
-<div class="form-group" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE">
+<div
+    class="form-group"
+    *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE"
+>
     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
     <input
         required
         type="text"
-        [pattern]="languageStepInputs.packageNamePattern"
+        [pattern]="programmingExerciseCreationConfig.packageNamePattern"
         class="form-control"
         name="packageName"
         id="field_packageName"
@@ -74,7 +80,7 @@
     <input
         required
         type="text"
-        [pattern]="languageStepInputs.appNamePatternForSwift"
+        [pattern]="programmingExerciseCreationConfig.appNamePatternForSwift"
         class="form-control"
         name="packageName"
         id="field_appName"
@@ -91,7 +97,7 @@
 </div>
 
 <!-- Static code analysis checkbox -->
-<div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.staticCodeAnalysisAllowed">
+<div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed">
     <div class="form-check mb-0 custom-control custom-checkbox">
         <input
             type="checkbox"
@@ -100,7 +106,7 @@
             name="staticCodeAnalysisEnabled"
             [disabled]="!!programmingExercise.sequentialTestRuns || (!isImportFromExistingExercise && !!programmingExercise.id)"
             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
-            (change)="languageStepInputs.onStaticCodeAnalysisChanged()"
+            (change)="programmingExerciseCreationConfig.onStaticCodeAnalysisChanged()"
         />
         <label class="form-check-label custom-control-label" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
             Enable Static Code Analysis</label
@@ -126,7 +132,7 @@
             </div>
             <input
                 type="number"
-                [pattern]="languageStepInputs.maxPenaltyPattern"
+                [pattern]="programmingExerciseCreationConfig.maxPenaltyPattern"
                 class="form-control"
                 name="maxPenalty"
                 id="field_maxPenalty"
@@ -144,7 +150,7 @@
 
 <!-- Sequential Test Runs checkbox
 It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-<div class="form-group mb-0" *ngIf="languageStepInputs.sequentialTestRunsAllowed">
+<div class="form-group mb-0" *ngIf="programmingExerciseCreationConfig.sequentialTestRunsAllowed">
     <div class="form-check">
         <label class="form-check-label" for="field_sequentialTestRuns">
             <input
@@ -163,7 +169,7 @@ It would be very complicated to change the sequential test run feature after an 
 </div>
 
 <!-- Testwise Coverage checkbox-->
-<div class="form-group" *ngIf="languageStepInputs.testwiseCoverageAnalysisSupported">
+<div class="form-group" *ngIf="programmingExerciseCreationConfig.testwiseCoverageAnalysisSupported">
     <div class="form-check">
         <label class="form-check-label" for="field_testwiseCoverageEnabled">
             <input

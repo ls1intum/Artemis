@@ -29,13 +29,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import {
-    GradingStepInputs,
-    InfoStepInputs,
-    InfrastructureStepInputs,
-    LanguageStepInputs,
-    ProblemStepInputs,
-} from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -758,9 +752,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     /**
      * checking if at least one of Online Editor or Offline Ide is selected
      */
-    validIdeSelection() {
-        return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
-    }
+    validIdeSelection = () => {
+        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+    };
 
     isEventInsideTextArea(event: Event): boolean {
         if (event.target instanceof Element) {
@@ -995,7 +989,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
-    getInfoStepInputs(): InfoStepInputs {
+    getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
             auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
@@ -1003,7 +997,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            isImportFromExistingExercise: false,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
             updateRepositoryName: this.updateRepositoryName,
@@ -1012,11 +1005,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
             updateCategories: this.categoriesChanged,
-        };
-    }
-
-    getLanguageStepInputs(): LanguageStepInputs {
-        return {
             appNamePatternForSwift: this.appNamePatternForSwift,
             modePickerOptions: this.modePickerOptions,
             withDependencies: this.withDependencies,
@@ -1029,49 +1017,23 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             projectTypes: this.projectTypes,
             selectedProjectType: this.selectedProjectType,
             onProjectTypeChange: this.projectTypeChanged,
-
-            // Inputs for the three checkboxes in the bottom
             sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
             testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,
-        };
-    }
-
-    getGradingStepInputs(): GradingStepInputs {
-        return {};
-    }
-
-    getProblemStepInputs(): ProblemStepInputs {
-        return {
             problemStatementLoaded: this.problemStatementLoaded,
             templateParticipationResultLoaded: this.templateParticipationResultLoaded,
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
             recreateBuildPlans: this.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
-            selectedProjectType: this.selectedProjectType,
-        };
-    }
-
-    getInfrastructureStepInputs(): InfrastructureStepInputs {
-        return {
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
             isImportFromExistingExercise: this.isImportFromExistingExercise,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            recreateBuildPlans: this.recreateBuildPlans,
-            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            selectedProjectType: this.selectedProjectType,
-            updateCheckoutDirectory: this.updateCheckoutDirectory,
-            updateRepositoryName: this.updateRepositoryName,
-            updateTemplate: this.updateTemplate,
-            validIdeSelection: this.validIdeSelection,
         };
     }
 }
