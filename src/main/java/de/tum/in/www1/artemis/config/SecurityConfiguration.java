@@ -174,8 +174,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/api/lti/launch/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/.well-known/jwks.json").permitAll()
-            // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
-            .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
+            .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
             .antMatchers("/api/**").authenticated()
         .and()
             .apply(securityConfigurerAdapter());
