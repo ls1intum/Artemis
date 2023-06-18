@@ -132,13 +132,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
     }
 
-    scrollToUnread() {
-        setTimeout(() => {
-            const unreadMessageElement: HTMLElement = this.unreadMessage.nativeElement;
-            unreadMessageElement.scrollIntoView({ behavior: 'auto' });
-        });
-    }
-
     closeChat() {
         this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.dialog.closeAll();

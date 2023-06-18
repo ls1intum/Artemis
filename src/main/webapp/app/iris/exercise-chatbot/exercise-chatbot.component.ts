@@ -4,7 +4,6 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
 import { shakeAnimation } from 'angular-animations';
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -33,9 +32,6 @@ export class ExerciseChatbotComponent implements OnDestroy {
     faCircle = faCircle;
     faCommentDots = faCommentDots;
     faChevronDown = faChevronDown;
-
-    hasNewMessages = false;
-    chatOpen = false;
 
     constructor(
         public dialog: MatDialog,
