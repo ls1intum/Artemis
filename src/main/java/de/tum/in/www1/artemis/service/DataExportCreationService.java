@@ -591,7 +591,6 @@ public class DataExportCreationService {
         }
         var fileName = "submission_" + modelingSubmission.getId();
         if (apollonConversionService.isEmpty()) {
-            log.warn("Cannot include modeling submission content in data export because apollon profile is not active");
             log.warn("Cannot include modeling submission content in data export as pdf because apollon profile is not active. Going to include the json file");
             addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
             return;

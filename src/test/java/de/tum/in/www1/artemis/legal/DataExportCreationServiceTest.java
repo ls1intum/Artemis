@@ -13,9 +13,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.jgit.lib.Repository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,9 +35,11 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
@@ -118,6 +118,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @BeforeEach
     void initTestCase() throws IOException {
@@ -393,8 +396,36 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportSuccess_informsUser() {
         var dataExport = initDataExport();
+        doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
         dataExportCreationService.createDataExport(dataExport);
         verify(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @Disabled("doesn't work at the moment")
+    void testDataExportApollonConversionServiceBeanNotPresent_includesModelAsJson() throws IOException {
+        var user = TEST_PREFIX + "student1";
+        var dataExport = initDataExport();
+        var course = courseUtilService.createCourseWithCustomStudentGroupName(TEST_PREFIX + "student", "noApollon");
+        modelingExerciseUtilService.addModelingExerciseToCourse(course);
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        var exercise = course.getExercises().iterator().next();
+        var submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        participationUtilService.addSubmission(exercise, submission, user);
+        apollonConversionService = null;
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "noApollon");
+        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("Modeling"));
+        var modelingExerciseDirectoryPath = getExerciseDirectoryPaths(courseDirPath);
+        assertThat(modelingExerciseDirectoryPath).hasSize(1);
+        assertThat(modelingExerciseDirectoryPath.get(0))
+                .isDirectoryContaining(path -> path.getFileName().toString().contains("modeling_submission") && path.getFileName().toString().endsWith(".json"));
+        assertThat(modelingExerciseDirectoryPath.get(0)).isDirectoryContaining(path -> path.getFileName().toString().equals("view_model.md"));
+
     }
 
     private DataExport initDataExport() {
