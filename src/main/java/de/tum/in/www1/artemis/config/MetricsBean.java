@@ -330,7 +330,7 @@ public class MetricsBean {
     }
 
     @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
-    private void calculatePublicArtemisMetrics() {
+    public void updatePublicArtemisMetrics() {
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
@@ -338,7 +338,7 @@ public class MetricsBean {
 
         var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
         activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
-                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
+                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.getActiveUsers(now.minusDays(periodInDays), now).size()))
                 .collect(Collectors.toList()));
 
         var courses = courseRepository.findAll();

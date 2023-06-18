@@ -54,6 +54,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     MeterRegistry meterRegistry;
 
     @Autowired
+    MetricsBean metricsBean;
+
+    @Autowired
     CourseService courseService;
 
     @Autowired
@@ -86,6 +89,21 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             exercise.setDueDate(ZonedDateTime.now().minusHours(1));
             exerciseRepository.save(exercise);
         });
+    }
+
+    @Test
+    void testPublicMetrics() {
+        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        var course1 = courseUtilService.createCourse();
+        course1.setStudentGroupName(TEST_PREFIX + "students");
+
+        // This is still zero because the update function has not been called yet
+        assertMetricEquals(0, "artemis.statistics.public.courses");
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        // After the update: the course is returned
+        assertMetricEquals(1, "artemis.statistics.public.courses");
     }
 
     @Test
