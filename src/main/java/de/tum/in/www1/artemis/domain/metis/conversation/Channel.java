@@ -119,6 +119,6 @@ public class Channel extends Conversation {
 
     @Override
     public String getHumanReadableNameForReceiver(User sender) {
-        return name;
+        return getName();
     }
 }
