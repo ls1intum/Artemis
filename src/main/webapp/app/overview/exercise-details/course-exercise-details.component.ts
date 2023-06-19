@@ -99,6 +99,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
+    irisActivated?: boolean;
+
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
 
@@ -106,6 +108,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
+
+    public irisProfileEnabled: boolean;
 
     // Icons
     faBook = faBook;
@@ -154,9 +158,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         // Checks if the current environment is production
+        // Checks if iris profile is enabled
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
+                this.irisProfileEnabled = profileInfo.irisEnabled;
             }
         });
     }
@@ -214,6 +220,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.submissionPolicy = submissionPolicy;
                 this.hasSubmissionPolicy = true;
             });
+            this.irisActivated = this.irisProfileEnabled && programmingExercise.irisActivated;
         }
 
         this.showIfExampleSolutionPresent(newExercise);
