@@ -21,12 +21,16 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -62,6 +66,18 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise exercise;
 
     private List<ProgrammingExerciseTask> sortedTasks;
@@ -78,20 +94,20 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() {
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        final ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
         student = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         var activatedTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList();
         programmingExerciseTestCaseRepository.saveAll(activatedTestCases);
         exercise = exerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
-        database.addHintsToExercise(exercise);
-        database.addTasksToProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exercise);
+        programmingExerciseUtilService.addHintsToExercise(exercise);
+        programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
 
         sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
@@ -102,7 +118,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         hints.get(2).setProgrammingExerciseTask(sortedTasks.get(2));
         exerciseHintRepository.saveAll(hints);
 
-        studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
+        studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
     }
 
     @Test
@@ -316,7 +332,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private void addResultWithSuccessfulTestCases(Collection<ProgrammingExerciseTestCase> successfulTestCases) {
-        var submission = database.createProgrammingSubmission(studentParticipation, false);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false);
         Result result = new Result().participation(submission.getParticipation()).assessmentType(AssessmentType.AUTOMATIC).score(0D).rated(true)
                 .completionDate(ZonedDateTime.now().plusSeconds(timeOffset++));
         result = resultRepository.save(result);
@@ -330,7 +346,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             feedback.setText(testCase.getTestName());
             feedback.setVisibility(Visibility.ALWAYS);
             feedback.setType(FeedbackType.AUTOMATIC);
-            database.addFeedbackToResult(feedback, result);
+            participationUtilService.addFeedbackToResult(feedback, result);
         }
     }
 }

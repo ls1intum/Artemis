@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -28,13 +28,13 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
     private PushNotificationDeviceConfigurationCleanupService cleanupService;
 
     @Autowired
-    private DatabaseUtilService database;
+    private UserUtilService userUtilService;
 
     private User user;
 
     @BeforeEach
     void setupUser() {
-        user = database.createAndSaveUser("test-user");
+        user = userUtilService.createAndSaveUser("test-user");
         deviceConfigurationRepository.deleteAll();
     }
 

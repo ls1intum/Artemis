@@ -18,14 +18,14 @@
             #instance="ngbTypeahead"
         />
         <ng-container *ngIf="isSearching">
-            <small class="form-text text-muted">{{ 'artemisApp.userSelector.searchingText' | artemisTranslate }}</small>
+            <small class="form-text text-body-secondary">{{ 'artemisApp.userSelector.searchingText' | artemisTranslate }}</small>
             <br />
         </ng-container>
         <ng-container *ngIf="searchFailed">
             <small>{{ 'artemisApp.userSelector.searchFailedText' | artemisTranslate }}</small>
             <br />
         </ng-container>
-        <small *ngIf="searchStudents" class="form-text text-muted">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+        <small *ngIf="searchStudents" class="form-text text-body-secondary">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
     </div>
     <div class="text-end">
         <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('students')">

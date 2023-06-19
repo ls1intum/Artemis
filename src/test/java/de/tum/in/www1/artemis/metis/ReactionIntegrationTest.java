@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -28,9 +29,11 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -44,6 +47,15 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -66,11 +78,11 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        userUtilService.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
+        existingPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
         // filters existing posts with conversation
@@ -263,8 +275,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.DESCENDING;
 
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -300,8 +312,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.ASCENDING;
 
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         Post postReactedOn = existingPostsWithAnswers.get(0);
         createVoteReactionOnPost(postReactedOn, student1);
@@ -398,7 +410,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
+        Course dummyCourse = courseUtilService.createCourse();
         Post postToReactOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
 
@@ -477,6 +489,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(createdReaction.getPost()).isEqualTo(expectedReaction.getPost());
         assertThat(createdReaction.getAnswerPost()).isEqualTo(expectedReaction.getAnswerPost());
 
-        database.assertSensitiveInformationHidden(createdReaction);
+        conversationUtilService.assertSensitiveInformationHidden(createdReaction);
     }
 }

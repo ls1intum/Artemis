@@ -14,16 +14,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -41,6 +44,15 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
     private Course course;
 
     private Exercise exercise;
@@ -54,11 +66,11 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      */
     @BeforeEach
     void initTestCase() {
-        course = database.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
+        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
         textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).get(0);
-        var instructor = database.createAndSaveUser(TEST_PREFIX + "instructor");
+        var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
         userRepository.save(instructor);
     }
@@ -134,7 +146,8 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<TextAssessmentEvent> events = new ArrayList<>();
         Instant instant = Instant.now();
         for (int i = 0; i < timestamps; i++) {
-            TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+            TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(),
+                    textSubmission.getId());
             event.setTimestamp(instant);
             instant = instant.plusSeconds(distance * 60L);
             events.add(event);
