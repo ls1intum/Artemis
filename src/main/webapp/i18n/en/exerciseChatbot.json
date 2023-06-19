@@ -15,7 +15,7 @@
             "f6": "The chat widget can be closed by clicking on the 'X' button located in the top right corner or by utilizing the chatbot button positioned below the widget.",
             "f7": "The widget is designed with draggable functionality, allowing users to move it freely to different positions on the page.",
             "f8": "The widget supports resizing, enabling users to adjust its dimensions by expanding or shrinking its borders.",
-            "f9": "The widget offers a full-screen feature, accessible by clicking on the button adjacent to the 'X' button. This expands the widget to occupy the entire page, resembling a full-page display. To revert back to its previous size, you can click the button again, returning the widget to its original dimensions."
+            "f9": "The widget offers a full-screen feature, accessible by clicking on the button adjacent to the 'X' button. This expands the widget to occupy the entire page, resembling a full-page display. To revert back to its previous size, you can click the button again, returning the widget to its original dimensions.",
             "unreadMessages": "Unread messages",
             "buttonTooltip": "Start chatting with Iris!"
         }
