@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 
-class IrisWebsocketTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class IrisWebsocketTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriswebsocketintegration";
 
@@ -39,16 +38,16 @@ class IrisWebsocketTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
