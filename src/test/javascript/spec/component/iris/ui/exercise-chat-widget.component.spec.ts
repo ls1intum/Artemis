@@ -361,7 +361,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         // then
         const buttonElement: HTMLElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
-        expect(buttonElement.disabled).toBeTruthy();
+        expect(buttonElement.getAttribute('disabled')).not.toBeNull();
     });
 
     it('should see the resend button if there is a sending error; a retry succeeds', fakeAsync(() => {
