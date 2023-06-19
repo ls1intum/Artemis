@@ -429,9 +429,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             fail("Timed out waiting for the quiz exercise cache.");
         }
 
-        // not only wait until the message got received, but also until the processing is done.
-        Thread.sleep(50);
-
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
             joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student7");
