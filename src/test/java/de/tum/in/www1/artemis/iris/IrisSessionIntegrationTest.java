@@ -25,10 +25,10 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 4, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 0);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
         activateIrisFor(exercise);
     }
@@ -38,8 +38,8 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     void createSession() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisChatSession.class, HttpStatus.CREATED);
         var actualIrisSession = irisChatSessionRepository.findByIdElseThrow(irisSession.getId());
-        assertThat(actualIrisSession.getUser()).isEqualTo(database.getUserByLogin(TEST_PREFIX + "student1"));
-        assertThat(actualIrisSession.getExercise()).isEqualTo(exercise);
+        assertThat(actualIrisSession.getUser()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        assertThat(exercise).isEqualTo(actualIrisSession.getExercise());
     }
 
     @Test

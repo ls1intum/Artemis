@@ -6,7 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject, of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
@@ -16,6 +16,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
+import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
 
 describe('ExerciseChatbotComponent', () => {
     let component: ExerciseChatbotComponent;
@@ -38,7 +40,9 @@ describe('ExerciseChatbotComponent', () => {
 
         mockDialog = {
             open: jest.fn().mockReturnValue({
-                afterClosed: jest.fn().mockReturnValue(of('true')),
+                afterClosed: jest.fn().mockReturnValue({
+                    subscribe: jest.fn(),
+                }),
                 close: mockDialogClose,
             }),
             closeAll: jest.fn(),
@@ -121,12 +125,66 @@ describe('ExerciseChatbotComponent', () => {
 
     it('should close the dialog when destroying the object', () => {
         // given
-        component.openDialog();
+        component.openChat();
 
         // when
         component.ngOnDestroy();
 
         // then
         expect(mockDialogClose).toHaveBeenCalled();
+    });
+
+    it('should show new message indicator when chatbot is closed', () => {
+        // given
+        stateStore.dispatch(new SessionReceivedAction(0, []));
+
+        // when
+        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage));
+
+        // then
+        fixture.detectChanges();
+        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        expect(unreadIndicatorElement).not.toBeNull();
+    });
+
+    it('should not show new message indicator when chatbot is open', () => {
+        // given
+        stateStore.dispatch(new SessionReceivedAction(0, []));
+        component.openChat();
+
+        // when
+        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage));
+
+        // then
+        fixture.detectChanges();
+        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        expect(unreadIndicatorElement).toBeNull();
+    });
+
+    it('should call action to reset number of new messages when close chat', () => {
+        // given
+        jest.spyOn(stateStore, 'dispatch');
+        stateStore.dispatch(new SessionReceivedAction(0, []));
+        component.openChat();
+
+        // when
+        component.handleButtonClick();
+
+        // then
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
+    });
+
+    it('should call action to reset number of new messages when press escape key', () => {
+        // given
+        const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
+        jest.spyOn(stateStore, 'dispatch');
+        stateStore.dispatch(new SessionReceivedAction(0, []));
+        component.openChat();
+
+        // when
+        component.onEscapeKeyDown(eventMock);
+
+        // then
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
     });
 });

@@ -19,11 +19,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon", "iris" })
 public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -43,6 +46,15 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    protected UserUtilService userUtilService;
+
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     void setup() {

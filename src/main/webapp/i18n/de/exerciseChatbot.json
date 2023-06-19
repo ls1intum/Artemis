@@ -6,6 +6,7 @@
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
+            "unreadMessages": "Ungelesene Nachrichten",
             "buttonTooltip": "Beginne mit Iris zu chatten!"
         }
     }

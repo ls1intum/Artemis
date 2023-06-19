@@ -110,3 +110,11 @@
 .blinking-dots {
     animation: blink 1s infinite;
 }
+
+.unread-message {
+    display: flex;
+    justify-content: center;
+    color: var(--gray-600);
+    padding-top: 8px;
+    padding-bottom: 8px;
+}

@@ -19,10 +19,14 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -39,6 +43,18 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected ParticipationUtilService participationUtilService;
 
     @LocalServerPort
     protected int port;
@@ -92,7 +108,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
 
-        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         student1Login = TEST_PREFIX + "student1";
         student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
         student2Login = TEST_PREFIX + "student2";
@@ -101,14 +117,14 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
 
         // Set the Authentication object for student1 in the SecurityContextHolder.
-        // This is necessary because the "database.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
+        // This is necessary because the "participationUtilService.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
         // In tests, this is done using e.g. @WithMockUser(username="student1", roles="USER"), but this does not work on this @BeforeEach method.
         List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
         Authentication authentication = new UsernamePasswordAuthenticationToken(student1Login, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -129,19 +145,19 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         assignmentRepositorySlug = projectKey1.toLowerCase() + "-" + student1Login;
 
         // Add a participation for student1.
-        studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
+        studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
         studentParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Add a participation for tutor1.
-        teachingAssistantParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
+        teachingAssistantParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         teachingAssistantParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + tutor1Login).toLowerCase()));
         teachingAssistantParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(teachingAssistantParticipation);
 
         // Add a participation for instructor1.
-        instructorParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        instructorParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
         instructorParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructor1Login).toLowerCase()));
         instructorParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(instructorParticipation);

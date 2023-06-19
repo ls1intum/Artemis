@@ -105,6 +105,7 @@
                 "health": "Status",
                 "configuration": "Konfiguration",
                 "privacyStatement": "Datenschutzerklärung",
+                "imprint": "Impressum",
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",
@@ -205,6 +206,7 @@
             "connect": "Verknüpfen",
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
+            "editBuildPlan": "Build-Plan bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
@@ -246,7 +248,6 @@
             "updateResult": "Ergebnis bearbeiten",
             "viewResult": "Ergebnis anzeigen",
             "cleanupBuildPlan": "Build-Plan aufräumen",
-            "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
             "exams": "Klausuren",
@@ -257,7 +258,10 @@
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben",
             "endNow": "Jetzt Beenden",
             "ldap": "von LDAP synchronisieren",
-            "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden."
+            "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
+            "discardChanges": "Änderungen verwerfen",
+            "goBack": "Zurück",
+            "requestDataExport": "Datenexport anfordern"
         },
         "detail": {
             "field": "Feld",
