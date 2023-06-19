@@ -124,7 +124,7 @@ Additional notes on the controller methods:
 * POST should return the newly created entity.
 * POST should be used to trigger remote methods (e.g. ".../{participationId}/submit" should be triggered with a POST).
 * Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
-    * Always use ``@PreAuthorize`` to only allow certain roles to access the method.
+    * Always use the Authorization enforcement logic described down below to only allow certain roles to access the method.
     * Perform additional security checks using the ``AuthorizationCheckService``.
 * Check for other common weaknesses, e.g., weak configuration, malicious user input, missing log events, etc.
 * Never trust user input and check if the passed data exists in the database.
@@ -303,7 +303,7 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
 
 .. code-block:: java
 
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         var exercise = programmingExerciseRepository.findById(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -321,13 +321,13 @@ The table contains all annotations for the corresponding minimum role including 
 +------------------+----------------------------------------+-----------------+----------------+
 | ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
 +------------------+----------------------------------------+-----------------+----------------+
-| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") | /api/           | web.rest       |
+| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     | /api/           | web.rest       |
+| EDITOR           | @EnforceAtLeastEditor                  | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| TA               | @PreAuthorize("hasRole('TA')")         | /api/           | web.rest       |
+| TA               | @EnforceAtLeastTutor                   | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
-| USER             | @PreAuthorize("hasRole('USER')")       | /api/           | web.rest       |
+| USER             | @EnforceAtLeastStudent                 | /api/           | web.rest       |
 +------------------+----------------------------------------+-----------------+----------------+
 | ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
 +------------------+----------------------------------------+-----------------+----------------+
@@ -348,7 +348,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 .. code-block:: java
 
     @GetMapping(Endpoints.GET_FOR_COURSE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);

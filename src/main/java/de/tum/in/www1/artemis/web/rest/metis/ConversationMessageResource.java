@@ -14,11 +14,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -53,7 +53,7 @@ public class ConversationMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/messages")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
         // creation of message posts should not trigger entity creation alert
@@ -71,7 +71,7 @@ public class ConversationMessageResource {
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/messages")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilter postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter);
@@ -100,7 +100,7 @@ public class ConversationMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/messages/{messageId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
@@ -115,7 +115,7 @@ public class ConversationMessageResource {
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
