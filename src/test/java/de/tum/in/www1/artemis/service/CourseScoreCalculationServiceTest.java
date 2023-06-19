@@ -13,13 +13,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseScoresDTO;
@@ -44,12 +47,21 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Course course;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+        course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
     }
 
     @Test
@@ -68,7 +80,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         exerciseRepository.save(exercise);
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
         assertThat(bonusSourceResultDTOMap).hasSize(1);
@@ -80,9 +92,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithoutExercises() {
-        Course course = database.addEmptyCourse();
+        Course course = courseUtilService.addEmptyCourse();
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         var courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
         assertThat(courseResult).isNull();
@@ -98,7 +110,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         exerciseRepository.saveAll(course.getExercises());
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
@@ -106,9 +118,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.get(0);
-        database.createSubmissionAndResult(studentParticipation, 50, true);
-        database.createSubmissionAndResult(studentParticipation, 40, true);
-        database.createSubmissionAndResult(studentParticipation, 60, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
@@ -164,7 +176,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         exerciseRepository.save(exercise);
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(course);
@@ -183,8 +195,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getScoresAndParticipationResultsForPastCourse() {
         // Create course with assessment due date passed.
-        Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
@@ -214,13 +226,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getScoresAndParticipationResultsForPastCourseWithGradedPresentations() {
-        Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         pastCourse.setPresentationScore(null);
 
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(pastCourse, 5, 37.5);
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(pastCourse, 5, 37.5);
         gradingScaleRepository.save(gradingScale);
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         pastCourse.getExercises().forEach(exercise -> {
             exercise.getStudentParticipations().forEach(participation -> {
@@ -252,7 +264,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void calculateCourseScoreWithNoParticipations() {
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), Collections.emptyList(),
                 new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00, 0.0), Collections.emptyList());
@@ -277,7 +289,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         // Test null participation case.
         assertThat(courseScoreCalculationService.getResultForParticipation(null, dueDate)).isNull();
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         var studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
@@ -285,9 +297,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.get(0);
-        database.createSubmissionAndResult(studentParticipation, 50, true);
-        database.createSubmissionAndResult(studentParticipation, 40, true);
-        Result latestResult = database.createSubmissionAndResult(studentParticipation, 60, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        Result latestResult = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
 
         // Test getting the latest rated result.
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
