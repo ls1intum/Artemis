@@ -11,12 +11,12 @@ import javax.validation.constraints.NotNull;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -46,7 +46,7 @@ public class DataExportResource {
      * @return the data export object
      */
     @PutMapping("data-exports")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public DataExport requestDataExport() throws IOException {
         if (!canRequestDataExport()) {
             throw new AccessForbiddenException("You can only request a data export every " + dataExportService.DAYS_BETWEEN_DATA_EXPORTS + " days");
@@ -93,7 +93,7 @@ public class DataExportResource {
      * @return A resource containing the data export zip file
      */
     @GetMapping("data-exports/{dataExportId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
         DataExport dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
@@ -142,7 +142,7 @@ public class DataExportResource {
      * @return true if the user can request a data export, false otherwise
      */
     @GetMapping("data-exports/can-request")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public boolean canRequestExport() {
         return canRequestDataExport();
     }
@@ -153,7 +153,7 @@ public class DataExportResource {
      * @return a data export DTO with the id of the export that can be downloaded or a DTO with a id of null if no export can be downloaded
      */
     @GetMapping("data-exports/can-download")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public DataExportDTO canDownloadAnyExport() {
         return dataExportService.canDownloadAnyDataExport();
     }
@@ -165,7 +165,7 @@ public class DataExportResource {
      * @return true if the user can download the data export, false otherwise
      */
     @GetMapping("data-exports/{dataExportId}/can-download")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public boolean canDownloadSpecificExport(@PathVariable long dataExportId) {
         return canDownloadSpecificDataExport(dataExportId);
     }
