@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -58,12 +57,9 @@ public class ExamRegistrationService {
 
     private final ChannelService channelService;
 
-    private final ChannelRepository channelRepository;
-
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -75,7 +71,6 @@ public class ExamRegistrationService {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
     }
 
     /**
