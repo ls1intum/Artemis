@@ -33,10 +33,10 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 4, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 0);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
     }
 
@@ -55,7 +55,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void createMessageUnauthorized() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student3"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
@@ -66,7 +66,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void getMessagesUnauthorized() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student4"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
         var message1 = new IrisMessage();
         message1.setSession(irisSession);
         message1.setSentAt(ZonedDateTime.now());
