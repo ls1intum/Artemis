@@ -101,6 +101,7 @@ public class ExamRegistrationService {
         }
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
             var registrationNumber = examUserDto.registrationNumber();
             var login = examUserDto.login();
@@ -127,6 +128,7 @@ public class ExamRegistrationService {
                     }
                     registeredExamUser = examUserRepository.save(registeredExamUser);
                     exam.addExamUser(registeredExamUser);
+                    usersAddedToExam.add(registeredExamUser.getUser().getLogin());
                 }
 
                 if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
@@ -135,12 +137,12 @@ public class ExamRegistrationService {
                     examUser.setPlannedSeat(examUserDto.seat());
                     examUser = examUserRepository.save(examUser);
                     exam.addExamUser(examUser);
+                    usersAddedToExam.add(examUser.getUser().getLogin());
                 }
-
-                addStudentToExamChannel(exam, student);
             }
         }
         examRepository.save(exam);
+        channelService.registerUsersToExamChannel(usersAddedToExam, exam);
 
         try {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();

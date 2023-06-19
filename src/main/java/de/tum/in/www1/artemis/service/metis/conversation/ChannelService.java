@@ -178,6 +178,16 @@ public class ChannelService {
         registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
     }
 
+    @Async
+    public void registerUsersToExamChannel(List<String> users, Exam exam) {
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
+        if (channel == null) {
+            return;
+        }
+        registerUsersToChannel(false, false, false, users, exam.getCourse(), channel);
+
+    }
+
     /**
      * Register users to the newly created channel
      *
