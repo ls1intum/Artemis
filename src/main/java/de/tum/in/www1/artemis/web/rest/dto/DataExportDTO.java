@@ -4,5 +4,5 @@ import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 
-public record DataExportDTO(Long id, DataExportState dataExportState, ZonedDateTime requestDate, ZonedDateTime nextRequestDate) {
+public record DataExportDTO(Long id, DataExportState dataExportState, ZonedDateTime createdDate, ZonedDateTime nextRequestDate) {
 }

@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import java.io.*;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -65,20 +67,20 @@ public class DataExportResource {
         if (dataExports.isEmpty()) {
             return true;
         }
-        return checkAllDataExportsIfCurrentlyDataExportCanBeRequested(dataExports);
+        var latestDataExport = dataExports.stream().max(Comparator.comparing(DataExport::getCreatedDate)).get();
+        var olderThanDaysBetweenDataExports = Duration.between(latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()), ZonedDateTime.now())
+                .toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS;
+
+        return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState().hasFailed();
+
     }
 
     private boolean checkAllDataExportsIfCurrentlyDataExportCanBeRequested(Set<DataExport> dataExports) {
         for (var dataExport : dataExports) {
             // we need to distinguish between these two cases as the creation date might not have been set yet (if the export hasn't been created yet).
             // allow requesting a new data export if the latest data export is older than the configured DAYS_BETWEEN_DATA_EXPORTS or its creation has failed
-            if (dataExport.getCreationFinishedDate() != null
-                    && (Duration.between(dataExport.getCreationFinishedDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS)
-                    || dataExport.getDataExportState().hasFailed()) {
-                return true;
-            }
-            if (dataExport.getCreationFinishedDate() == null
-                    && (Duration.between(dataExport.getCreatedDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS)
+
+            if (Duration.between(dataExport.getCreatedDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS
                     || dataExport.getDataExportState().hasFailed()) {
                 return true;
             }

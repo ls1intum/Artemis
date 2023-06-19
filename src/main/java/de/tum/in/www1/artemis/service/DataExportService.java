@@ -108,14 +108,7 @@ public class DataExportService {
 
     @NotNull
     private ZonedDateTime retrieveNextRequestDate(DataExport dataExport) {
-        ZonedDateTime nextRequestDate;
-        if (dataExport.getCreationFinishedDate() == null) {
-            nextRequestDate = dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
-        }
-        else {
-            nextRequestDate = dataExport.getCreationFinishedDate().plusDays(DAYS_BETWEEN_DATA_EXPORTS);
-        }
-        return nextRequestDate;
+        return dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
     }
 
     /**

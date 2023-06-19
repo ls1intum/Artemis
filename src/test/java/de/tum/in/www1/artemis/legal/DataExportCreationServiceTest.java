@@ -168,7 +168,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getCreatedDate()).isNotNull();
         assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
@@ -355,7 +354,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getCreatedBy()).isNotNull();
         assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
