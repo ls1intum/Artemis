@@ -3,13 +3,13 @@
         <div class="mb-0">
             <h3>
                 <span jhiTranslate="artemisApp.examManagement.students">Students</span>
-                <span class="text-muted">({{ exam.title }})</span>
+                <span class="text-body-secondary">({{ exam.title }})</span>
             </h3>
         </div>
         <div>
             <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span>:
             <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers.length }}</span>
-            <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
+            <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-body-secondary">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }}
                 )
             </span>
