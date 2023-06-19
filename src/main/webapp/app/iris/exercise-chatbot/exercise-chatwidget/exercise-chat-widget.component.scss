@@ -67,15 +67,19 @@
         conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
         radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
 }
+
 .left {
     --_d: 0%;
+
     border-left: var(--t) solid #0000;
     background-color: var(--iris-client-chat-background);
     margin-right: var(--t);
     place-self: start;
 }
+
 .right {
     --_d: 100%;
+
     border-right: var(--t) solid #0000;
     margin-left: var(--t);
     place-self: end;
@@ -206,4 +210,3 @@ pre {
     cursor: pointer;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
 }
-
