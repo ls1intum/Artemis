@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div *ngFor="let message of messages; let i = index">
-                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</span>
+                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
                     <div [ngClass]="{ 'bubble right': message.sender === SENDER_USER, 'bubble left': message.sender === SENDER_SERVER }">
                         <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
