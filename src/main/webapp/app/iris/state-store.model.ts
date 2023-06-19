@@ -1,11 +1,11 @@
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
-import { IrisErrorType } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 
 export enum ActionType {
     NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',
     ACTIVE_CONVERSATION_MESSAGE_LOADED = 'active-conversation-message-loaded',
-    CONVERSATION_ERROR_OCCURRED = 'conversation-error-occurred',
+    CONVERSATION_ERROR_OCCURRED = 'conversation-error-occurred', // TODO rename to error changed after advanced ui PR is merged
     STUDENT_MESSAGE_SENT = 'student-message-sent',
     SESSION_CHANGED = 'session-changed',
     RATE_MESSAGE_SUCCESS = 'rate-message-success',
@@ -38,7 +38,7 @@ export class ActiveConversationMessageLoadedAction {
 export class ConversationErrorOccurredAction {
     readonly type: ActionType;
 
-    constructor(public readonly errorType: IrisErrorType) {
+    constructor(public readonly errorType: IrisErrorMessageKey | null) {
         this.type = ActionType.CONVERSATION_ERROR_OCCURRED;
     }
 }
@@ -105,12 +105,11 @@ export function isRateMessageSuccessAction(action: MessageStoreAction): action i
 }
 
 export class MessageStoreState {
-    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean, public error: IrisErrorType | null) {}
     public constructor(
         public messages: ReadonlyArray<IrisMessage>,
         public sessionId: number | null,
         public isLoading: boolean,
         public numNewMessages: number,
-        public error: string,
+        public error: IrisErrorType | null,
     ) {}
 }

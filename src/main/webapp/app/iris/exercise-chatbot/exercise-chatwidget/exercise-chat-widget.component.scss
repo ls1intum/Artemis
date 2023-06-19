@@ -134,3 +134,29 @@
 .rate-button-not-clicked {
     color: var(--secondary);
 }
+
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-10px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(10px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.shake-animation {
+    animation: shake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}

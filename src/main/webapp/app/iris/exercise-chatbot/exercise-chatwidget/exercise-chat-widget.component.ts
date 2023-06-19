@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
@@ -7,7 +7,7 @@ import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
-import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -32,6 +32,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     numNewMessages = 0;
     unreadMessageIndex: number;
     dots = 1;
+    resendAnimationActive = false;
+    shakeErrorField = false;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
@@ -44,6 +46,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faXmark = faXmark;
     faThumbsUp = faThumbsUp;
     faThumbsDown = faThumbsDown;
+    faRedo = faRedo;
 
     ngOnInit() {
         this.animateDots();
@@ -69,6 +72,17 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.stateSubscription.unsubscribe();
     }
 
+    private newUserMessage(message: string): IrisClientMessage {
+        const content: IrisMessageContent = {
+            type: IrisMessageContentType.TEXT,
+            textContent: message,
+        };
+        return {
+            sender: this.SENDER_USER,
+            content: [content],
+        };
+    }
+
     animateDots() {
         setInterval(() => {
             this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
@@ -82,7 +96,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => this.scrollToBottom('smooth'))
-                .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(errorMessages[IrisErrorMessageKey.SEND_MESSAGE_FAILED])));
+                .catch(() => {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                });
+            // TODO show that iris has been disabled after the corresponding PR is merged
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
@@ -115,20 +132,35 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             .rateMessage(<number>this.sessionId, message_id, helpful)
             .toPromise()
             .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED)));
+    }
+
+    resendMessage(message: IrisClientMessage) {
+        this.resendAnimationActive = true;
+
+        this.triggerShake();
+
+        this.httpMessageService
+            .createMessage(<number>this.sessionId, message)
+            .toPromise()
+            .then(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(null)))
             .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
-                this.scrollToBottom('smooth');
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                this.triggerShake();
+            })
+            .finally(() => {
+                this.resendAnimationActive = false;
             });
     }
 
-    private newUserMessage(message: string): IrisClientMessage {
-        const content: IrisMessageContent = {
-            type: IrisMessageContentType.TEXT,
-            textContent: message,
-        };
-        return {
-            sender: this.SENDER_USER,
-            content: [content],
-        };
+    isSendMessageFailedError(): boolean {
+        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+    }
+
+    triggerShake() {
+        this.shakeErrorField = true;
+        setTimeout(() => {
+            this.shakeErrorField = false;
+        }, 1000);
     }
 }

@@ -19,8 +19,21 @@
             <div *ngFor="let message of messages; let i = index">
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</span>
                 <div *ngFor="let content of message.content">
-                    <div *ngIf="message.sender === SENDER_USER" class="my-chat">
-                        <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                    <div *ngIf="message.sender === SENDER_USER" style="display: flex; flex-direction: row">
+                        <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
+                            <button
+                                id="resendButton"
+                                style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
+                                (click)="resendMessage(message)"
+                                [disabled]="resendAnimationActive"
+                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && isSendMessageFailedError()"
+                            >
+                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
+                            </button>
+                        </div>
+                        <div style="display: flex">
+                            <span [innerHTML]="content.textContent! | htmlForMarkdown" class="my-chat"></span>
+                        </div>
                     </div>
                     <div *ngIf="message.sender === SENDER_SERVER" style="width: fit-content">
                         <div class="client-chat">
@@ -49,7 +62,7 @@
                     </div>
                 </div>
             </div>
-            <div class="client-chat-error" *ngIf="error">
+            <div class="client-chat-error" *ngIf="error" [ngClass]="{ 'shake-animation': shakeErrorField }">
                 {{ error.key | artemisTranslate }}
             </div>
         </div>
@@ -57,7 +70,7 @@
         <!-- input field section -->
         <div class="chat-input">
             <input [(ngModel)]="newMessageTextContent" type="text" (keyup.enter)="onSend()" placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}" />
-            <button (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading">
+            <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading || !!error">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
         </div>

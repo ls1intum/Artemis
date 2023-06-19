@@ -6,7 +6,7 @@ import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
-import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -70,6 +70,6 @@ export class IrisSessionService {
      * @param error The error message.
      */
     private dispatchError(error: IrisErrorMessageKey): void {
-        this.stateStore.dispatch(new ConversationErrorOccurredAction(errorMessages[error]));
+        this.stateStore.dispatch(new ConversationErrorOccurredAction(error));
     }
 }

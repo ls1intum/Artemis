@@ -33,7 +33,7 @@ export class IrisStateStore implements OnDestroy {
         sessionId: null,
         isLoading: false,
         numNewMessages: 0,
-        error: '',
+        error: null,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -115,6 +115,7 @@ export class IrisStateStore implements OnDestroy {
             return {
                 messages: [...state.messages],
                 sessionId: state.sessionId,
+                numNewMessages: state.numNewMessages,
                 isLoading: false,
                 error: state.error,
             };
@@ -139,7 +140,7 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 messages: [...state.messages, castedAction.message],
                 isLoading: false,
-                error: '',
+                error: null,
             };
         }
         if (isActiveConversationMessageLoadedAction(action)) {
@@ -150,7 +151,6 @@ export class IrisStateStore implements OnDestroy {
                 isLoading: false,
                 error: null,
                 numNewMessages: state.numNewMessages + 1,
-                error: '',
             };
         }
         if (isConversationErrorOccurredAction(action)) {
@@ -158,8 +158,7 @@ export class IrisStateStore implements OnDestroy {
             return {
                 ...state,
                 isLoading: false,
-                error: action.errorType,
-                error: castedAction.errorMessage,
+                error: castedAction.errorType == null ? null : errorMessages[castedAction.errorType],
             };
         }
         if (isSessionReceivedAction(action)) {
@@ -168,10 +167,6 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 messages: castedAction.messages,
                 sessionId: castedAction.sessionId,
-                error: '',
-                messages: action.messages,
-                sessionId: action.sessionId,
-                isLoading: state.isLoading,
                 error: null,
             };
         }

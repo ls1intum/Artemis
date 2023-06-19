@@ -214,7 +214,7 @@ describe('IrisStateStore', () => {
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        stateStore.dispatch(new ConversationErrorOccurredAction(errorMessages[IrisErrorMessageKey.HISTORY_LOAD_FAILED]));
+        stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.HISTORY_LOAD_FAILED));
 
         const state = (await promise) as MessageStoreState;
 
@@ -239,6 +239,28 @@ describe('IrisStateStore', () => {
                 messages: [action.message],
             });
         });
+    });
+
+    it('should stay in fatal states', async () => {
+        const obs1 = stateStore.getState();
+
+        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SESSION_LOAD_FAILED));
+
+        const state1 = (await promise1) as MessageStoreState;
+
+        expect(state1.error?.fatal).toBeTruthy();
+
+        const obs2 = stateStore.getState();
+
+        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new StudentMessageSentAction(mockClientMessage));
+
+        const state2 = (await promise2) as MessageStoreState;
+
+        expect(state2.error?.fatal).toBeTruthy();
     });
 });
 

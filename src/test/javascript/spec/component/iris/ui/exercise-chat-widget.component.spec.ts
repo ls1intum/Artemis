@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
@@ -21,6 +21,8 @@ import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/ir
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
+import { By } from '@angular/platform-browser';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -63,6 +65,10 @@ describe('ExerciseChatWidgetComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should add user message on send', waitForAsync(async () => {
         // given
         jest.spyOn(stateStore, 'dispatch');
@@ -96,9 +102,11 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.newMessageTextContent).toBe('');
     });
 
-    it('should handle an error and dispatch ConversationErrorOccurredAction', waitForAsync(async () => {
+    it('should handle an error and dispatch ConversationErrorOccurredAction', fakeAsync(() => {
+        stateStore.dispatch(new SessionReceivedAction(component.sessionId, []));
+        tick();
         const message = 'Hello';
-        const error = 'Something went wrong. Please try again later!';
+        const error = { fatal: false, key: 'artemisApp.exerciseChatbot.errors.sendMessageFailed' };
         const mockMessage = {
             sender: component.SENDER_USER,
             content: [
@@ -108,20 +116,25 @@ describe('ExerciseChatWidgetComponent', () => {
                 },
             ],
         };
-        jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(
+        jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValue(
             throwError({
                 status: 500,
             }),
         );
+        jest.spyOn(mockHttpMessageService, 'createMessage');
         jest.spyOn(component, 'scrollToBottom');
         jest.spyOn(stateStore, 'dispatchAndThen');
 
         component.newMessageTextContent = message;
+
+        tick();
+        fixture.detectChanges();
         component.onSend();
-        await fixture.whenStable();
+
+        tick();
+        fixture.detectChanges();
 
         expect(stateStore.dispatchAndThen).toHaveBeenCalled();
-        expect(mockHttpMessageService.createMessage).toHaveBeenCalledWith(component.sessionId, mockMessage);
         expect(component.newMessageTextContent).toBe('');
         expect(component.error).toEqual(error);
         expect(component.scrollToBottom).toHaveBeenCalled();
@@ -164,11 +177,10 @@ describe('ExerciseChatWidgetComponent', () => {
         jest.useRealTimers();
     });
 
-    it('should set the appropriate message styles based on the sender', waitForAsync(async () => {
+    it('should set the appropriate message styles based on the sender', async () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
 
         fixture.detectChanges();
-        await fixture.whenStable();
 
         const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
         const clientChats = chatBodyElement.querySelectorAll('.client-chat');
@@ -176,13 +188,12 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
-    }));
+    });
 
-    it('should render rate message buttons for server resonses only', waitForAsync(async () => {
+    it('should render rate message buttons for server responses only', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage, mockServerMessage]));
 
         fixture.detectChanges();
-        await fixture.whenStable();
 
         const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
         const myChats = chatBodyElement.querySelectorAll('.my-chat');
@@ -192,7 +203,7 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(myChats).toHaveLength(1);
         expect(clientChats).toHaveLength(2);
         expect(buttons).toHaveLength(2);
-    }));
+    });
 
     it('should render rate buttons with correct class style', () => {
         const mockMessageContent = {
@@ -217,7 +228,7 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(rateClickableButtons).toHaveLength(5);
     });
 
-    it('should send request when pressing thums up button on a message', waitForAsync(async () => {
+    it('should send request when pressing thumbs up button on a message', async () => {
         jest.spyOn(stateStore, 'dispatch');
         const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
             of(
@@ -247,9 +258,9 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(rateMessageMock).toHaveBeenCalledWith(123, 18, true);
         expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(0, true));
-    }));
+    });
 
-    it('should send request when pressing thums down button on a message', waitForAsync(async () => {
+    it('should send request when pressing thumbs down button on a message', async () => {
         jest.spyOn(stateStore, 'dispatch');
         const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
             of(
@@ -279,7 +290,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(rateMessageMock).toHaveBeenCalledWith(123, 18, false);
         expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(0, false));
-    }));
+    });
 
     it('should render unread message line with correct position', () => {
         // given
@@ -338,4 +349,90 @@ describe('ExerciseChatWidgetComponent', () => {
         // then
         expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
     });
+
+    it('should disable the send button if there is an error', () => {
+        component.error = {
+            key: IrisErrorMessageKey.SEND_MESSAGE_FAILED,
+            fatal: false,
+        };
+
+        // when
+        fixture.detectChanges();
+
+        // then
+        const buttonElement: HTMLElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+        expect(buttonElement.disabled).toBeTruthy();
+    });
+
+    it('should see the resend button if there is a sending error; a retry succeeds', fakeAsync(() => {
+        // given
+        stateStore.dispatch(new SessionReceivedAction(component.sessionId, [mockClientMessage]));
+        component.error = { fatal: false, key: IrisErrorMessageKey.SEND_MESSAGE_FAILED } as IrisErrorType;
+
+        tick(100);
+        fixture.detectChanges();
+
+        let resendButton = fixture.debugElement.nativeElement.querySelector('#resendButton');
+
+        expect(resendButton.getAttribute('disabled')).toBeFalsy();
+
+        jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValue(
+            of(
+                new HttpResponse<IrisMessage>({
+                    status: 200,
+                    body: mockServerMessage,
+                }),
+            ),
+        );
+
+        // when
+        component.resendMessage(mockClientMessage);
+
+        // then
+
+        tick(100);
+        fixture.detectChanges();
+
+        expect(component.error).toBeNull();
+
+        resendButton = fixture.debugElement.nativeElement.querySelector('#resendButton');
+        expect(resendButton).toBeNull();
+        flush();
+    }));
+
+    it('should see the resend button if there is a sending error; a retry fails', fakeAsync(() => {
+        // given
+        stateStore.dispatch(new SessionReceivedAction(component.sessionId, [mockClientMessage]));
+        component.error = { fatal: false, key: IrisErrorMessageKey.SEND_MESSAGE_FAILED } as IrisErrorType;
+
+        tick(100);
+        fixture.detectChanges();
+
+        let resendButton = fixture.debugElement.nativeElement.querySelector('#resendButton');
+
+        expect(resendButton.getAttribute('disabled')).toBeFalsy();
+
+        jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValue(
+            throwError({
+                status: 500,
+            }),
+        );
+
+        // when
+        component.resendMessage(mockClientMessage);
+
+        // then
+        tick(100);
+        fixture.detectChanges();
+
+        expect(component.error).not.toBeNull();
+
+        resendButton = fixture.debugElement.nativeElement.querySelector('#resendButton');
+        expect(resendButton.getAttribute('disabled')).toBeFalsy();
+
+        const element = fixture.debugElement.query(By.css('.shake-animation')).nativeElement;
+        expect(element.classList.contains('shake-animation')).toBeTrue();
+
+        flush();
+    }));
 });
