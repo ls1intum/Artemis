@@ -193,6 +193,7 @@ public class ChannelService {
         if (channel == null) {
             return;
         }
+        SecurityUtils.setAuthorizationObject();
         registerUsersToChannel(false, false, false, users, exam.getCourse(), channel);
     }
 
