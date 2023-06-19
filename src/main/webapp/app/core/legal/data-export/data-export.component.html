@@ -1,0 +1,33 @@
+<div *ngIf="isAdmin">
+    <h1>
+        {{ 'artemisApp.dataExport.title' | artemisTranslate }}
+    </h1>
+
+    <p>
+        {{ 'artemisApp.dataExport.description' | artemisTranslate }}
+    </p>
+
+    <div class="column d-flex justify-content-center align-content-center">
+        <button
+            id="request-data-export-btn"
+            jhiDeleteButton
+            [actionType]="ActionType.RequestDataExport"
+            [buttonSize]="ButtonSize.LARGE"
+            [buttonType]="ButtonType.PRIMARY"
+            [entityTitle]="currentLogin!"
+            deleteQuestion="artemisApp.dataExport.confirmationQuestion"
+            (delete)="requestExport()"
+            [dialogError]="dialogError$"
+            [animation]="false"
+            deleteConfirmationText="artemisApp.dataExport.typeLoginToConfirm"
+            class="mb-1"
+        ></button>
+        <jhi-button
+            id="download-data-export-btn"
+            [btnSize]="ButtonSize.LARGE"
+            [disabled]="!canDownload"
+            title="artemisApp.dataExport.download"
+            (onClick)="downloadDataExport()"
+        ></jhi-button>
+    </div>
+</div>

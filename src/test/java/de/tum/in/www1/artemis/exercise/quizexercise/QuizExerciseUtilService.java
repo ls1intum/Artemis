@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +15,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,9 +26,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -32,6 +34,8 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
@@ -78,6 +82,21 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private RequestUtilService requestUtilService;
+
+    @Autowired
+    private SubmittedAnswerRepository submittedAnswerRepository;
+
+    @Autowired
+    private DragAndDropMappingRepository dragAndDropMappingRepository;
+
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     /**
      * Create, join and start a batch for student by tutor
@@ -622,4 +641,204 @@ public class QuizExerciseUtilService {
 
         return quizSubmission;
     }
+
+    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) throws IOException {
+        QuizExercise quizExercise = createAndSaveQuizWithAllQuestionTypes(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle("quiz");
+        quizExercise.setDuration(120);
+        assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
+        assertThat(quizExercise.isValid()).isTrue();
+        course.addExercises(quizExercise);
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(quizExercise);
+        studentParticipation.setParticipant(userUtilService.getUserByLogin(login));
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.setParticipation(studentParticipation);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setScoreInPoints(2.0);
+        var submittedAnswerMC = new MultipleChoiceSubmittedAnswer();
+        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
+        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0), multipleChoiceQuestion.getAnswerOptions().get(1)));
+        submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
+        var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
+        submittedShortAnswer.setQuizQuestion(shortAnswerQuestion);
+        ShortAnswerSubmittedText shortAnswerSubmittedText1 = new ShortAnswerSubmittedText();
+        ShortAnswerSubmittedText shortAnswerSubmittedText2 = new ShortAnswerSubmittedText();
+        shortAnswerQuestion.setExercise(quizExercise);
+        shortAnswerSubmittedText1.setText("my text");
+        shortAnswerSubmittedText1.setIsCorrect(false);
+        shortAnswerSubmittedText2.setText("is");
+        shortAnswerSubmittedText2.setIsCorrect(true);
+        shortAnswerSubmittedText1.setSubmittedAnswer(submittedShortAnswer);
+        shortAnswerSubmittedText2.setSubmittedAnswer(submittedShortAnswer);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText1);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText2);
+        shortAnswerSubmittedText1.setSpot(shortAnswerQuestion.getSpots().get(1));
+        shortAnswerSubmittedText2.setSpot(shortAnswerQuestion.getSpots().get(0));
+
+        var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
+        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
+        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "drag_and_drop_background.jpg");
+        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "drag_item.jpg");
+        if (Files.exists(backgroundPathInFileSystem)) {
+            Files.delete(backgroundPathInFileSystem);
+        }
+        if (Files.exists(dragItemPathInFileSystem)) {
+            Files.delete(dragItemPathInFileSystem);
+        }
+        Files.copy(new ClassPathResource("test-data/data-export/drag_and_drop_background.jpg").getInputStream(), backgroundPathInFileSystem);
+        Files.copy(new ClassPathResource("test-data/data-export/drag_item.jpg").getInputStream(), dragItemPathInFileSystem);
+        dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
+        submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
+        dragAndDropQuestion.setExercise(quizExercise);
+        DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
+        dragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(0));
+        dragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(0));
+        DragAndDropMapping incorrectDragAndDropMapping = new DragAndDropMapping();
+        incorrectDragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(3));
+        incorrectDragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(1));
+        DragAndDropMapping mappingWithImage = new DragAndDropMapping();
+        mappingWithImage.setDragItem(dragAndDropQuestion.getDragItems().get(4));
+        mappingWithImage.setDropLocation(dragAndDropQuestion.getDropLocations().get(3));
+        dragAndDropQuestion.addCorrectMapping(dragAndDropMapping);
+        studentParticipationRepository.save(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        submittedShortAnswer.setSubmission(quizSubmission);
+        submittedAnswerMC.setSubmission(quizSubmission);
+        submittedDragAndDropAnswer.setSubmission(quizSubmission);
+        dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
+        incorrectDragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
+        mappingWithImage.setSubmittedAnswer(submittedDragAndDropAnswer);
+        submittedAnswerRepository.save(submittedDragAndDropAnswer);
+        dragAndDropMapping.setQuestion(null);
+        incorrectDragAndDropMapping.setQuestion(null);
+        mappingWithImage.setQuestion(null);
+        dragAndDropMapping = dragAndDropMappingRepository.save(dragAndDropMapping);
+        incorrectDragAndDropMapping = dragAndDropMappingRepository.save(incorrectDragAndDropMapping);
+        mappingWithImage = dragAndDropMappingRepository.save(mappingWithImage);
+        dragAndDropMapping.setQuestion(dragAndDropQuestion);
+        incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
+        mappingWithImage.setQuestion(dragAndDropQuestion);
+        quizQuestionRepository.save(dragAndDropQuestion);
+        submittedAnswerRepository.save(submittedAnswerMC);
+        submittedAnswerRepository.save(submittedShortAnswer);
+        quizSubmission.addSubmittedAnswers(submittedAnswerMC);
+        quizSubmission.addSubmittedAnswers(submittedShortAnswer);
+        quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
+        studentParticipation.addSubmission(quizSubmission);
+        quizQuestionRepository.save(dragAndDropQuestion);
+        quizExercise = quizExerciseRepository.save(quizExercise);
+        studentParticipationRepository.save(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        quizExercise.addParticipation(studentParticipation);
+        courseRepo.save(course);
+        quizExerciseRepository.save(quizExercise);
+        return quizExercise;
+    }
+
+    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        return quizExerciseRepository.save(quizExercise);
+    }
+
+    private void initializeQuizExerciseWithAllQuestionTypes(QuizExercise quizExercise) {
+        quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
+        quizExercise.addQuestions(createShortAnswerQuestionWithRealisticText());
+        quizExercise.addQuestions(createSingleChoiceQuestion());
+    }
+
+    private ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
+        var shortAnswerQuestion = createShortAnswerQuestion();
+        shortAnswerQuestion.setText("This [-spot1] a [-spot 2] answer text");
+        return shortAnswerQuestion;
+    }
+
+    public DragAndDropQuestion createDragAndDropQuestionWithAllTypesOfMappings() {
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
+        dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
+        dropLocation1.setTempID(generateTempId());
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
+        dropLocation2.setTempID(generateTempId());
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setInvalid(true);
+        dropLocation3.setTempID(generateTempId());
+        var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        dropLocation4.setTempID(generateTempId());
+        var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
+        dropLocation5.setTempID(generateTempId());
+        dnd.addDropLocation(dropLocation1);
+        // also invoke remove once
+        dnd.removeDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
+        dnd.addDropLocation(dropLocation4);
+        dnd.addDropLocation(dropLocation5);
+
+        var dragItem1 = new DragItem().text("D1");
+        dragItem1.setTempID(generateTempId());
+        var dragItem2 = new DragItem().text("D2");
+        dragItem2.setTempID(generateTempId());
+        var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
+        var dragItem4 = new DragItem().text("invalid drag item");
+        dragItem4.setTempID(generateTempId());
+        var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/drag_item.jpg");
+        dragItem4.setInvalid(true);
+        dnd.addDragItem(dragItem1);
+        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
+        // also invoke remove once
+        dnd.removeDragItem(dragItem1);
+        dnd.addDragItem(dragItem1);
+        dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
+        dnd.addDragItem(dragItem4);
+        dnd.addDragItem(dragItem5);
+
+        var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
+        dragItem1.addMappings(mapping1);
+        // also invoke remove
+        dragItem1.removeMappings(mapping1);
+        dragItem1.addMappings(mapping1);
+        assertThat(dragItem1.getMappings()).isNotEmpty();
+
+        dnd.addCorrectMapping(mapping1);
+        dnd.removeCorrectMapping(mapping1);
+        dnd.addCorrectMapping(mapping1);
+        var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
+        dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
+        var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
+        dnd.addCorrectMapping(mapping4);
+        var mapping5 = new DragAndDropMapping().dragItem(dragItem5).dropLocation(dropLocation5);
+        dnd.addCorrectMapping(mapping5);
+        dnd.setExplanation("Explanation");
+        return dnd;
+    }
+
+    @NotNull
+    public MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
+        return mc;
+    }
+
+    @NotNull
+    public MultipleChoiceQuestion createSingleChoiceQuestion() {
+        var singleChoiceQuestion = createMultipleChoiceQuestion();
+        singleChoiceQuestion.setSingleChoice(true);
+        return singleChoiceQuestion;
+    }
+
 }

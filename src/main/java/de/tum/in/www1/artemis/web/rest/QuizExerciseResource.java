@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
@@ -139,10 +139,9 @@ public class QuizExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestPart("exercise") QuizExercise quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
-
         log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
             throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
@@ -181,7 +180,7 @@ public class QuizExerciseResource {
      *         (Internal Server Error) if the quizExercise couldn't be updated
      */
     @PutMapping(value = "/quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws IOException {
@@ -237,7 +236,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -263,7 +262,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping("exams/{examId}/quiz-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
@@ -287,7 +286,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
@@ -311,7 +310,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
@@ -330,7 +329,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}/for-student")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
@@ -356,7 +355,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
     @PostMapping("/quiz-exercises/{quizExerciseId}/join")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
         QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
@@ -389,7 +388,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the new batch
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/add-batch")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
@@ -411,7 +410,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/quiz-exercises/{quizBatchId}/start-batch")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
@@ -443,7 +442,7 @@ public class QuizExerciseResource {
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
@@ -539,7 +538,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/quiz-exercises/{quizExerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
@@ -588,7 +587,7 @@ public class QuizExerciseResource {
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
     @PutMapping(value = "/quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") QuizExercise quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
@@ -628,7 +627,7 @@ public class QuizExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("/quiz-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") boolean isCourseFilter,
             @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -649,7 +648,7 @@ public class QuizExerciseResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
