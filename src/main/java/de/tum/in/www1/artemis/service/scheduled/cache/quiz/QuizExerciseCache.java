@@ -34,7 +34,7 @@ public abstract class QuizExerciseCache implements Cache {
      *
      * @return the actual QuizExercise object, may be null.
      */
-    public abstract QuizExercise getExercise();
+    abstract QuizExercise getExercise();
 
     /**
      * QuizBatch ids by username

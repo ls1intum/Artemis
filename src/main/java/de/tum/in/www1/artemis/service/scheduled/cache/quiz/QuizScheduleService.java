@@ -700,7 +700,7 @@ public class QuizScheduleService {
         return (QuizExerciseCache) quizCache.getTransientWriteCacheFor(exerciseId);
     }
 
-    public QuizExerciseCache getReadCache(long exerciseId) {
+    private QuizExerciseCache getReadCache(long exerciseId) {
         return (QuizExerciseCache) quizCache.getReadCacheFor(exerciseId);
     }
 }

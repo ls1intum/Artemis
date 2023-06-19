@@ -38,7 +38,7 @@ final class EmptyQuizExerciseCache extends QuizExerciseCache {
     }
 
     @Override
-    public QuizExercise getExercise() {
+    QuizExercise getExercise() {
         return null;
     }
 

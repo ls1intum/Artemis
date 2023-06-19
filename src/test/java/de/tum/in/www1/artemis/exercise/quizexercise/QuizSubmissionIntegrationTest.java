@@ -405,18 +405,15 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
     }
 
-    // @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
-    // @EnumSource(QuizMode.class)
-    @RepeatedTest(3000)
-    void testQuizSubmitNoDatabaseRequests(/* QuizMode quizMode */) throws Exception {
+    @EnumSource(QuizMode.class)
+    void testQuizSubmitNoDatabaseRequests(QuizMode quizMode) throws Exception {
         CountDownLatch lock = new CountDownLatch(1);
 
         var topic = hazelcastInstance.getTopic(HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC);
         topic.addMessageListener(o -> lock.countDown());
 
-        QuizMode quizMode = QuizMode.INDIVIDUAL;
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
@@ -428,6 +425,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         if (!lock.await(2000, TimeUnit.MILLISECONDS)) {
             fail("Timed out waiting for the quiz exercise cache.");
         }
+
+        Thread.sleep(20);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
