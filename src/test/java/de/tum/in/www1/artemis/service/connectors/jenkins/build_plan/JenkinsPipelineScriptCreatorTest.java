@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -27,11 +28,14 @@ class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsG
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void init() {
-        var course = database.addEmptyCourse();
+        var course = courseUtilService.addEmptyCourse();
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
