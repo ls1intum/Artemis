@@ -38,6 +38,15 @@
             <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Competency</span>
         </a>
         <a
+            *ngIf="course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'learning-path-management']"
+            class="tab-item btn btn-primary btn-md ms-1"
+            routerLinkActive="active"
+        >
+            <fa-icon [icon]="faNetworkWired"></fa-icon>
+            <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Path</span>
+        </a>
+        <a
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'tutorial-groups']"
