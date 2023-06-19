@@ -16,6 +16,9 @@ If you are setting Artemis up for the first time, these are the steps you should
 - :ref:`Start Artemis`
 - :ref:`Test the Setup`
 
+.. HINT::
+    For a video version of the guide as well as a quick demonstration refer to https://youtu.be/I1lt42U6gSY.
+
 .. contents:: Content of this section
     :local:
     :depth: 1
