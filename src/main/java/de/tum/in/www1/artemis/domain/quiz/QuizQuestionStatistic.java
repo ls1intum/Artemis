@@ -2,13 +2,10 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.DiscriminatorOptions;
-
 import com.fasterxml.jackson.annotation.*;
 
 @Entity
 @DiscriminatorValue(value = "Q")
-@DiscriminatorOptions(force = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),

@@ -51,77 +51,81 @@ describe('TextSubmissionAssessmentComponent', () => {
     let exampleSubmissionService: ExampleSubmissionService;
     let router: Router;
 
-    const exercise = {
-        id: 1,
-        type: ExerciseType.TEXT,
-        assessmentType: AssessmentType.MANUAL,
-        problemStatement: '',
-        course: { id: 123, isAtLeastInstructor: true } as Course,
-    } as TextExercise;
-    const participation: StudentParticipation = {
-        type: ParticipationType.STUDENT,
-        id: 2,
-        exercise,
-    } as unknown as StudentParticipation;
-    const submission = {
-        submissionExerciseType: SubmissionExerciseType.TEXT,
-        id: 2278,
-        submitted: true,
-        type: SubmissionType.MANUAL,
-        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
-        text: 'First text. Second text.',
-        participation,
-    } as unknown as TextSubmission;
-    submission.results = [
-        {
-            id: 2374,
-            completionDate: dayjs('2019-07-09T11:51:23.251Z'),
-            successful: false,
-            score: 8,
-            rated: true,
-            hasComplaint: true,
-            submission,
-            participation,
-        } as unknown as Result,
-    ];
+    let exercise: TextExercise;
+    let participation: StudentParticipation;
+    let submission: TextSubmission;
+    let mockActivatedRoute: ActivatedRoute;
 
-    getLatestSubmissionResult(submission)!.feedbacks = [
-        {
+    beforeEach(() => {
+        exercise = {
             id: 1,
-            detailText: 'First Feedback',
-            credits: 1,
-            reference: 'First text id',
-        } as Feedback,
-    ];
-    submission.blocks = [
-        {
-            id: 'First text id',
-            text: 'First text.',
-            startIndex: 0,
-            endIndex: 11,
-            submission,
-        } as TextBlock,
-        {
-            id: 'second text id',
-            text: 'Second text.',
-            startIndex: 12,
-            endIndex: 24,
-            submission,
-        } as TextBlock,
-    ];
-    submission.participation!.submissions = [submission];
-    submission.participation!.results = [getLatestSubmissionResult(submission)!];
+            type: ExerciseType.TEXT,
+            assessmentType: AssessmentType.MANUAL,
+            problemStatement: '',
+            course: { id: 123, isAtLeastInstructor: true } as Course,
+        } as TextExercise;
+        participation = {
+            type: ParticipationType.STUDENT,
+            id: 2,
+            exercise,
+        } as unknown as StudentParticipation;
+        submission = {
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+            id: 2278,
+            submitted: true,
+            type: SubmissionType.MANUAL,
+            submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
+            text: 'First text. Second text.',
+            participation,
+        } as unknown as TextSubmission;
+        submission.results = [
+            {
+                id: 2374,
+                completionDate: dayjs('2019-07-09T11:51:23.251Z'),
+                successful: false,
+                score: 8,
+                rated: true,
+                hasComplaint: true,
+                submission,
+                participation,
+            } as unknown as Result,
+        ];
 
-    const route = (): ActivatedRoute =>
-        ({
+        getLatestSubmissionResult(submission)!.feedbacks = [
+            {
+                id: 1,
+                detailText: 'First Feedback',
+                credits: 1,
+                reference: 'First text id',
+            } as Feedback,
+        ];
+        submission.blocks = [
+            {
+                id: 'First text id',
+                text: 'First text.',
+                startIndex: 0,
+                endIndex: 11,
+                submission,
+            } as TextBlock,
+            {
+                id: 'second text id',
+                text: 'Second text.',
+                startIndex: 12,
+                endIndex: 24,
+                submission,
+            } as TextBlock,
+        ];
+        submission.participation!.submissions = [submission];
+        submission.participation!.results = [getLatestSubmissionResult(submission)!];
+
+        mockActivatedRoute = {
             paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
             queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
             data: of({
                 studentParticipation: participation,
             }),
-        } as any as ActivatedRoute);
+        } as unknown as ActivatedRoute;
 
-    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
@@ -140,7 +144,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -164,16 +168,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create and set parameters correctly', fakeAsync(() => {
+    it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
-        component['route'] = route();
-        component['activatedRoute'] = route();
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
         expect(component.isTestRun).toBeFalse();
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
-    }));
+    });
 
     it('should show jhi-text-assessment-area', () => {
         component['setPropertiesFromServerResponse'](participation);
@@ -227,23 +228,28 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(handleFeedbackStub).toHaveBeenCalledOnce();
     });
 
-    it('should display error when saving but assessment invalid', () => {
+    it('should display error when saving but assessment invalid', async () => {
         component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
-        fixture.detectChanges();
+        await component.ngOnInit();
+
         component.save();
+        expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
-    it('should display error when submitting but assessment invalid', () => {
+    it('should display error when submitting but assessment invalid', async () => {
         component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
-        component.result = getLatestSubmissionResult(submission);
+
+        await component.ngOnInit();
 
         component.submit();
+
+        expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
@@ -260,13 +266,18 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
+        // add an unreferenced feedback to make the assessment invalid
+        component.unreferencedFeedback = [new Feedback()];
+
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+        expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
         expect(onSuccessCalled).toBeFalse();
         expect(onErrorCalled).toBeTrue();
     });
 
-    it.each([false, true])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
+    it.each([true, false])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.credits = 5;
         unreferencedFeedback.detailText = 'gj';
@@ -367,8 +378,6 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should go to next submission', fakeAsync(() => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = jest.spyOn(router, 'navigate');
-        component['route'] = route();
-        component['activatedRoute'] = route();
 
         component.ngOnInit();
         tick();
@@ -401,6 +410,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         const url = [
             '/course-management',
             component.courseId,
+            'exams',
+            component.examId,
+            'exercise-groups',
+            component.exerciseGroupId,
             'text-exercises',
             component.exerciseId,
             'participations',

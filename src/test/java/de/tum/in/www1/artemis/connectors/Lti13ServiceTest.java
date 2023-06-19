@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.connectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -154,7 +156,7 @@ class Lti13ServiceTest {
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
-        assertThrows(IllegalArgumentException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
         verifyNoInteractions(launchRepository);
     }
@@ -164,7 +166,8 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/courses/1/exercises/100000").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -173,7 +176,8 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/with/invalid/path/to/exercise/11").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -182,7 +186,8 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -193,7 +198,7 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn(invalidPath).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
@@ -212,7 +217,7 @@ class Lti13ServiceTest {
         String target = "https://some-artemis-domain.org/courses/12/exercises/123";
         doReturn(target).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(EntityNotFoundException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
@@ -231,7 +236,7 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
@@ -240,7 +245,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_john", username);
+        assertThat(username).isEqualTo("prefix_john");
     }
 
     @Test
@@ -251,7 +256,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jonsnow", username);
+        assertThat(username).isEqualTo("prefix_jonsnow");
     }
 
     @Test
@@ -263,7 +268,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -275,7 +280,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -460,21 +465,21 @@ class Lti13ServiceTest {
         HttpEntity<String> httpEntity = httpEntityCapture.getValue();
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
-        assertNotNull(authHeaders, "Score publish request must contain an Authorization header");
-        assertTrue(authHeaders.contains("Bearer " + accessToken), "Score publish request must contain the corresponding Authorization Bearer token");
+        assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
+        assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
-        assertEquals(launch.getSub(), body.get("userId"), "Invalid parameter in score publish request: userId");
-        assertNotNull(body.get("timestamp"), "Parameter missing in score publish request: timestamp");
-        assertNotNull(body.get("activityProgress"), "Parameter missing in score publish request: activityProgress");
-        assertNotNull(body.get("gradingProgress"), "Parameter missing in score publish request: gradingProgress");
+        assertThat(body.get("userId")).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
+        assertThat(body.get("timestamp")).as("Parameter missing in score publish request: timestamp").isNotNull();
+        assertThat(body.get("activityProgress")).as("Parameter missing in score publish request: activityProgress").isNotNull();
+        assertThat(body.get("gradingProgress")).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
-        assertEquals("Good job. Not so good", body.get("comment"), "Invalid parameter in score publish request: comment");
-        assertEquals(scoreGiven, body.get("scoreGiven"), "Invalid parameter in score publish request: scoreGiven");
-        assertEquals(100d, body.get("scoreMaximum"), "Invalid parameter in score publish request: scoreMaximum");
+        assertThat(body.get("comment")).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
+        assertThat(body.get("scoreGiven")).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
+        assertThat(body.get("scoreMaximum")).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 
-        assertEquals(urlCapture.getValue(), launch.getScoreLineItemUrl() + "/scores", "Score publish request was sent to a wrong URI");
+        assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
     }
 
     private State getValidStateForNewResult(Result result) {

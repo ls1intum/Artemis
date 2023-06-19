@@ -10,7 +10,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class ProgrammingExerciseUpdateWizardProblemComponent {
     programmingExercise: ProgrammingExercise;
 
-    @Input() isImport: boolean;
+    @Input() isImportFromExistingExercise: boolean;
+    @Input() isImportFromFile: boolean;
+
     @Input() problemStepInputs: ProblemStepInputs;
 
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -53,6 +54,13 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
+    /**
+     * Getter for the stored default branch of the participation.
+     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation)} if you are not sure that the value was already
+     * set in the Artemis database
+     *
+     * @return the name of the default branch or null if not yet stored in Artemis
+     */
     public String getBranch() {
         return branch;
     }

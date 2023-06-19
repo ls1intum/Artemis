@@ -9,17 +9,17 @@
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
-            "register": {
-                "title": "Course Registration",
-                "registerSuccessful": "Registration successful",
-                "registerForCourse": "Register",
-                "notInCourseButCanRegister": "You are not registered for this course, but you can register yourself.",
+            "enroll": {
+                "title": "Course Enrollment",
+                "enrollSuccessful": "Enrollment successful",
+                "enrollInCourse": "Enroll",
+                "notInCourseButCanEnroll": "You are not enrolled in this course, but you can enroll yourself.",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
-                "noCourse": "No courses available for registration",
+                "noCourse": "No courses available for enrollment",
                 "courseLoading": "Course is loading...",
                 "coursesLoading": "Courses are loading...",
-                "courseSignupConfirmationTitle": "Confirm Course Registration"
+                "courseEnrollmentConfirmationTitle": "Confirm Course Enrollment"
             },
             "course": "Course"
         },
@@ -27,6 +27,7 @@
             "noCourseIcon": "No course icon available",
             "showMore": "Show more",
             "showLess": "Show less",
+            "manage": "Manage",
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics",
@@ -58,6 +59,7 @@
                 "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release Date: ",
                 "notReleased": "Not released",
                 "live": "Live",
+                "shortDueDate": "Due",
                 "noDueDate": "No due date",
                 "userNotAssignedToTeam": "You have not been assigned to a team yet.",
                 "userNotStartedExercise": "You have not started this exercise yet.",
@@ -88,8 +90,22 @@
                     "programmingTotal": "Total Programming Exercises:",
                     "textTotal": "Total Text Exercises:",
                     "file-uploadTotal": "Total File Upload Exercises:",
-                    "startDate": "Start Date:",
-                    "endDate": "End Date:",
+                    "startDate": "Start:",
+                    "endDate": "End:",
+                    "enrollmentStartDate": "Enrollment from:",
+                    "enrollmentEndDate": "Enrollment until:",
+                    "unenrollmentEndDate": "Unenrollment until:",
+                    "unenrollmentButton": "Unenroll",
+                    "unenrollmentModal": {
+                        "title": "Confirm Course Unenrollment",
+                        "confirmationQuestion": "Are you sure you want to unenroll from",
+                        "reenrollmentNotPossible": "The course does not allow you to enroll again. This is an irreversible action.",
+                        "reenrollmentPossible": "If you change your mind, the course will allow you to enroll again until:",
+                        "confirmationInput": "Enter the title of the course:",
+                        "cancelButton": "Cancel",
+                        "acceptButton": "Yes, I want to unenroll.",
+                        "unenrollmentSuccessful": "Unenrollment successful"
+                    },
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }
@@ -98,6 +114,8 @@
                 "totalScore": "Your overall points",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
+                "totalPresentationPoints": "Your presentation points: {{ number }}",
+                "achievablePresentationPoints": "Achievable presentation points: {{ number }}",
                 "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
@@ -123,6 +141,7 @@
                 "gradeInfo": "(based on attainable points)",
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
                 "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
+                "presentationHelp": "The reachable presentation points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
                 "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
                 "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
                 "programmingPointLabel": "Programming Points",
@@ -130,6 +149,7 @@
                 "modelingPointLabel": "Modeling Points",
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
+                "presentationPointsLabel": "Presentation Points",
                 "missingPointsLabel": "Missing Points",
                 "achievedPointsLabel": "Achieved Points",
                 "includeStandardCategories": "Hide Artemis standard categories:",
@@ -199,7 +219,9 @@
                 "complaintDue": "Complaint due:",
                 "complaintDueTooltip": "You can write a complain until {{date}}.",
                 "complaintPossible": "Complaint possible:",
-                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint."
+                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
+                "presented": "Presented:",
+                "presentation": "Presentation:"
             }
         }
     }

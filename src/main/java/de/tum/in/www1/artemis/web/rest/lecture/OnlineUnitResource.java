@@ -14,7 +14,6 @@ import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.google.common.net.InternetDomainName;
@@ -24,8 +23,9 @@ import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -42,14 +42,14 @@ public class OnlineUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
     public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
-            LearningGoalProgressService learningGoalProgressService) {
+            CompetencyProgressService competencyProgressService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -60,7 +60,7 @@ public class OnlineUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the online unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/online-units/{onlineUnitId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
         var onlineUnit = onlineUnitRepository.findByIdElseThrow(onlineUnitId);
@@ -77,7 +77,7 @@ public class OnlineUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
     @PutMapping("/lectures/{lectureId}/online-units")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
         log.debug("REST request to update an online unit : {}", onlineUnit);
         if (onlineUnit.getId() == null) {
@@ -90,7 +90,7 @@ public class OnlineUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
-        learningGoalProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressService.updateProgressByLearningObjectAsync(result);
         return ResponseEntity.ok(result);
     }
 
@@ -103,7 +103,7 @@ public class OnlineUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures/{lectureId}/online-units")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnit);
         if (onlineUnit.getId() != null) {
@@ -126,7 +126,7 @@ public class OnlineUnitResource {
         lecture.addLectureUnit(persistedOnlineUnit);
         lectureRepository.save(lecture);
 
-        learningGoalProgressService.updateProgressByLearningObjectAsync(persistedOnlineUnit);
+        competencyProgressService.updateProgressByLearningObjectAsync(persistedOnlineUnit);
 
         return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }
@@ -138,7 +138,7 @@ public class OnlineUnitResource {
      * @return A DTO with link, meta title, and meta description
      */
     @GetMapping("/lectures/online-units/fetch-online-resource")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public OnlineResourceDTO getOnlineResource(@RequestParam("link") String link) {
         try {
             // Ensure that the link is a correctly formed URL

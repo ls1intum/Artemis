@@ -11,7 +11,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
+import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
@@ -38,6 +38,7 @@ import {
     faList,
     faLock,
     faSignOutAlt,
+    faStamp,
     faTachometerAlt,
     faTasks,
     faThLarge,
@@ -95,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faWrench = faWrench;
     faLock = faLock;
+    faStamp = faStamp;
     faFlag = faFlag;
     faBook = faBook;
     faTasks = faTasks;
@@ -326,7 +328,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
-        privacy_statement: 'artemisApp.privacyStatement.title',
+        privacy_statement: 'artemisApp.legal.privacyStatement.title',
+        imprint: 'artemisApp.legal.imprint.title',
+        edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -544,6 +548,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
                 break;
+            case 'submissions':
+                // only a scores list exists, no special one for submissions
+                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                this.addTranslationAsCrumb(updatedLink, 'submissions');
+                break;
             default:
                 // Special cases:
                 if (this.lastRouteUrlSegment === 'user-management') {
@@ -744,7 +753,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Subscribes to navigation end events to look for an exam id in the URL which indicates that we're in the student view of an exam.
      */
     subscribeToNavigationEventsForExamId() {
-        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+        this.routerEventSubscription = this.router.events.pipe(filter((event: Event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
             if (event.url.includes('management')) {
                 this.examId = undefined;
                 return;

@@ -34,6 +34,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 /**
  * Filter properties for a result
@@ -96,6 +97,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     cancelConfirmationText: string;
 
     correctionRoundIndices: number[] = [];
+
+    localVCEnabled = false;
 
     // Icons
     faBan = faBan;
@@ -196,6 +199,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             if (programmingExercise.projectKey) {
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, programmingExercise.projectKey);
+                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                 });
             }
         }

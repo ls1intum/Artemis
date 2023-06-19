@@ -7,6 +7,7 @@ import javax.persistence.*;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -17,8 +18,14 @@ import de.tum.in.www1.artemis.service.FileService;
  */
 @Entity
 @DiscriminatorValue(value = "F")
+@JsonTypeName("file-upload")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadSubmission extends Submission {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getSubmissionExerciseType() {
+        return "file-upload";
+    }
 
     @Transient
     private transient FileService fileService = new FileService();

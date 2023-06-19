@@ -111,7 +111,7 @@
                             <label for="lectureAttachmentInput{{ attachmentToBeCreated.name }}" class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file"
                                 >File</label
                             >
-                            <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
+                            <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
                             <fa-icon
                                 [icon]="faQuestionCircle"
                                 [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate : { extensions: allowedFileExtensions }"
@@ -158,16 +158,9 @@
 
                 <div class="row">
                     <div class="col-12">
-                        <button
-                            id="upload-attachment"
-                            type="submit"
-                            [disabled]="isUploadingAttachment || !isSubmitPossible"
-                            (click)="uploadLectureAttachmentAndSave()"
-                            class="btn btn-primary me-2"
-                        >
+                        <button id="upload-attachment" type="submit" [disabled]="!isSubmitPossible" (click)="saveAttachment()" class="btn btn-primary me-2">
                             <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
-                            <span *ngIf="isUploadingAttachment" jhiTranslate="artemisApp.lecture.attachments.uploading"></span>
-                            <span *ngIf="!isUploadingAttachment" jhiTranslate="entity.action.saveAttachment"></span>
+                            <span jhiTranslate="entity.action.saveAttachment"></span>
                         </button>
                         <button type="submit" (click)="cancel()" class="btn btn-default">
                             <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

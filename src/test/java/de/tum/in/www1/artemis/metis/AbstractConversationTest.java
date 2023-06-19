@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -16,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
@@ -69,6 +70,12 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     ConversationMessageRepository conversationMessageRepository;
 
+    @Autowired
+    UserUtilService userUtilService;
+
+    @Autowired
+    CourseUtilService courseUtilService;
+
     Long exampleCourseId;
 
     String testPrefix = "";
@@ -76,7 +83,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void setupTestScenario() throws Exception {
         this.testPrefix = getTestPrefix();
-        var course = this.database.createCourse();
+        var course = courseUtilService.createCourse();
         courseRepository.save(course);
         exampleCourseId = course.getId();
     }
@@ -102,7 +109,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     Post createPostWithConversation(Long conversationId, String authorLoginWithoutPrefix) {
         Post post = new Post();
-        post.setAuthor(database.getUserByLogin(testPrefix + authorLoginWithoutPrefix));
+        post.setAuthor(userUtilService.getUserByLogin(testPrefix + authorLoginWithoutPrefix));
         post.setDisplayPriority(DisplayPriority.NONE);
         var conv = conversationRepository.findByIdElseThrow(conversationId);
         post.setConversation(conv);
@@ -124,7 +131,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
-        var receivingUser = database.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
+        var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
         verify(messagingTemplate, times(1)).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).metisCrudAction().equals(crudAction)
@@ -155,7 +162,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     void removeUsersFromConversation(Long conversationId, String... userLoginsWithoutPrefix) {
         for (String login : userLoginsWithoutPrefix) {
-            var user = database.getUserByLogin(testPrefix + login);
+            var user = userUtilService.getUserByLogin(testPrefix + login);
             var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
             participant.ifPresent(conversationParticipant -> conversationParticipantRepository.delete(conversationParticipant));
         }
@@ -168,10 +175,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
         return persistedCourse;
-    }
-
-    ChannelDTO createChannel(boolean isPublicChannel) throws Exception {
-        return createChannel(isPublicChannel, RandomConversationNameGenerator.generateRandomConversationName());
     }
 
     ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
@@ -196,7 +199,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     void addUsersToConversation(Long conversationId, String... userLoginsWithoutPrefix) {
         for (String login : userLoginsWithoutPrefix) {
-            var user = database.getUserByLogin(testPrefix + login);
+            var user = userUtilService.getUserByLogin(testPrefix + login);
             var existing = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
             if (existing.isPresent()) {
                 continue;
@@ -210,7 +213,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     void hideConversation(Long conversationId, String userLoginWithoutPrefix) {
-        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
+        var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
         participant.ifPresent(conversationParticipant -> {
             conversationParticipant.setIsHidden(true);
@@ -219,7 +222,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     void favoriteConversation(Long conversationId, String userLoginWithoutPrefix) {
-        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
+        var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
         participant.ifPresent(conversationParticipant -> {
             conversationParticipant.setIsFavorite(true);
@@ -276,25 +279,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     void resetWebsocketMock() {
         reset(this.messagingTemplate);
-    }
-
-    public static class RandomConversationNameGenerator {
-
-        private static final String LOWERCASE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
-
-        private static final String NUMBERS = "0123456789";
-
-        private static final String ALL_CHARS = LOWERCASE_LETTERS + NUMBERS;
-
-        private static final SecureRandom RANDOM = new SecureRandom();
-
-        public static String generateRandomConversationName() {
-            var stringBuilder = new StringBuilder();
-            for (int i = 0; i < 10; i++) {
-                stringBuilder.append(ALL_CHARS.charAt(RANDOM.nextInt(ALL_CHARS.length())));
-            }
-            return stringBuilder.toString();
-        }
     }
 
 }

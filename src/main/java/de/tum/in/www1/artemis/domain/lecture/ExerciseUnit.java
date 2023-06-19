@@ -13,8 +13,8 @@ import org.hibernate.annotations.Cache;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.Competency;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.LearningGoal;
 
 @Entity
 @DiscriminatorValue("E")
@@ -61,12 +61,12 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    public Set<LearningGoal> getLearningGoals() {
-        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "learningGoals") ? new HashSet<>() : exercise.getLearningGoals();
+    public Set<Competency> getCompetencies() {
+        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "competencies") ? new HashSet<>() : exercise.getCompetencies();
     }
 
     @Override
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
+    public void setCompetencies(Set<Competency> competencies) {
         // Should be set in associated exercise
     }
 
@@ -78,6 +78,6 @@ public class ExerciseUnit extends LectureUnit {
     public void prePersistOrUpdate() {
         this.name = null;
         this.releaseDate = null;
-        this.learningGoals = new HashSet<>();
+        this.competencies = new HashSet<>();
     }
 }

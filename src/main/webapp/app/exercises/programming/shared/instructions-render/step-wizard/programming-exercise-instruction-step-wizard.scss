@@ -6,7 +6,8 @@
 
 .stepwizard-row {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
 }
 
 .stepwizard {
@@ -16,7 +17,7 @@
 }
 
 .stepwizard-title {
-    display: flex;
+    display: table-cell;
     align-items: center;
 }
 

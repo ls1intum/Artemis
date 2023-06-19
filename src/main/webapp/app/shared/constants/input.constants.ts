@@ -16,3 +16,6 @@ export const SHORT_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]{2,}$/;
 /** Prefixes must follow the login pattern **/
 export const LOGIN_PATTERN = /^[_'.@A-Za-z0-9-]*$/;
 export const MAX_QUIZ_QUESTION_POINTS = 9999;
+export const MAX_QUIZ_QUESTION_LENGTH_THRESHOLD = 250;
+export const MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD = 500;
+export const MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD = 255;

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.FILE_UPLOAD
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 
@@ -13,8 +14,14 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  */
 @Entity
 @DiscriminatorValue(value = "F")
+@JsonTypeName("file-upload")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "file-upload";
+    }
 
     @Column(name = "example_solution")
     private String exampleSolution;

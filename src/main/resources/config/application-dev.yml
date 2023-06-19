@@ -25,7 +25,7 @@ spring:
         restart:
             enabled: true
         livereload:
-            enabled: false # we use Webpack dev server + BrowserSync for livereload
+            enabled: false # we use the Angular dev server
     jackson:
         serialization:
             indent-output: true
@@ -71,7 +71,7 @@ server:
 # ===================================================================
 
 jhipster:
-    # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
+    # CORS is only enabled by default with the "dev" profile, so the client can access the API
     cors:
         allowed-origin-patterns: "*"
         allowed-methods: "*"

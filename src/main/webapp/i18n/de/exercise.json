@@ -28,6 +28,7 @@
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "embeddedFilesWarning": "Alle eingebetteten Dateien sind erst nach dem Import in der Aufgabenstellung verfügbar.",
                 "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
                 "searchInCourses": "Suche in Kursen?",

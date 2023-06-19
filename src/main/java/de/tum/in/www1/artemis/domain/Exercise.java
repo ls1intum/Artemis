@@ -3,13 +3,13 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -37,13 +37,18 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
-        @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-        @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"),
+    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
+    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
+    @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
+    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends BaseExercise implements LearningObject {
 
@@ -67,7 +72,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
-    private Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<Competency> competencies = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -389,12 +394,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     public Long getNumberOfParticipations() {
@@ -959,4 +964,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public abstract ExerciseType getExerciseType();
+
+    /**
+     * Disconnects child entities from the exercise.
+     * <p>
+     * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
+     */
+    public void disconnectRelatedEntities() {
+        Stream.of(competencies, teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases)
+                .filter(Objects::nonNull).forEach(Collection::clear);
+    }
 }

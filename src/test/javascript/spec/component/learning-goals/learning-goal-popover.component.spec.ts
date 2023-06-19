@@ -11,11 +11,13 @@ import { Component } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
+    selector: 'jhi-statistics',
     template: '',
 })
 class DummyStatisticsComponent {}
 
 @Component({
+    selector: 'jhi-course-management',
     template: '',
 })
 class DummyManagementComponent {}

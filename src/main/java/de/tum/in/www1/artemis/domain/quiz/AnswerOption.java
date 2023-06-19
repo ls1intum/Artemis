@@ -80,6 +80,11 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         return this;
     }
 
+    public AnswerOption isInvalid(boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
     public void setExplanation(String explanation) {
         this.explanation = explanation;
     }

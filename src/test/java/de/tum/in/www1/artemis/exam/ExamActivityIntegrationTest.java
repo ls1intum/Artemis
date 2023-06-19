@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -20,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
@@ -51,6 +52,15 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ExamActivityResource examActivityResource;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course;
 
     private Exam exam;
@@ -59,13 +69,13 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        course = database.addEmptyCourse();
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        exam = database.addActiveExamWithRegisteredUser(course, student1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        course = courseUtilService.addEmptyCourse();
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        exam = examUtilService.addActiveExamWithRegisteredUser(course, student1);
         exam.setMonitoring(true);
         exam = examRepository.save(exam);
-        studentExam = database.addStudentExam(exam);
+        studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200);
         studentExam.setUser(student1);
         studentExamRepository.save(studentExam);
@@ -199,14 +209,14 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         List<ExamAction> examActions = request.getList("/api/exam-monitoring/" + exam.getId() + "/load-actions", HttpStatus.OK, ExamAction.class);
 
-        assertEquals(1, examActions.size());
+        assertThat(examActions).hasSize(1);
 
         var receivedAction = examActions.get(0);
         // We need to validate those values to be equal.
-        assertEquals(examAction.getExamActivityId(), receivedAction.getExamActivityId());
-        assertEquals(examAction.getStudentExamId(), receivedAction.getStudentExamId());
-        assertEquals(examAction.getId(), receivedAction.getId());
-        assertEquals(examAction.getType(), receivedAction.getType());
+        assertThat(receivedAction.getExamActivityId()).isEqualTo(examAction.getExamActivityId());
+        assertThat(receivedAction.getStudentExamId()).isEqualTo(examAction.getStudentExamId());
+        assertThat(receivedAction.getId()).isEqualTo(examAction.getId());
+        assertThat(receivedAction.getType()).isEqualTo(examAction.getType());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -216,9 +226,9 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam.setMonitoring(!monitoring);
         exam = examRepository.save(exam);
 
-        var result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
+        boolean result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
 
-        assertEquals(result, monitoring);
-        assertEquals(examRepository.findByIdElseThrow(exam.getId()).isMonitoring(), monitoring);
+        assertThat(result).isEqualTo(monitoring);
+        assertThat(examRepository.findByIdElseThrow(exam.getId()).isMonitoring()).isEqualTo(monitoring);
     }
 }

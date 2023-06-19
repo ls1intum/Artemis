@@ -11,14 +11,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 
 class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -46,6 +50,18 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private ResultRepository resultRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private TextExercise exercise;
 
     /**
@@ -53,19 +69,19 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
      */
     @BeforeEach
     void initTestCase() throws Error {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = database.createCourseWithInstructorAndTextExercise(TEST_PREFIX);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        Course course = courseUtilService.createCourseWithInstructorAndTextExercise(TEST_PREFIX);
 
-        exercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         StudentParticipation studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
-        studentParticipation.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         studentParticipationRepository.save(studentParticipation);
 
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
 
-        database.addResultToSubmission(textSubmission, AssessmentType.AUTOMATIC);
+        participationUtilService.addResultToSubmission(textSubmission, AssessmentType.AUTOMATIC);
 
         Set<TextBlock> textBlocks = Set.of(new TextBlock().text("This is Part 1,").startIndex(0).endIndex(15).automatic(),
                 new TextBlock().text("and this is Part 2.").startIndex(16).endIndex(35).automatic(),

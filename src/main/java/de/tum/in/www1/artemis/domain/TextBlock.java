@@ -74,10 +74,6 @@ public class TextBlock implements Serializable {
 
     @ManyToOne
     @JsonIgnore
-    private TextAssessmentKnowledge knowledge;
-
-    @ManyToOne
-    @JsonIgnore
     private TextCluster cluster;
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -242,13 +238,5 @@ public class TextBlock implements Serializable {
 
     public void setNumberOfAffectedSubmissions(int numberOfAffectedSubmissions) {
         this.numberOfAffectedSubmissions = numberOfAffectedSubmissions;
-    }
-
-    public TextAssessmentKnowledge getKnowledge() {
-        return knowledge;
-    }
-
-    public void setKnowledge(TextAssessmentKnowledge knowledge) {
-        this.knowledge = knowledge;
     }
 }

@@ -70,7 +70,6 @@ describe('ExerciseImportComponent', () => {
 
     beforeEach(() => {
         comp.exerciseType = ExerciseType.QUIZ;
-        fixture.detectChanges();
         quizExercise = new QuizExercise(undefined, undefined);
         quizExercise.id = 5;
         searchResult = { numberOfPages: 3, resultsOnPage: [quizExercise] };
@@ -100,7 +99,7 @@ describe('ExerciseImportComponent', () => {
         comp.clear();
 
         // THEN
-        expect(dismiss).toHaveBeenCalledOnceWith('cancel');
+        expect(dismiss).toHaveBeenCalledExactlyOnceWith('cancel');
     });
 
     it('should close the active modal with result', () => {
@@ -266,19 +265,21 @@ describe('ExerciseImportComponent', () => {
         'uses the correct paging service',
         fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
             const getSpy = jest.spyOn(injector, 'get');
-            jest.resetAllMocks();
+            // This is needed for `.toHaveBeenCalledWith` to work properly:
+            getSpy.mockImplementation(() => undefined);
 
             comp.exerciseType = exerciseType;
 
             comp.ngOnInit();
 
-            expect(getSpy).toHaveBeenCalledOnceWith(expectedPagingService, undefined, 0); // default values for arguments 2 and 3
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(expectedPagingService, undefined, 0); // default values for arguments 2 and 3
         }),
     );
 
     it('should allow importing SCA configurations', () => {
         const getSpy = jest.spyOn(injector, 'get');
-        jest.resetAllMocks();
+        // This is needed for `.toHaveBeenCalledWith` to work properly:
+        getSpy.mockImplementation(() => undefined);
 
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
@@ -286,7 +287,7 @@ describe('ExerciseImportComponent', () => {
         comp.ngOnInit();
 
         expect(comp.titleKey).toContain('configureGrading');
-        expect(getSpy).toHaveBeenCalledOnceWith(CodeAnalysisPagingService, undefined, 0);
+        expect(getSpy).toHaveBeenCalledExactlyOnceWith(CodeAnalysisPagingService, undefined, 0);
     });
 
     it('should sort by exam title when only the exam filter is active', () => {

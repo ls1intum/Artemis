@@ -11,17 +11,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -39,6 +42,15 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
     private Course course;
 
     private User tutor;
@@ -54,8 +66,8 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
      */
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 1, 1, 1);
-        course = database.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
+        userUtilService.addUsers(TEST_PREFIX, 0, 1, 1, 1);
+        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         tutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
         // we exactly create 1 exercise, 1 participation and 1 submission (which was submitted), so the following code should be fine
         exercise = course.getExercises().iterator().next();
@@ -69,7 +81,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddMultipleCompleteAssessmentEvents() throws Exception {
-        List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
+        List<TextAssessmentEvent> events = TextExerciseFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         for (TextAssessmentEvent event : events) {
             request.post("/api/event-insights/text-assessment/events", event, HttpStatus.CREATED);
@@ -102,7 +114,8 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
      * @param userId   the id of the user to be tested in the event
      */
     private void expectEventAddedWithResponse(HttpStatus expected, Long userId) throws Exception {
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
 
         request.post("/api/event-insights/text-assessment/events", event, expected);
     }
@@ -114,7 +127,8 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withNotNullEventId() throws Exception {
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
         event.setId(1L);
         request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
     }
@@ -124,7 +138,8 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {
         textSubmission.setExampleSubmission(true);
         textSubmissionRepository.saveAndFlush(textSubmission);
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
         request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
     }
 
@@ -134,8 +149,9 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllEventsByCourseId() throws Exception {
-        User user = database.getUserByLogin("admin");
-        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        User user = userUtilService.getUserByLogin("admin");
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
 
         request.post("/api/event-insights/text-assessment/events", event, HttpStatus.CREATED);
 
@@ -156,8 +172,10 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
-        TextAssessmentEvent event1 = database.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
-        TextAssessmentEvent event2 = database.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        TextAssessmentEvent event1 = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+        TextAssessmentEvent event2 = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
 
         // Add two events with two different tutor ids
         textAssessmentEventRepository.saveAll(List.of(event1, event2));
