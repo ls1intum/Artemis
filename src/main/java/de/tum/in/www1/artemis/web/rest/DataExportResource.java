@@ -72,12 +72,13 @@ public class DataExportResource {
         for (var dataExport : dataExports) {
             // we need to distinguish between these two cases as the creation date might not have been set yet (if the export hasn't been created yet).
             // allow requesting a new data export if the latest data export is older than the configured DAYS_BETWEEN_DATA_EXPORTS or its creation has failed
-            if (dataExport.getCreationDate() != null
-                    && (Duration.between(dataExport.getCreationDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS)
+            if (dataExport.getCreationFinishedDate() != null
+                    && (Duration.between(dataExport.getCreationFinishedDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS)
                     || dataExport.getDataExportState().hasFailed()) {
                 return true;
             }
-            if (dataExport.getCreationDate() == null && (Duration.between(dataExport.getCreatedDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS)
+            if (dataExport.getCreationFinishedDate() == null
+                    && (Duration.between(dataExport.getCreatedDate(), ZonedDateTime.now()).toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS)
                     || dataExport.getDataExportState().hasFailed()) {
                 return true;
             }

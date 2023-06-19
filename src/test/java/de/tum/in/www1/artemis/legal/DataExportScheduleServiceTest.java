@@ -62,11 +62,11 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         if (shouldBeCreated) {
             assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-            assertThat(dataExport.getCreationDate()).isNotNull();
+            assertThat(dataExport.getCreationFinishedDate()).isNotNull();
         }
         else {
             assertThat(dataExport.getDataExportState()).isEqualTo(state);
-            assertThat(dataExport.getCreationDate()).isNull();
+            assertThat(dataExport.getCreationFinishedDate()).isNull();
         }
     }
 
@@ -141,7 +141,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private DataExport createDataExportWithCreationDateAndState(ZonedDateTime creationDate, DataExportState state) {
         DataExport dataExport = new DataExport();
-        dataExport.setCreationDate(creationDate);
+        dataExport.setCreationFinishedDate(creationDate);
         dataExport.setDataExportState(state);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("path");

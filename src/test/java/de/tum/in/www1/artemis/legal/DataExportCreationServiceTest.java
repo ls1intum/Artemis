@@ -161,7 +161,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getCreatedDate()).isNotNull();
-        assertThat(dataExportFromDb.getCreationDate()).isNotNull();
+        assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
         // extract zip file and check content
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
@@ -352,7 +352,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
         assertThat(dataExportFromDb.getCreatedDate()).isNotNull();
-        assertThat(dataExportFromDb.getCreationDate()).isNotNull();
+        assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
         // extract zip file and check content
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));

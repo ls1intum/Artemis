@@ -222,7 +222,7 @@ public class DataExportCreationService {
 
     private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
         dataExport.setFilePath(dataExportPath.toString());
-        dataExport.setCreationDate(ZonedDateTime.now());
+        dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
         singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);

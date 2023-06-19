@@ -24,8 +24,8 @@ public class DataExport extends AbstractAuditingEntity {
     @Enumerated(EnumType.ORDINAL)
     private DataExportState dataExportState;
 
-    @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    @Column(name = "creation_finished_date")
+    private ZonedDateTime creationFinishedDate;
 
     @Column(name = "download_date")
     private ZonedDateTime downloadDate;
@@ -37,12 +37,12 @@ public class DataExport extends AbstractAuditingEntity {
     @Column(name = "file_path")
     private String filePath;
 
-    public ZonedDateTime getCreationDate() {
-        return creationDate;
+    public ZonedDateTime getCreationFinishedDate() {
+        return creationFinishedDate;
     }
 
-    public void setCreationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
+    public void setCreationFinishedDate(ZonedDateTime creationDate) {
+        this.creationFinishedDate = creationDate;
     }
 
     public ZonedDateTime getDownloadDate() {
