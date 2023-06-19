@@ -6,7 +6,7 @@
         <comment>Make the data export an AbstractAuditingEntity.</comment>
         <renameColumn tableName="data_export" oldColumnName="request_date" newColumnName="created_date" columnDataType="datetime(3)"/>
         <renameColumn tableName="data_export" oldColumnName="student_id" newColumnName="user_id" columnDataType="BIGINT"/>
-        <renameColumn tableName="data_export" oldColumnName="creation_date" newColumnName="creation_finished_date"/>
+        <renameColumn tableName="data_export" oldColumnName="creation_date" newColumnName="creation_finished_date" columnDataType="datetime(3)"/>
         <addColumn tableName="data_export">
             <column name="created_by" type="VARCHAR(45)"/>
         </addColumn>
