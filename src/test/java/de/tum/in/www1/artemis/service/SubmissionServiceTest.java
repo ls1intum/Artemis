@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -21,7 +23,11 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -43,6 +49,24 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Autowired
     private ComplaintRepository complaintRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
 
     private User student1;
 
@@ -83,18 +107,18 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 3, 2, 0, 1);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        tutor1 = database.getUserByLogin(TEST_PREFIX + "tutor1");
-        tutor2 = database.getUserByLogin(TEST_PREFIX + "tutor2");
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 1);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
 
-        Course course = database.createCourse();
-        Exam exam = database.addExam(course);
+        Course course = courseUtilService.createCourse();
+        Exam exam = examUtilService.addExam(course);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam = examRepository.save(exam);
 
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
         examTextExercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().filter(ex -> ex instanceof TextExercise).findAny().orElse(null);
         examModelingExercise = (ModelingExercise) exam.getExerciseGroups().get(3).getExercises().stream().filter(ex -> ex instanceof ModelingExercise).findAny().orElse(null);
         examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findAny()
@@ -139,18 +163,18 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
             submission2.submitted(true);
 
             if (exercise instanceof ProgrammingExercise) {
-                database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission1, TEST_PREFIX + "student1");
-                database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission2, TEST_PREFIX + "student1");
+                programmingExerciseUtilService.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission1, TEST_PREFIX + "student1");
+                programmingExerciseUtilService.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission2, TEST_PREFIX + "student1");
             }
             else {
-                database.addSubmission(exercise, submission1, TEST_PREFIX + "student1");
-                database.addSubmission(exercise, submission2, TEST_PREFIX + "student2");
+                participationUtilService.addSubmission(exercise, submission1, TEST_PREFIX + "student1");
+                participationUtilService.addSubmission(exercise, submission2, TEST_PREFIX + "student2");
             }
         }
     }
 
     private void getTutorSpecificCallsTutor1(Exercise exercise) {
-        database.changeUser(TEST_PREFIX + "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         unassessedSubmissionCorrectionRound0Tutor1 = submissionService.getRandomAssessableSubmission(exercise, true, 0);
         unassessedSubmissionCorrectionRound1Tutor1 = submissionService.getRandomAssessableSubmission(exercise, true, 1);
         submissionListTutor1CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(exercise.getId(), tutor1, true, 0);
@@ -158,7 +182,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     private void getTutorSpecificCallsTutor2(Exercise exercise) {
-        database.changeUser(TEST_PREFIX + "tutor2");
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
         unassessedSubmissionCorrectionRound0Tutor2 = submissionService.getRandomAssessableSubmission(exercise, true, 0);
         unassessedSubmissionCorrectionRound1Tutor2 = submissionService.getRandomAssessableSubmission(exercise, true, 1);
         submissionListTutor2CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(exercise.getId(), tutor2, true, 0);
@@ -264,7 +288,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         // setup
         queryTestingBasics(examTextExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         // checks
         getQueryResults(examTextExercise);
@@ -329,8 +353,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
 
         // checks
         getQueryResults(examTextExercise);
@@ -359,7 +383,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         Result resultForSecondCorrectionWithLock;
 
@@ -417,7 +441,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         // checks
         getQueryResults(examModelingExercise);
@@ -483,8 +507,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
 
         // checks
         getQueryResults(examModelingExercise);
@@ -513,7 +537,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         Result resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
         resultForSecondCorrectionWithLock.setAssessor(tutor2);
@@ -541,15 +565,16 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsWithComplaintsForExerciseAsInstructor() {
-        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
-        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
-        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
+        var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
+        var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
+        var participation3 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
         // noinspection unused
-        var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
-        var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "instructor1");
-        var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
-        database.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
-        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
+        var submissionWithoutComplaint = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
+        var submissionWithComplaintSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(),
+                TEST_PREFIX + "instructor1");
+        var submissionWithComplaintOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
 
@@ -576,15 +601,15 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetSubmissionsWithComplaintsForExerciseAsTutor() {
-        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
-        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
-        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
+        var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
+        var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
+        var participation3 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
         // noinspection unused
-        var submissionWithoutComplaint = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
-        var submissionWithComplaintSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
-        var submissionWithComplaintOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
-        database.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
-        database.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
+        var submissionWithoutComplaint = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
+        var submissionWithComplaintSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
+        var submissionWithComplaintOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintSameTutor, TEST_PREFIX + "student2", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submissionWithComplaintOtherTutor, TEST_PREFIX + "student3", ComplaintType.COMPLAINT);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
 
@@ -607,15 +632,15 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetSubmissionsWithMoreFeedbackRequestsForExerciseAsTutor() {
-        var participation1 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
-        var participation2 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
-        var participation3 = database.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
+        var participation1 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
+        var participation2 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student2");
+        var participation3 = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student3");
         // noinspection unused
-        var submissionWithoutRequest = database.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
-        var submissionWithRequestSameTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
-        var submissionWithRequestOtherTutor = database.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
-        database.addComplaintToSubmission(submissionWithRequestSameTutor, TEST_PREFIX + "student2", ComplaintType.MORE_FEEDBACK);
-        database.addComplaintToSubmission(submissionWithRequestOtherTutor, TEST_PREFIX + "student3", ComplaintType.MORE_FEEDBACK);
+        var submissionWithoutRequest = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation1, new TextSubmission(), TEST_PREFIX + "tutor2");
+        var submissionWithRequestSameTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation2, new TextSubmission(), TEST_PREFIX + "tutor1");
+        var submissionWithRequestOtherTutor = participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation3, new TextSubmission(), TEST_PREFIX + "tutor2");
+        complaintUtilService.addComplaintToSubmission(submissionWithRequestSameTutor, TEST_PREFIX + "student2", ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaintToSubmission(submissionWithRequestOtherTutor, TEST_PREFIX + "student3", ComplaintType.MORE_FEEDBACK);
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(examTextExercise.getId());
 

@@ -17,7 +17,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -25,6 +29,18 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ParticipationLifecycleService participationLifecycleService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -37,10 +53,10 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
     void reset() {
         SecurityUtils.setAuthorizationObject();
 
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        participation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
     }
 
     @Test
