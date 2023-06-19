@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "quizsubmissiontest";
@@ -101,14 +100,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    @BeforeAll
-    void stopSchedule() {
-        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        quizScheduleService.stopSchedule();
-    }
-
     @BeforeEach
     void init() {
+        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
+        quizScheduleService.stopSchedule();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
     }
 
