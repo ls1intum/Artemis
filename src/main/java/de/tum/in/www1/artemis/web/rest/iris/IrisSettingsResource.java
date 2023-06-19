@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
@@ -131,7 +132,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings.
      */
     @PutMapping("iris/global-iris-settings")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
     public ResponseEntity<IrisSettings> updateGlobalSettings(@RequestBody IrisSettings settings) {
         var updatedSettings = irisSettingsService.saveGlobalIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
