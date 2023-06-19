@@ -204,6 +204,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             };
         };
 
+        // Currently, an additional REST call is made to retrieve the channel associated with the lecture/exercise
+        // TODO: Add the channel to the response for loading the lecture/exercise
         if (this.lecture?.id) {
             this.channelService
                 .getChannelOfLecture(courseId, this.lecture.id)
