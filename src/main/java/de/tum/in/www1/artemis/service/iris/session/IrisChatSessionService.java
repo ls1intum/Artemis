@@ -162,10 +162,10 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         Repository templateRepo;
         Repository studentRepo;
 
-        if (studentParticipation.isEmpty() && templateParticipation.isEmpty()) {
-            return;
+        if (templateParticipation.isEmpty()) {
+            throw new BadRequestException("Iris cannot function without template participation");
         }
-        else if (studentParticipation.isEmpty()) {
+        if (studentParticipation.isEmpty()) {
             try {
                 templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
             }
@@ -174,17 +174,6 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 return;
             }
             parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
-            return;
-        }
-        else if (templateParticipation.isEmpty()) {
-            try {
-                studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
-            }
-            catch (GitAPIException e) {
-                log.error("Could not checkout student repository", e);
-                return;
-            }
-            parameters.put("studentRepository", repositoryService.getFilesWithContent(studentRepo));
             return;
         }
 
