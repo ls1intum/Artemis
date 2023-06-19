@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.util.IrisUtilTestService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 
 class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -37,6 +39,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private IrisUtilTestService irisUtilTestService;
 
     private ProgrammingExercise exercise;
 
@@ -60,6 +65,10 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
 
         irisRequestMockProvider.mockResponse("Hello World");
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var exerciseParticipation = database.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        activateIrisFor(savedExercise);
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
@@ -103,6 +112,12 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend1.setSession(irisSession);
         messageToSend1.setSentAt(ZonedDateTime.now());
         messageToSend1.setContent(List.of(createMockContent(messageToSend1), createMockContent(messageToSend1), createMockContent(messageToSend1)));
+
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var exerciseParticipation = database.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        activateIrisFor(savedExercise);
+
         var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage1.getHelpful()).isNull();
