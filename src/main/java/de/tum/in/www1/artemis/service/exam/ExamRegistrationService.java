@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -340,9 +339,6 @@ public class ExamRegistrationService {
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
-
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerCourseStudentsToChannelAsynchronously(course, channel);
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

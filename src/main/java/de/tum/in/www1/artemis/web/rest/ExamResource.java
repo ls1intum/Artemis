@@ -9,7 +9,8 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -969,6 +970,9 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
+        channelService.registerCourseStudentsToChannelAsynchronously(exam.getCourse(), channel);
+
         return ResponseEntity.ok().body(null);
     }
 
