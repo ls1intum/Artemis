@@ -212,7 +212,7 @@ public class ExamRegistrationService {
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
 
-            addStudentToExamChannel(exam, student);
+            channelService.registerUsersToExamChannel(List.of(student.getLogin()), exam);
         }
         else {
             log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
@@ -366,18 +366,5 @@ public class ExamRegistrationService {
         examUser.setExam(exam);
         examUser.setUser(user);
         return examUserRepository.save(examUser);
-    }
-
-    /**
-     * Adds a student to the exam channel if it exists
-     *
-     * @param exam    exam the channel belongs to
-     * @param student the user that should be added
-     */
-    private void addStudentToExamChannel(Exam exam, User student) {
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        if (channel != null) {
-            channelService.registerUsersToChannel(false, false, false, List.of(student.getLogin()), exam.getCourse(), channel);
-        }
     }
 }
