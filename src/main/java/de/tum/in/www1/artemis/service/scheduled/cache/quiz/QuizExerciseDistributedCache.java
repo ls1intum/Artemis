@@ -89,7 +89,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     }
 
     @Override
-    QuizExercise getExercise() {
+    public QuizExercise getExercise() {
         return exercise;
     }
 

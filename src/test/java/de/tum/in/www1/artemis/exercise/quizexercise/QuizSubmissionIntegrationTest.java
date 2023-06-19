@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -429,7 +430,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             fail("Timed out waiting for the quiz exercise cache.");
         }
 
-        Thread.sleep(50); // additional delay until all processing is complete
+        // not only wait until the message got received, but also until the processing is done.
+        Awaitility.await().until(() -> quizScheduleService.getReadCache(exerciseId).getExercise() != null);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));

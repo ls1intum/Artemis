@@ -217,7 +217,7 @@ public class QuizScheduleService {
      * @return if processing of the quiz has finished
      */
     public boolean finishedProcessing(Long quizExerciseId) {
-        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().isEmpty();
+        return getReadCache(quizExerciseId).getSubmissions().isEmpty();
     }
 
     /**
@@ -326,7 +326,7 @@ public class QuizScheduleService {
      * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
      */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
-        ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getQuizStart().forEach(taskHandler -> {
+        getReadCache(quizExerciseId).getQuizStart().forEach(taskHandler -> {
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
@@ -528,11 +528,11 @@ public class QuizScheduleService {
 
     public void joinQuizBatch(QuizExercise quizExercise, QuizBatch quizBatch, User user) {
         log.debug("join user {} to batch {} for quiz {}", user, quizBatch, quizExercise.getId());
-        ((QuizExerciseCache)quizCache.getTransientWriteCacheFor(quizExercise.getId())).getBatches().put(user.getLogin(), quizBatch.getId());
+        getWriteCache(quizExercise.getId()).getBatches().put(user.getLogin(), quizBatch.getId());
     }
 
     public Optional<Long> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        var quizExerciseCache = (QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId());
+        var quizExerciseCache = getReadCache(quizExercise.getId());
         return Optional.ofNullable(quizExerciseCache.getBatches().get(login));
     }
 
@@ -700,7 +700,7 @@ public class QuizScheduleService {
         return (QuizExerciseCache) quizCache.getTransientWriteCacheFor(exerciseId);
     }
 
-    private QuizExerciseCache getReadCache(long exerciseId) {
+    public QuizExerciseCache getReadCache(long exerciseId) {
         return (QuizExerciseCache) quizCache.getReadCacheFor(exerciseId);
     }
 }

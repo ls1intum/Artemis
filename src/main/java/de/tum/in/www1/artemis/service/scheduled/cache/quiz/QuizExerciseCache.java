@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 /**
  * Represents the cache for one specific quiz exercise.
  */
-abstract class QuizExerciseCache implements Cache {
+public abstract class QuizExerciseCache implements Cache {
 
     private final Long exerciseId;
 
@@ -34,7 +34,7 @@ abstract class QuizExerciseCache implements Cache {
      *
      * @return the actual QuizExercise object, may be null.
      */
-    abstract QuizExercise getExercise();
+    public abstract QuizExercise getExercise();
 
     /**
      * QuizBatch ids by username
