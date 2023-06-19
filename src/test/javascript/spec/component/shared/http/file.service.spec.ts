@@ -49,7 +49,7 @@ describe('FileService', () => {
 
             expect(file.size).toEqual(blob.size);
             expect(file.name).toBe(firstUniqueFileName + '.png');
-            expect(getUniqueFileNameSpy).toHaveBeenCalledOnceWith('png', undefined);
+            expect(getUniqueFileNameSpy).toHaveBeenCalledExactlyOnceWith('png', undefined);
             expect(v4Mock).toHaveBeenCalledOnce();
         });
 
@@ -72,7 +72,7 @@ describe('FileService', () => {
 
             expect(file.size).toEqual(blob.size);
             expect(file.name).toBe(thirdUniqueFileName + '.png');
-            expect(getUniqueFileNameSpy).toHaveBeenCalledOnceWith('png', existingFileNames);
+            expect(getUniqueFileNameSpy).toHaveBeenCalledExactlyOnceWith('png', existingFileNames);
             expect(v4Mock).toHaveBeenCalledTimes(3);
         });
     });

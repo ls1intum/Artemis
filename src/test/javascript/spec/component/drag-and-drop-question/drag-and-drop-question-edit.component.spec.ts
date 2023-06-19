@@ -154,7 +154,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(component.question.backgroundFilePath).toEndWith('.jpg');
         expect(addFileSpy).toHaveBeenCalledOnce();
-        expect(createObjectURLStub).toHaveBeenCalledOnceWith(file1);
+        expect(createObjectURLStub).toHaveBeenCalledExactlyOnceWith(file1);
     });
 
     it('should move the mouse in different situations', () => {
@@ -356,7 +356,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const filePath = newDragItemOfQuestion.pictureFilePath!;
         expect(component.filePreviewPaths.size).toBe(1);
         expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
-        expect(addFileSpy).toHaveBeenCalledOnceWith({ file, fileName: filePath });
+        expect(addFileSpy).toHaveBeenCalledExactlyOnceWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
@@ -455,7 +455,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.filePreviewPaths.size).toBe(3);
         expect(addFileSpy).not.toHaveBeenCalled();
-        expect(removeFileSpy).toHaveBeenCalledOnceWith('this/is/a/fake/path/3/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledExactlyOnceWith('this/is/a/fake/path/3/image.jpg');
         expect(component.question.dragItems![0]).toContainAllEntries([
             ['id', 1],
             ['pictureFilePath', 'this/is/a/fake/path/2/image.jpg'],
@@ -501,7 +501,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question.dragItems![1].pictureFilePath).toEndWith('.' + extension);
         const filePath = component.question.dragItems![1].pictureFilePath!;
         expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
-        expect(addFileSpy).toHaveBeenCalledOnceWith({ file, fileName: filePath });
+        expect(addFileSpy).toHaveBeenCalledExactlyOnceWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
 

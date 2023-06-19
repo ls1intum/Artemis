@@ -1056,7 +1056,7 @@ describe('QuizExercise Management Detail Component', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledOnceWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), {});
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), {});
                 expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
             });
 
@@ -1066,7 +1066,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).toHaveBeenCalledOnceWith(comp.quizExercise, new Map<string, Blob>());
+                expect(quizExerciseServiceImportStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise, new Map<string, Blob>());
             });
 
             it('should not save if not valid', () => {
