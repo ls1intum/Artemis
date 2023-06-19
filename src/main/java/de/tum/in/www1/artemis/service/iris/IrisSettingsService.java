@@ -233,7 +233,7 @@ public class IrisSettingsService {
             if (subSettings2 != null && subSettings2.getPreferredModel() != null) {
                 preferredModel = subSettings2.getPreferredModel();
             }
-            else if (subSettings1 != null) {
+            else if (subSettings1 != null && subSettings1.getPreferredModel() != null) {
                 preferredModel = subSettings1.getPreferredModel();
             }
             else {
