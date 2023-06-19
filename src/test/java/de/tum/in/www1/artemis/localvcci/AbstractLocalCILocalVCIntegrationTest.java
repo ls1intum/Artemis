@@ -14,10 +14,14 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -34,6 +38,18 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected ParticipationUtilService participationUtilService;
 
     @LocalServerPort
     protected int port;
@@ -81,7 +97,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
 
-        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         student1Login = TEST_PREFIX + "student1";
         student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
         student2Login = TEST_PREFIX + "student2";
@@ -89,8 +105,8 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         instructor1Login = TEST_PREFIX + "instructor1";
         instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
 
-        course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);

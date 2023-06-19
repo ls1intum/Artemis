@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL;
 import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL_UPPER_CASE;
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -27,9 +27,12 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
@@ -71,6 +74,15 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     protected AuthorityRepository authorityRepository;
 
+    @Autowired
+    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    protected CourseUtilService courseUtilService;
+
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
     private static final String USERNAME = TEST_PREFIX + "student1";
 
     protected ProgrammingExercise programmingExercise;
@@ -81,9 +93,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void setUp() {
-        course = database.addCourseWithOneProgrammingExercise();
-        database.addOnlineCourseConfigurationToCourse(course);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        courseUtilService.addOnlineCourseConfigurationToCourse(course);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();

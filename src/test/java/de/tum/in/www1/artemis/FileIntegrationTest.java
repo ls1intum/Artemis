@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -27,9 +28,15 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureFactory;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -53,9 +60,27 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private LectureRepository lectureRepo;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
     }
 
     @Test
@@ -85,7 +110,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseIcon() throws Exception {
-        Course course = database.addEmptyCourse();
+        Course course = courseUtilService.addEmptyCourse();
         MockMultipartFile file = new MockMultipartFile("file", "icon.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
@@ -101,8 +126,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDragAndDropBackgroundFile() throws Exception {
-        Course course = database.addEmptyCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        Course course = courseUtilService.addEmptyCourse();
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -122,8 +147,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDragItemFile() throws Exception {
-        Course course = database.addEmptyCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        Course course = courseUtilService.addEmptyCourse();
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -159,10 +184,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
@@ -210,12 +235,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = database.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now());
         attachment.setLecture(lecture);
 
         // create file
@@ -241,11 +266,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAttachmentUnit() throws Exception {
-        Lecture lecture = database.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
         MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
         AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, HttpStatus.CREATED);
-        database.addLectureUnitsToLecture(lecture, List.of(attachmentUnit));
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(attachmentUnit));
 
         String attachmentPath = attachmentUnit.getAttachment().getLink();
         String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
@@ -255,12 +280,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetUnreleasedAttachmentUnitAsTutor() throws Exception {
-        Lecture lecture = database.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
         // create unreleased attachment unit
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
         attachmentUnit.setLecture(lecture);
         Attachment attachment = attachmentUnit.getAttachment();
         attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -274,9 +299,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private AttachmentUnit createLectureWithAttachmentUnit() {
-        Lecture lecture = database.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
         lecture.addLectureUnit(attachmentUnit);
 
         lectureRepo.save(lecture);
@@ -375,7 +400,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         adjustReleaseDateToFuture(lecture);
 
         // The test setup needs at least TA right for creating a lecture with files.
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         // The unit is hidden, students should not see it in the merged result
         callAndCheckMergeResult(lecture, 2);
@@ -400,7 +425,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lectureRepo.save(lecture);
 
         // The test setup needs at least TA right for creating a lecture with files.
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
         try (PDDocument mergedDoc = retrieveMergeResult(lecture)) {
             assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
@@ -429,7 +454,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = database.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
@@ -464,14 +489,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             unit3 = uploadAttachmentUnit(file3, expectedStatus);
         }
 
-        lecture = database.addLectureUnitsToLecture(lecture, List.of(unit1, unit2, unit3));
+        lecture = lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit1, unit2, unit3));
 
         return lecture;
     }
 
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
 
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(false);
 
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);

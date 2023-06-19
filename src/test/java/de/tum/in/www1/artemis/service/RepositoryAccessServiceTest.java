@@ -22,10 +22,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -45,6 +48,15 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
     private RepositoryAccessService repositoryAccessService;
 
     @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
     private ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     User student;
@@ -55,9 +67,9 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void setup() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        course = database.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().stream().iterator().next();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -66,13 +78,13 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testShouldEnforceLockRepositoryPolicy() throws Exception {
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
 
         // Add LockRepositoryPolicy to the programmingExercise.
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
         lockRepositoryPolicy.setActive(true);
         lockRepositoryPolicy.setSubmissionLimit(1);
-        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
         // Process a new result for the submission. This should lock the participation, because the submission limit is reached.
         BambooBuildResultNotificationDTO bambooBuildResult = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(), List.of(),
