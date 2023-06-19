@@ -26,6 +26,18 @@ public class AuthorizationTestService {
 
     private final Method preAuthorizeValueAnnotation = PreAuthorize.class.getDeclaredMethod("value");
 
+    private static final String REST_BASE_PACKAGE = "de.tum.in.www1.artemis.web.rest";
+
+    private static final String REST_ADMIN_PACKAGE = REST_BASE_PACKAGE + ".admin";
+
+    private static final String REST_OPEN_PACKAGE = REST_BASE_PACKAGE + ".open";
+
+    private static final String REST_BASE_PATH = "/api";
+
+    private static final String REST_ADMIN_PATH = REST_BASE_PATH + "/admin";
+
+    private static final String REST_PUBLIC_PATH = REST_BASE_PATH + "/public";
+
     public AuthorizationTestService() throws NoSuchMethodException {
         // Empty constructor to add exception
     }
@@ -41,7 +53,7 @@ public class AuthorizationTestService {
 
         // Test each endpoint and collect the reports
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : endpointMap.entrySet()) {
-            testEndpoint(entry.getValue(), classReports, methodReports);
+            testEndpoint(entry.getKey(), entry.getValue(), classReports, methodReports);
         }
 
         printReports(classReports, methodReports);
@@ -75,13 +87,16 @@ public class AuthorizationTestService {
      * Tests a single endpoint and collects the reports
      * Additional tests should be added here.
      *
+     * @param info          The request mapping info of the endpoint
      * @param method        The handler method of the endpoint
      * @param classReports  The current class reports
      * @param methodReports The current method reports
      */
-    private void testEndpoint(HandlerMethod method, Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports)
+    private void testEndpoint(RequestMappingInfo info, HandlerMethod method, Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports)
             throws InvocationTargetException, IllegalAccessException {
         checkForAnnotation(method, classReports, methodReports);
+        checkForLocation(method, methodReports);
+        checkForPath(info, method, methodReports);
     }
 
     /**
@@ -125,6 +140,105 @@ public class AuthorizationTestService {
             addElement(methodReports, javaMethod,
                     "Collision between class and method authorization annotations found for " + javaMethod.getName() + "(). Collisions should be " + "avoided" + ".");
         }
+    }
+
+    /**
+     * Checks if the method is located in the correct package. If the method has no single authorization annotation, the method returns.
+     *
+     * @param method        The handler method of the endpoint
+     * @param methodReports The current method reports
+     */
+    private void checkForLocation(HandlerMethod method, Map<Method, Set<String>> methodReports) {
+        Method javaMethod = method.getMethod();
+        Class<?> javaClass = javaMethod.getDeclaringClass();
+        Annotation annotation = getSingleAuthAnnotation(javaMethod);
+        if (annotation == null) {
+            // We already logged an error in this case
+            return;
+        }
+        String annotationType = annotation.annotationType().getSimpleName();
+
+        switch (annotationType) {
+            case "EnforceAdmin" -> {
+                if (!javaClass.getPackageName().startsWith(REST_ADMIN_PACKAGE)) {
+                    addElement(methodReports, javaMethod, "Expect method " + javaMethod.getName() + " annotated with @EnforceAdmin to be in package " + REST_ADMIN_PACKAGE
+                            + " but found in " + javaClass.getPackageName() + ".");
+                }
+            }
+            case "EnforceAtLeastInstructor", "EnforceAtLeastEditor", "EnforceAtLeastTutor", "EnforceAtLeastStudent" -> {
+                if (!javaClass.getPackageName().startsWith(REST_BASE_PACKAGE)) {
+                    addElement(methodReports, javaMethod, "Expect method " + javaMethod.getName() + " annotated with @" + annotationType + " to be in package " + REST_BASE_PACKAGE
+                            + " but found in " + javaClass.getPackageName() + ".");
+                }
+            }
+            case "EnforceNothing" -> {
+                if (!javaClass.getPackageName().startsWith(REST_OPEN_PACKAGE)) {
+                    addElement(methodReports, javaMethod, "Expect method " + javaMethod.getName() + " annotated with @EnforceNothing to be in package " + REST_OPEN_PACKAGE
+                            + " but found in " + javaClass.getPackageName() + ".");
+                }
+            }
+            default -> addElement(methodReports, javaMethod, "Unsupported annotation type " + annotationType + " for method " + javaMethod.getName() + "().");
+        }
+    }
+
+    /**
+     * Checks if the path of the endpoint has the correct prefix. If the method has no single authorization annotation, the method returns.
+     *
+     * @param info          The request mapping info of the endpoint
+     * @param method        The handler method of the endpoint
+     * @param methodReports The current method reports
+     */
+    private void checkForPath(RequestMappingInfo info, HandlerMethod method, Map<Method, Set<String>> methodReports) {
+        Method javaMethod = method.getMethod();
+        Set<String> patterns = Objects.requireNonNull(info.getPatternsCondition()).getPatterns();
+        Annotation annotation = getSingleAuthAnnotation(javaMethod);
+        if (annotation == null) {
+            // We already logged an error in this case
+            return;
+        }
+        String annotationType = annotation.annotationType().getSimpleName();
+
+        switch (annotationType) {
+            case "EnforceAdmin" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.startsWith(REST_ADMIN_PATH)) {
+                        addElement(methodReports, javaMethod,
+                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceAdmin to start with " + REST_ADMIN_PATH + " but is " + pattern + ".");
+                    }
+                }
+            }
+            case "EnforceAtLeastInstructor", "EnforceAtLeastEditor", "EnforceAtLeastTutor", "EnforceAtLeastStudent" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.startsWith(REST_BASE_PATH)) {
+                        addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @" + annotationType + " to start with "
+                                + REST_BASE_PATH + " but is " + pattern + ".");
+                    }
+                }
+            }
+            case "EnforceNothing" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.startsWith(REST_PUBLIC_PATH)) {
+                        addElement(methodReports, javaMethod,
+                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceNothing to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
+                    }
+                }
+            }
+            default -> addElement(methodReports, javaMethod, "Unsupported annotation type " + annotationType + " for method " + javaMethod.getName() + "().");
+        }
+    }
+
+    /**
+     * Returns the authorization annotation of the given method if it exists, null otherwise or if multiple annotations exist.
+     *
+     * @param method The method to check
+     * @return The authorization annotation or null
+     */
+    private Annotation getSingleAuthAnnotation(Method method) {
+        List<Annotation> annotations = getAuthAnnotations(method);
+        if (annotations.size() == 1) {
+            return annotations.get(0);
+        }
+        return null;
     }
 
     /**
