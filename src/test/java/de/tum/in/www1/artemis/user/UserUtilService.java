@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.UserTestRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -62,6 +63,9 @@ public class UserUtilService {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserTestRepository userTestRepository;
 
     public void changeUser(String username) {
         User user = getUserByLogin(username);
@@ -214,7 +218,7 @@ public class UserUtilService {
         // Otherwise, the amount users per course constantly increases while running the tests,
         // even though the old users are not needed anymore.
         if (usersToAdd.size() > 0) {
-            Set<User> currentUsers = userRepo.findAllInAnyGroup();
+            Set<User> currentUsers = userTestRepository.findAllInAnyGroup();
             log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));
             userRepo.saveAll(currentUsers);
