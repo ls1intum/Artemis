@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -30,14 +31,14 @@ public class IrisUtilTestService {
     @Autowired
     private UrlService urlService;
 
-    @Autowired
-    private DatabaseUtilService database;
-
     @Autowired(required = false)
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -62,7 +63,7 @@ public class IrisUtilTestService {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUrl(templateRepoUrl.toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);

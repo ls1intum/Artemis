@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -43,6 +44,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisUtilTestService irisUtilTestService;
 
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -66,7 +70,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         irisRequestMockProvider.mockResponse("Hello World");
         var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
-        var exerciseParticipation = database.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
+        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
         activateIrisFor(savedExercise);
 
@@ -114,7 +118,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend1.setContent(List.of(createMockContent(messageToSend1), createMockContent(messageToSend1), createMockContent(messageToSend1)));
 
         var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
-        var exerciseParticipation = database.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
+        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
         activateIrisFor(savedExercise);
 
