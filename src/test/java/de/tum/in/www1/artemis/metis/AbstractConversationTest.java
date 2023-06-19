@@ -95,7 +95,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(exampleCourseId);
         postContextFilter.setConversationId(conversationId);
         var requestingUser = userRepository.getUser();
 

@@ -169,8 +169,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setChannel(courseId: number): void {
         if (this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
             this.metisService.getFilteredPosts({
-                exerciseId: this.exercise?.id,
-                lectureId: this.lecture?.id,
+                exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
+                lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
             });
             return;
         }
@@ -188,8 +188,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     const contextFilter = this.channel?.id
                         ? { conversationId: this.channel.id }
                         : {
-                              exerciseId: this.exercise?.id,
-                              lectureId: this.lecture?.id,
+                              exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
+                              lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
                           };
                     this.metisService.getFilteredPosts(contextFilter);
                     this.createEmptyPost();
@@ -273,8 +273,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseId: this.channel?.id ? undefined : this.exercise?.id,
-            lectureId: this.channel?.id ? undefined : this.lecture?.id,
+            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
+            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
             conversationId: this.channel?.id,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
