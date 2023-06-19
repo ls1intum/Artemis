@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -48,9 +49,6 @@ public class HestiaUtilTestService {
     private UrlService urlService;
 
     @Autowired
-    private DatabaseUtilService database;
-
-    @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
 
     // required=false is necessary, as this will otherwise fail when not part of a AbstractSpringIntegrationBambooBitbucketJiraTest
@@ -65,6 +63,9 @@ public class HestiaUtilTestService {
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     /**
      * Sets up the template repository of a programming exercise with a single file
@@ -115,7 +116,7 @@ public class HestiaUtilTestService {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUrl(templateRepoUrl.toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
@@ -176,7 +177,7 @@ public class HestiaUtilTestService {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
-        database.addSolutionParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         solutionParticipation.setRepositoryUrl(solutionRepoUrl.toString());
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
