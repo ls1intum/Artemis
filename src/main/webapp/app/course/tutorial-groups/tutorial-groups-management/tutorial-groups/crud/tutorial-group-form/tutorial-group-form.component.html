@@ -28,7 +28,7 @@
                 <label class="form-check-label" for="updateTutorialGroupChannelNameControl">
                     {{ 'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.label' | artemisTranslate }}
                 </label>
-                <small id="updateChannelNameHelp" class="form-text text-muted d-block">{{
+                <small id="updateChannelNameHelp" class="form-text text-body-secondary d-block">{{
                     'artemisApp.forms.tutorialGroupForm.updateChannelNameInput.explanation' | artemisTranslate
                 }}</small>
             </div>
@@ -60,7 +60,7 @@
                     (focus)="taFocus$.next($any($event).target.value)"
                     (click)="taClick$.next($any($event).target.value)"
                 />
-                <small id="taHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.taHelp' | artemisTranslate }}</small>
+                <small id="taHelp" class="form-text text-body-secondary">{{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.taHelp' | artemisTranslate }}</small>
                 <div *ngIf="teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)" class="alert alert-danger">
                     <div *ngIf="teachingAssistantControl?.errors?.required">
                         {{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.requiredValidationError' | artemisTranslate }}
@@ -84,7 +84,7 @@
                     (focus)="campusFocus$.next($any($event).target.value)"
                     (click)="campusClick$.next($any($event).target.value)"
                 />
-                <small id="campusHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.campusInput.campusHelp' | artemisTranslate }}</small>
+                <small id="campusHelp" class="form-text text-body-secondary">{{ 'artemisApp.forms.tutorialGroupForm.campusInput.campusHelp' | artemisTranslate }}</small>
                 <div *ngIf="campusControl?.invalid && (campusControl?.dirty || campusControl?.touched)" class="alert alert-danger">
                     <div *ngIf="campusControl?.errors?.max">
                         {{ 'artemisApp.forms.tutorialGroupForm.campusInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
@@ -118,7 +118,7 @@
                     (focus)="languageFocus$.next($any($event).target.value)"
                     (click)="languageClick$.next($any($event).target.value)"
                 />
-                <small id="languageHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.languageHelp' | artemisTranslate }}</small>
+                <small id="languageHelp" class="form-text text-body-secondary">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.languageHelp' | artemisTranslate }}</small>
             </div>
             <!-- Validation Errors for the smaller input from above-->
             <div class="form-group">
@@ -139,7 +139,7 @@
             <!-- Additional Information -->
             <div class="form-group">
                 <label class="d-block" for="additionalInfo">{{ 'artemisApp.forms.tutorialGroupForm.additionalInformationInput.label' | artemisTranslate }}</label>
-                <small id="additionalInfoHelp" class="form-text mb-1 text-muted">
+                <small id="additionalInfoHelp" class="form-text mb-1 text-body-secondary">
                     <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
                 </small>
                 <!-- not included in reactive form -->
@@ -174,7 +174,7 @@
                     [placeholder]="'artemisApp.forms.tutorialGroupForm.notificationInput.placeholder' | artemisTranslate"
                     rows="3"
                 ></textarea>
-                <small id="notificationHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.help' | artemisTranslate }}</small>
+                <small id="notificationHelp" class="form-text text-body-secondary">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.help' | artemisTranslate }}</small>
 
                 <div *ngIf="notificationControl?.invalid && (notificationControl?.dirty || notificationControl?.touched)" class="alert alert-danger">
                     <div *ngIf="notificationControl?.errors?.maxlength">

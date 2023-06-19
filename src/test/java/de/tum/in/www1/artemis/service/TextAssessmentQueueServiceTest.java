@@ -14,9 +14,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,14 +41,17 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     private Percentage errorRate;
 
     private Course course;
 
     @BeforeEach
     void init() {
-        database.createAndSaveUser(TEST_PREFIX + "student1");
-        course = database.addCourseWithOneReleasedTextExercise();
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
+        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         errorRate = Percentage.withPercentage(0.0001);
     }
 
