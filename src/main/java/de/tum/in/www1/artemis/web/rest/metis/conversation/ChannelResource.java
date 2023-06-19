@@ -115,7 +115,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the channel
      */
     @GetMapping("/{courseId}/exercises/{exerciseId}/channel")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Channel> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("REST request to get channel of exercise: {}", exerciseId);
         checkMessagingEnabledElseThrow(courseId);
@@ -137,7 +137,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the channel
      */
     @GetMapping("/{courseId}/lectures/{lectureId}/channel")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Channel> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
         log.debug("REST request to get channel of lecture: {}", lectureId);
         checkMessagingEnabledElseThrow(courseId);
