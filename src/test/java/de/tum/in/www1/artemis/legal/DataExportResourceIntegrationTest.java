@@ -171,8 +171,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
         boolean assessmentDueDateInTheFuture = false;
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
-        createCommunicationData(TEST_PREFIX + "student1", course);
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
+        createCommunicationData(course);
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -199,7 +199,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(courseDirPath).isDirectoryContaining(path -> "messages_posts_reactions.csv".equals(path.getFileName().toString()));
     }
 
-    private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture) throws Exception {
+    private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
@@ -207,7 +207,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         }
         Course course1;
         if (assessmentDueDateInTheFuture) {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("future", TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
+            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         else {
             course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
@@ -242,10 +242,10 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         return course1;
     }
 
-    private void createCommunicationData(String userLogin, Course course1) {
-        conversationUtilService.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
-        conversationUtilService.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
-        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
+    private void createCommunicationData(Course course1) {
+        conversationUtilService.addMessageWithReplyAndReactionInGroupChatOfCourseForUser("dataexportstudent1", course1, "group chat");
+        conversationUtilService.addMessageInChannelOfCourseForUser(TEST_PREFIX + "student1", course1, "channel");
+        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser("dataexportstudent1", course1, "one-to-one-chat");
     }
 
     private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
@@ -403,15 +403,33 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntLeakResultsIfAssessmentDueDateInTheFuture() throws Exception {
         boolean assessmentDueDateInTheFuture = true;
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var courseShortName = "future";
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         addOnlyAnswerPostInCourse(course);
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "future");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
         assertCommunicationDataCsvFile(courseDirPath);
         getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportContainsDataAboutCourseStudentUnenrolled() throws Exception {
+        boolean assessmentDueDateInTheFuture = true;
+        var courseShortName = "unenrolled";
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
+        // by setting the course groups to a different value we simulate unenrollment because the user is no longer part of the user group and hence, the course.
+        courseUtilService.updateCourseGroups("abc", course, "");
+        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
+        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+
     }
 
     private void addOnlyAnswerPostInCourse(Course course) {
