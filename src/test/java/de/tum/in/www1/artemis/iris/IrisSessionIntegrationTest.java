@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.iris;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +42,8 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     void createSession() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisChatSession.class, HttpStatus.CREATED);
         var actualIrisSession = irisChatSessionRepository.findByIdElseThrow(irisSession.getId());
-        assertEquals(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), actualIrisSession.getUser());
-        assertEquals(exercise, actualIrisSession.getExercise());
+        assertThat(actualIrisSession.getUser()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        assertThat(exercise).isEqualTo(actualIrisSession.getExercise());
     }
 
     @Test
@@ -58,7 +58,7 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     void getCurrentSession() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var currentIrisSession = request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.OK, IrisSession.class);
-        assertEquals(irisSession, currentIrisSession);
+        assertThat(currentIrisSession).isEqualTo(irisSession);
     }
 
     @Test
