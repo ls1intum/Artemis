@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -29,7 +30,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
@@ -87,8 +87,8 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
         // Process a new result for the submission. This should lock the participation, because the submission limit is reached.
-        BambooBuildResultNotificationDTO bambooBuildResult = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(), List.of(),
-                new ArrayList<>());
+        BambooBuildResultNotificationDTO bambooBuildResult = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(),
+                List.of(), new ArrayList<>());
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now());
         bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly((programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase(),
