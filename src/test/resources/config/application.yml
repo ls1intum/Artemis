@@ -173,7 +173,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: "postgres:15.2-alpine"
+                    image: "postgres:15.3-alpine"
                     tmpfs:
                         enabled: true
                 server:
@@ -196,7 +196,7 @@ zonky:
                         max_parallel_maintenance_workers: 2
             mysql:
                 docker:
-                    image: "mysql:8.0.32"
+                    image: "mysql:8.0.33"
                     tmpfs:
                         enabled: true
 
