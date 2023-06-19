@@ -68,11 +68,7 @@ public class DataExportService {
     @Value("${artemis.repo-download-clone-path}")
     private Path repoClonePath;
 
-    private final CourseRepository courseRepository;
-
     private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     private final ZipFileService zipFileService;
 
@@ -107,15 +103,13 @@ public class DataExportService {
 
     private final ComplaintRepository complaintRepository;
 
-    public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
-            ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
-            QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
-            StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, ComplaintRepository complaintRepository) {
-        this.courseRepository = courseRepository;
+    public DataExportService(UserRepository userRepository, ZipFileService zipFileService, ProgrammingExerciseExportService programmingExerciseExportService,
+            ExamService examService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository,
+            ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
+            Optional<ApollonConversionService> apollonConversionService, StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            ComplaintRepository complaintRepository) {
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.examService = examService;
@@ -392,10 +386,11 @@ public class DataExportService {
                 }
             }
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers.txt"), multipleChoiceQuestionsSubmissions);
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION),
+                        multipleChoiceQuestionsSubmissions);
             }
             if (!shortAnswerQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers.txt"), shortAnswerQuestionsSubmissions);
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION), shortAnswerQuestionsSubmissions);
             }
         }
 
@@ -467,37 +462,44 @@ public class DataExportService {
         return replaceSpotWithSubmittedAnswer(shortAnswerSubmittedAnswer, stringBuilder, includeResults);
     }
 
-    private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder stringBuilder, boolean includeResults) {
+    private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder submittedAnswer, boolean includeResults) {
         var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
-        stringBuilder.append("Your answer: ").append("\n");
-        stringBuilder.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
+        submittedAnswer.append("Your answer: ").append("\n");
+        submittedAnswer.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
         for (Map.Entry<String, ShortAnswerSubmittedText> entry : spotToSubmittedTextMap.entrySet()) {
             Pattern pattern = Pattern.compile(entry.getKey());
-            Matcher matcher = pattern.matcher(stringBuilder);
+            Matcher matcher = pattern.matcher(submittedAnswer);
             while (matcher.find()) {
-                int start = matcher.start();
-                int end = matcher.end();
+
                 StringBuilder replacement = new StringBuilder();
-                if (entry.getValue().isIsCorrect() != null && entry.getValue().isIsCorrect()) {
-                    replacement.append(entry.getValue().getText());
-                    if (includeResults) {
-                        replacement.append(" (Correct)");
-                    }
-                }
-                else if (entry.getValue().isIsCorrect() != null && !entry.getValue().isIsCorrect()) {
-                    replacement.append(entry.getValue().getText());
-                    if (includeResults) {
-                        replacement.append(" (Incorrect)");
-                    }
-                    else {
-                        replacement.append(entry.getValue().getText());
-                    }
-                    stringBuilder.replace(start, end, replacement.toString());
-                    matcher = pattern.matcher(stringBuilder);
-                }
+                matcher = addSubmittedAnswerWithResult(submittedAnswer, includeResults, entry.getValue(), pattern, matcher, replacement);
             }
         }
-        return stringBuilder.toString();
+        return submittedAnswer.toString();
+    }
+
+    private Matcher addSubmittedAnswerWithResult(StringBuilder submittedAnswer, boolean includeResults, ShortAnswerSubmittedText submittedText, Pattern pattern, Matcher matcher,
+            StringBuilder replacement) {
+        int start = matcher.start();
+        int end = matcher.end();
+        if (submittedText.isIsCorrect() != null && submittedText.isIsCorrect()) {
+            replacement.append(submittedText.getText());
+            if (includeResults) {
+                replacement.append(" (Correct)");
+            }
+        }
+        else if (submittedText.isIsCorrect() != null && !submittedText.isIsCorrect()) {
+            replacement.append(submittedText.getText());
+            if (includeResults) {
+                replacement.append(" (Incorrect)");
+            }
+            else {
+                replacement.append(submittedText.getText());
+            }
+            submittedAnswer.replace(start, end, replacement.toString());
+            matcher = pattern.matcher(submittedAnswer);
+        }
+        return matcher;
     }
 
     private Map<String, ShortAnswerSubmittedText> buildMapFromSpotsToSubmittedAnswers(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
@@ -513,14 +515,62 @@ public class DataExportService {
     private void createCommunicationExport(long userId, Path workingDirectory) throws IOException {
         var postsPerCourse = postRepository.findPostsByAuthorId(userId).stream().filter(post -> post.getCoursePostingBelongsTo() != null)
                 .collect(Collectors.groupingBy(Post::getCoursePostingBelongsTo));
+        // plagiarism case posts are included in the plagiarism case export
         var answerPostsPerCourse = answerPostRepository.findAnswerPostsByAuthorId(userId).stream().filter(answerPost -> answerPost.getCoursePostingBelongsTo() != null)
-                .collect(Collectors.groupingBy(AnswerPost::getCoursePostingBelongsTo));
+                .filter(answerPost -> answerPost.getPost().getPlagiarismCase() == null).collect(Collectors.groupingBy(AnswerPost::getCoursePostingBelongsTo));
         var reactions = reactionRepository.findReactionsByUserId(userId);
         var reactionsToPostsPerCourse = reactions.stream().filter(reaction -> reaction.getPost() != null).filter(reaction -> reaction.getPost().getCoursePostingBelongsTo() != null)
                 .collect(Collectors.groupingBy(reaction -> reaction.getPost().getCoursePostingBelongsTo()));
         var reactionsToAnswerPostsPerCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
                 .filter(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo() != null)
                 .collect(Collectors.groupingBy(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo()));
+        createCommunicationExportIfPostsExist(workingDirectory, postsPerCourse, answerPostsPerCourse, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
+        createCommunicationExportIfAnswerPostsExist(workingDirectory, answerPostsPerCourse, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
+        createCommunicationExportIfReactionsToPostsExist(workingDirectory, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
+        createCommunicationExportIfReactionsToAnswerPostsExist(workingDirectory, reactionsToAnswerPostsPerCourse);
+    }
+
+    private void createCommunicationExportIfReactionsToAnswerPostsExist(Path workingDirectory, Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
+        // it can happen that only answer post reactions exist in a course but neither posts, nor answer posts nor reactions to posts
+        for (var entry : reactionsToAnswerPostsPerCourse.entrySet()) {
+            var course = entry.getKey();
+            var courseDir = retrieveCourseDirPath(workingDirectory, course);
+            var answerPostReactionsInCourse = entry.getValue();
+            createDirectoryIfNotExistent(courseDir);
+            createCommunicationCsvFile(courseDir, List.of(), List.of(), List.of(), answerPostReactionsInCourse);
+        }
+    }
+
+    private void createCommunicationExportIfReactionsToPostsExist(Path workingDirectory, Map<Course, List<Reaction>> reactionsToPostsPerCourse,
+            Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
+        // it can happen that only reactions exist in a course but no post or answer post
+        for (var entry : reactionsToPostsPerCourse.entrySet()) {
+            var course = entry.getKey();
+            var courseDir = retrieveCourseDirPath(workingDirectory, course);
+            var postReactionsInCourse = entry.getValue();
+            var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
+            createDirectoryIfNotExistent(courseDir);
+            createCommunicationCsvFile(courseDir, List.of(), List.of(), postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
+        }
+    }
+
+    private void createCommunicationExportIfAnswerPostsExist(Path workingDirectory, Map<Course, List<AnswerPost>> answerPostsPerCourse,
+            Map<Course, List<Reaction>> reactionsToPostsPerCourse, Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
+        // it can happen that an answer post and reactions exist in a course but no post
+        for (var entry : answerPostsPerCourse.entrySet()) {
+            var course = entry.getKey();
+            var courseDir = retrieveCourseDirPath(workingDirectory, course);
+            var answerPostsInCourse = entry.getValue();
+            var postReactionsInCourse = reactionsToPostsPerCourse.remove(course);
+            var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
+            createDirectoryIfNotExistent(courseDir);
+            createCommunicationCsvFile(courseDir, List.of(), answerPostsInCourse == null ? List.of() : answerPostsInCourse,
+                    postReactionsInCourse == null ? List.of() : postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
+        }
+    }
+
+    private void createCommunicationExportIfPostsExist(Path workingDirectory, Map<Course, List<Post>> postsPerCourse, Map<Course, List<AnswerPost>> answerPostsPerCourse,
+            Map<Course, List<Reaction>> reactionsToPostsPerCourse, Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
         // this covers all cases where at least one post in a course exists
         for (var entry : postsPerCourse.entrySet()) {
             var course = entry.getKey();
@@ -533,35 +583,6 @@ public class DataExportService {
             createDirectoryIfNotExistent(courseDir);
             createCommunicationCsvFile(courseDir, postsInCourse, answerPostsInCourse == null ? List.of() : answerPostsInCourse,
                     postReactionsInCourse == null ? List.of() : postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
-        }
-        // it can happen that an answer post and reactions exist in a course but no post
-        for (var entry : answerPostsPerCourse.entrySet()) {
-            var course = entry.getKey();
-            var courseDir = retrieveCourseDirPath(workingDirectory, course);
-            var answerPostsInCourse = entry.getValue();
-            var postReactionsInCourse = reactionsToPostsPerCourse.remove(course);
-            var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
-            createDirectoryIfNotExistent(courseDir);
-            createCommunicationCsvFile(courseDir, List.of(), answerPostsInCourse == null ? List.of() : answerPostsInCourse,
-                    postReactionsInCourse == null ? List.of() : postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
-        }
-        // it can happen that only reactions exist in a course but no post or answer post
-        for (var entry : reactionsToPostsPerCourse.entrySet()) {
-            var course = entry.getKey();
-            var courseDir = retrieveCourseDirPath(workingDirectory, course);
-            var postReactionsInCourse = entry.getValue();
-            var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
-            createDirectoryIfNotExistent(courseDir);
-            createCommunicationCsvFile(courseDir, List.of(), List.of(), postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
-        }
-
-        // it can happen that only answer post reactions exist in a course but neither posts, nor answer posts nor reactions to posts
-        for (var entry : reactionsToAnswerPostsPerCourse.entrySet()) {
-            var course = entry.getKey();
-            var courseDir = retrieveCourseDirPath(workingDirectory, course);
-            var answerPostReactionsInCourse = entry.getValue();
-            createDirectoryIfNotExistent(courseDir);
-            createCommunicationCsvFile(courseDir, List.of(), List.of(), List.of(), answerPostReactionsInCourse);
         }
     }
 
@@ -637,7 +658,7 @@ public class DataExportService {
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
         // text can be null which leads to an exception
         if (textSubmission.getText() != null) {
-            Files.writeString(outputDir.resolve("text_exercise_submission_" + textSubmission.getId() + "_text.txt"), textSubmission.getText());
+            Files.writeString(outputDir.resolve("text_exercise_submission_" + textSubmission.getId() + "_text" + TXT_FILE_EXTENSION), textSubmission.getText());
         }
         else {
             log.warn("Cannot include text submission content in data export because content is null for submission with id: {}", textSubmission.getId());
