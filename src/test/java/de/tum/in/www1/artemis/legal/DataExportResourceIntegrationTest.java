@@ -147,7 +147,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion six times
+        // mock apollon conversion eight times
+        mockApollonConversion();
+        mockApollonConversion();
         mockApollonConversion();
         mockApollonConversion();
         mockApollonConversion();
