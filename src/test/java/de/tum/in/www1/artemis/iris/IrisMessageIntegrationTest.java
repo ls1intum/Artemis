@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -48,10 +46,10 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 12, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 12, 0, 0, 0);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setIrisActivated(true);
         programmingExerciseRepository.save(exercise);
     }
@@ -59,7 +57,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessage() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
@@ -68,8 +66,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         gpt35RequestMockProvider.mockResponse("Hello World");
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
-        assertEquals(IrisMessageSender.USER, irisMessage.getSender());
-        assertNull(irisMessage.getHelpful());
+        assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
+        assertThat(irisMessage.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
@@ -82,8 +80,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
-        var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student2"));
-        var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student3"));
+        var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession2);
         messageToSend.setSentAt(ZonedDateTime.now());
@@ -94,7 +92,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void sendMessageWithoutContent() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student4"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
@@ -104,14 +102,14 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
     void sendTwoMessages() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student5"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student5"));
         var messageToSend1 = new IrisMessage();
         messageToSend1.setSession(irisSession);
         messageToSend1.setSentAt(ZonedDateTime.now());
         messageToSend1.setContent(List.of(createMockContent(messageToSend1), createMockContent(messageToSend1), createMockContent(messageToSend1)));
         var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
-        assertEquals(IrisMessageSender.USER, irisMessage1.getSender());
-        assertNull(irisMessage1.getHelpful());
+        assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
+        assertThat(irisMessage1.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getTextContent).toList());
@@ -123,8 +121,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend2.setSentAt(ZonedDateTime.now());
         messageToSend2.setContent(List.of(createMockContent(messageToSend2), createMockContent(messageToSend2), createMockContent(messageToSend2)));
         var irisMessage2 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class, HttpStatus.CREATED);
-        assertEquals(IrisMessageSender.USER, irisMessage2.getSender());
-        assertNull(irisMessage2.getHelpful());
+        assertThat(irisMessage2.getSender()).isEqualTo(IrisMessageSender.USER);
+        assertThat(irisMessage2.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getTextContent).toList());
@@ -135,7 +133,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student6", roles = "USER")
     void getMessages() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student6"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student6"));
         var message1 = new IrisMessage();
         message1.setSession(irisSession);
         message1.setSentAt(ZonedDateTime.now());
@@ -170,7 +168,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
     void rateMessageHelpfulTrue() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student7"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student7"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
@@ -184,7 +182,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student8", roles = "USER")
     void rateMessageHelpfulFalse() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student8"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student8"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
@@ -198,7 +196,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student9", roles = "USER")
     void rateMessageHelpfulNull() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student9"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student9"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
@@ -212,7 +210,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void rateMessageWrongSender() throws Exception {
-        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student10"));
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student10"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
@@ -225,8 +223,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void rateMessageWrongSession() throws Exception {
-        var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student11"));
-        var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, database.getUserByLogin(TEST_PREFIX + "student12"));
+        var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student11"));
+        var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student12"));
         var message = new IrisMessage();
         message.setSession(irisSession1);
         message.setSentAt(ZonedDateTime.now());

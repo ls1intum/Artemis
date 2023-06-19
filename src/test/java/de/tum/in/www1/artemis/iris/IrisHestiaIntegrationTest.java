@@ -26,10 +26,10 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @Test
@@ -49,11 +49,11 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private void addCodeHints() {
-        exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
-        database.addHintsToExercise(exercise);
-        database.addTasksToProgrammingExercise(exercise);
-        database.addSolutionEntriesToProgrammingExercise(exercise);
-        database.addCodeHintsToProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exercise);
+        programmingExerciseUtilService.addHintsToExercise(exercise);
+        programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
+        programmingExerciseUtilService.addSolutionEntriesToProgrammingExercise(exercise);
+        programmingExerciseUtilService.addCodeHintsToProgrammingExercise(exercise);
         codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintRepository.findByExerciseId(exercise.getId()).stream().findAny().orElseThrow().getId());
     }
 }

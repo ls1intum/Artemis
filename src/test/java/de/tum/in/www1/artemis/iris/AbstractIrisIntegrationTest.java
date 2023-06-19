@@ -16,6 +16,9 @@ import org.springframework.test.context.ActiveProfiles;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.IrisGPT3_5RequestMockProvider;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon", "iris-gpt3_5" })
 class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -23,6 +26,15 @@ class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     @Qualifier("irisGPT3_5RequestMockProvider")
     protected IrisGPT3_5RequestMockProvider gpt35RequestMockProvider;
+
+    @Autowired
+    protected UserUtilService userUtilService;
+
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     void setup() {
