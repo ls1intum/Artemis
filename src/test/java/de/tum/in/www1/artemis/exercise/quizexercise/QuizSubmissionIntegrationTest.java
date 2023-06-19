@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
+import static de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizCache.HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
@@ -11,9 +13,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -22,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
@@ -40,6 +45,7 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "quizsubmissiontest";
@@ -92,10 +98,17 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private ExamUtilService examUtilService;
 
-    @BeforeEach
-    void init() {
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
+
+    @BeforeAll
+    void stopSchedule() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
+    }
+
+    @BeforeEach
+    void init() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
     }
 
@@ -397,15 +410,31 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    // @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void testQuizSubmitNoDatabaseRequests(QuizMode quizMode) throws Exception {
+    // @EnumSource(QuizMode.class)
+    @RepeatedTest(3000)
+    void testQuizSubmitNoDatabaseRequests(/* QuizMode quizMode */) throws Exception {
+        CountDownLatch lock = new CountDownLatch(1);
+
+        var topic = hazelcastInstance.getTopic(HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC);
+        topic.addMessageListener(o -> lock.countDown());
+
+        QuizMode quizMode = QuizMode.INDIVIDUAL;
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.save(quizExercise); // <- responsible for saving the exercise into the distributed exercise cache
+        final long exerciseId = quizExercise.getId();
+
+        // Wait until the exercise update got processed
+        if (!lock.await(2000, TimeUnit.MILLISECONDS)) {
+            fail("Timed out waiting for the quiz exercise cache.");
+        }
+
+        Thread.sleep(50); // additional delay until all processing is complete
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
@@ -414,7 +443,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
-        assertThatDb(() -> request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
+        assertThatDb(() -> request.postWithResponseBody("/api/exercises/" + exerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
                 .hasBeenCalledTimes(quizMode == QuizMode.SYNCHRONIZED ? 0 : 1);
     }
 

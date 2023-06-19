@@ -27,11 +27,11 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an
  * {@linkplain #performCacheWriteIfPresent(Long, UnaryOperator) if-present variant}).
  */
-final class QuizCache extends CacheHandler<Long> {
+public final class QuizCache extends CacheHandler<Long> {
 
     private final Logger logger = LoggerFactory.getLogger(QuizCache.class);
 
-    private static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
+    public static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 
     private final ITopic<QuizExercise> cachedQuizExerciseUpdates;
 

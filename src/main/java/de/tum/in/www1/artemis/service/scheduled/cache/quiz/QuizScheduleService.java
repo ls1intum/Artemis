@@ -113,7 +113,7 @@ public class QuizScheduleService {
      */
     public void updateSubmission(Long quizExerciseId, String username, QuizSubmission quizSubmission) {
         if (quizSubmission != null && quizExerciseId != null && username != null) {
-            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getSubmissions().put(username, quizSubmission);
+            getWriteCache(quizExerciseId).getSubmissions().put(username, quizSubmission);
         }
     }
 
@@ -127,7 +127,7 @@ public class QuizScheduleService {
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
         log.debug("add result for statistic update for quiz {}: {}", quizExerciseId, result);
         if (quizExerciseId != null && result != null) {
-            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getResults().put(result.getId(), result);
+            getWriteCache(quizExerciseId).getResults().put(result.getId(), result);
         }
     }
 
@@ -139,7 +139,7 @@ public class QuizScheduleService {
      */
     private void addParticipation(Long quizExerciseId, StudentParticipation participation) {
         if (quizExerciseId != null && participation != null) {
-            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getParticipations().put(participation.getParticipantIdentifier(), participation);
+            getWriteCache(quizExerciseId).getParticipations().put(participation.getParticipantIdentifier(), participation);
         }
     }
 
@@ -155,7 +155,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null || username == null) {
             return null;
         }
-        QuizSubmission quizSubmission = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().get(username);
+        QuizSubmission quizSubmission = getReadCache(quizExerciseId).getSubmissions().get(username);
         if (quizSubmission != null) {
             return quizSubmission;
         }
@@ -176,7 +176,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null || username == null) {
             return null;
         }
-        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getParticipations().get(username);
+        return getReadCache(quizExerciseId).getParticipations().get(username);
     }
 
     /**
@@ -189,9 +189,9 @@ public class QuizScheduleService {
         if (quizExerciseId == null) {
             return null;
         }
-        QuizExercise quizExercise = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getExercise();
+        QuizExercise quizExercise = getReadCache(quizExerciseId).getExercise();
         if (quizExercise == null) {
-            log.warn("QuizExercise with {} not found in cache, reload from database. This should NOT happen!", quizExerciseId);
+            log.warn("QuizExercise with id {} not found in cache, reload from database. This should NOT happen!", quizExerciseId);
             quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
             if (quizExercise != null) {
                 updateQuizExercise(quizExercise);
@@ -694,5 +694,13 @@ public class QuizScheduleService {
             }
         }
         return count;
+    }
+
+    private QuizExerciseCache getWriteCache(long exerciseId) {
+        return (QuizExerciseCache) quizCache.getTransientWriteCacheFor(exerciseId);
+    }
+
+    private QuizExerciseCache getReadCache(long exerciseId) {
+        return (QuizExerciseCache) quizCache.getReadCacheFor(exerciseId);
     }
 }
