@@ -778,6 +778,7 @@ public class DataExportService {
             FileUtils.copyDirectory(new File(submissionFilePath), outputDir.toFile());
         }
         catch (IOException ignored) {
+            log.warn("Cannot include file {} as file upload submission because the file doesn't exist anymore.", submissionFilePath);
             // ignore if we cannot retrieve the submitted file, it might no longer exist.
         }
     }

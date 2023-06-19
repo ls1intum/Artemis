@@ -50,6 +50,8 @@ import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -131,6 +133,12 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private ApollonConversionService apollonConversionService;
 
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
+
     @BeforeEach
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 5, 5, 0, 1);
@@ -163,7 +171,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
         boolean assessmentDueDateInTheFuture = false;
-        prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        createCommunicationData(TEST_PREFIX + "student1", course);
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -181,11 +190,16 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
+        assertCommunicationDataCsvFile(courseDirPath);
         getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
 
     }
 
-    private void prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture) throws Exception {
+    private void assertCommunicationDataCsvFile(Path courseDirPath) {
+        assertThat(courseDirPath).isDirectoryContaining(path -> "messages_posts_reactions.csv".equals(path.getFileName().toString()));
+    }
+
+    private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
@@ -222,11 +236,10 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         participationUtilService.addSubmission(participation, submission2);
         var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
-        createCommunicationData(userLogin, course1);
-
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        return course1;
     }
 
     private void createCommunicationData(String userLogin, Course course1) {
@@ -267,10 +280,18 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         return exam;
     }
 
-    private void prepareExamDataWithResultPublicationDateInTheFuture() throws Exception {
+    private Exam prepareExamDataWithResultPublicationDateInTheFuture() throws Exception {
         var exam = prepareExamDataForDataExportCreation("examNoResults");
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
-        examRepository.save(exam);
+        return examRepository.save(exam);
+    }
+
+    private void addOnlyReactionToPostInCourse(Course course) {
+        // add a reaction in a course to a post where no other communication data exists
+        var loginUser2 = TEST_PREFIX + "student2";
+        conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "student 2 message");
+        var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
+        conversationUtilService.addReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
     }
 
     private void assertNoResultsFile(Path exerciseDirPath) {
@@ -336,7 +357,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectExamContent() throws Exception {
-        prepareExamDataForDataExportCreation("exam");
+        var exam = prepareExamDataForDataExportCreation("exam");
+        addOnlyAnswerPostReactionInCourse(exam.getCourse());
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
@@ -347,21 +369,31 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
+        assertCommunicationDataCsvFile(courseDirPath);
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false, false));
 
     }
 
+    private void addOnlyAnswerPostReactionInCourse(Course course) {
+        var loginUser2 = TEST_PREFIX + "student2";
+        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
+        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.get(0));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resultsPublicationDateInTheFuture_noResultsLeaked() throws Exception {
-        prepareExamDataWithResultPublicationDateInTheFuture();
+        var exam = prepareExamDataWithResultPublicationDateInTheFuture();
+        addOnlyReactionToPostInCourse(exam.getCourse());
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoResults");
+        assertCommunicationDataCsvFile(courseDirPath);
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
@@ -371,13 +403,22 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntLeakResultsIfAssessmentDueDateInTheFuture() throws Exception {
         boolean assessmentDueDateInTheFuture = true;
-        prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        addOnlyAnswerPostInCourse(course);
         var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "future");
+        assertCommunicationDataCsvFile(courseDirPath);
         getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+    }
+
+    private void addOnlyAnswerPostInCourse(Course course) {
+        var loginUser2 = TEST_PREFIX + "student2";
+        conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "message student2");
+        var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
     }
 
     @Test
