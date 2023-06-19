@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,6 +19,9 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -112,7 +114,7 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/file-upload-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
@@ -151,7 +153,7 @@ public class FileUploadExerciseResource {
      *         (403) if the user is not at least an editor in the target course.
      */
     @PostMapping("file-upload-exercises/import/{sourceId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
             throws URISyntaxException {
 
@@ -212,7 +214,7 @@ public class FileUploadExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("file-upload-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<FileUploadExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -229,7 +231,7 @@ public class FileUploadExerciseResource {
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
@@ -268,7 +270,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of fileUploadExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/file-upload-exercises")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -289,7 +291,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadExercise, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
@@ -323,7 +325,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
@@ -344,7 +346,7 @@ public class FileUploadExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
@@ -371,7 +373,7 @@ public class FileUploadExerciseResource {
      *         Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);

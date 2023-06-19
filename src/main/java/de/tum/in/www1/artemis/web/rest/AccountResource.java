@@ -4,11 +4,11 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AccountService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -46,7 +46,7 @@ public class AccountResource {
      * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
     @PutMapping("account")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
         if (accountService.isRegistrationDisabled()) {
             throw new AccessForbiddenException("Can't edit user information as user registration is disabled");
@@ -68,7 +68,7 @@ public class AccountResource {
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
     @PostMapping("account/change-password")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
         User user = userRepository.getUser();
         if (!user.isInternal()) {
