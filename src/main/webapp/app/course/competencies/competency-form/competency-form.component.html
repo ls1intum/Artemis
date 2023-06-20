@@ -1,0 +1,137 @@
+<div class="row">
+    <div class="col-12">
+        <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <div class="form-group" *ngIf="!isInConnectMode">
+                <label for="title">{{ 'artemisApp.competency.title' | artemisTranslate }}*</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="title"
+                    formControlName="title"
+                    [placeholder]="'artemisApp.competency.createCompetency.titlePlaceholder' | artemisTranslate"
+                />
+                <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="titleControl?.errors?.required">
+                        {{ 'artemisApp.competency.createCompetency.titleRequiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.maxlength">
+                        {{ 'artemisApp.competency.createCompetency.titleMaxLengthValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.titleUnique">
+                        {{ 'artemisApp.competency.createCompetency.titleUniqueValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group" *ngIf="!isInConnectMode">
+                <label for="description">{{ 'artemisApp.competency.description' | artemisTranslate }}</label>
+                <textarea
+                    class="form-control"
+                    id="description"
+                    rows="6"
+                    formControlName="description"
+                    [placeholder]="'artemisApp.competency.createCompetency.descriptionPlaceholder' | artemisTranslate"
+                ></textarea>
+                <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="descriptionControl?.errors?.maxlength">
+                        {{ 'artemisApp.competency.createCompetency.descriptionMaxLengthValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group" *ngIf="!isInConnectMode">
+                <label for="taxonomy">
+                    {{ 'artemisApp.competency.taxonomy' | artemisTranslate }}
+                    <small *ngIf="suggestedTaxonomies?.length">
+                        ({{ 'artemisApp.competency.createCompetency.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }})
+                    </small>
+                </label>
+                <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
+                    <option [ngValue]="undefined" selected></option>
+                    <option *ngFor="let taxonomy of competencyTaxonomy | keyvalue : keepOrder; let i = index" [ngValue]="taxonomy.key">
+                        {{ '&ThinSpace;'.repeat(i) }}&boxur;
+                        {{ 'artemisApp.competency.taxonomies.' + taxonomy.value.toLowerCase() | artemisTranslate }}
+                        ({{ 'artemisApp.competency.keywords.' + taxonomy.value.toLowerCase() | artemisTranslate }})
+                    </option>
+                </select>
+            </div>
+            <div class="form-group" *ngIf="!isInConnectMode">
+                <label for="masteryThreshold">
+                    {{ 'artemisApp.competency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? 50 }}%
+                    <small *ngIf="averageStudentScore"> ({{ 'artemisApp.competency.createCompetency.averageStudentScore' | artemisTranslate }}: {{ averageStudentScore }}%) </small>
+                </label>
+                <input type="range" min="0" max="100" class="form-range" id="masteryThreshold" formControlName="masteryThreshold" />
+            </div>
+            <div>
+                <label>{{ 'artemisApp.competency.createCompetency.connectWithLectureUnits' | artemisTranslate }}</label>
+                <div
+                    [hidden]="isInSingleLectureMode"
+                    *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures"
+                    ngbDropdown
+                    class="mb-2"
+                >
+                    <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
+                        {{
+                            selectedLectureInDropdown
+                                ? getLectureTitleForDropdown(selectedLectureInDropdown)
+                                : ('artemisApp.competency.createCompetency.selectLecture' | artemisTranslate)
+                        }}
+                    </button>
+                    <div ngbDropdownMenu>
+                        <button ngbDropdownItem type="button" *ngFor="let lecture of lecturesOfCourseWithLectureUnits" (click)="selectLectureInDropdown(lecture)">
+                            {{ getLectureTitleForDropdown(lecture) }}
+                        </button>
+                    </div>
+                </div>
+                <ng-template #noLectures>
+                    <div class="alert alert-info">
+                        {{ 'artemisApp.competency.createCompetency.noLectures' | artemisTranslate }}
+                    </div>
+                </ng-template>
+                <div class="table-responsive" *ngIf="selectedLectureInDropdown">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>id</th>
+                                <th>
+                                    {{ 'artemisApp.competency.createCompetency.lectureUnitTable.type' | artemisTranslate }}
+                                </th>
+                                <th>
+                                    {{ 'artemisApp.competency.createCompetency.lectureUnitTable.name' | artemisTranslate }}
+                                </th>
+                                <th>
+                                    {{ 'artemisApp.competency.createCompetency.lectureUnitTable.releaseDate' | artemisTranslate }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                class="lectureUnitRow"
+                                *ngFor="let lectureUnit of selectedLectureInDropdown.lectureUnits"
+                                (click)="selectLectureUnitInTable(lectureUnit)"
+                                [class.table-primary]="isLectureUnitAlreadySelectedInTable(lectureUnit)"
+                            >
+                                <td>{{ lectureUnit.id ? lectureUnit.id : '' }}</td>
+                                <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
+                                <td>{{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}</td>
+                                <td>
+                                    {{
+                                        lectureUnitService.getLectureUnitReleaseDate(lectureUnit)
+                                            ? lectureUnitService.getLectureUnitReleaseDate(lectureUnit)!.format('MMM DD YYYY, HH:mm:ss')
+                                            : ''
+                                    }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
+                    <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                </button>
+                <button *ngIf="hasCancelButton" type="button" (click)="cancelForm()" class="btn btn-default">
+                    <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
