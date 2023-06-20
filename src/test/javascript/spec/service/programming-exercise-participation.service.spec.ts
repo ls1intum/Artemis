@@ -51,8 +51,8 @@ describe('ProgrammingExerciseParticipation Service', () => {
                 const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
                 req.flush(result);
                 tick();
-                expect(titleSpy).toHaveBeenCalledOnceWith(participation);
-                expect(accessRightsSpy).toHaveBeenCalledOnceWith(participation.exercise);
+                expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
+                expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
             }),
         );
 
@@ -65,8 +65,8 @@ describe('ProgrammingExerciseParticipation Service', () => {
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${participation.id}/student-participation-with-latest-result-and-feedbacks` });
             req.flush(participation);
             tick();
-            expect(titleSpy).toHaveBeenCalledOnceWith(participation);
-            expect(accessRightsSpy).toHaveBeenCalledOnceWith(participation.exercise);
+            expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
+            expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
         }));
 
         it('checkIfParticipationHasResult', fakeAsync(() => {

@@ -38,6 +38,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
     notSubmitted: boolean;
 
     ngOnChanges() {
+        // It's enough to look at the normal due date as students with time extension cannot start after the regular due date
         const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
         this.exerciseMissedDueDate = afterDueDate && !this.studentParticipation;
 
@@ -47,7 +48,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else {
             this.uninitialized = !afterDueDate && !this.studentParticipation;
-            this.notSubmitted = !afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
+            this.notSubmitted = !!this.studentParticipation && !this.studentParticipation.submissions?.length;
         }
     }
 }
