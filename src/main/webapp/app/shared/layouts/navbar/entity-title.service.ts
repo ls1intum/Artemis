@@ -7,7 +7,7 @@ export enum EntityType {
     COURSE = 'COURSE',
     EXERCISE = 'EXERCISE',
     LECTURE = 'LECTURE',
-    LEARNING_GOAL = 'LEARNING_GOAL',
+    COMPETENCY = 'COMPETENCY',
     HINT = 'HINT',
     DIAGRAM = 'DIAGRAM',
     ORGANIZATION = 'ORGANIZATION',
@@ -107,7 +107,7 @@ export class EntityTitleService {
             case EntityType.LECTURE:
                 resourceUrl += 'lectures';
                 break;
-            case EntityType.LEARNING_GOAL:
+            case EntityType.COMPETENCY:
                 resourceUrl += 'competencies';
                 break;
             case EntityType.HINT:

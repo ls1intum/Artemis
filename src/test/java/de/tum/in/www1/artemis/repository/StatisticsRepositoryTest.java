@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -32,6 +33,9 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private ZonedDateTime startDate;
 
@@ -54,7 +58,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
         var endDate = spanType == SpanType.WEEK ? ZonedDateTime.of(2021, 11, 21, 23, 59, 59, 0, startDate.getZone())
                 : ZonedDateTime.of(2022, 2, 6, 23, 59, 59, 0, startDate.getZone());
         // we need to add users in order to get non-empty results returned
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         // the persistentEvents simulate a log in of a student
         // here we simulate that student1 logged in on 15.11.21
         var persistentEventStudent1 = setupPersistentEvent(TEST_PREFIX + "student1", startDate);

@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,6 +19,9 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.CompetencyService;
@@ -39,8 +41,7 @@ public class CompetencyResource {
 
     private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
-    // TODO: change to `competency` once the translation labels are changed on client
-    private static final String ENTITY_NAME = "learningGoal";
+    private static final String ENTITY_NAME = "competency";
 
     private final CourseRepository courseRepository;
 
@@ -85,7 +86,7 @@ public class CompetencyResource {
      * @return the title of the competency wrapped in an ResponseEntity or 404 Not Found if no competency with that id exists
      */
     @GetMapping("/competencies/{competencyId}/title")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<String> getCompetencyTitle(@PathVariable Long competencyId) {
         final var title = competencyRepository.getCompetencyTitle(competencyId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -98,7 +99,7 @@ public class CompetencyResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("competencies")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<Competency>> getAllCompetenciesOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(competencyService.getAllOnPageWithSize(search, user));
@@ -111,7 +112,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
     @GetMapping("/courses/{courseId}/competencies")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Competency>> getCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -130,7 +131,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the competency, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Competency> getCompetency(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.debug("REST request to get Competency : {}", competencyId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -158,7 +159,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated competency
      */
     @PutMapping("/courses/{courseId}/competencies")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Competency> updateCompetency(@PathVariable Long courseId, @RequestBody Competency competency) {
         log.debug("REST request to update Competency : {}", competency);
         if (competency.getId() == null) {
@@ -194,7 +195,7 @@ public class CompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/competencies")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Competency> createCompetency(@PathVariable Long courseId, @RequestBody Competency competency) throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competency);
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
@@ -227,7 +228,7 @@ public class CompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/competencies/import")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Competency> importCompetency(@PathVariable long courseId, @RequestBody Competency competencyToImport) throws URISyntaxException {
         log.info("REST request to import a competency: {}", competencyToImport.getId());
 
@@ -254,7 +255,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/competencies/{competencyId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteCompetency(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to delete a Competency : {}", competencyId);
 
@@ -292,7 +293,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/student-progress")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<CompetencyProgress> getCompetencyStudentProgress(@PathVariable Long courseId, @PathVariable Long competencyId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
@@ -320,7 +321,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/course-progress")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable Long courseId, @PathVariable Long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -344,7 +345,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with a list of relations for the competency in the body
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/relations")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<CompetencyRelation>> getCompetencyRelations(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.debug("REST request to get relations for Competency : {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -365,7 +366,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/courses/{courseId}/competencies/{tailCompetencyId}/relations/{headCompetencyId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<CompetencyRelation> createCompetencyRelation(@PathVariable Long courseId, @PathVariable Long tailCompetencyId, @PathVariable Long headCompetencyId,
             @RequestParam(defaultValue = "") String type) {
         log.info("REST request to create a relation between competencies {} and {}", tailCompetencyId, headCompetencyId);
@@ -408,7 +409,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/competencies/{competencyId}/relations/{competencyRelationId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeCompetencyRelation(@PathVariable Long competencyId, @PathVariable Long courseId, @PathVariable Long competencyRelationId) {
         log.info("REST request to remove a competency relation: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -432,7 +433,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
     @GetMapping("/courses/{courseId}/prerequisites")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Competency>> getPrerequisites(@PathVariable Long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -456,7 +457,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/courses/{courseId}/prerequisites/{competencyId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Competency> addPrerequisite(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to add a prerequisite: {}", competencyId);
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
@@ -481,7 +482,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/prerequisites/{competencyId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> removePrerequisite(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to remove a prerequisite: {}", competencyId);
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);

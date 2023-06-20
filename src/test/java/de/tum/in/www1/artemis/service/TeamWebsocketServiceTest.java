@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
@@ -21,6 +22,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.team.TeamUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
 class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -35,6 +38,15 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
 
     private ModelingExercise modelingExercise;
 
@@ -55,8 +67,8 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course = database.addCourseWithModelingAndTextExercise();
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 exercise.setMode(ExerciseMode.TEAM);
@@ -86,7 +98,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendTeamAssignmentUpdateOnRemoveStudentFromTeam() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
-        team.setOwner(database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
         teamRepository.save(team);
 
         User studentToRemoveFromTeam = students.iterator().next();
@@ -101,7 +113,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendTeamAssignmentUpdateOnAddStudentToTeam() throws Exception {
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise);
-        team.setOwner(database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
         teamRepository.save(team);
 
         Team updatedTeam = new Team(team).id(team.getId()).students(students);
@@ -126,7 +138,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSendTeamAssignmentUpdateOnTeamImport() throws Exception {
-        database.addTeamsForExercise(textExercise, 2, null); // create teams in source exercise
+        teamUtilService.addTeamsForExercise(textExercise, 2, null); // create teams in source exercise
         List<Team> destinationTeams = request.putWithResponseBodyList(importFromExerciseUrl(textExercise), null, Team.class, HttpStatus.OK);
 
         destinationTeams.forEach(team -> {

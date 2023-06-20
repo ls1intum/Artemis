@@ -495,4 +495,25 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
         exercise.setSecondCorrectionEnabled(!exercise.getSecondCorrectionEnabled());
         return save(exercise).getSecondCorrectionEnabled();
     }
+
+    /**
+     * Finds all exercises of a course where the user has participated in.
+     * Currently only used for the data export
+     *
+     * @param courseId the id of the course
+     * @param userId   the id of the user
+     * @return a set of exercises the user has participated in with eager participations, submissions, results and feedbacks
+     */
+    @Query("""
+            SELECT e
+            FROM Course c
+                LEFT JOIN  c.exercises e
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE c.id = :courseId
+                  AND p.student.id = :userId
+            """)
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(long courseId, long userId);
 }

@@ -1,0 +1,38 @@
+<div
+    [id]="'competency-card-' + competency.id"
+    class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative"
+    [class.border-secondary]="isPrerequisite"
+    [class.border-success]="isMastered"
+    [class.text-secondary]="isMastered"
+>
+    <a *ngIf="courseId && !isPrerequisite" class="stretched-link" [routerLink]="['/courses', courseId, 'competencies', competency.id!]"></a>
+    <div class="col-auto d-none d-sm-block">
+        <a class="exercise-row-icon">
+            <fa-icon [icon]="getIcon(competency.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate" container="body"></fa-icon>
+        </a>
+    </div>
+    <div class="col">
+        <div class="row">
+            <div class="col-auto d-sm-none">
+                <h4 class="fw-medium">
+                    <fa-icon *ngIf="competency.taxonomy" [icon]="getIcon(competency.taxonomy)"></fa-icon>
+                </h4>
+            </div>
+            <div class="col-sm col py-2">
+                <h4 class="m-0">
+                    {{ competency.title }}
+                    <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+                </h4>
+                <p *ngIf="competency.description" class="m-0">{{ competency.description }}</p>
+                <div *ngIf="isPrerequisite && competency.course">
+                    <span class="badge bg-primary">{{ competency.course.title }}</span>
+                    <span class="badge bg-secondary">{{ competency.course.semester }}</span>
+                </div>
+                <ng-content></ng-content>
+            </div>
+            <div *ngIf="!isPrerequisite" class="col-sm col text-end py-1 px-2" style="max-width: 95px">
+                <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings>
+            </div>
+        </div>
+    </div>
+</div>
