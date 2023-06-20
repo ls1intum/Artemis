@@ -42,7 +42,8 @@ following dependencies/tools on your machine:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
-   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
+   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -52,6 +53,8 @@ following dependencies/tools on your machine:
 
 ------------------------------------------------------------------------------------------------------------------------
 
+
+.. _Database Setup:
 
 Database Setup
 --------------
@@ -358,7 +361,7 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
     * **/opt/artemis/public/content:**
 
       This directory will be used for branding.
-      You can specify a favicon and ``imprint.html`` here.
+      You can specify a favicon here.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
@@ -408,6 +411,7 @@ Other run / debug configurations
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
   (see `Athene Service <#athene-service>`__).
 
@@ -566,15 +570,13 @@ instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/logo/favicon.svg``
-* The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/privacy-statement.rst
+.. include:: setup/legal-documents.rst
 
-
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/programming-exercises.rst
 
@@ -589,6 +591,10 @@ instead of the TUM defaults:
 ------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/localci-localvc.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 

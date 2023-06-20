@@ -16,11 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -38,6 +41,15 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ExamRepository examRepository;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
+
     private GradingScale gradingScale;
 
     private Set<GradeStep> gradeSteps;
@@ -54,8 +66,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         gradingScale = new GradingScale();
         gradingScale.setId(1L);
         gradeSteps = new HashSet<>();
-        course = database.addEmptyCourse();
-        exam = database.addExam(course);
+        course = courseUtilService.addEmptyCourse();
+        exam = examUtilService.addExam(course);
     }
 
     /**
@@ -81,7 +93,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testMatchPercentageToGradeStepNoValidMapping() {
-        gradeSteps = database.generateGradeStepSet(gradingScale, false);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
@@ -163,7 +175,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleInvalidGradeStepSet() {
-        gradeSteps = database.generateGradeStepSet(gradingScale, false);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
         gradingScale.setExam(exam);
 
@@ -178,10 +190,10 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleValidGradeStepSet() {
-        gradeSteps = database.generateGradeStepSet(gradingScale, true);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, true);
         gradingScale.setGradeSteps(gradeSteps);
-        course = database.addEmptyCourse();
-        exam = database.addExam(course);
+        course = courseUtilService.addEmptyCourse();
+        exam = examUtilService.addExam(course);
         exam.setExamMaxPoints(null);
         gradingScale.setExam(exam);
         examRepository.save(exam);
@@ -197,7 +209,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testGetGradingScaleForCourseIfMultipleScalesAreSaved() {
-        Course course = database.addEmptyCourse();
+        Course course = courseUtilService.addEmptyCourse();
         GradingScale gradingScale1 = new GradingScale();
         gradingScale1.setCourse(course);
         gradingScale1.setGradeType(GradeType.GRADE);
@@ -216,8 +228,8 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testGetGradingScaleForExamIfMultipleScalesAreSaved() {
-        Course course = database.addEmptyCourse();
-        Exam exam = database.addExam(course);
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
         GradingScale gradingScale1 = new GradingScale();
         gradingScale1.setExam(exam);
         gradingScale1.setGradeType(GradeType.BONUS);
@@ -236,7 +248,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testGradeStepMatchingForRoundingErrors1() {
-        GradingScale gradingScale = database.generateGradingScale(3, new double[] { 0, 40.005, 80, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(3, new double[] { 0, 40.005, 80, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(40, id);
@@ -257,7 +269,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testGradeStepMatchingForRoundingErrors2() {
-        GradingScale gradingScale = database.generateGradingScale(3, new double[] { 0, 40, 63.9901, 100 }, false, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(3, new double[] { 0, 40, 63.9901, 100 }, false, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(64, id);
@@ -274,7 +286,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testGradeStepMatchingForRoundingErrors3() {
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, 50.010101, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, 50.010101, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(50, id);
@@ -292,7 +304,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors4() {
         double boundary = 60 + 1d / 7d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(60.142857, id);
@@ -310,7 +322,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors5() {
         double boundary = 33 + 1d / 3d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(33.33, id);
@@ -328,7 +340,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors6() {
         double boundary = 55 + 2d / 3d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, false, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, false, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(55.67, id);
@@ -346,7 +358,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors7() {
         double boundary = 70 + 1d / 6d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(70.16, id);
@@ -364,7 +376,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors8() {
         double boundary = 45 + 5d / 6d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(45.83, id);
@@ -382,7 +394,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors9() {
         double boundary = 50 + 1d / 9d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(50.11, id);
@@ -400,7 +412,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors10() {
         double boundary = 35 + 1d / 11d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(35.09, id);
@@ -418,7 +430,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors11() {
         double boundary = 25 + 1d / 12d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(25.08, id);
@@ -436,7 +448,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     void testGradeStepMatchingForRoundingErrors12() {
         double boundary = 42 + 1d / 13d;
-        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, boundary, 100 }, true, 1, Optional.empty());
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(42.07, id);
@@ -455,10 +467,10 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGradeMappingWithRealExamResults() throws Exception {
         double[] gradeBoundaries = { 0, 28.3, 34.2, 40, 45.8, 51.7, 57.5, 63.3, 69.2, 75, 80.8, 86.7, 92.5, 100 };
         String[] gradeNames = { "5.0", "4.7", "4.3", "4.0", "3.7", "3.3", "3.0", "2.7", "2.3", "2.0", "1.7", "1.3", "1.0" };
-        GradingScale gradingScale = database.generateGradingScale(13, gradeBoundaries, true, 3, Optional.of(gradeNames));
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(13, gradeBoundaries, true, 3, Optional.of(gradeNames));
         Long id = gradingScaleRepository.save(gradingScale).getId();
 
-        List<String[]> results = database.loadPercentagesAndGrades("test-data/student-grades/grades.csv");
+        List<String[]> results = gradingScaleUtilService.loadPercentagesAndGrades("test-data/student-grades/grades.csv");
 
         assertThat(results).isNotEmpty();
         for (String[] result : results) {

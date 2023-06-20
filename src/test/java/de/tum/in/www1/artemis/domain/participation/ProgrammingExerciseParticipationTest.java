@@ -7,8 +7,11 @@ import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.user.UserFactory;
 
 class ProgrammingExerciseParticipationTest {
 
@@ -57,9 +60,9 @@ class ProgrammingExerciseParticipationTest {
 
     private ProgrammingExerciseStudentParticipation setupParticipation(final ZonedDateTime exerciseDueDate) {
         final ZonedDateTime now = ZonedDateTime.now();
-        final var user = ModelFactory.generateActivatedUser("student1");
-        final var course = ModelFactory.generateCourse(1L, now.minusDays(10), now.plusDays(20), new HashSet<>());
-        final var exercise = ModelFactory.generateProgrammingExercise(now.minusHours(10), exerciseDueDate, course);
-        return ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, exercise, user);
+        final var user = UserFactory.generateActivatedUser("student1");
+        final var course = CourseFactory.generateCourse(1L, now.minusDays(10), now.plusDays(20), new HashSet<>());
+        final var exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusHours(10), exerciseDueDate, course);
+        return ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, exercise, user);
     }
 }

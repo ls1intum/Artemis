@@ -16,13 +16,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -51,18 +54,24 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private ComplaintResponseRepository complaintResponseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private Complaint complaint;
 
     @BeforeEach
     void initTestCase() throws Exception {
         // creating the users student1, tutor1-tutor3 and instructor1
-        this.database.addUsers(TEST_PREFIX, 1, 3, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 3, 0, 1);
 
         // creating course
         // students: student1 | tutors: tutor1-tutor3 | instructors: instructor1
-        Course course = this.database.createCourse();
+        Course course = courseUtilService.createCourse();
         // creating text exercise
-        TextExercise textExercise = ModelFactory.generateTextExercise(null, null, null, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.saveAndFlush(textExercise);
@@ -80,7 +89,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.saveAndFlush(submission);
         // creating assessment by tutor1
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        Result result = ModelFactory.generateResult(true, 50D);
+        Result result = ParticipationFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
         result.setParticipation(studentParticipation);

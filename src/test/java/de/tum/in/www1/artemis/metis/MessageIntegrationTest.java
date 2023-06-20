@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -43,11 +42,13 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -72,6 +73,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -104,11 +111,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        existingPostsAndConversationPosts = database.createPostsWithinCourse(TEST_PREFIX);
+        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
         List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
@@ -116,10 +123,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();
 
         // filter existing posts with exercise context
-        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
+        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
 
         // filter existing posts with lecture context
-        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList());
+        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
@@ -145,7 +152,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(createdPost.getConversation().getId());
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(1);
 
@@ -160,14 +167,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
         var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").get();
-        List<Post> posts = database.createPostsWithAnswersAndReactionsAndConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
+        List<Post> posts = conversationUtilService.createPostsWithAnswersAndReactionsAndConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
         long conversationId = posts.get(0).getConversation().getId();
         for (Post post : posts) {
             assertThat(post.getConversation().getId()).isNotNull();
             assertThat(post.getConversation().getId()).isEqualTo(conversationId);
         }
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(course.getId());
         postContextFilter.setConversationId(posts.get(0).getConversation().getId());
         if (pageSize == LOWER_PAGE_SIZE) {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize))).hasSize(LOWER_PAGE_SIZE);
@@ -197,7 +204,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
 
@@ -223,7 +230,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         // attempt to save new post under someone else's conversation
         postToSave.setConversation(existingConversationPosts.get(0).getConversation());
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
 
