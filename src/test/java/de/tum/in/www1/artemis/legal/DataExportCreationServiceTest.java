@@ -139,7 +139,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion 6 times, because the last test includes 6 modeling exercises
+        // mock apollon conversion 8 times, because the last test includes 8 modeling exercises
+        mockApollonConversion();
+        mockApollonConversion();
         mockApollonConversion();
         mockApollonConversion();
         mockApollonConversion();
@@ -163,7 +165,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
         boolean assessmentDueDateInTheFuture = false;
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
         createCommunicationData(TEST_PREFIX + "student1", course);
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
@@ -191,7 +193,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(courseDirPath).isDirectoryContaining(path -> "messages_posts_reactions.csv".equals(path.getFileName().toString()));
     }
 
-    private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture) throws Exception {
+    private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
@@ -199,7 +201,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         }
         Course course1;
         if (assessmentDueDateInTheFuture) {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture("future", TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
+            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         else {
             course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
@@ -396,14 +398,15 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntLeakResultsIfAssessmentDueDateInTheFuture() throws Exception {
         boolean assessmentDueDateInTheFuture = true;
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture);
+        var courseShortName = "future";
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         addOnlyAnswerPostInCourse(course);
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "future");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
         assertCommunicationDataCsvFile(courseDirPath);
         getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
     }
@@ -441,7 +444,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @Disabled("doesn't work at the moment")
+    @Disabled("doesn't work at the moment, we would need to mock the apollon conversion service bean as missing, probably not worth the overhead")
     void testDataExportApollonConversionServiceBeanNotPresent_includesModelAsJson() throws IOException {
         var user = TEST_PREFIX + "student1";
         var dataExport = initDataExport();
@@ -463,7 +466,23 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(modelingExerciseDirectoryPath.get(0))
                 .isDirectoryContaining(path -> path.getFileName().toString().contains("modeling_submission") && path.getFileName().toString().endsWith(".json"));
         assertThat(modelingExerciseDirectoryPath.get(0)).isDirectoryContaining(path -> path.getFileName().toString().equals("view_model.md"));
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportContainsDataAboutCourseStudentUnenrolled() throws Exception {
+        boolean assessmentDueDateInTheFuture = true;
+        var courseShortName = "unenrolled";
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
+        var dataExport = initDataExport();
+        // by setting the course groups to a different value we simulate unenrollment because the user is no longer part of the user group and hence, the course.
+        courseUtilService.updateCourseGroups("abc", course, "");
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
+        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
     }
 
     private DataExport initDataExport() {
