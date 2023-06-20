@@ -6,7 +6,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -14,6 +13,8 @@ import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -56,7 +57,7 @@ public class StaticCodeAnalysisResource {
      * @return the static code analysis categories
      */
     @GetMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
@@ -76,7 +77,7 @@ public class StaticCodeAnalysisResource {
      * @return the updated static code analysis categories
      */
     @PatchMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
@@ -98,7 +99,7 @@ public class StaticCodeAnalysisResource {
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping(Endpoints.RESET)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
@@ -119,7 +120,7 @@ public class StaticCodeAnalysisResource {
      * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
     @PatchMapping(Endpoints.IMPORT)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> importStaticCodeAnalysisCategoriesFromExercise(@PathVariable Long exerciseId, @RequestParam Long sourceExerciseId) {
         log.debug("REST request to import static code analysis categories to programming exercise {} from exercise {}", exerciseId, sourceExerciseId);
 
