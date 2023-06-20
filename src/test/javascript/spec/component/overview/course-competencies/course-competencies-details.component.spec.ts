@@ -147,22 +147,22 @@ describe('CourseCompetenciesDetails', () => {
     }));
 
     it('should detect if due date is passed', () => {
-        const learningGoalFuture = { softDueDate: dayjs().add(1, 'days') } as LearningGoal;
-        component.learningGoal = learningGoalFuture;
+        const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
+        component.competency = competencyFuture;
         fixture.detectChanges();
         expect(component.softDueDatePassed).toBeFalse();
 
-        const learningGoalPast = { softDueDate: dayjs().subtract(1, 'days') } as LearningGoal;
-        component.learningGoal = learningGoalPast;
+        const competencyPast = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
+        component.competency = competencyPast;
         fixture.detectChanges();
         expect(component.softDueDatePassed).toBeTrue();
     });
 
     it.each([
-        { learningGoal: { softDueDate: dayjs().add(1, 'days') } as LearningGoal, expectedBadge: 'success' },
-        { learningGoal: { softDueDate: dayjs().subtract(1, 'days') } as LearningGoal, expectedBadge: 'danger' },
-    ])('should have [ngClass] resolve to correct date badge', ({ learningGoal, expectedBadge }) => {
-        component.learningGoal = learningGoal;
+        { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
+        { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
+    ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
+        component.competency = competency;
         fixture.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);

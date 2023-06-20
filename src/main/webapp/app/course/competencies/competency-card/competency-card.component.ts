@@ -50,6 +50,6 @@ export class CompetencyCardComponent {
     }
 
     get softDueDatePassed(): boolean {
-        return dayjs().isAfter(this.learningGoal.softDueDate);
+        return dayjs().isAfter(this.competency.softDueDate);
     }
 }

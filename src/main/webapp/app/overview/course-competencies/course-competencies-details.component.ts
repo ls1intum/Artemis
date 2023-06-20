@@ -126,6 +126,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
     }
 
     get softDueDatePassed(): boolean {
-        return dayjs().isAfter(this.learningGoal.softDueDate);
+        return dayjs().isAfter(this.competency.softDueDate);
     }
 }

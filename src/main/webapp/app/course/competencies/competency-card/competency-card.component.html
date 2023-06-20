@@ -30,6 +30,12 @@
                 </div>
                 <ng-content></ng-content>
             </div>
+            <div *ngIf="!isPrerequisite && competency.softDueDate" class="col-sm col py-2" style="max-width: fit-content">
+                <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
+                <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
+                    {{ competency.softDueDate | artemisTimeAgo }}
+                </span>
+            </div>
             <div *ngIf="!isPrerequisite" class="col-sm col text-end py-1 px-2" style="max-width: 95px">
                 <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings>
             </div>

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -28,6 +29,7 @@ export class Competency implements BaseEntity {
     public id?: number;
     public title?: string;
     public description?: string;
+    public softDueDate?: dayjs.Dayjs;
     public taxonomy?: CompetencyTaxonomy;
     public masteryThreshold?: number;
     public course?: Course;
