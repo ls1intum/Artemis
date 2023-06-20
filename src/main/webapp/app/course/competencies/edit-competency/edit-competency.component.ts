@@ -89,7 +89,7 @@ export class EditCompetencyComponent implements OnInit {
     }
 
     updateCompetency(formData: CompetencyFormData) {
-        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.competency.title = title;
         this.competency.description = description;
