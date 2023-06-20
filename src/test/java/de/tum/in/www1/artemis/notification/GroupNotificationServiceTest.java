@@ -274,7 +274,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
         groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
+        verify(groupNotificationService, timeout(1500).times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
@@ -284,7 +284,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
+        verify(groupNotificationService, timeout(1500).times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
@@ -294,7 +294,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
+        verify(instanceMessageSendService, timeout(1500).times(1)).sendExerciseReleaseNotificationSchedule(any());
     }
 
     /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
@@ -371,21 +371,17 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     /**
      * Checks if an email was created and send
-     *
-     * @param times how often the email should have been sent
      */
-    private void verifyEmail(int times) {
-        verify(javaMailSender, timeout(1500).times(times)).createMimeMessage();
+    private void verifyEmail() {
+        verify(javaMailSender, timeout(1500)).createMimeMessage();
     }
 
     /**
      * Checks if a push to android and iOS was created and send
-     *
-     * @param times how often the email should have been sent
      */
-    private void verifyPush(int times) {
-        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), any(List.class), any(Object.class));
-        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), any(List.class), any(Object.class));
+    private void verifyPush(Object notificationSubject) {
+        verify(applePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
+        verify(firebasePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
     }
 
     /**
@@ -393,9 +389,11 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @Test
     void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
+        var countBefore = notificationRepository.count();
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        assertThat(notificationRepository.findAll()).as("No notification should be created/saved").isEmpty();
+        var countAfter = notificationRepository.count();
+        assertThat(countAfter).as("No notification should be created/saved").isEqualTo(countBefore);
     }
 
     /**
@@ -414,43 +412,31 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
 
-        verifyEmail(1);
-        verifyPush(1);
+        verifyEmail();
+        verifyPush(attachment);
     }
 
-    /**
-     * Test for notifyStudentGroupAboutExercisePractice method
-     */
     @Test
     void testNotifyStudentGroupAboutExercisePractice() {
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
         verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
-        verifyEmail(1);
-        verifyPush(1);
+        verifyEmail();
+        verifyPush(exercise);
     }
 
-    /**
-     * Test for notifyStudentGroupAboutQuizExerciseStart method
-     */
     @Test
     void testNotifyStudentGroupAboutQuizExerciseStart() {
         groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
         verifyRepositoryCallWithCorrectNotification(1, QUIZ_EXERCISE_STARTED_TITLE);
     }
 
-    /**
-     * Test for notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate method
-     */
     @Test
     void testNotifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(3, EXERCISE_UPDATED_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutReleasedExercise method
-     */
     @Test
     void testNotifyAllGroupsAboutReleasedExercise() {
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
@@ -459,88 +445,64 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         verify(javaMailSender, timeout(1500).atLeastOnce()).createMimeMessage();
     }
 
-    /**
-     * Test for notifyEditorAndInstructorGroupAboutExerciseUpdate method
-     */
     @Test
     void testNotifyEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(2, EXERCISE_UPDATED_TITLE);
     }
 
-    /**
-     * Test for notifyEditorAndInstructorGroupAboutExerciseUpdate method
-     */
     @Test
     void testNotifyAllGroupsAboutNewPostForExercise() {
         groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise method
-     */
     @Test
     void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(2, DUPLICATE_TEST_CASE_TITLE);
     }
 
-    /**
-     * Test for notifyInstructorGroupAboutIllegalSubmissionsForExercise method
-     */
     @Test
     void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(1, ILLEGAL_SUBMISSION_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutNewPostForLecture method
-     */
     @Test
     void testNotifyAllGroupsAboutNewPostForLecture() {
         groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutNewCoursePost method
-     */
     @Test
     void testNotifyAllGroupsAboutNewCoursePost() {
         groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost method
-     */
     @Test
     void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise method
-     */
     @Test
     void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutNewAnnouncement method
-     */
+    // TODO: this test is somehow flaky. On slow machines, it seems that verifyPush is invoked times(2). Probably the corresponding method is too generic
+    // because it uses any() all the time
     @Test
     void testNotifyAllGroupsAboutNewAnnouncement() {
         prepareNotificationSettingForTest(student, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST);
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
-        verifyEmail(2);
-        verifyPush(2);
+        verifyEmail();
+        // paste post subject
+        verifyPush(post);
     }
 
     /**

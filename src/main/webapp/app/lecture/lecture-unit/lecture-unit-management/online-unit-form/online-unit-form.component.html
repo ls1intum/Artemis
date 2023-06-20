@@ -10,7 +10,7 @@
                 [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
                 (change)="onLinkChanged()"
             />
-            <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
+            <small id="urlHelperExplanation" class="form-text text-body-secondary">{{ 'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
             <div *ngIf="sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)" class="alert alert-danger">
                 <div *ngIf="sourceControl?.errors?.required">
                     {{ 'artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError' | artemisTranslate }}
