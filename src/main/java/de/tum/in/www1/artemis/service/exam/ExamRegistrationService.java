@@ -15,10 +15,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -59,12 +57,9 @@ public class ExamRegistrationService {
 
     private final ChannelService channelService;
 
-    private final ChannelRepository channelRepository;
-
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -76,7 +71,6 @@ public class ExamRegistrationService {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
     }
 
     /**
@@ -101,6 +95,7 @@ public class ExamRegistrationService {
         }
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
             var registrationNumber = examUserDto.registrationNumber();
             var login = examUserDto.login();
@@ -127,6 +122,7 @@ public class ExamRegistrationService {
                     }
                     registeredExamUser = examUserRepository.save(registeredExamUser);
                     exam.addExamUser(registeredExamUser);
+                    usersAddedToExam.add(registeredExamUser.getUser().getLogin());
                 }
 
                 if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
@@ -135,12 +131,12 @@ public class ExamRegistrationService {
                     examUser.setPlannedSeat(examUserDto.seat());
                     examUser = examUserRepository.save(examUser);
                     exam.addExamUser(examUser);
+                    usersAddedToExam.add(examUser.getUser().getLogin());
                 }
-
-                addStudentToExamChannel(exam, student);
             }
         }
         examRepository.save(exam);
+        channelService.registerUsersToExamChannel(usersAddedToExam, exam);
 
         try {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -210,7 +206,7 @@ public class ExamRegistrationService {
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
 
-            addStudentToExamChannel(exam, student);
+            channelService.registerUsersToExamChannel(List.of(student.getLogin()), exam);
         }
         else {
             log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
@@ -339,9 +335,6 @@ public class ExamRegistrationService {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
 
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerCourseStudentsToChannelAsynchronously(course, channel);
-
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());
         for (int i = 0; i < students.size(); i++) {
@@ -364,18 +357,5 @@ public class ExamRegistrationService {
         examUser.setExam(exam);
         examUser.setUser(user);
         return examUserRepository.save(examUser);
-    }
-
-    /**
-     * Adds a student to the exam channel if it exists
-     *
-     * @param exam    exam the channel belongs to
-     * @param student the user that should be added
-     */
-    private void addStudentToExamChannel(Exam exam, User student) {
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        if (channel != null) {
-            channelService.registerUsersToChannel(false, false, false, List.of(student.getLogin()), exam.getCourse(), channel);
-        }
     }
 }

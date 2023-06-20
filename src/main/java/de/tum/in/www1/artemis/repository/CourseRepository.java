@@ -181,7 +181,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
                 SELECT course
                 FROM Course course
-                    LEFT JOIN FETCH course.organizations co
+                    LEFT JOIN FETCH course.organizations
                 WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
@@ -441,7 +441,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Utility method used to check whether a user is member of at least one organization of a given course
      *
-     * @param user   the user to check
+     * @param user   the user to check, organizations must NOT be lazily loaded
      * @param course the course to check
      * @return true if the user is member of at least one organization of the course. false otherwise
      */

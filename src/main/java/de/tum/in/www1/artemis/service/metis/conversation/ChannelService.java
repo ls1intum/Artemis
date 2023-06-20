@@ -158,6 +158,9 @@ public class ChannelService {
      */
     @Async
     public void registerCourseStudentsToChannelAsynchronously(Course course, Channel channel) {
+        if (channel == null) {
+            return;
+        }
         SecurityUtils.setAuthorizationObject();
         registerUsersToChannel(true, false, false, List.of(), course, channel);
     }
@@ -176,6 +179,22 @@ public class ChannelService {
         }
         SecurityUtils.setAuthorizationObject();
         registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
+    }
+
+    /**
+     * Adds users to the channel of the given exam asynchronously
+     *
+     * @param users list of user logins to register for the exam channel
+     * @param exam  exam to which channel the users should be added
+     */
+    @Async
+    public void registerUsersToExamChannel(List<String> users, Exam exam) {
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
+        if (channel == null) {
+            return;
+        }
+        SecurityUtils.setAuthorizationObject();
+        registerUsersToChannel(false, false, false, users, exam.getCourse(), channel);
     }
 
     /**

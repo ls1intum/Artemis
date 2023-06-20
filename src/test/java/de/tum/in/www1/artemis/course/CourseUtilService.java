@@ -158,6 +158,7 @@ public class CourseUtilService {
         Organization organization = organizationTestService.createOrganization(name, shortName, url, description, logoUrl, emailPattern);
         organizations.add(organization);
         course.setOrganizations(organizations);
+        course.setEnrollmentEnabled(true);
         return courseRepo.save(course);
     }
 

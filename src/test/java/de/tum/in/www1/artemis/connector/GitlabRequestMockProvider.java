@@ -122,6 +122,9 @@ public class GitlabRequestMockProvider {
         if (mockServer != null) {
             mockServer.reset();
         }
+        if (mockServerShortTimeout != null) {
+            mockServerShortTimeout.reset();
+        }
         if (closeable != null) {
             closeable.close();
         }
