@@ -275,7 +275,7 @@ public class LectureResource {
      * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
      *
      * @param lectureId the lectureId of the lecture to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/details-with-slides")
     @EnforceAtLeastStudent
