@@ -36,5 +36,4 @@ public abstract class IrisSession extends DomainObject {
     public List<IrisMessage> getMessages() {
         return messages;
     }
-
 }
