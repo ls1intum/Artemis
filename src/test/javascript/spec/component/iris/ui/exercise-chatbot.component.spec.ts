@@ -16,7 +16,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { mockServerMessage } from '../../../helpers/sample/iris-sample-data';
+import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
 
 describe('ExerciseChatbotComponent', () => {
     let component: ExerciseChatbotComponent;
