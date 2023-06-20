@@ -147,6 +147,11 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    public Course createCourseWithMessagingEnabled() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        return courseRepo.save(course);
+    }
+
     public Course createCourseWithCustomStudentGroupName(String studentGroupName) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor");
         return courseRepo.save(course);
@@ -800,6 +805,18 @@ public class CourseUtilService {
 
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
+    }
+
+    public void enableMessagingForCourse(Course course) {
+        CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
+        if (currentConfig == CourseInformationSharingConfiguration.DISABLED) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+            courseRepo.save(course);
+        }
+        else if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepo.save(course);
+        }
     }
 
     public Course createCourseWithTextExerciseAndTutor(String login) {

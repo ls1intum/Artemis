@@ -589,7 +589,7 @@ public class UserService {
     }
 
     /**
-     * add the user to the specified group and update in VCS (like GitLab) if used
+     * add the user to the specified group and update in VCS (like GitLab) if used, and registers the user to necessary channels
      *
      * @param user  the user
      * @param group the group

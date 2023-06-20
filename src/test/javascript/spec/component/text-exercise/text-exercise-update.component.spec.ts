@@ -15,9 +15,10 @@ import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -34,7 +35,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
-            declarations: [TextExerciseUpdateComponent],
+            declarations: [TextExerciseUpdateComponent, MockComponent(TitleChannelNameComponent)],
         })
             .overrideTemplate(TextExerciseUpdateComponent, '')
             .compileComponents();
@@ -49,7 +50,7 @@ describe('TextExercise Management Update Component', () => {
             const course = { id: 1 } as Course;
             const textExercise = new TextExercise(course, undefined);
             textExercise.id = 123;
-
+            textExercise.channelName = 'testChannel';
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
                 route.data = of({ textExercise });
@@ -173,6 +174,7 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
         const courseId = 1;
 
         beforeEach(() => {
@@ -205,6 +207,7 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
         const courseId = 1;
 
         beforeEach(() => {
@@ -233,6 +236,7 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
         const groupId = 1;
 
         beforeEach(() => {
@@ -263,6 +267,8 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
+
         const groupId = 1;
 
         beforeEach(() => {

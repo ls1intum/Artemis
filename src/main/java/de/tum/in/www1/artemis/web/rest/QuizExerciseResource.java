@@ -19,14 +19,18 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
@@ -89,12 +93,19 @@ public class QuizExerciseResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ChannelService channelService;
+
+    private final ChannelRepository channelRepository;
+
+    private final ConversationService conversationService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
             GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository) {
+            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, ChannelService channelService, ChannelRepository channelRepository,
+            ConversationService conversationService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -114,6 +125,9 @@ public class QuizExerciseResource {
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.submissionRepository = submissionRepository;
+        this.channelService = channelService;
+        this.channelRepository = channelRepository;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -145,10 +159,13 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        quizExercise = quizExerciseService.save(quizExercise);
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+        Channel createdChannel = channelService.createExerciseChannel(result, quizExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -201,9 +218,14 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
 
+        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
+
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
+        if (updatedChannel != null) {
+            quizExercise.setChannelName(updatedChannel.getName());
+        }
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -276,6 +298,12 @@ public class QuizExerciseResource {
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
+        }
+        if (quizExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
+            if (channel != null) {
+                quizExercise.setChannelName(channel.getName());
+            }
         }
         setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);
@@ -525,6 +553,7 @@ public class QuizExerciseResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(quizExercise);
         exerciseDeletionService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();

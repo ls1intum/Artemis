@@ -60,12 +60,12 @@
                     <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
                 </div>
                 <div class="col-1 my-auto mx-auto">
-                    <jhi-learning-goals-popover
+                    <jhi-competencies-popover
                         [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
                         [courseId]="lecture!.course!.id!"
-                        [learningGoals]="lectureUnit.competencies || []"
-                        [navigateTo]="'courseLearningGoals'"
-                    ></jhi-learning-goals-popover>
+                        [competencies]="lectureUnit.competencies || []"
+                        [navigateTo]="'courseCompetencies'"
+                    ></jhi-competencies-popover>
                 </div>
             </div>
             <!-- LECTURE UNITS END-->
@@ -101,7 +101,11 @@
         </div>
         <!-- LECTURE END -->
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="lecture && isCommunicationEnabled(lecture.course)" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet
+                *ngIf="lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))"
+                class="ms-3"
+                (activate)="onChildActivate($event)"
+            ></router-outlet>
         </div>
     </div>
 </div>

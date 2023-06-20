@@ -4,7 +4,7 @@ import { enterDate } from '../../../utils';
 
 export class QuizExerciseCreationPage {
     setTitle(title: string) {
-        cy.get('#quiz-title').type(title);
+        cy.get('#field_title').type(title);
     }
 
     setVisibleFrom(date: Dayjs) {
