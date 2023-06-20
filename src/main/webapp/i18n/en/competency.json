@@ -1,0 +1,146 @@
+{
+    "artemisApp": {
+        "competency": {
+            "created": "Competency created",
+            "deleted": "Competency deleted",
+            "updated": "Competency updated",
+            "competencyButton": "Competencies",
+            "title": "Competencies",
+            "description": "Description",
+            "taxonomy": "Taxonomy",
+            "masteryThreshold": "Mastery threshold",
+            "course": "Course",
+            "progress": "Progress",
+            "progressDescription": "The percentage of completed lecture units and exercises linked to this competency.",
+            "confidence": "Confidence",
+            "confidenceDescription": "The average score in all linked exercises in relation to the threshold required for mastering the competency defined by the instructor.",
+            "mastery": "Mastery",
+            "masteryDescription": "A weighted metric of your progress and confidence, which shows your overall advancement towards competency mastery.",
+            "masteredStudents": "Mastered students",
+            "mastered": "Mastered",
+            "taxonomies": {
+                "remember": "Remember",
+                "understand": "Understand",
+                "apply": "Apply",
+                "analyze": "Analyze",
+                "evaluate": "Evaluate",
+                "create": "Create"
+            },
+            "keywords": {
+                "remember": "define, duplicate, list, note, repeat, recognize, reproduce, name",
+                "understand": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
+                "apply": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
+                "analyze": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
+                "evaluate": "appraise, argue, choose, defend, judge, select, support, value, critique",
+                "create": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            },
+            "table": {
+                "panelHeader": "Your advancement"
+            },
+            "manageCompetencies": {
+                "title": "Competency Management",
+                "import": "Import competency",
+                "create": "Create competency"
+            },
+            "importCompetency": {
+                "title": "Import a Competency",
+                "search": "Search for a competency:",
+                "loading": "Loading...",
+                "table": {
+                    "title": "Title",
+                    "course": "Course",
+                    "semester": "Semester",
+                    "doSelect": "Select"
+                }
+            },
+            "createCompetency": {
+                "title": "Create a new competency",
+                "titlePlaceholder": "Give the competency a title",
+                "titleRequiredValidationError": "A competency needs to have a title",
+                "titleMaxLengthValidationError": "A competency title is limited to 255 characters",
+                "titleUniqueValidationError": "There already exists a competency with this title in the course",
+                "descriptionPlaceholder": "What do you expect students to learn? Example: \"You can explain the difference between call-by-value and call-by-reference.\"",
+                "descriptionMaxLengthValidationError": "A competency description is limited to 10 000 characters",
+                "suggestedTaxonomy": "Suggested",
+                "averageStudentScore": "Current average confidence",
+                "connectWithLectureUnits": "Link the competency with lecture units",
+                "selectLecture": "Select a Lecture",
+                "noLectures": "This course has no lectures",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} unit(s) linked)",
+                "lectureUnitTable": {
+                    "type": "Type",
+                    "name": "Lecture Unit",
+                    "releaseDate": "Release Date",
+                    "lecture": "Lecture",
+                    "scoreAchievedByStudent": "Your score",
+                    "averageScoreAchievedByStudent": "Average score of participant",
+                    "totalPointsAchievable": "Achievable points",
+                    "noOfParticipants": "Number of participants",
+                    "participationRate": "Participation Rate"
+                }
+            },
+            "editCompetency": {
+                "title": "Edit a competency"
+            },
+            "link": {
+                "title": "Linked Competencies",
+                "lectureUnit": "Optionally link this lecture unit to one or more competencies.",
+                "exercise": "Optionally link this exercise to one or more competencies."
+            },
+            "competencyCard": {
+                "connectedLectureUnits": "Linked Lecture Units",
+                "connectedLectureUnitsExplanation": "The following lecture units are linked to this competency:",
+                "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Confidence, Blue = Progress)",
+                "exerciseNote": "Please note that we take always the last submission into account for exercise units. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
+                "delete": {
+                    "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the competency for confirmation.",
+                    "buttonText": "Delete"
+                },
+                "remove": "Remove",
+                "achieved": "achieved",
+                "progressUnavailable": "Progress calculation is currently only available for competencies linked to lecture units.",
+                "noUnitsConnected": "This competency is not linked to any lecture units",
+                "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
+                "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"
+            },
+            "competencyPopover": {
+                "connectedCompetencies": "Linked Competencies",
+                "explanation": "This lecture unit helps you to achieve the following competencies: ",
+                "noCompetencies": "No competencies are linked with this lecture unit! "
+            },
+            "prerequisite": {
+                "title": "Prerequisites",
+                "managePrerequisites": {
+                    "title": "Prerequisite Management",
+                    "select": "Select Prerequisite"
+                },
+                "import": {
+                    "title": "Add prerequisites",
+                    "table": {
+                        "title": "Title",
+                        "course": "Course",
+                        "semester": "Semester",
+                        "doSelect": "Select"
+                    },
+                    "searchCompetency": "Search competency:",
+                    "loading": "Loading..."
+                }
+            },
+            "relation": {
+                "competencyRelations": "Competency Relations",
+                "tailCompetency": "Tail Competency",
+                "relationType": "Relation Type",
+                "headCompetency": "Head Competency",
+                "relates": "Relates",
+                "assumes": "Assumes",
+                "extends": "Extends",
+                "matches": "Matches",
+                "createRelation": "Create Relation",
+                "createsCircularRelation": "You can not create circular relations between competencies.",
+                "selfRelation": "You can not create a relation between a competency and itself.",
+                "relationAlreadyExists": "This relation already exists."
+            }
+        }
+    }
+}
