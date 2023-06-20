@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
-import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -77,15 +76,6 @@ describe('ExerciseChatbotComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should open dialog when chat not accepted', () => {
-        jest.spyOn(component, 'openDialog');
-
-        component.chatAccepted = false;
-        component.handleButtonClick();
-
-        expect(component.openDialog).toHaveBeenCalled();
     });
 
     it('should open chat when chat accepted', () => {
