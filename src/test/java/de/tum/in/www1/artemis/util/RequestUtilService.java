@@ -174,11 +174,7 @@ public class RequestUtilService {
             request.headers(httpHeaders);
         }
         MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         restoreSecurityContext();
         return res.getResponse();
     }
@@ -200,11 +196,7 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
@@ -246,11 +238,7 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         return res.getResponse().getContentAsString();
     }
 
@@ -340,11 +328,7 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
 
         if (res.getResponse().getStatus() >= 299) {
             return null;
@@ -622,5 +606,19 @@ public class RequestUtilService {
             multiMap.add(key, value.toString());
         });
         return multiMap;
+    }
+
+    /**
+     * Verifies the expected response headers against the actual response headers.
+     *
+     * @param expectedResponseHeaders a map containing the expected response headers
+     * @param res                     the {@link MvcResult} containing the actual response headers
+     */
+    private static void verifyExpectedResponseHeaders(Map<String, String> expectedResponseHeaders, MvcResult res) {
+        if (expectedResponseHeaders != null) {
+            for (Map.Entry<String, String> responseHeader : expectedResponseHeaders.entrySet()) {
+                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).get(0)).isEqualTo(responseHeader.getValue());
+            }
+        }
     }
 }
