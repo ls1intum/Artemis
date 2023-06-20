@@ -76,30 +76,44 @@ class AuthorizationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
+    void testEnforceAdminAnnotations() {
+        ArchRule rule = methods().that().areAnnotatedWith(EnforceAdmin.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAPackage(REST_ADMIN_PACKAGE + "..");
+        rule.check(productionClasses);
+    }
+
+    @Test
     void testEnforceAtLeastInstructorAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastInstructor.class).should().beDeclaredInClassesThat().resideInAPackage(REST_BASE_PACKAGE + ".*").andShould()
-                .beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + ".*", REST_OPEN_PACKAGE + ".*");
-        rule.evaluate(productionClasses);
+        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastInstructor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+        rule.check(productionClasses);
     }
 
     @Test
     void testEnforceAtLeastEditorAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastEditor.class).should().beDeclaredInClassesThat().resideInAPackage(REST_BASE_PACKAGE + ".*").andShould()
-                .beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + ".*", REST_OPEN_PACKAGE + ".*");
-        rule.evaluate(productionClasses);
+        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastEditor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAnyPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+        rule.check(productionClasses);
     }
 
     @Test
     void testEnforceAtLeastTutorAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastTutor.class).should().beDeclaredInClassesThat().resideInAPackage(REST_BASE_PACKAGE + ".*").andShould()
-                .beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + ".*", REST_OPEN_PACKAGE + ".*");
-        rule.evaluate(productionClasses);
+        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastTutor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+        rule.check(productionClasses);
     }
 
     @Test
     void testEnforceAtLeastStudentAnnotations() {
-        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastStudent.class).should().beDeclaredInClassesThat().resideInAPackage(REST_BASE_PACKAGE + ".*").andShould()
-                .beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + ".*", REST_OPEN_PACKAGE + ".*");
-        rule.evaluate(productionClasses);
+        ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastStudent.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+        rule.check(productionClasses);
+    }
+
+    @Test
+    void testEnforceNothingAnnotations() {
+        ArchRule rule = methods().that().areAnnotatedWith(EnforceNothing.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAPackage(REST_OPEN_PACKAGE + "..");
+        rule.check(productionClasses);
     }
 }
