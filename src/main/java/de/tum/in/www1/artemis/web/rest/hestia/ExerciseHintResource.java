@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -20,6 +19,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
@@ -78,7 +80,7 @@ public class ExerciseHintResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ExerciseHint> createExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to save ExerciseHint : {}", exerciseHint);
 
@@ -117,7 +119,7 @@ public class ExerciseHintResource {
      *         or with status {@code 500 (Internal Server Error)} if the exerciseHint couldn't be updated.
      */
     @PutMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseHintId, @PathVariable Long exerciseId) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
 
@@ -161,7 +163,7 @@ public class ExerciseHintResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         var title = exerciseHintService.getExerciseHintTitle(exerciseId, exerciseHintId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -177,7 +179,7 @@ public class ExerciseHintResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -205,7 +207,7 @@ public class ExerciseHintResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHints : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -222,7 +224,7 @@ public class ExerciseHintResource {
      *         or with status {@code 404 (Not Found)}
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/activated")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<ExerciseHint>> getActivatedExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get activated ExerciseHints : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -244,7 +246,7 @@ public class ExerciseHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exercise hints
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/available")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<ExerciseHint>> getAvailableExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get a CodeHint for programming exercise : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -272,7 +274,7 @@ public class ExerciseHintResource {
      *         or with status {@code 400 (BAD_REQUEST)} if the hint could not be activated
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/activate")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<ExerciseHint> activateExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to activate ExerciseHint : {}", exerciseHintId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -301,7 +303,7 @@ public class ExerciseHintResource {
      * @return The {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/rating/{ratingValue}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> rateExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId, @PathVariable Integer ratingValue) {
         log.debug("REST request to rate ExerciseHint : {}", exerciseHintId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -327,7 +329,7 @@ public class ExerciseHintResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
