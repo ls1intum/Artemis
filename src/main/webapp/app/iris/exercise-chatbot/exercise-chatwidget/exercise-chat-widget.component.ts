@@ -33,18 +33,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     error = '';
     dots = 1;
 
-    readonly firstMessageContent = {
-        textContent: "Hi, I'm Iris! I can help you with your programming exercise. You can know more about me here.",
-        type: IrisMessageContentType.TEXT,
-    } as IrisMessageContent;
-
-    readonly firstMessage = {
-        sender: IrisSender.LLM,
-        id: 1,
-        content: [this.firstMessageContent],
-        sentAt: dayjs(),
-    } as IrisServerMessage;
-
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
     }
@@ -88,7 +76,18 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     loadFirstMessage(): void {
         if (this.messages.length === 0) {
-            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(this.firstMessage));
+            const firstMessageContent = {
+                textContent: "Hi, I'm Iris! I can help you with your programming exercise. You can know more about me here.",
+                type: IrisMessageContentType.TEXT,
+            } as IrisMessageContent;
+
+            const firstMessage = {
+                sender: IrisSender.LLM,
+                id: 1,
+                content: [firstMessageContent],
+                sentAt: dayjs(),
+            } as IrisServerMessage;
+            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
         }
     }
 
