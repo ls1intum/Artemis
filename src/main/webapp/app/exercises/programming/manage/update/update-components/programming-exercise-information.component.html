@@ -1,23 +1,18 @@
 <div class="form-group">
     <div>
-        <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
+        <label class="label-narrow" jhiTranslate="artemisApp.exercise.title">Title</label>
         <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
     </div>
-    <input
-        required
-        type="text"
-        class="form-control"
-        name="title"
-        id="field_title"
+    <jhi-title-channel-name
+        [(title)]="programmingExercise.title"
+        [(channelName)]="programmingExercise.channelName"
+        channelNamePrefix="exercise-"
+        [minTitleLength]="3"
         [pattern]="infoInputs.titleNamePattern"
-        [(ngModel)]="programmingExercise.title"
-        #title="ngModel"
-    />
-    <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys : ['required']">
-        <div *ngIf="title.invalid && (title.dirty || title.touched)" class="alert alert-danger">
-            <div [jhiTranslate]="'artemisApp.exercise.form.title' + '.' + e.key"></div>
-        </div>
-    </ng-container>
+        [hideTitleLabel]="true"
+        [emphasizeLabels]="true"
+        [hideChannelName]="isExamMode || (isEdit && programmingExercise.channelName === undefined)"
+    ></jhi-title-channel-name>
 </div>
 
 <div class="form-group">
