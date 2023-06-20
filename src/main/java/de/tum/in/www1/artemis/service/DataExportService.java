@@ -224,6 +224,8 @@ public class DataExportService {
                 var courseDirPath = retrieveCourseDirPath(workingDirectory, exam.getCourse());
                 var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
                 var examWorkingDir = Files.createDirectories(courseDirPath.resolve(examDirectoryName));
+                log.debug("Creating export for student exam with id {} for exam with id {} and user with id {} in course {}", studentExam.getId(), exam.getId(), userId,
+                        entry.getKey().getTitle());
                 createStudentExamExport(studentExam, examWorkingDir);
             }
         }
