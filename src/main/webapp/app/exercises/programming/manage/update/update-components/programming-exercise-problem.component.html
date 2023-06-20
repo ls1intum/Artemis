@@ -31,7 +31,6 @@
         id="learning-goals"
         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
         [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
-        [includeOptionals]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
         [(ngModel)]="programmingExercise.competencies"
         name="learningGoals"
     ></jhi-learning-goal-selection>

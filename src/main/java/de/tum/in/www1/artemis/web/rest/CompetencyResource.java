@@ -167,11 +167,8 @@ public class CompetencyResource {
             throw new BadRequestException();
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var existingCompetency = this.competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competency.getId());
+        var existingCompetency = this.competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, existingCompetency);
-        if (competency.isOptional() && !competencyService.competencyCanBeOptional(existingCompetency)) {
-            throw new BadRequestException();
-        }
 
         existingCompetency.setTitle(competency.getTitle());
         existingCompetency.setDescription(competency.getDescription());

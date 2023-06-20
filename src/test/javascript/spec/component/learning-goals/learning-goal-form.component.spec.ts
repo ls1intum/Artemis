@@ -15,8 +15,6 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
 
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
@@ -96,48 +94,6 @@ describe('LearningGoalFormComponent', () => {
         });
     }));
 
-    it('should detect disable optional selection if scored exercise exists', () => {
-        // stubbing learning goal service for validator
-        const learningGoalService = TestBed.inject(LearningGoalService);
-
-        const learningGoalOfGetAllForCourseResponse = new LearningGoal();
-        learningGoalOfGetAllForCourseResponse.id = 1;
-        learningGoalOfGetAllForCourseResponse.title = 'test';
-
-        const getAllForCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-            body: [learningGoalOfGetAllForCourseResponse],
-            status: 200,
-        });
-
-        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(getAllForCourseResponse));
-
-        learningGoalFormComponentFixture.detectChanges();
-
-        const exampleTitle = 'uniqueName';
-        learningGoalFormComponent.titleControl!.setValue(exampleTitle);
-        const exampleDescription = 'lorem ipsum';
-        learningGoalFormComponent.descriptionControl!.setValue(exampleDescription);
-
-        const exercise = { id: 1, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY } as Exercise;
-
-        const learningGoalOfFindByIdResponse = new LearningGoal();
-        learningGoalOfGetAllForCourseResponse.id = 2;
-        learningGoalOfFindByIdResponse.exercises = [exercise];
-
-        const findByIdResponse: HttpResponse<LearningGoal> = new HttpResponse({
-            body: learningGoalOfFindByIdResponse,
-            status: 200,
-        });
-        jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
-
-        learningGoalFormComponent.courseId = 1;
-        learningGoalFormComponent.formData.id = 2;
-        learningGoalFormComponent.isEditMode = true;
-
-        learningGoalFormComponent.ngOnInit();
-        expect(learningGoalFormComponent.optionalControl?.disabled).toBeTrue();
-    });
-
     it('should correctly set form values in edit mode', () => {
         learningGoalFormComponent.isEditMode = true;
         const textUnit = new TextUnit();
@@ -150,14 +106,6 @@ describe('LearningGoalFormComponent', () => {
             taxonomy: LearningGoalTaxonomy.ANALYZE,
             optional: true,
         };
-
-        // stubbing learning goal service for validator
-        const learningGoalService = TestBed.inject(LearningGoalService);
-        const findByIdResponse: HttpResponse<LearningGoal> = new HttpResponse({
-            body: new LearningGoal(),
-            status: 200,
-        });
-        jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(findByIdResponse));
 
         learningGoalFormComponentFixture.detectChanges();
         learningGoalFormComponent.formData = formData;

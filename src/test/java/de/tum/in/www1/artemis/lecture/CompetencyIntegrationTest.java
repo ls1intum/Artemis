@@ -324,14 +324,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     private static Stream<Arguments> competencyUpdateToOptionalProvider() {
-        return Stream.of(Arguments.of(IncludedInOverallScore.NOT_INCLUDED, HttpStatus.OK), Arguments.of(IncludedInOverallScore.INCLUDED_AS_BONUS, HttpStatus.OK),
-                Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY, HttpStatus.BAD_REQUEST));
+        return Stream.of(Arguments.of(IncludedInOverallScore.NOT_INCLUDED), Arguments.of(IncludedInOverallScore.INCLUDED_AS_BONUS),
+                Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY));
     }
 
     @ParameterizedTest
     @MethodSource("competencyUpdateToOptionalProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore, HttpStatus httpStatus) throws Exception {
+    void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
         Course course = courseRepository.findByIdElseThrow(competency.getId());
 
         Competency newCompetency = new Competency();
@@ -347,7 +347,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         exerciseRepository.save(exercise);
 
         newCompetency.setOptional(true);
-        request.put("/api/courses/" + competency.getId() + "/competencies", newCompetency, httpStatus);
+        request.put("/api/courses/" + competency.getId() + "/competencies", newCompetency, HttpStatus.OK);
     }
 
     @Test

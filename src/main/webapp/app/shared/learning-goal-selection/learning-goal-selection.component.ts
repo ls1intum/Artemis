@@ -1,11 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, forwardRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { LearningGoal, getIcon } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-learning-goal-selection',
@@ -18,16 +17,13 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
         },
     ],
 })
-export class LearningGoalSelectionComponent implements OnInit, OnChanges, ControlValueAccessor {
+export class LearningGoalSelectionComponent implements OnInit, ControlValueAccessor {
     @Input() labelName: string;
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() learningGoals: LearningGoal[];
-    nonOptionalLearningGoals: LearningGoal[];
-    selectableLearningGoals: LearningGoal[];
-    @Input() includeOptionals: boolean;
 
     @Output() valueChange = new EventEmitter();
 
@@ -61,18 +57,6 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
                     },
                 });
             }
-        } else {
-            this.setLearningGoals(this.learningGoals);
-        }
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.includeOptionals.currentValue !== changes.includeOptionals.previousValue) {
-            if (changes.includeOptionals.currentValue) {
-                this.selectableLearningGoals = this.learningGoals;
-            } else {
-                this.selectableLearningGoals = this.nonOptionalLearningGoals;
-            }
         }
     }
 
@@ -87,9 +71,6 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
             learningGoal.userProgress = undefined;
             return learningGoal;
         });
-
-        this.nonOptionalLearningGoals = this.learningGoals.filter((learningGoal) => !learningGoal.optional);
-        this.selectableLearningGoals = this.includeOptionals ? this.learningGoals : this.nonOptionalLearningGoals;
     }
 
     updateField(newValue: LearningGoal[]) {
@@ -99,22 +80,12 @@ export class LearningGoalSelectionComponent implements OnInit, OnChanges, Contro
     }
 
     writeValue(value?: LearningGoal[]): void {
-        if (value && this.selectableLearningGoals) {
+        if (value && this.learningGoals) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.id);
-            this.value = this.selectableLearningGoals.filter((learningGoal) => ids.includes(learningGoal.id));
+            this.value = this.learningGoals.filter((learningGoal) => ids.includes(learningGoal.id));
         } else {
             this.value = value;
-        }
-    }
-
-    updateIncludeOptionals(includedInOverallScore: IncludedInOverallScore | undefined) {
-        if (!includedInOverallScore) {
-            return;
-        }
-        this.includeOptionals = includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
-        if (!this.includeOptionals) {
-            this.updateField(this.value?.filter((learningGoal: LearningGoal) => !learningGoal.optional));
         }
     }
 

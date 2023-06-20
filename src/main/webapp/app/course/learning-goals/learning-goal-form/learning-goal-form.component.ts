@@ -10,10 +10,6 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { intersection } from 'lodash-es';
 import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
@@ -101,7 +97,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
     suggestedTaxonomies: string[] = [];
-    canBeOptional = true;
 
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
@@ -111,7 +106,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         private learningGoalService: LearningGoalService,
         private translateService: TranslateService,
         public lectureUnitService: LectureUnitService,
-        private alertService: AlertService,
     ) {}
 
     get titleControl() {
@@ -138,7 +132,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit(): void {
-        this.checkCanBeOptional();
         this.initializeForm();
     }
 
@@ -245,34 +238,5 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             lectureTitle: lecture.title,
             noOfConnectedUnits: noOfSelectedUnitsInLecture,
         });
-    }
-
-    private checkCanBeOptional(): void {
-        if (!this.isEditMode || !this.formData.id) {
-            this.canBeOptional = true;
-            return;
-        }
-
-        this.learningGoalService
-            .findById(this.formData.id, this.courseId)
-            .pipe(
-                map((res) => {
-                    if (res.body) {
-                        return res.body;
-                    }
-                    return null;
-                }),
-            )
-            .subscribe({
-                next: (learningGoal) => {
-                    if (learningGoal?.exercises?.length) {
-                        this.canBeOptional = !learningGoal.exercises.some((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
-                    }
-                    if (!this.canBeOptional) {
-                        this.optionalControl?.disable();
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
     }
 }

@@ -33,7 +33,6 @@ import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-sv
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -46,8 +45,6 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')
     quizQuestionsEditComponent: QuizQuestionListEditComponent;
-    @ViewChild('learningGoalSelectionComponent')
-    learningGoalSelectionComponent: LearningGoalSelectionComponent;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -293,13 +290,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
         this.validateDate();
         return super.cacheValidation(this.changeDetector);
-    }
-
-    /**
-     * Updates selection of LearningGoalSelectionComponent
-     */
-    updateLearningGoalSelection() {
-        this.learningGoalSelectionComponent.includeOptionals = this.quizExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
     }
 
     addQuizBatch() {
@@ -553,7 +543,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise.includedInOverallScore = includedInOverallScore;
         this.cacheValidation();
-        this.updateLearningGoalSelection();
     }
 
     computeInvalidReasons(): ValidationReason[] {

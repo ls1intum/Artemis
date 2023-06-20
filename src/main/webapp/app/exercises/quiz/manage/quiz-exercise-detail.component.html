@@ -189,9 +189,7 @@
                             <jhi-included-in-overall-score-picker
                                 *ngIf="quizExercise.includedInOverallScore"
                                 [includedInOverallScore]="quizExercise.includedInOverallScore!"
-                                (includedInOverallScoreChange)="
-                                    includedInOverallScoreChange($event); learningGoalSelectionComponent.updateIncludeOptionals(quizExercise.includedInOverallScore)
-                                "
+                                (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
                                 [allowNotIncluded]="!isExamMode"
                             ></jhi-included-in-overall-score-picker>
                         </div>
@@ -201,11 +199,9 @@
             <div class="row">
                 <div class="form-group" *ngIf="!isExamMode">
                     <jhi-learning-goal-selection
-                        #learningGoalSelectionComponent
                         id="learning-goals"
                         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
                         [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
-                        [includeOptionals]="quizExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                         [(ngModel)]="quizExercise.competencies"
                         name="learningGoals"
                     ></jhi-learning-goal-selection>

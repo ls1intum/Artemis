@@ -936,22 +936,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         validateScoreSettings();
         validateDates();
         validateExamExerciseIncludedInScoreCompletely();
-        validateCompetencies();
     }
 
     private void validateExamExerciseIncludedInScoreCompletely() {
         if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
-        }
-    }
-
-    private void validateCompetencies() {
-        if (includedInOverallScore == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            final boolean containsOptionalCompetency = competencies.stream().anyMatch(Competency::isOptional);
-            if (containsOptionalCompetency) {
-                throw new BadRequestAlertException("An exercise included in the score can not be linked to an optional competency.", getTitle(),
-                        "exerciseIncludedInScoreLinkedToOptionalCompetency");
-            }
         }
     }
 

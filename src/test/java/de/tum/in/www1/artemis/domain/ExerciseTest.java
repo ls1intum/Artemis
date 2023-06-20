@@ -1,29 +1,23 @@
 package de.tum.in.www1.artemis.domain;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class ExerciseTest {
 
@@ -298,32 +292,6 @@ class ExerciseTest {
         participations.add(participation);
 
         return participations;
-    }
-
-    private static Stream<Arguments> validateCompetenciesProvider() {
-        Competency optionalCompetency = new Competency();
-        optionalCompetency.setOptional(true);
-        Competency nonOptionalCompetency = new Competency();
-        return Stream.of(Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY, optionalCompetency, true),
-                Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY, nonOptionalCompetency, false),
-                Arguments.of(IncludedInOverallScore.INCLUDED_AS_BONUS, optionalCompetency, false), Arguments.of(IncludedInOverallScore.NOT_INCLUDED, optionalCompetency, false));
-    }
-
-    @ParameterizedTest
-    @MethodSource("validateCompetenciesProvider")
-    void validateCompetencies(IncludedInOverallScore includedInOverallScore, Competency competency, boolean exceptionExpected) {
-        exercise.setMaxPoints(1.0);
-
-        exercise.setIncludedInOverallScore(includedInOverallScore);
-        var competencies = new HashSet<Competency>();
-        competencies.add(competency);
-        exercise.setCompetencies(competencies);
-        if (exceptionExpected) {
-            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exercise.validateGeneralSettings());
-        }
-        else {
-            assertThatCode(() -> exercise.validateGeneralSettings()).doesNotThrowAnyException();
-        }
     }
 
     @Test

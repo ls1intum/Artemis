@@ -24,7 +24,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -32,8 +31,6 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
     styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
-    @ViewChild('learningGoalSelectionComponent') learningGoalSelectionComponent: LearningGoalSelectionComponent;
-
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor?: ModelingEditorComponent;
 

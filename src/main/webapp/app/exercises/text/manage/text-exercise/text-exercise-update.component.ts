@@ -23,7 +23,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -32,8 +31,6 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
 })
 export class TextExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
-
-    @ViewChild('learningGoalSelectionComponent') learningGoalSelectionComponent: LearningGoalSelectionComponent;
 
     @ViewChild('editForm') editForm: NgForm;
 
