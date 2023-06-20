@@ -257,7 +257,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testGetPostsForCourseWithCourseWideContent() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -272,7 +272,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -290,7 +290,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToOwn", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -310,7 +310,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
         params.add("filterToOwn", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -450,7 +450,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -470,7 +470,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
         params.add("filterToOwn", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -490,7 +490,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
         params.add("filterToUnresolved", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -512,7 +512,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToOwn", "true");
         params.add("filterToUnresolved", "true");
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
