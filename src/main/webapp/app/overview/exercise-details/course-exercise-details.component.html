@@ -156,8 +156,8 @@
                 </ng-container>
             </div>
             <!-- RESULTS END -->
-            <!-- PROBLEM STATEMENT START -->
             <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"> </jhi-problem-statement>
+
             <jhi-reset-repo-button
                 *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length"
                 [exercise]="exercise"
@@ -165,7 +165,6 @@
                 [smallButtons]="false"
             >
             </jhi-reset-repo-button>
-            <!-- PROBLEM STATEMENT END -->
             <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
@@ -204,6 +203,7 @@
                     </ng-container>
                 </dl>
             </ng-container>
+            <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation"></jhi-exercise-info>
             <jhi-complaint-student-view
                 *ngIf="
                     exercise &&
