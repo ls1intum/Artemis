@@ -86,10 +86,10 @@ describe('CourseRegistrationButtonComponent', () => {
 
     it('should navigate home after unenrollment', () => {
         component.onUnenroll();
-        expect(navigateStub).toHaveBeenCalledOnceWith(['/']);
+        expect(navigateStub).toHaveBeenCalledExactlyOnceWith(['/']);
     });
 
-    it('should alert error after unsucessfull unenrollment', () => {
+    it('should alert error after unsuccessful unenrollment', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         unenrollFromCourseStub = jest.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(throwError(() => httpError));
         fixture.detectChanges();

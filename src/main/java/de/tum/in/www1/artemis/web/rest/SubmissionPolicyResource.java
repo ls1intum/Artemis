@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -16,6 +15,8 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
@@ -66,7 +67,7 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to.
      */
     @GetMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<SubmissionPolicy> getSubmissionPolicyOfExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get submission policy of programming exercise {}", exerciseId);
 
@@ -92,7 +93,7 @@ public class SubmissionPolicyResource {
      *         is invalid. More information on submission policy validation can be found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PostMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
@@ -133,7 +134,7 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to and 400 when the programming exercise does not have a submission policy.
      */
     @DeleteMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeSubmissionPolicyFromProgrammingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to remove submission policy from programming exercise {}", exerciseId);
 
@@ -168,7 +169,7 @@ public class SubmissionPolicyResource {
      *         the submission policy or the programming exercise has no submission policy.
      */
     @PutMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam Boolean activate) {
         log.debug("REST request to toggle the submission policy for programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
@@ -216,7 +217,7 @@ public class SubmissionPolicyResource {
      *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PatchMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy updatedSubmissionPolicy) {
         log.debug("REST request to update the submission policy of programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
@@ -248,7 +249,7 @@ public class SubmissionPolicyResource {
      * @return the ResponseEntity with status 200 (OK) containing the number of submissions in its body.
      */
     @GetMapping("participations/{participationId}/submission-count")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Integer> getParticipationSubmissionCount(@PathVariable Long participationId) {
         var programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseStudentParticipation);

@@ -33,6 +33,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     List<Post> findPostsByAuthorLogin(String login);
 
+    List<Post> findPostsByAuthorId(long authorId);
+
     /**
      * Generates SQL Query via specifications to filter and sort Posts
      *
@@ -43,14 +45,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
      * @return returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
      */
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
-        Specification<Post> specification = Specification.where(distinct())
-                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
-                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
-                                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
-                                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
-                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                        .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+        Specification<Post> specification = Specification.where(distinct()).and(getCourseSpecification(postContextFilter.getCourseId()))
+                .and(getLectureSpecification(postContextFilter.getLectureIds()).or(getExerciseSpecification(postContextFilter.getExerciseIds()))
+                        .or(getCourseWideContextSpecification(postContextFilter.getCourseWideContexts())))
+                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
+                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
         if (pagingEnabled) {
             return findAll(specification, pageable);

@@ -159,6 +159,7 @@ local-vcs-repos
 /coverage
 /exports
 /legal/server-integration-test
+data-exports/
 
 ######################
 # Gradle Wrapper

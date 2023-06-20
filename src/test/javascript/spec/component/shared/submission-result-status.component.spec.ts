@@ -73,7 +73,7 @@ describe('SubmissionResultStatusComponent', () => {
 
         it.each([
             [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, false],
-            [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
+            [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{}] } as Exercise, true],
             [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{ submissions: [{}] }] } as Exercise, false],
             [{ dueDate: dayjs().add(1, 'hour') } as Exercise, false],
             [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, true],
