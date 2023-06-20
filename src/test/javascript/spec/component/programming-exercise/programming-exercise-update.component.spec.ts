@@ -789,27 +789,39 @@ describe('ProgrammingExercise Management Update Component', () => {
         });
     });
 
-    it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
-        const entity = new ProgrammingExercise(new Course(), undefined);
-        entity.id = 123;
-        comp.programmingExercise = entity;
-        comp.programmingExercise.course = course;
-        comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    describe('disable features based on selected language and project type', () => {
+        beforeEach(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 123;
+            comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
 
-        const route = TestBed.inject(ActivatedRoute);
-        route.params = of({ courseId });
-        route.url = of([{ path: 'edit' } as UrlSegment]);
-        route.data = of({ programmingExercise: entity });
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+        });
 
-        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+        it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
 
-        fixture.detectChanges();
-        tick();
+            fixture.detectChanges();
+            tick();
 
-        expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-        expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
-    }));
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
+            expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
+        }));
+
+        it('should disable options for java dejagnu project type', fakeAsync(() => {
+            comp.selectedProjectType = ProjectType.MAVEN_MAVEN;
+
+            expect(comp.sequentialTestRunsAllowed).toBeFalse();
+            expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
+        }));
+    });
 
     it('should toggle the wizard mode', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
