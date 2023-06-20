@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.service.dto.OpenAIChatResponseDTO;
-import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 
 /**
  * A service which sends REST requests to the GPT-3.5 API to generate responses to Iris conversations.
@@ -114,7 +113,8 @@ public class IrisGPT3_5Service implements IrisModel {
             return CompletableFuture.completedFuture(irisMessage);
         }
         catch (JsonProcessingException e) {
-            return CompletableFuture.failedFuture(new IrisParseResponseException(e));
+            log.error(e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
         }
     }
 
