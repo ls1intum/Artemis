@@ -174,6 +174,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false);
+        exercise.setChannelName("exercise-pe");
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
