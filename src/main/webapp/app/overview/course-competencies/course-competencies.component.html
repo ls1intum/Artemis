@@ -1,0 +1,40 @@
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div *ngIf="countCompetencies > 0" class="mt-3 position-relative">
+            <div class="exercise-row-container mb-3">
+                <jhi-competency-card *ngFor="let competency of competencies; index as i; trackBy: identify" [competency]="competency" [courseId]="courseId"></jhi-competency-card>
+            </div>
+        </div>
+        <div *ngIf="countPrerequisites > 0" class="mt-3 position-relative">
+            <div class="exercise-row-container mb-3">
+                <div class="control-label" (click)="isCollapsed = !isCollapsed">
+                    <fa-icon class="pe-3" [icon]="isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                    <span>{{ 'artemisApp.competency.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
+                </div>
+                <div *ngIf="!isCollapsed">
+                    <jhi-competency-card
+                        *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+                        [competency]="prerequisite"
+                        [courseId]="courseId"
+                        [isPrerequisite]="true"
+                    ></jhi-competency-card>
+                </div>
+                <div class="collapsed"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-3 offset-lg-1">
+        <h3 class="mt-3">{{ 'artemisApp.competency.table.panelHeader' | artemisTranslate }}</h3>
+        <span class="badge bg-dark">{{ countMasteredCompetencies }} / {{ countCompetencies }}</span> {{ 'artemisApp.competency.mastered' | artemisTranslate }}
+        <dl class="mt-3">
+            <dt>{{ 'artemisApp.competency.progress' | artemisTranslate }}</dt>
+            <dd>{{ 'artemisApp.competency.progressDescription' | artemisTranslate }}</dd>
+
+            <dt>{{ 'artemisApp.competency.confidence' | artemisTranslate }}</dt>
+            <dd>{{ 'artemisApp.competency.confidenceDescription' | artemisTranslate }}</dd>
+
+            <dt>{{ 'artemisApp.competency.mastery' | artemisTranslate }}</dt>
+            <dd>{{ 'artemisApp.competency.masteryDescription' | artemisTranslate }}</dd>
+        </dl>
+    </div>
+</div>

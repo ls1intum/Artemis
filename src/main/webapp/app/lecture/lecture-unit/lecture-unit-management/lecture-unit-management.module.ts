@@ -18,7 +18,7 @@ import { TextUnitFormComponent } from './text-unit-form/text-unit-form.component
 import { EditTextUnitComponent } from './edit-text-unit/edit-text-unit.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
-import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
@@ -35,7 +35,7 @@ import { AttachmentUnitsComponent } from './attachment-units/attachment-units.co
         RouterModule.forChild([]),
         ArtemisLectureUnitsModule,
         FormDateTimePickerModule,
-        ArtemisLearningGoalsModule,
+        ArtemisCompetenciesModule,
         DragDropModule,
     ],
     declarations: [
