@@ -949,6 +949,14 @@ Course Info Bar
     box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
 }
 
+.mat-select-panel {
+    background: $metis-course-discussion-select-bg;
+    -webkit-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    -moz-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    min-width: fit-content;
+}
+
 .mat-form-field-outline {
     top: -0.1rem !important;
     color: $mat-form-field-outline;

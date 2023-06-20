@@ -39,7 +39,7 @@
                         <fa-icon class="ng-fa-icon" [icon]="faEye" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
                     </ng-template>
                 </button>
-                <small class="text-muted">
+                <small class="text-body-secondary">
                     {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate : { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
                 </small>
             </div>
@@ -55,7 +55,7 @@
                         <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="notification-text mb-1 text-break" [innerHTML]="getNotificationTextTranslation(notification)"></div>
-                    <div class="info text-muted text-end">
+                    <div class="info text-body-secondary text-end">
                         {{ notification.notificationDate?.toDate() | date : 'dd.MM.yy HH:mm' }}
                         {{ 'artemisApp.notification.by' | artemisTranslate }}
                         <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
