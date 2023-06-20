@@ -27,7 +27,7 @@
         </div>
 
         <!-- main chat section -->
-        <div class="chat-body" #chatBody>
+        <div class="chat-body" #chatBody (scroll)="onChatScroll()">
             <div class="p-chat" *ngIf="!userAccepted">
                 <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
                 <div class="button-container">
