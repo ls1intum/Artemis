@@ -1,5 +1,6 @@
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
+import { ButtonType } from 'app/shared/components/button.component';
 
 /**
  * Defines the type of the action handled by delete dialog
@@ -10,6 +11,7 @@ export enum ActionType {
     Cleanup = 'cleanup',
     Remove = 'remove',
     Unlink = 'unlink',
+    RequestDataExport = 'requestDataExport',
     NoButtonTextDelete = 'noButtonTextDelete',
     EndNow = 'endNow',
 }
@@ -36,6 +38,9 @@ export class DeleteDialogData {
 
     // type of the action that the delete dialog will handle
     actionType: ActionType;
+
+    //button type determining the style of the button
+    buttonType: ButtonType;
 
     // output event passed to the delete dialog component
     delete: EventEmitter<any>;

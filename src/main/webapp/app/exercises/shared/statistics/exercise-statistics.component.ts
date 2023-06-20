@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpResponse } from '@angular/common/http';
 
@@ -22,6 +23,7 @@ export class ExerciseStatisticsComponent implements OnInit {
     paramSub: Subscription;
 
     exercise: Exercise;
+    course: Course;
     exerciseStatistics: ExerciseManagementStatisticsDto;
 
     constructor(private service: StatisticsService, private route: ActivatedRoute, private exerciseService: ExerciseService) {}
@@ -33,6 +35,7 @@ export class ExerciseStatisticsComponent implements OnInit {
         });
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.exercise = exerciseResponse.body!;
+            this.course = getCourseFromExercise(this.exercise)!;
         });
         this.service.getExerciseStatistics(exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
             this.exerciseStatistics = res;

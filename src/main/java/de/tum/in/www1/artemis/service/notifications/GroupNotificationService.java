@@ -6,9 +6,7 @@ import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactor
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -79,8 +77,7 @@ public class GroupNotificationService {
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
         for (GroupNotificationType group : groups) {
-            GroupNotification resultingGroupNotification;
-            resultingGroupNotification = switch (notificationType) {
+            GroupNotification resultingGroupNotification = switch (notificationType) {
                 // Post Types
                 case NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification((Post) notificationSubject, author, group, notificationType,
                         (Course) typeSpecificInformation);
@@ -376,7 +373,7 @@ public class GroupNotificationService {
             return foundUsers;
         }
         else {
-            return foundUsers.stream().filter((user) -> user.getId() != author.getId()).toList();
+            return foundUsers.stream().filter((user) -> !Objects.equals(user.getId(), author.getId())).toList();
         }
     }
 }
