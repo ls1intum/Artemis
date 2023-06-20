@@ -2068,6 +2068,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
+        programmingExercise.setChannelName("pe-test");
         programmingExercise.setShortName("ExerciseTitle");
         programmingExercise.setTitle("Title");
         if (expectedStatus == HttpStatus.CREATED) {

@@ -83,7 +83,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void setupTestScenario() throws Exception {
         this.testPrefix = getTestPrefix();
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createCourseWithMessagingEnabled();
         courseRepository.save(course);
         exampleCourseId = course.getId();
     }
@@ -97,13 +97,14 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
         PostContextFilter postContextFilter = new PostContextFilter(exampleCourseId);
         postContextFilter.setConversationId(conversationId);
+        var requestingUser = userRepository.getUser();
 
-        var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).stream().toList().size();
+        var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         assertThat(createdPost.getConversation().getId()).isEqualTo(conversationId);
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(numberBefore + 1);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;
     }
 

@@ -341,6 +341,17 @@ public class ConversationUtilService {
         return conversationRepository.save(conversation);
     }
 
+    public static Channel createChannel(Course course, String channelName) {
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName(channelName);
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setDescription("Test channel");
+        return channel;
+    }
+
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setConversation(conversation);

@@ -35,12 +35,12 @@ export class CreateTextUnitComponent implements OnInit {
             return;
         }
 
-        const { name, releaseDate, content, learningGoals } = formData;
+        const { name, releaseDate, content, competencies } = formData;
 
         this.textUnitToCreate.name = name;
         this.textUnitToCreate.releaseDate = releaseDate;
         this.textUnitToCreate.content = content;
-        this.textUnitToCreate.competencies = learningGoals || [];
+        this.textUnitToCreate.competencies = competencies || [];
 
         this.isLoading = true;
 
