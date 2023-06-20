@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 
@@ -118,6 +118,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
                 this.scrollToBottom('smooth');
             });
+    }
+
+    isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+        return isStudentSentMessage(message);
+    }
+
+    isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return isServerSentMessage(message);
     }
 
     private newUserMessage(message: string): IrisClientMessage {
