@@ -151,7 +151,7 @@ public class ChannelDTO extends ConversationDTO {
     }
 
     public String getSubType() {
-        return subType.toString().toLowerCase();
+        return subType != null ? subType.toString().toLowerCase() : null;
     }
 
     @Override

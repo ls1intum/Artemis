@@ -1,6 +1,14 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
-public enum ChannelSubType {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    GENERAL, EXERCISE, LECTURE
+public enum ChannelSubType {
+    @JsonProperty("general")
+    GENERAL,
+
+    @JsonProperty("exercise")
+    EXERCISE,
+
+    @JsonProperty("lecture")
+    LECTURE
 }
