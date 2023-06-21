@@ -107,16 +107,13 @@ You can now test the setup:
 
 - Create a course and a programming exercise.
 
-Video showcasing how to create a programming exercise:
-
 .. raw:: html
+
     <iframe src="https://live.rbg.tum.de/w/artemisintro/34537?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video of creating a programming exercise on TUM-Live.
     </iframe>
 
 - Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
-
-Video showcasing how to participate in a programming exercise from the online editor and from a local Git client:
 
 .. raw:: html
 
