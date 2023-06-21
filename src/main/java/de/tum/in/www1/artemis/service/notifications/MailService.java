@@ -153,6 +153,15 @@ public class MailService implements InstantNotificationService {
         prepareTemplateAndSendEmail(user, templateName, titleKey, context);
     }
 
+    /**
+     * Sends an email to a user (the internal admin user) about a failed data export creation.
+     *
+     * @param admin        the admin user
+     * @param templateName the name of the email template
+     * @param titleKey     the subject of the email
+     * @param dataExport   the data export that failed
+     * @param reason       the exception that caused the data export to fail
+     */
     public void sendDataExportFailedEmailForAdmin(User admin, String templateName, String titleKey, DataExport dataExport, Exception reason) {
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
         Context context = createBaseContext(admin, locale);

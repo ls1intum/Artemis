@@ -451,6 +451,11 @@ public class UserService {
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
 
+    /**
+     * Trys to find a user by the internal admin username
+     *
+     * @return an Optional.emtpy() if no internal admin user is found, otherwise an optional with the internal admin user
+     */
     public Optional<User> findInternalAdminUser() {
         if (artemisInternalAdminUsername.isEmpty()) {
             log.warn("The internal admin username is not configured and no internal admin user can be retrieved.");
