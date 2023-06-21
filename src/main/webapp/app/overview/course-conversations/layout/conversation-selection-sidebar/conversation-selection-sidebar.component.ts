@@ -9,7 +9,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, isChannelDto, isExerciseChannelDto, isLectureChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
@@ -43,6 +43,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     displayedStarredConversations: ConversationDto[] = [];
     channelConversations: ChannelDTO[] = [];
     displayedChannelConversations: ChannelDTO[] = [];
+    exerciseChannelConversations: ChannelDTO[] = [];
+    displayedExerciseChannelConversations: ChannelDTO[] = [];
+    lectureChannelConversations: ChannelDTO[] = [];
+    displayedLectureChannelConversations: ChannelDTO[] = [];
     oneToOneChats: OneToOneChatDTO[] = [];
     displayedOneToOneChats: OneToOneChatDTO[] = [];
     groupChats: GroupChatDto[] = [];
@@ -90,6 +94,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 tap(() => {
                     this.displayedStarredConversations = [];
                     this.displayedChannelConversations = [];
+                    this.displayedExerciseChannelConversations = [];
+                    this.displayedLectureChannelConversations = [];
                     this.displayedOneToOneChats = [];
                     this.displayedGroupChats = [];
                 }),
@@ -110,6 +116,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                     this.displayedChannelConversations = this.channelConversations.filter((conversation) => {
                         return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
                     });
+                    this.displayedExerciseChannelConversations = this.exerciseChannelConversations.filter((conversation) => {
+                        return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
+                    });
+                    this.displayedLectureChannelConversations = this.lectureChannelConversations.filter((conversation) => {
+                        return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
+                    });
                     this.displayedOneToOneChats = this.oneToOneChats.filter((conversation) => {
                         return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
                     });
@@ -119,6 +131,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                     this.numberOfConversationsPassingFilter =
                         this.displayedStarredConversations.length +
                         this.displayedChannelConversations.length +
+                        this.displayedExerciseChannelConversations.length +
+                        this.displayedLectureChannelConversations.length +
                         this.displayedOneToOneChats.length +
                         this.displayedGroupChats.length;
 
@@ -166,6 +180,14 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
         this.channelConversations = this.allConversations
             .filter((conversation) => isChannelDto(conversation) && !conversation.isFavorite)
+            .map((channel) => channel as Channel)
+            .sort((a, b) => a.name!.localeCompare(b.name!));
+        this.exerciseChannelConversations = this.allConversations
+            .filter((conversation) => isExerciseChannelDto(conversation) && !conversation.isFavorite)
+            .map((channel) => channel as Channel)
+            .sort((a, b) => a.name!.localeCompare(b.name!));
+        this.lectureChannelConversations = this.allConversations
+            .filter((conversation) => isLectureChannelDto(conversation) && !conversation.isFavorite)
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
         this.oneToOneChats = this.allConversations
