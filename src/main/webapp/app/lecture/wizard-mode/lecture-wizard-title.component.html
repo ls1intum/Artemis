@@ -1,10 +1,9 @@
 <div>
     <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle">Title</span></h1>
     <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage">Add a title and meaningful description to the new lecture.</span></p>
-    <div class="form-group">
-        <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-        <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
-    </div>
+    <form name="editForm" role="form" novalidate>
+        <jhi-title-channel-name [(title)]="lecture.title" [(channelName)]="lecture.channelName" channelNamePrefix="lecture-"></jhi-title-channel-name>
+    </form>
     <div class="form-group" id="field_description">
         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
         <jhi-markdown-editor

@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -28,10 +30,11 @@ import { getElement, getElements } from '../../../helpers/utils/general.utils';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import {
     metisCourse,
-    metisCoursePostsWithCourseWideContext,
     metisExercise,
+    metisExerciseChannel,
     metisExercisePosts,
     metisLecture,
+    metisLectureChannel,
     metisLecturePosts,
     metisPostTechSupport,
     post1WithCreationDate,
@@ -44,12 +47,17 @@ import {
     postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
+    let channelService: ChannelService;
+    let getChannelOfLectureSpy: jest.SpyInstance;
+    let getChannelOfExerciseSpy: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -57,6 +65,7 @@ describe('PageDiscussionSectionComponent', () => {
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
+                MockProvider(ChannelService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -89,6 +98,23 @@ describe('PageDiscussionSectionComponent', () => {
                 fixture = TestBed.createComponent(DiscussionSectionComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
+                channelService = TestBed.inject(ChannelService);
+                getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: {} as Channel,
+                            status: 200,
+                        }),
+                    ),
+                );
+                getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: {} as Channel,
+                            status: 200,
+                        }),
+                    ),
+                );
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
             });
     });
@@ -106,19 +132,48 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.posts).toEqual(metisExercisePosts);
     }));
 
-    it('should set course and posts for lecture on initialization', fakeAsync(() => {
+    it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {
+        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisLectureChannel as Channel,
+                    status: 200,
+                }),
+            ),
+        );
         component.lecture = { ...metisLecture, course: metisCourse };
+        component.ngOnInit();
+        tick();
+        expect(component.course).toEqual(metisCourse);
+        expect(component.createdPost).toBeDefined();
+        expect(component.channel).toEqual(metisLectureChannel);
+        expect(getChannelOfLectureSpy).toHaveBeenCalled();
+    }));
+
+    it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
+        getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisExerciseChannel as Channel,
+                    status: 200,
+                }),
+            ),
+        );
+        component.exercise = { ...metisExercise, course: metisCourse };
+        component.ngOnInit();
+        tick();
+        expect(component.course).toEqual(metisCourse);
+        expect(component.createdPost).toBeDefined();
+        expect(component.channel).toEqual(metisExerciseChannel);
+        expect(getChannelOfExerciseSpy).toHaveBeenCalled();
+    }));
+
+    it('should set course and posts for lecture on initialization', fakeAsync(() => {
+        component.lecture = metisLecture;
         component.ngOnInit();
         tick();
         expect(component.createdPost).toBeDefined();
         expect(component.posts).toEqual(metisLecturePosts);
-    }));
-
-    it('should show single post if current post is set', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        // mock activated route returns id of metisPostTechSupport
-        expect(component.currentPost).toEqual(metisPostTechSupport);
     }));
 
     it('should reset current post', fakeAsync(() => {
@@ -181,19 +236,19 @@ describe('PageDiscussionSectionComponent', () => {
         expect(searchInput.textContent).toBe('');
     }));
 
-    it('should display an extra new post button on top of posts for user convenience', fakeAsync(() => {
+    it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
         component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        component.posts = metisCoursePostsWithCourseWideContext;
+        component.posts = metisExercisePosts;
         fixture.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
         expect(newPostButtons).not.toBeNull();
-        expect(newPostButtons).toHaveLength(2);
+        expect(newPostButtons).toHaveLength(1);
     }));
 
-    it('extra new post button on top of posts should be hidden if there are less then 3 posts', fakeAsync(() => {
+    it('should display one new message button', fakeAsync(() => {
         component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();

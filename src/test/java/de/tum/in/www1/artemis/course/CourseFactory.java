@@ -21,7 +21,13 @@ public class CourseFactory {
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
         return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
-                true, 7);
+                false, 7);
+    }
+
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
+            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, boolean messagingEnabled) {
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
+                messagingEnabled, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
@@ -49,7 +55,6 @@ public class CourseFactory {
         }
         else {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);

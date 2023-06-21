@@ -21,10 +21,15 @@
                     <label class="form-check-label" for="id" jhiTranslate="artemisApp.examManagement.examId">Exam ID</label>
                     <input class="form-control" type="text" id="id" name="id" [value]="exam.id" readonly />
                 </div>
-                <div class="form-group">
-                    <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.examTitle">Exam Title</label>
-                    <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
-                </div>
+                <label class="form-check-label" jhiTranslate="artemisApp.examManagement.examTitle">Exam Title</label>
+                <jhi-title-channel-name
+                    [(title)]="exam.title"
+                    [(channelName)]="exam.channelName"
+                    channelNamePrefix="exam-"
+                    [hideTitleLabel]="true"
+                    [hideChannelName]="exam.testExam || (exam.id !== undefined && exam.channelName === undefined)"
+                >
+                </jhi-title-channel-name>
             </div>
             <div class="form-group">
                 <div>
