@@ -1,6 +1,6 @@
 #!/bin/bash
 
-numberOfStarts=$(grep ":: Interactive Learning with Individual Feedback ::" ../tests.log | wc -l)
+numberOfStarts=$(grep ":: Interactive Learning with Individual Feedback ::" tests.log | wc -l)
 echo "Number of Server Starts: $numberOfStarts"
 
 if [[ $numberOfStarts -gt 4 ]]
