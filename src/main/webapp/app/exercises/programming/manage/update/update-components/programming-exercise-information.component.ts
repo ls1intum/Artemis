@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
@@ -10,4 +10,6 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 export class ProgrammingExerciseInformationComponent {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+
+    protected readonly ProjectType = ProjectType;
 }
