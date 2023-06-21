@@ -44,6 +44,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     componentClass = 'chat-widget';
     rows = 1;
     fullSize = false;
+    showChatWidget = true;
+    widgetWidth = '330px';
+    widgetHeight = '430px';
 
     constructor(
         private dialog: MatDialog,
@@ -161,15 +164,26 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.isScrolledToBottom = scrollHeight - scrollTop === clientHeight;
     }
 
+    resetScreen(resetType: string) {
+        this.chatWidget.nativeElement.style.opacity = '0';
+        setTimeout(() => {
+            this.showChatWidget = false;
+            this.widgetWidth = resetType == 'maximize' ? '95vw' : '330px';
+            this.widgetHeight = resetType == 'maximize' ? '85vh' : '430px';
+        }, 50);
+        setTimeout(() => {
+            this.showChatWidget = true;
+            this.chatWidget.nativeElement.style.opacity = '1';
+        }, 50);
+    }
+
     maximizeScreen() {
-        this.chatWidget.nativeElement.style.width = '95vw';
-        this.chatWidget.nativeElement.style.height = '85vh';
+        this.resetScreen('maximize');
         this.fullSize = true;
     }
 
     minimizeScreen() {
-        this.chatWidget.nativeElement.style.width = '330px';
-        this.chatWidget.nativeElement.style.height = '430px';
+        this.resetScreen('minimize');
         this.fullSize = false;
     }
 

@@ -1,6 +1,20 @@
 <div class="container">
     <!-- chat box -->
-    <div class="chat-widget" #chatWidget ngDraggable [handle]="chatBody" ngResizable rzHandles="all" [rzMinWidth]="250" [rzMinHeight]="200" [rzMaxWidth]="950" [rzMaxHeight]="700">
+    <div
+        *ngIf="showChatWidget"
+        [style.width]="widgetWidth"
+        [style.height]="widgetHeight"
+        class="chat-widget"
+        #chatWidget
+        ngDraggable
+        [handle]="chatBody"
+        ngResizable
+        rzHandles="all"
+        [rzMinWidth]="250"
+        [rzMinHeight]="200"
+        [rzMaxWidth]="1200"
+        [rzMaxHeight]="700"
+    >
         <!-- client -->
         <div class="client">
             <div class="chat-header">
@@ -39,7 +53,7 @@
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
                     <div [ngClass]="{ 'bubble-right': message.sender === SENDER_USER, 'bubble-left': message.sender === SENDER_SERVER }">
-                        <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                        <pre><span [innerHTML]="content.textContent! | htmlForMarkdown"></span></pre>
                     </div>
                 </div>
             </div>
