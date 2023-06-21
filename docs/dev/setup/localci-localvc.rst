@@ -17,7 +17,7 @@ If you are setting Artemis up for the first time, these are the steps you should
 - :ref:`Test the Setup`
 
 .. HINT::
-    For a video version of the guide as well as a quick demonstration refer to https://youtu.be/I1lt42U6gSY.
+    For a video version of the guide refer to https://live.rbg.tum.de/w/artemisintro/34536.
 
 .. contents:: Content of this section
     :local:
@@ -100,9 +100,10 @@ Test the Setup
 
 You can now test the setup:
 
-- Create a course and a programming exercise.
-- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
+- Create a course and a programming exercise. See https://live.rbg.tum.de/w/artemisintro/34537 for a video showcasing the creation of a programming exercise.
+- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment. See https://live.rbg.tum.de/w/artemisintro/34538 for a video showing how to do this.
 - Make sure that the result of your submission is displayed in the Artemis UI.
 
 .. HINT::
    At the moment, the local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
+   For unauthorized access, your Git client will display the respective error message (see https://live.rbg.tum.de/w/artemisintro/34539 for instance).
