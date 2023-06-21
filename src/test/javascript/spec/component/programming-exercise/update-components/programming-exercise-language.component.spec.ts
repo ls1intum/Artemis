@@ -7,6 +7,7 @@ import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValu
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
@@ -37,27 +38,9 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseLanguageComponent);
                 comp = fixture.componentInstance;
+                comp.programmingExerciseCreationConfig = {};
 
-                comp.languageStepInputs = {
-                    modePickerOptions: [],
-                    onProgrammingLanguageChange(): ProgrammingLanguage {
-                        return ProgrammingLanguage.EMPTY;
-                    },
-                    onProjectTypeChange(): ProjectType {
-                        return ProjectType.PLAIN;
-                    },
-                    packageNamePattern: '',
-                    packageNameRequired: false,
-                    projectTypes: [],
-                    selectedProgrammingLanguage: ProgrammingLanguage.OCAML,
-                    selectedProjectType: ProjectType.FACT,
-                    supportedLanguages: [],
-                    withDependencies: false,
-                    onWithDependenciesChanged(): boolean {
-                        return false;
-                    },
-                    appNamePatternForSwift: '',
-                };
+                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
             });

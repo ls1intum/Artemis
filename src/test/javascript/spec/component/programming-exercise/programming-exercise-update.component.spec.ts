@@ -845,7 +845,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         expect(comp.currentWizardModeStep).toBe(2);
     }));
 
-    it('should return the problem step inputs', fakeAsync(() => {
+    it('should return the exercise creation config', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
         route.url = of([{ path: 'new' } as UrlSegment]);
@@ -857,7 +857,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         fixture.detectChanges();
         tick();
 
-        const problemStepInputs = comp.getProblemStepInputs();
+        const problemStepInputs = comp.getProgrammingExerciseCreationConfig();
         expect(problemStepInputs).not.toBeNull();
     }));
 

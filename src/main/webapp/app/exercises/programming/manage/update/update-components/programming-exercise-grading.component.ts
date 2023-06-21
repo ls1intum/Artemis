@@ -4,8 +4,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',

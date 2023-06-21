@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 
 describe('ProgrammingExerciseDifficultyComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;
@@ -32,6 +33,10 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseDifficultyComponent);
                 comp = fixture.componentInstance;
+                comp.programmingExercise = {
+                    allowOfflineIde: true,
+                };
+                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
             });
     });
 

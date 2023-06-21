@@ -1,61 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { Observable } from 'rxjs';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ValidationReason } from 'app/entities/exercise.model';
-
-export type ProgrammingExerciseCreationConfig = {
-    titleNamePattern: string;
-    shortNamePattern: RegExp;
-    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    refreshAuxiliaryRepositoryChecks: () => void;
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
-    updateCategories: (categories: ExerciseCategory[]) => void;
-    auxiliaryRepositoriesSupported: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
-    auxiliaryRepositoryDuplicateNames: boolean;
-    checkoutSolutionRepositoryAllowed: boolean;
-    invalidDirectoryNamePattern: RegExp;
-    invalidRepositoryNamePattern: RegExp;
-    isImportFromExistingExercise: boolean;
-    appNamePatternForSwift: string;
-    modePickerOptions: ModePickerOption<ProjectType>[];
-    withDependencies: boolean;
-    onWithDependenciesChanged: (withDependencies: boolean) => boolean;
-    packageNameRequired: boolean;
-    packageNamePattern: string;
-    supportedLanguages: string[];
-    selectedProgrammingLanguage: ProgrammingLanguage;
-    onProgrammingLanguageChange: (language: ProgrammingLanguage) => ProgrammingLanguage;
-    projectTypes: ProjectType[];
-    selectedProjectType: ProjectType;
-    onProjectTypeChange: (projectType: ProjectType) => ProjectType;
-    staticCodeAnalysisAllowed: boolean;
-    onStaticCodeAnalysisChanged: () => void;
-    maxPenaltyPattern: string;
-    sequentialTestRunsAllowed: boolean;
-    testwiseCoverageAnalysisSupported: boolean;
-    problemStatementLoaded: boolean;
-    templateParticipationResultLoaded: boolean;
-    hasUnsavedChanges: boolean;
-    rerenderSubject: Observable<void>;
-    validIdeSelection: () => boolean | undefined;
-    inProductionEnvironment: boolean;
-    recreateBuildPlans: boolean;
-    onRecreateBuildPlanOrUpdateTemplateChange: () => void;
-    updateTemplate: boolean;
-    publishBuildPlanUrlAllowed: boolean;
-    recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
-    isExamMode: boolean;
-    isEdit: boolean;
-    isImportFromFile: boolean;
-    showSummary: boolean;
-};
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard',

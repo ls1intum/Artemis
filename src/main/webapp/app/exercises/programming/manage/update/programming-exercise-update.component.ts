@@ -29,7 +29,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -992,7 +992,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
             isImportFromFile: this.isImportFromFile,
-            showSummary: false, // TODO: Check if this is ever used
+            showSummary: false,
             isEdit: this.isEdit,
             isExamMode: this.isExamMode,
             auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
