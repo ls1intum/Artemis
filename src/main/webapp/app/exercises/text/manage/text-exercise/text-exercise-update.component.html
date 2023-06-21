@@ -10,10 +10,14 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
         </div>
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-            <input required minlength="3" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
-        </div>
+        <jhi-title-channel-name
+            [(title)]="textExercise.title"
+            [(channelName)]="textExercise.channelName"
+            channelNamePrefix="exercise-"
+            [minTitleLength]="3"
+            [emphasizeLabels]="true"
+            [hideChannelName]="this.isExamMode || (!this.isImport && this.textExercise.channelName === undefined)"
+        ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
@@ -185,13 +189,13 @@
             }}</span>
         </div>
         <div class="form-group" *ngIf="!isExamMode">
-            <jhi-learning-goal-selection
-                id="learning-goals"
-                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+            <jhi-competency-selection
+                id="competencies"
+                [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                 [(ngModel)]="textExercise.competencies"
-                name="learningGoals"
-            ></jhi-learning-goal-selection>
+                name="competencies"
+            ></jhi-competency-selection>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
