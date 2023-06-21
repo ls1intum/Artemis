@@ -34,6 +34,9 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     @Input()
     course: Course;
 
+    @Input()
+    allowChannelCreation: boolean;
+
     channelActions$ = new Subject<ChannelAction>();
 
     noOfChannels = 0;
@@ -44,7 +47,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     isInitialized = false;
 
     initialize() {
-        super.initialize(['course', 'createChannelFn']);
+        super.initialize(['course', 'createChannelFn', 'allowChannelCreation']);
         if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }

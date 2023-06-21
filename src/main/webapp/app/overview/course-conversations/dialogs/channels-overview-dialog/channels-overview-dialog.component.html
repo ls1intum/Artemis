@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="modal-footer justify-content-between">
-            <button *ngIf="canCreateChannel(course)" type="button" class="btn btn-secondary" (click)="openCreateChannelDialog($event)" id="createChannel">
+            <button *ngIf="allowChannelCreation && canCreateChannel(course)" type="button" class="btn btn-secondary" (click)="openCreateChannelDialog($event)" id="createChannel">
                 {{ 'artemisApp.dialogs.channelOverview.createChannelButton' | artemisTranslate }}
             </button>
         </div>

@@ -314,11 +314,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
     }
 
-    openChannelOverviewDialog(event: MouseEvent) {
+    openChannelOverviewDialog(event: MouseEvent, allowChannelCreation: boolean) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
+        modalRef.componentInstance.allowChannelCreation = allowChannelCreation;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
