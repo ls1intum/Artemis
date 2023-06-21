@@ -3,6 +3,11 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Subscription } from 'rxjs';
+import { LearningPathService } from 'app/course/learning-paths/learningPathService.service';
+import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-learning-path-management',
@@ -16,7 +21,12 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
 
     courseSub: Subscription;
 
-    constructor(private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private courseManagementService: CourseManagementService,
+        private learningPathService: LearningPathService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.parent!.params.subscribe((params) => {
@@ -51,6 +61,16 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
     }
 
     enableLearningPaths() {
-        // TODO: Enable learning paths
+        this.isLoading = true;
+        this.learningPathService
+            .enableLearningPaths(this.courseId)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }
