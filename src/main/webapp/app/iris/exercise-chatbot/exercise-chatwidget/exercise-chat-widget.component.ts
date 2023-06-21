@@ -216,7 +216,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         textarea.rows = 1;
         chatBody.style.height = `calc(100% - 100px)`;
         this.stateStore.dispatch(new NumNewMessagesResetAction());
-        this.dialog.closeAll();
     }
 
     private newUserMessage(message: string): IrisClientMessage {
