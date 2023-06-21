@@ -218,14 +218,14 @@ public class DataExportService {
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
 
         for (var entry : studentExamsPerCourse.entrySet()) {
-            log.debug("Found student exams in course  {}" + entry.getKey().getTitle());
+            log.warn("Found student exams in course  {}" + entry.getKey().getTitle());
             for (var studentExam : entry.getValue()) {
                 var exam = studentExam.getExam();
                 var examTitle = exam.getSanitizedExamTitle();
                 var courseDirPath = retrieveCourseDirPath(workingDirectory, exam.getCourse());
                 var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
                 var examWorkingDir = Files.createDirectories(courseDirPath.resolve(examDirectoryName));
-                log.debug("Creating export for student exam with id {} for exam with id {} and user with id {} in course {}", studentExam.getId(), exam.getId(), userId,
+                log.warn("Creating export for student exam with id {} for exam with id {} and user with id {} in course {}", studentExam.getId(), exam.getId(), userId,
                         entry.getKey().getTitle());
                 createStudentExamExport(studentExam, examWorkingDir);
             }
