@@ -33,7 +33,7 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorial Groups",
-                "learningGoals": "Competencies",
+                "competencies": "Competencies",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
@@ -158,7 +158,7 @@
                 "exercisesWithNoCategories": "Exercises with no categories",
                 "pointsPerExercise": "Points per Exercise"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "No competencies available for this course."
             },
             "lectureList": {
@@ -210,10 +210,14 @@
                 "rated": "Rated",
                 "practice": "Practice",
                 "assessmentType": "Assessment:",
+                "releaseDate": "Release date:",
+                "releaseDateTooltip": "Students can see this exercise from {{date}}.",
                 "startDate": "Start date:",
                 "startDateTooltip": "Students can work on this exercise from {{date}}.",
                 "submissionDue": "Submission due:",
                 "submissionDueTooltip": "The submission is due by {{date}}.",
+                "exampleSolutionPublicationDate": "Example solution publication date:",
+                "exampleSolutionPublicationDateTooltip": "The example solution is published at {{date}}.",
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",
