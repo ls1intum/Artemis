@@ -792,6 +792,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
         const entity = new ProgrammingExercise(new Course(), undefined);
         entity.id = 123;
+        entity.channelName = 'notificationText';
         comp.programmingExercise = entity;
         comp.programmingExercise.course = course;
         comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;

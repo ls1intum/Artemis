@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -14,10 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -25,6 +29,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
@@ -54,9 +59,14 @@ public class ConversationService {
 
     private final GroupChatRepository groupChatRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
-            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository) {
+            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository,
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -66,6 +76,8 @@ public class ConversationService {
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.postRepository = postRepository;
         this.groupChatRepository = groupChatRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -103,8 +115,13 @@ public class ConversationService {
 
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
-        conversations.addAll(channelsOfUser);
         conversations.addAll(groupChatsOfUser);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        // if the user is only a student in the course, we filter out all channels that are not yet open
+        var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
+        var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
+        conversations.addAll(filteredChannels);
+
         return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
     }
 
@@ -240,6 +257,36 @@ public class ConversationService {
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> usersToMessage) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
         usersToMessage.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+    }
+
+    /**
+     * Deregister all clients from the exercise channel of the given exercise
+     *
+     * @param exercise the exercise that is being deleted
+     */
+    public void deregisterAllClientsFromChannel(Exercise exercise) {
+        // deregister all clients from the channel
+        Channel originalChannel = channelRepository.findChannelByExerciseId(exercise.getId());
+        if (exercise.isCourseExercise() && originalChannel != null) {
+            Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
+            Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            broadcastOnConversationMembershipChannel(originalChannel.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
+        }
+    }
+
+    /**
+     * Deregister all clients from the lecture channel of the given exercise
+     *
+     * @param lecture the lecture that is being deleted
+     */
+    public void deregisterAllClientsFromChannel(Lecture lecture) {
+        // deregister all clients from the channel
+        Channel originalChannel = channelRepository.findChannelByLectureId(lecture.getId());
+        if (originalChannel != null) {
+            Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
+            Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            broadcastOnConversationMembershipChannel(lecture.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
+        }
     }
 
     @NotNull
@@ -401,5 +448,25 @@ public class ConversationService {
             return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
         }
         return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+    }
+
+    /**
+     * Filter all channels where the attached lecture/exercise has been released
+     *
+     * @param channels A stream of channels
+     * @return A stream of channels for lectures/exercises that have been released
+     */
+    public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
+        return channels.filter(channel -> {
+            if (channel.getExercise() != null) {
+                return channel.getExercise().isReleased();
+            }
+            else if (channel.getExam() != null) {
+                return channel.getExam().isVisibleToStudents();
+            }
+            else {
+                return true;
+            }
+        });
     }
 }

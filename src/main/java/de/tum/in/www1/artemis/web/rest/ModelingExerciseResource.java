@@ -17,9 +17,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
@@ -28,6 +30,8 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -83,12 +87,19 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
+    private final ChannelService channelService;
+
+    private final ConversationService conversationService;
+
+    private final ChannelRepository channelRepository;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ConversationService conversationService,
+            ChannelRepository channelRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -104,6 +115,9 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
+        this.channelService = channelService;
+        this.conversationService = conversationService;
+        this.channelRepository = channelRepository;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -137,6 +151,9 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        Channel createdChannel = channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 
@@ -196,6 +213,8 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
+        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
+
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
@@ -205,7 +224,6 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
-
         return ResponseEntity.ok(updatedModelingExercise);
     }
 
@@ -247,6 +265,13 @@ public class ModelingExerciseResource {
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
 
+        if (modelingExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(modelingExercise.getId());
+            if (channel != null) {
+                modelingExercise.setChannelName(channel.getName());
+            }
+        }
+
         return ResponseEntity.ok().body(modelingExercise);
     }
 
@@ -268,6 +293,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(modelingExercise);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
