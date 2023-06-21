@@ -86,7 +86,7 @@ jobs:
         reporter: java-junit
     - name: Number of Server Starts
       if: success() || failure()
-      run: cat tests.log | grep "Interactive Learning with Individual Feedback" | wc -l
+      run: bash /supporting_scripts/test.sh
 
   server-tests-mysql:
       needs: [ server-tests ]
