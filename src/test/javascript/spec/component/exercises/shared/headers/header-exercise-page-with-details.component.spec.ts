@@ -206,6 +206,7 @@ describe('HeaderExercisePageWithDetails', () => {
         participation.results = results;
         component.studentParticipation = participation;
         component.submissionPolicy = new LockRepositoryPolicy();
+        component.submissionPolicy.active = true;
 
         component.ngOnChanges();
 

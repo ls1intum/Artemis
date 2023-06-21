@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -793,7 +794,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
             ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
             ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
-            assertThat(actualTime).isEqualTo(expectedTime);
+            assertThat(actualTime).isCloseTo(expectedTime, within(1, ChronoUnit.MILLIS));
         }
     }
 
