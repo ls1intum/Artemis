@@ -318,8 +318,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
-        modalRef.componentInstance.allowChannelCreation = allowChannelCreation;
+        modalRef.componentInstance.createChannelFn = allowChannelCreation ? this.metisConversationService.createChannel : undefined;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
