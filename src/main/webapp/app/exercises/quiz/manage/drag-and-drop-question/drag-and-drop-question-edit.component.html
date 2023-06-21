@@ -385,23 +385,18 @@
 
         <!--    TODO: Fix the item input for reevaluation -->
         <div class="question-options row d-flex justify-content-start" *ngIf="!reEvaluationInProgress">
-            <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
-                <div class="input-group-prepend">
-                    <button class="btn btn-outline-secondary" (click)="dragItemFileInput.click()">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <span *ngIf="reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
-                        <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
-                    </button>
-                </div>
+            <div class="col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
+                <button class="btn btn-outline-secondary me-2" (click)="dragItemFileInput.click()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span *ngIf="reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
+                    <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
+                </button>
                 <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
-            </div>
-            <div class="question-options">
-                <div class="col">
-                    <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
-                    </button>
-                </div>
+
+                <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
+                </button>
             </div>
         </div>
         <ng-container *ngIf="!reEvaluationInProgress">
