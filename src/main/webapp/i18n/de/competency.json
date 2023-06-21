@@ -142,6 +142,11 @@
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
                 "relationAlreadyExists": "Diese Beziehung existiert bereits."
             }
+        },
+        "learningPath": {
+            "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
+            "enable": "Lernpfade aktivieren",
+            "enableHint": "Die Erstellung von Lernppfaden für alle Studierende kann einige Minuten dauern."
         }
     }
 }

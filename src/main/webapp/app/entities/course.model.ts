@@ -89,6 +89,7 @@ export class Course implements BaseEntity {
     public lectures?: Lecture[];
     public competencies?: Competency[];
     public prerequisites?: Competency[];
+    public learningPathEnabled?: boolean;
     public exams?: Exam[];
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];

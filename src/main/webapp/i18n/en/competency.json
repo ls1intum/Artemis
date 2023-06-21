@@ -141,6 +141,11 @@
                 "selfRelation": "You can not create a relation between a competency and itself.",
                 "relationAlreadyExists": "This relation already exists."
             }
+        },
+        "learningPath": {
+            "isDisabled": "Learning Paths are currently disabled for this course.",
+            "enable": "Enable Learning Paths",
+            "enableHint": "The creation of Learning Paths for every student may take a few minutes."
         }
     }
 }
