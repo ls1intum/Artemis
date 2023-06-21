@@ -44,7 +44,7 @@ const examples: (ConversationDto | undefined)[] = [
 examples.forEach((activeConversation) => {
     describe(
         'ConversationSelectionSidebarComponent with ' +
-            (activeConversation?.subType ? activeConversation?.subType + ' ' : '') +
+            (activeConversation instanceof ChannelDTO ? activeConversation.subType + ' ' : '') +
             (activeConversation?.type || 'no active conversation'),
         () => {
             let component: ConversationSelectionSidebarComponent;
