@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
@@ -33,10 +34,13 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
@@ -102,32 +106,42 @@ public class QuizExerciseResource {
 
     private final FileService fileService;
 
-    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
-            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
+    private final ChannelService channelService;
+
+    private final ChannelRepository channelRepository;
+
+    private final ConversationService conversationService;
+
+    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
+            UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
+            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService) {
+            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
+            ChannelRepository channelRepository, ConversationService conversationService) {
         this.quizExerciseService = quizExerciseService;
+        this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.exerciseDeletionService = exerciseDeletionServiceService;
         this.userRepository = userRepository;
         this.courseService = courseService;
+        this.courseRepository = courseRepository;
+        this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
+        this.examDateService = examDateService;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
-        this.exerciseService = exerciseService;
-        this.examDateService = examDateService;
-        this.courseRepository = courseRepository;
-        this.quizMessagingService = quizMessagingService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.submissionRepository = submissionRepository;
         this.fileService = fileService;
+        this.channelService = channelService;
+        this.channelRepository = channelRepository;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -163,10 +177,13 @@ public class QuizExerciseResource {
 
         quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
 
-        quizExercise = quizExerciseService.save(quizExercise);
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+        Channel createdChannel = channelService.createExerciseChannel(result, quizExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -223,9 +240,14 @@ public class QuizExerciseResource {
 
         quizExerciseService.handleDndQuizFileUpdates(quizExercise, originalQuiz, files);
 
+        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
+
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
+        if (updatedChannel != null) {
+            quizExercise.setChannelName(updatedChannel.getName());
+        }
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -298,6 +320,12 @@ public class QuizExerciseResource {
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
+        }
+        if (quizExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
+            if (channel != null) {
+                quizExercise.setChannelName(channel.getName());
+            }
         }
         setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);
@@ -565,6 +593,7 @@ public class QuizExerciseResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(quizExercise);
         exerciseDeletionService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 

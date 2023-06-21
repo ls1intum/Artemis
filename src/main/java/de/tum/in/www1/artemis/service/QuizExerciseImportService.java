@@ -14,10 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
@@ -28,11 +30,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final FileService fileService;
 
+    private final ChannelService channelService;
+
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
+        this.channelService = channelService;
     }
 
     /**
@@ -52,7 +57,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise, providedFiles);
         copyQuizBatches(importedExercise, newExercise);
-        return quizExerciseService.save(newExercise);
+
+        QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
+
+        Channel createdChannel = channelService.createExerciseChannel(newQuizExercise, importedExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, newQuizExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        return newQuizExercise;
     }
 
     /**

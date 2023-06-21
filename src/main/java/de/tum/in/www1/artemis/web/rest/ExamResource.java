@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -36,8 +37,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
@@ -49,6 +52,7 @@ import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -66,6 +70,8 @@ public class ExamResource {
     private final Logger log = LoggerFactory.getLogger(ExamResource.class);
 
     private static final String ENTITY_NAME = "exam";
+
+    private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -109,12 +115,14 @@ public class ExamResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
+    private final ChannelService channelService;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService,
-            CustomAuditEventRepository auditEventRepository) {
+            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -133,6 +141,8 @@ public class ExamResource {
         this.examImportService = examImportService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.auditEventRepository = auditEventRepository;
+        this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -160,13 +170,16 @@ public class ExamResource {
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
-        Exam result = examRepository.save(exam);
+        Exam savedExam = examRepository.save(exam);
 
-        if (result.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+        if (savedExam.isMonitoring()) {
+            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId())).body(result);
+        Channel createdChannel = channelService.createExamChannel(savedExam, exam.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(false, savedExam.getCourse(), createdChannel);
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
     /**
@@ -203,22 +216,24 @@ public class ExamResource {
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
 
-        Exam result = examRepository.save(updatedExam);
+        Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
+
+        Exam savedExam = examRepository.save(updatedExam);
 
         if (updatedExam.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
         }
         else {
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(savedExam.getId());
         }
-        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), updatedExam.isMonitoring());
+        examMonitoringScheduleService.notifyMonitoringUpdate(savedExam.getId(), updatedExam.isMonitoring());
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -226,11 +241,15 @@ public class ExamResource {
 
         if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok(result);
+        if (updatedChannel != null) {
+            savedExam.setChannelName(updatedExam.getChannelName());
+        }
+
+        return ResponseEntity.ok(savedExam);
     }
 
     /**
@@ -256,7 +275,7 @@ public class ExamResource {
         // Step 3: Validate the Exam dates
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Step 4: Import Exam with Exercises
+        // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
 
         // Step 5: Set Exam Monitoring
@@ -441,7 +460,12 @@ public class ExamResource {
         }
 
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
+            Exam exam = examRepository.findByIdElseThrow(examId);
+            Channel channel = channelRepository.findChannelByExamId(exam.getId());
+            if (channel != null) {
+                exam.setChannelName(channel.getName());
+            }
+            return ResponseEntity.ok(exam);
         }
 
         if (withExerciseGroups) {
@@ -725,6 +749,7 @@ public class ExamResource {
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
+
         var studentDto = new StudentDTO();
         studentDto.setRegistrationNumber(student.getRegistrationNumber());
         studentDto.setFirstName(student.getFirstName());
@@ -946,6 +971,9 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
+        channelService.registerCourseStudentsToChannelAsynchronously(exam.getCourse(), channel);
+
         return ResponseEntity.ok().body(null);
     }
 

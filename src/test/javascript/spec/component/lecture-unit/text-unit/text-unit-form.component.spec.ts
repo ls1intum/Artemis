@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -45,7 +45,7 @@ describe('TextUnitFormComponent', () => {
                 MarkdownEditorStubComponent,
                 MockComponent(FormDateTimePickerComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(LearningGoalSelectionComponent),
+                MockComponent(CompetencySelectionComponent),
             ],
             providers: [MockProvider(TranslateService), { provide: Router, useClass: MockRouter }],
             schemas: [],
@@ -119,7 +119,7 @@ describe('TextUnitFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: 'Test',
                 releaseDate: null,
-                learningGoals: null,
+                competencies: null,
                 content: exampleMarkdown,
             });
         });

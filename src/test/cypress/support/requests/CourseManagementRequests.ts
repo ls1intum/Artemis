@@ -8,7 +8,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
-import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
+import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
@@ -63,7 +63,7 @@ export class CourseManagementRequests {
      */
     createCourse(
         customizeGroups = false,
-        courseName = 'Cypress course' + generateUUID(),
+        courseName = 'Course ' + generateUUID(),
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
@@ -128,7 +128,7 @@ export class CourseManagementRequests {
         recordTestwiseCoverage = false,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
-        title = 'Cypress programming exercise ' + generateUUID(),
+        title = 'Programming ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
@@ -139,6 +139,7 @@ export class CourseManagementRequests {
             title,
             shortName: programmingShortName,
             packageName,
+            channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
@@ -261,6 +262,14 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
     }
 
+    getExerciseChannel(courseId: number, exerciseId: number) {
+        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/channel` });
+    }
+
+    getLectureChannel(courseId: number, exerciseId: number) {
+        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/lectures/${exerciseId}/channel` });
+    }
+
     createCourseMessageGroupChat(course: Course, users: Array<string>) {
         const body = users;
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/group-chats`, body });
@@ -379,7 +388,7 @@ export class CourseManagementRequests {
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
-    addExerciseGroupForExam(exam: Exam, title = 'group' + generateUUID(), mandatory = true) {
+    addExerciseGroupForExam(exam: Exam, title = 'Group ' + generateUUID(), mandatory = true) {
         const exerciseGroup = new ExerciseGroup();
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
@@ -391,10 +400,21 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
-        const template = { ...textExerciseTemplate, title };
+    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()) {
+        const template = {
+            ...textExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
         const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
+    }
+
+    deleteTextExercise(exerciseId: number) {
+        return cy.request({
+            url: TEXT_EXERCISE_BASE + exerciseId,
+            method: DELETE,
+        });
     }
 
     /**
@@ -415,7 +435,7 @@ export class CourseManagementRequests {
 
     createModelingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        title = 'Cypress modeling exercise ' + generateUUID(),
+        title = 'Modeling ' + generateUUID(),
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
@@ -423,6 +443,7 @@ export class CourseManagementRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
+            channelName: 'exercise-' + titleLowercase(title),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
@@ -486,7 +507,7 @@ export class CourseManagementRequests {
     createQuizExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
-        title = 'Cypress quiz exercise' + generateUUID(),
+        title = 'Quiz ' + generateUUID(),
         releaseDate = day().add(1, 'year'),
         duration = 600,
     ): Cypress.Chainable<Cypress.Response<QuizExercise>> {
@@ -495,6 +516,7 @@ export class CourseManagementRequests {
             title,
             quizQuestions,
             duration,
+            channelName: 'exercise-' + titleLowercase(title),
         };
         let newQuizExercise;
         const dates = {
@@ -636,18 +658,19 @@ export class CourseManagementRequests {
         });
     }
 
-    createLecture(course: Course, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
-        const lecture = {
+    createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+        const body = {
             ...lectureTemplate,
             course,
             title,
             startDate,
             endDate,
+            channelName: 'lecture-' + titleLowercase(title),
         };
         return cy.request({
             url: `${BASE_API}lectures`,
             method: POST,
-            body: lecture,
+            body,
         });
     }
 }
@@ -669,6 +692,7 @@ export class ExamBuilder {
         this.template.startDate = dayjsToString(day().add(1, 'day'));
         this.template.endDate = dayjsToString(day().add(2, 'day'));
         this.template.workingTime = 86400;
+        this.template.channelName = titleLowercase(this.template.title);
     }
 
     /**

@@ -1,3 +1,4 @@
+import { Lecture } from 'app/entities/lecture.model';
 import { BASE_API, DELETE, POST } from '../../constants';
 import day from 'dayjs/esm';
 
@@ -6,31 +7,21 @@ export class LectureManagementPage {
         cy.get('#jh-create-entity').click();
     }
 
-    deleteLecture(lectureTitle: string, lectureIndex: number) {
-        this.getLectureRow(lectureIndex).find('#delete-lecture').click();
+    deleteLecture(lecture: Lecture) {
+        cy.get(`#lecture-${lecture.id}`).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(lectureTitle);
+        cy.get('#confirm-exercise-name').type(lecture.title!);
         cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
         cy.get('#delete').click();
         return cy.wait('@deleteLecture');
     }
 
-    getLectureRow(lectureIndex: number) {
-        const selector = '#lecture-row-' + lectureIndex;
-        cy.reloadUntilFound(selector);
-        return cy.get(selector);
+    getLecture(lecture: Lecture) {
+        return cy.get(`#lecture-${lecture.id}`);
     }
 
-    getLectureSelector(lectureTitle: string) {
-        return this.getLectureContainer().contains(lectureTitle);
-    }
-
-    getLectureContainer() {
-        return cy.get('#lecture-preview');
-    }
-
-    openUnitsPage(lectureIndex: number) {
-        this.getLectureRow(lectureIndex).find('#units').click();
+    openUnitsPage(lectureID: number) {
+        cy.get(`#lecture-${lectureID}`).find('#units').click();
     }
 
     openCreateUnit(type: UnitType) {
