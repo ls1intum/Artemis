@@ -43,8 +43,7 @@ public class ChannelDTO extends ConversationDTO {
 
     // property not taken from entity
     /**
-     * Determines the subtype of the channel, either "general" , "exercise" or "lecture" depending on whether the channel
-     * is associated with an exercise/lecture or not
+     * Determines the subtype of the channel depending on whether the channel is associated with an exercise/lecture or not
      */
     private ChannelSubType subType;
 

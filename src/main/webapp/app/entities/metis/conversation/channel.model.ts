@@ -5,6 +5,7 @@ import { Exam } from 'app/entities/exam.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the types defined in ChannelSubType.java, but in lowercase
+// since ChannelDTO.java#getSubType returns a lowercase String
 export enum ChannelSubType {
     GENERAL = 'general',
     EXERCISE = 'exercise',
