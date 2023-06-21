@@ -1,11 +1,10 @@
 #!/bin/bash
 
-variable=$(grep "Interactive Learning with Individual Feedback" ../tests.log | wc -l)
-echo $variable
+numberOfStarts=$(grep ":: Interactive Learning with Individual Feedback ::" ../tests.log | wc -l)
+echo "Number of Server Starts: $numberOfStarts"
 
-if [[ $variable -gt 4 ]]
+if [[ $numberOfStarts -gt 4 ]]
 then
-  echo "The number of Server Starts is greater than 4"
-else
-  echo "The number of Server Starts is not greater than 4"
+  echo "The number of Server Starts should not be greater than 4!"
+  exit 1
 fi
