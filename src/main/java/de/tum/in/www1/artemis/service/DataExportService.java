@@ -218,6 +218,7 @@ public class DataExportService {
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
 
         for (var entry : studentExamsPerCourse.entrySet()) {
+            log.debug("Found student exams in course  {}" + entry.getKey().getTitle());
             for (var studentExam : entry.getValue()) {
                 var exam = studentExam.getExam();
                 var examTitle = exam.getSanitizedExamTitle();
