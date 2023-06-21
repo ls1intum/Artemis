@@ -233,12 +233,15 @@
         <hr />
         <!--    TODO: Fix the background change for reevaluation -->
         <div class="question-options row d-flex justify-content-start" *ngIf="!reEvaluationInProgress">
-            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis" style="width: max-content !important">
-                <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
-                <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
-            </div>
-            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file" id="background-image-input-form">
-                <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
+            <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary" (click)="backgroundFileInput.click()">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
+                    </button>
+                </div>
+                <input #backgroundFileInput id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
             </div>
             <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()" *ngIf="reEvaluationInProgress">
                 <fa-icon [icon]="faUndo"></fa-icon>
