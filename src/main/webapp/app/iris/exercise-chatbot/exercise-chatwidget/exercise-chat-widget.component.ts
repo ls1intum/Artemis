@@ -152,9 +152,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     scrollToBottomOnClick() {
-        const chatBody = this.chatBody.nativeElement;
-        chatBody.scrollTop = chatBody.scrollHeight;
-        this.isScrolledToBottom = true;
+        const chatBody = this.chatBody?.nativeElement;
+        if (chatBody) {
+            chatBody.scrollTop = chatBody.scrollHeight;
+            this.isScrolledToBottom = true;
+        }
     }
 
     onChatScroll() {
@@ -166,16 +168,17 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     resetScreen(resetType: string) {
-        this.chatWidget.nativeElement.style.opacity = '0';
         setTimeout(() => {
             this.showChatWidget = false;
             this.widgetWidth = resetType == 'maximize' ? '95vw' : '330px';
             this.widgetHeight = resetType == 'maximize' ? '85vh' : '430px';
         }, 50);
         setTimeout(() => {
+            this.scrollToBottom('auto');
+        }, 100);
+        setTimeout(() => {
             this.showChatWidget = true;
-            this.chatWidget.nativeElement.style.opacity = '1';
-        }, 50);
+        }, 100);
     }
 
     maximizeScreen() {
@@ -223,7 +226,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows;
-        scrollArrow.style.bottom = `calc(60px + ${rowHeight}px)`;
+        scrollArrow.style.bottom = `calc(10% + ${rowHeight}px)`;
         chatBody.style.height = `calc(100% - ${rowHeight}px - 78px)`;
     }
 
@@ -232,8 +235,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         textarea.rows = 1;
-        chatBody.style.height = `calc(100% - 100px)`;
         scrollArrow.style.bottom = '60 px';
+        chatBody.style.height = `calc(100% - 100px)`;
         this.stateStore.dispatch(new NumNewMessagesResetAction());
     }
 
