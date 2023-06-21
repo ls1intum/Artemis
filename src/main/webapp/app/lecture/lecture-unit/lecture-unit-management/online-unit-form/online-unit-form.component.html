@@ -10,7 +10,7 @@
                 [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
                 (change)="onLinkChanged()"
             />
-            <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
+            <small id="urlHelperExplanation" class="form-text text-body-secondary">{{ 'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
             <div *ngIf="sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)" class="alert alert-danger">
                 <div *ngIf="sourceControl?.errors?.required">
                     {{ 'artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError' | artemisTranslate }}
@@ -51,12 +51,12 @@
             <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
-            <jhi-learning-goal-selection
-                id="learning-goals"
-                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                [labelTooltip]="'artemisApp.learningGoal.link.lectureUnit' | artemisTranslate"
-                formControlName="learningGoals"
-            ></jhi-learning-goal-selection>
+            <jhi-competency-selection
+                id="competencies"
+                [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+                formControlName="competencies"
+            ></jhi-competency-selection>
         </div>
         <div class="row">
             <div class="col-12">

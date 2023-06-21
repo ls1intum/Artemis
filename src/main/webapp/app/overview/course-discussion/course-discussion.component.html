@@ -26,45 +26,60 @@
         <div class="row mx-1 my-2 justify-content-between">
             <!-- context filter -->
             <div class="col-12 col-sm-7 col-md-auto order-lg-1">
-                <div class="row justify-content-center">
-                    <div class="col-auto p-0 selection-prefix">
+                <div class="row align-items-baseline justify-content-center">
+                    <div class="col-auto p-0 pe-2 selection-prefix">
                         <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto p-0">
-                        <select
+                        <mat-select
                             formControlName="context"
                             id="filter-context"
                             class="form-select course-discussion-select"
+                            panelClass="mat-select-panel"
                             [compareWith]="compareContextFilterOptionFn"
-                            (change)="onSelectContext()"
+                            (selectionChange)="onSelectContext()"
                             name="context"
+                            placeholder="{{ 'artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate : { title: course.title } }}"
+                            multiple
                         >
-                            <option [ngValue]="{ courseId: course.id }">
-                                {{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}
-                            </option>
-                            <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
-                                <option *ngFor="let context of CourseWideContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
-                                    {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
-                                </option>
-                            </optgroup>
-                            <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
-                                <option *ngFor="let lecture of lectures" [ngValue]="{ lectureId: lecture.id }">
-                                    {{ lecture.title }}
-                                </option>
-                            </optgroup>
-                            <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
-                                <option *ngFor="let exercise of exercises" [ngValue]="{ exerciseId: exercise.id }">
-                                    {{ exercise.title }}
-                                </option>
-                            </optgroup>
-                        </select>
+                            <mat-select-trigger *ngIf="formGroup.get('context')?.value?.length">
+                                {{formGroup.get('context')?.value?.[0].title}}
+                                <span *ngIf="(formGroup.get('context')?.value?.length || 0) > 1">
+                                    (+{{ (formGroup.get('context')?.value?.length || 0) - 1 }}
+                                    {{
+                                        formGroup.get('context')?.value?.length === 2
+                                            ? ('artemisApp.metis.overview.one_extra_context' | artemisTranslate)
+                                            : ('artemisApp.metis.overview.multiple_extra_contexts' | artemisTranslate)
+                                    }})
+                                </span>
+                            </mat-select-trigger>
+                            <mat-optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
+                                <mat-option
+                                    *ngFor="let context of CourseWideContext | keyvalue"
+                                    [value]="{ courseWideContext: context.value, title: 'artemisApp.metis.overview.' + context.value | artemisTranslate }"
+                                    class="context-option"
+                                >
+                                    <span class="context-option-text">{{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}</span>
+                                </mat-option>
+                            </mat-optgroup>
+                            <mat-optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
+                                <mat-option *ngFor="let lecture of lectures" [value]="{ lectureId: lecture.id, title: lecture.title }" class="context-option">
+                                    <span class="context-option-text">{{ lecture.title }}</span>
+                                </mat-option>
+                            </mat-optgroup>
+                            <mat-optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                                <mat-option *ngFor="let exercise of exercises" [value]="{ exerciseId: exercise.id, title: exercise.title }" class="context-option">
+                                    <span class="context-option-text">{{ exercise.title }}</span>
+                                </mat-option>
+                            </mat-optgroup>
+                        </mat-select>
                     </div>
                 </div>
             </div>
             <!-- sort dropdown -->
             <div class="col-12 col-sm-5 col-md-auto order-lg-3">
                 <div class="row align-items-baseline justify-content-center">
-                    <div class="col-auto p-0 selection-prefix">
+                    <div class="col-auto p-0 pe-2 selection-prefix">
                         <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto p-0">
@@ -162,6 +177,7 @@
                     class="item"
                     [post]="post"
                     [showAnswers]="posts.length === 1"
+                    [isCommunicationPage]="true"
                 >
                 </jhi-posting-thread>
                 <!-- spinner while loading posts -->

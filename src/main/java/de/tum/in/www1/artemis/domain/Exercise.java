@@ -185,6 +185,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Transient
     private Long numberOfRatingsTransient;
 
+    /**
+     * Used for receiving the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
+
     @Override
     public boolean isCompletedFor(User user) {
         return this.getStudentParticipations().stream().anyMatch((participation) -> participation.getStudents().contains(user));
@@ -730,6 +736,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setNumberOfRatings(Long numberOfRatings) {
         this.numberOfRatingsTransient = numberOfRatings;
+    }
+
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
     }
 
     @Nullable
