@@ -14,7 +14,8 @@ day.extend(utc);
  * Generates a unique identifier.
  * */
 export function generateUUID() {
-    return uuidv4().replace(/-/g, '');
+    const uuid = uuidv4().replace(/-/g, '');
+    return uuid.substr(0, 5);
 }
 
 /**
@@ -61,6 +62,10 @@ export function titleCaseWord(str: string) {
         sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
     }
     return sentence.join(' ');
+}
+
+export function titleLowercase(title: string) {
+    return title.replace(' ', '-').toLowerCase();
 }
 
 export function getExercise(exerciseId: number) {

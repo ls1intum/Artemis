@@ -21,6 +21,7 @@ import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -34,6 +35,7 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
         ArtemisCompetenciesModule,
+        TitleChannelNameModule,
     ],
     declarations: [
         LectureComponent,

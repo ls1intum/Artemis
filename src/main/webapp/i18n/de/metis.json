@@ -5,6 +5,8 @@
             "noPosts": "Keine Beiträge gefunden.",
             "postNumberInformation": "{{ number }} Treffer",
             "addNewPost": "Neuer Beitrag",
+            "newMessage": "Neue Nachricht",
+            "collapseNewMessage": "Einklappen",
             "reply": "Beantworten",
             "showMultipleAnswers": "Zeige {{ number }} Antworten",
             "showSingleAnswer": "Zeige 1 Antwort",
@@ -41,15 +43,21 @@
                 "exercise": "Aufgabe",
                 "lecture": "Vortrag"
             },
+            "channel": {
+                "notAMember": "Du bist kein Mitglied des Kanals.",
+                "noChannel": "Es ist kein Kanal verfügbar."
+            },
             "communication": {
                 "label": "Kommunikation",
                 "show": "Kommunikation anzeigen",
                 "hide": "Kommunikation einklappen"
             },
             "discussionSection": {
-                "searchBarDefault": "Suche nach Beiträgen",
+                "searchBarDefault": "Suche nach Nachrichten",
                 "sortByDate": "Datum:",
-                "defaultSortCriterion": "Standard-Sortierung"
+                "defaultSortCriterion": "Standard-Sortierung",
+                "noMessages": "Keine Nachrichten gefunden",
+                "loadingMessages": "Nachrichten laden..."
             },
             "overview": {
                 "title": "Beiträge",
