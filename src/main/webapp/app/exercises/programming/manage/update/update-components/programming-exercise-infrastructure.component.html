@@ -1,22 +1,6 @@
 <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.infrastructureStepTitle">Infrastructure</span></h1>
 <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.infrastructureStepMessage">Additional settings regarding infrastructure, etc</span></p>
 
-<div class="form-group mb-0" *ngIf="programmingExerciseCreationConfig.publishBuildPlanUrlAllowed">
-    <div class="form-check">
-        <label class="form-check-label" for="field_publishBuildPlanUrl">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="publishBuildPlanUrl"
-                id="field_publishBuildPlanUrl"
-                [(ngModel)]="programmingExercise.publishBuildPlanUrl"
-                checked
-            />
-            <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
-        </label>
-    </div>
-</div>
-
 <div *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise" class="form-group mb-0">
     <div class="form-check">
         <label class="form-check-label" for="field_recreateBuildPlans">
