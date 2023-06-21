@@ -47,8 +47,8 @@
     </ng-container>
 </div>
 
-<div>
-    <div class="form-group mt-2 mb-0">
+<div class="form-group">
+    <div>
         <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
         <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
     </div>
@@ -128,6 +128,23 @@
             (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
             class="ml-2"
         ></jhi-add-auxiliary-repository-button>
+    </div>
+</div>
+
+<!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
+<div class="form-group" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed">
+    <div class="form-check">
+        <label class="form-check-label" for="field_checkoutSolutionRepository">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="checkoutSolutionRepository"
+                id="field_checkoutSolutionRepository"
+                [(ngModel)]="programmingExercise.checkoutSolutionRepository"
+            />
+            <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title">Checkout Solution repository</span>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
+        </label>
     </div>
 </div>
 
