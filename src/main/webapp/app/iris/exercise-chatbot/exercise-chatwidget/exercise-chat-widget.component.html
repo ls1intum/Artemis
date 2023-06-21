@@ -64,7 +64,7 @@
                     </div>
                 </div>
             </div>
-            <div class="scroll-to-bottom" *ngIf="!isScrolledToBottom" (click)="scrollToBottomOnClick()">
+            <div class="scroll-to-bottom" *ngIf="!isScrolledToBottom" (click)="scrollToBottomOnClick()" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
             <div class="client-chat-error" *ngIf="error">

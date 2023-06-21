@@ -21,6 +21,7 @@ import { Subscription } from 'rxjs';
 export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
+    @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
 
@@ -219,16 +220,20 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     adjustChatBodyHeight(newRows: number) {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const chatBody: HTMLElement = this.chatBody.nativeElement;
+        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows;
+        scrollArrow.style.bottom = `calc(60px + ${rowHeight}px)`;
         chatBody.style.height = `calc(100% - ${rowHeight}px - 78px)`;
     }
 
     resetChatBodyHeight() {
         const chatBody: HTMLElement = this.chatBody.nativeElement;
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         textarea.rows = 1;
         chatBody.style.height = `calc(100% - 100px)`;
+        scrollArrow.style.bottom = '60 px';
         this.stateStore.dispatch(new NumNewMessagesResetAction());
     }
 
