@@ -11,9 +11,10 @@
         [(exercise)]="programmingExercise"
         [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
     ></jhi-programming-exercise-update-wizard>
+
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
-            <div class="flex-grow-1 align-items-center">
+            <div class="d-flex flex flex-row align-items-center">
                 <h4
                     *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id"
                     id="jhi-programming-exercise-heading-create"
@@ -39,7 +40,7 @@
         <h4 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
             Import Programming Exercise
         </h4>
-        <div class="update-programming-exercise">
+        <div class="update-programming-exercise mt-5">
             <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />

@@ -1,44 +1,46 @@
-<h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle">Problem</span></h1>
-<p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage">Set problem.</span></p>
+<section class="mb-5">
+    <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle">Problem</span></h1>
+    <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage">Set problem.</span></p>
 
-<div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
-    <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ngb-alert *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile" [dismissible]="false">
-        <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
-        ><span>{{
-            programmingExerciseCreationConfig.isImportFromExistingExercise
-                ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
-                : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
-        }}</span>
-    </ngb-alert>
-    <jhi-programming-exercise-instructions
-        *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise"
-        [exercise]="programmingExercise"
-        [participation]="programmingExercise.templateParticipation!"
-        [personalParticipation]="false"
-    ></jhi-programming-exercise-instructions>
+    <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
+        <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
+        <ngb-alert *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile" [dismissible]="false">
+            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
+            ><span>{{
+                programmingExerciseCreationConfig.isImportFromExistingExercise
+                    ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
+                    : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
+            }}</span>
+        </ngb-alert>
+        <jhi-programming-exercise-instructions
+            *ngIf="programmingExerciseCreationConfig.isImportFromExistingExercise"
+            [exercise]="programmingExercise"
+            [participation]="programmingExercise.templateParticipation!"
+            [personalParticipation]="false"
+        ></jhi-programming-exercise-instructions>
 
-    <jhi-programming-exercise-editable-instructions
-        *ngIf="
-            programmingExerciseCreationConfig.problemStatementLoaded &&
-            programmingExerciseCreationConfig.templateParticipationResultLoaded &&
-            !programmingExerciseCreationConfig.isImportFromExistingExercise
-        "
-        [participation]="programmingExercise.templateParticipation!"
-        [(exercise)]="exercise"
-        [showStatus]="!!programmingExercise?.id"
-        [editMode]="!!programmingExercise?.id"
-        (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
-        [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
-        class="form__editable-instructions"
-    ></jhi-programming-exercise-editable-instructions>
-</div>
-<div class="form-group" *ngIf="!programmingExerciseCreationConfig.isExamMode">
-    <jhi-learning-goal-selection
-        id="learning-goals"
-        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
-        [(ngModel)]="programmingExercise.competencies"
-        name="learningGoals"
-    ></jhi-learning-goal-selection>
-</div>
+        <jhi-programming-exercise-editable-instructions
+            *ngIf="
+                programmingExerciseCreationConfig.problemStatementLoaded &&
+                programmingExerciseCreationConfig.templateParticipationResultLoaded &&
+                !programmingExerciseCreationConfig.isImportFromExistingExercise
+            "
+            [participation]="programmingExercise.templateParticipation!"
+            [(exercise)]="exercise"
+            [showStatus]="!!programmingExercise?.id"
+            [editMode]="!!programmingExercise?.id"
+            (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
+            [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
+            class="form__editable-instructions"
+        ></jhi-programming-exercise-editable-instructions>
+    </div>
+    <div class="form-group" *ngIf="!programmingExerciseCreationConfig.isExamMode">
+        <jhi-learning-goal-selection
+            id="learning-goals"
+            [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+            [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+            [(ngModel)]="programmingExercise.competencies"
+            name="learningGoals"
+        ></jhi-learning-goal-selection>
+    </div>
+</section>
