@@ -586,7 +586,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 return submissionsWithRatedResult.get(0);
             }
             else {
-                // this means with have more than one submission, we want the one with the last submission date
+                // this means we have more than one submission, we want the one with the last submission date
                 // make sure that submissions without submission date do not lead to null pointer exception in the comparison
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
