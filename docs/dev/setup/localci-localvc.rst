@@ -16,7 +16,7 @@ If you are setting Artemis up for the first time, these are the steps you should
 - :ref:`Start Artemis`
 - :ref:`Test the Setup`
 
-Video version of the setup guide on TUM-Live:
+You can see the configuration in the following video:
 
 .. raw:: html
 
