@@ -7,6 +7,7 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('ProgrammingExerciseDifficultyComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;
@@ -33,9 +34,7 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseDifficultyComponent);
                 comp = fixture.componentInstance;
-                comp.programmingExercise = {
-                    allowOfflineIde: true,
-                };
+                comp.programmingExercise = new ProgrammingExercise();
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
             });
     });

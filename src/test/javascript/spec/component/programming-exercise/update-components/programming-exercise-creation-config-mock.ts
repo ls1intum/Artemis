@@ -3,6 +3,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exerc
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationConfig = {
     appNamePatternForSwift: '',
     auxiliaryRepositoriesSupported: false,
@@ -13,23 +14,23 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     existingCategories: [],
     hasUnsavedChanges: false,
     inProductionEnvironment: false,
-    invalidDirectoryNamePattern: undefined,
-    invalidRepositoryNamePattern: undefined,
+    invalidDirectoryNamePattern: new RegExp('(?!)'),
+    invalidRepositoryNamePattern: new RegExp('(?!)'),
     isEdit: false,
     isExamMode: false,
     isImportFromExistingExercise: false,
     isImportFromFile: false,
     maxPenaltyPattern: '',
     modePickerOptions: [],
-    onProgrammingLanguageChange(language: ProgrammingLanguage): ProgrammingLanguage {
+    onProgrammingLanguageChange(_language: ProgrammingLanguage): ProgrammingLanguage {
         return undefined;
     },
-    onProjectTypeChange(projectType: ProjectType): ProjectType {
+    onProjectTypeChange(_projectType: ProjectType): ProjectType {
         return undefined;
     },
     onRecreateBuildPlanOrUpdateTemplateChange(): void {},
     onStaticCodeAnalysisChanged(): void {},
-    onWithDependenciesChanged(withDependencies: boolean): boolean {
+    onWithDependenciesChanged(_withDependencies: boolean): boolean {
         return false;
     },
     packageNamePattern: '',
@@ -41,24 +42,24 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     recreateBuildPlans: false,
     refreshAuxiliaryRepositoryChecks(): void {},
     rerenderSubject: undefined,
-    selectedProgrammingLanguage: undefined,
-    selectedProjectType: undefined,
+    selectedProgrammingLanguage: ProgrammingLanguage.JAVA,
+    selectedProjectType: ProjectType.PLAIN_GRADLE,
     sequentialTestRunsAllowed: false,
-    shortNamePattern: undefined,
+    shortNamePattern: new RegExp('(?!)'),
     showSummary: false,
     staticCodeAnalysisAllowed: false,
     supportedLanguages: [],
     templateParticipationResultLoaded: false,
     testwiseCoverageAnalysisSupported: false,
     titleNamePattern: '',
-    updateCategories(categories: ExerciseCategory[]): void {},
-    updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
+    updateCategories(_categories: ExerciseCategory[]): void {},
+    updateCheckoutDirectory(_editedAuxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
         return function (p1: any) {
             return undefined;
         };
     },
-    updateRepositoryName(auxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
-        return function (p1: any) {
+    updateRepositoryName(_auxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
+        return function (_p1: any) {
             return undefined;
         };
     },
