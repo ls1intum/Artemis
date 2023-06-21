@@ -44,6 +44,10 @@ export class ChannelDTO extends ConversationDto {
     }
 }
 export function isChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
+    return isGeneralChannelDto(conversation) || isExerciseChannelDto(conversation) || isLectureChannelDto(conversation);
+}
+
+export function isGeneralChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }
 
