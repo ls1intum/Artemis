@@ -3,6 +3,14 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exam } from 'app/entities/exam.model';
 
+// IMPORTANT NOTICE: The following strings have to be consistent with
+// the ones defined in ChannelDTO.java
+export enum ChannelSubType {
+    GENERAL = 'general',
+    EXERCISE = 'exercise',
+    LECTURE = 'lecture',
+}
+
 /**
  * Entity
  */
@@ -27,6 +35,7 @@ export class Channel extends Conversation {
  * DTO
  */
 export class ChannelDTO extends ConversationDto {
+    public subType?: string;
     public name?: string;
     public description?: string;
     public topic?: string;
@@ -44,19 +53,19 @@ export class ChannelDTO extends ConversationDto {
     }
 }
 export function isChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
-    return isGeneralChannelDto(conversation) || isExerciseChannelDto(conversation) || isLectureChannelDto(conversation);
-}
-
-export function isGeneralChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }
 
+export function isGeneralChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
+    return isChannelDto(conversation) && conversation.subType === ChannelSubType.GENERAL;
+}
+
 export function isExerciseChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
-    return conversation.type === ConversationType.EXERCISE_CHANNEL;
+    return isChannelDto(conversation) && conversation.subType === ChannelSubType.EXERCISE;
 }
 
 export function isLectureChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
-    return conversation.type === ConversationType.LECTURE_CHANNEL;
+    return isChannelDto(conversation) && conversation.subType === ChannelSubType.LECTURE;
 }
 
 export function getAsChannelDto(conversation: ConversationDto | undefined): ChannelDTO | undefined {

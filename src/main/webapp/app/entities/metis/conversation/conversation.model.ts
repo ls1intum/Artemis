@@ -10,8 +10,6 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 export enum ConversationType {
     GROUP_CHAT = 'groupChat',
     CHANNEL = 'channel',
-    EXERCISE_CHANNEL = 'exerciseChannel',
-    LECTURE_CHANNEL = 'lectureChannel',
     ONE_TO_ONE = 'oneToOneChat',
 }
 /**

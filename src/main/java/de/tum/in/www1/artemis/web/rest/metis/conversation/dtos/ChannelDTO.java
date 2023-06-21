@@ -40,13 +40,23 @@ public class ChannelDTO extends ConversationDTO {
      */
     private String tutorialGroupTitle;
 
+    // property not taken from entity
+    /**
+     * Determines the subtype of the channel, either "general" , "exercise" or "lecture" depending on whether the channel
+     * is associated with an exercise/lecture or not
+     */
+    private String subType;
+
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
         if (channel.getExercise() != null) {
-            this.setType("exerciseChannel");
+            this.subType = "exercise";
         }
-        if (channel.getLecture() != null) {
-            this.setType("lectureChannel");
+        else if (channel.getLecture() != null) {
+            this.subType = "lecture";
+        }
+        else {
+            this.subType = "general";
         }
         this.name = channel.getName();
         this.description = channel.getDescription();
@@ -140,10 +150,15 @@ public class ChannelDTO extends ConversationDTO {
         this.tutorialGroupTitle = tutorialGroupTitle;
     }
 
+    public String getSubType() {
+        return subType;
+    }
+
     @Override
     public String toString() {
-        return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isAnnouncementChannel="
-                + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights
-                + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}" + super.toString();
+        return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
+                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator
+                + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}"
+                + super.toString();
     }
 }
