@@ -47,6 +47,14 @@ export function isChannelDto(conversation: ConversationDto): conversation is Cha
     return conversation.type === ConversationType.CHANNEL;
 }
 
+export function isExerciseChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
+    return conversation.type === ConversationType.EXERCISE_CHANNEL;
+}
+
+export function isLectureChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
+    return conversation.type === ConversationType.LECTURE_CHANNEL;
+}
+
 export function getAsChannelDto(conversation: ConversationDto | undefined): ChannelDTO | undefined {
     if (!conversation) {
         return undefined;
