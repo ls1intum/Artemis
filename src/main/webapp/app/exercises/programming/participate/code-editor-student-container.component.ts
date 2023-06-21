@@ -96,7 +96,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course = getCourseFromExercise(this.exercise);
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
-                            if (submissionPolicy) {
+                            if (submissionPolicy?.active) {
                                 this.exercise.submissionPolicy = submissionPolicy;
                                 this.getNumberOfSubmissionsForSubmissionPolicy();
                             }
