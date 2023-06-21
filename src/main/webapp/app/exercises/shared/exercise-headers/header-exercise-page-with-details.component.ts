@@ -83,7 +83,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             // There is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
                 !!this.studentParticipation?.submissionCount &&
-                !this.individualComplaintDeadline &&
+                !this.individualComplaintDueDate &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
             this.determineNextRelevantDateCourseMode();
@@ -125,7 +125,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the course exercise cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateCourseMode() {
-        const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.exercise.assessmentDueDate, this.individualComplaintDeadline];
+        const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.exercise.assessmentDueDate, this.individualComplaintDueDate];
         const possibleDatesLabels = ['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());
