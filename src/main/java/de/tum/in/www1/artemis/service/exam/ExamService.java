@@ -263,6 +263,8 @@ public class ExamService {
      */
     @NotNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
+        log.debug("calculating result for student exam of user {} with id {} for exam with id {}", studentExam.getId(), studentExam.getUser().getLogin(),
+                studentExam.getExam().getId());
         var exam = studentExam.getExam();
         var gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(exam.getId());
         Long studentId = studentExam.getUser().getId();
