@@ -3,6 +3,7 @@ import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { combineLatest, map } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -10,9 +11,12 @@ import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -23,10 +27,16 @@ import { FormBuilder } from '@angular/forms';
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
+    @Input() isCommunicationPage?: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    channel: Channel;
+
+    isNotAChannelMember: boolean;
+    noChannelAvailable: boolean;
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
+    shouldSendMessage: boolean;
     readonly pageType = PageType.PAGE_SECTION;
 
     // Icons
@@ -38,6 +48,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     constructor(
         protected metisService: MetisService,
+        private channelService: ChannelService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private router: Router,
@@ -59,10 +70,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.course = this.exercise?.course ?? this.lecture?.course;
             this.metisService.setCourse(this.course);
             this.metisService.setPageType(this.pageType);
-            this.metisService.getFilteredPosts({
-                exerciseId: this.exercise?.id,
-                lectureId: this.lecture?.id,
-            });
+            this.setChannel(routeParams.params.courseId);
             this.createEmptyPost();
             this.resetFormGroup();
         });
@@ -155,11 +163,74 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     };
 
     /**
+     * Set the channel for the discussion section, either for a lecture or an exercise
+     * @param courseId
+     */
+    setChannel(courseId: number): void {
+        if (this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+            this.metisService.getFilteredPosts({
+                exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
+                lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
+            });
+            return;
+        }
+        const getChannel = () => {
+            return {
+                next: (channel: Channel) => {
+                    this.channel = channel ?? undefined;
+
+                    if (!this.channel && this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.MESSAGING_ONLY) {
+                        this.noChannelAvailable = true;
+                        this.collapsed = true;
+                        return;
+                    }
+
+                    const contextFilter = this.channel?.id
+                        ? { conversationId: this.channel.id }
+                        : {
+                              exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
+                              lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
+                          };
+                    this.metisService.getFilteredPosts(contextFilter);
+                    this.createEmptyPost();
+                    this.resetFormGroup();
+                },
+                error: (error: HttpErrorResponse) => {
+                    if (error.status === 403 && error.error.message === 'error.noAccessButCouldJoin') {
+                        this.isNotAChannelMember = true;
+                        this.collapsed = true;
+                    }
+                },
+            };
+        };
+
+        // Currently, an additional REST call is made to retrieve the channel associated with the lecture/exercise
+        // TODO: Add the channel to the response for loading the lecture/exercise
+        if (this.lecture?.id) {
+            this.channelService
+                .getChannelOfLecture(courseId, this.lecture.id)
+                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .subscribe(getChannel());
+        } else if (this.exercise?.id) {
+            this.channelService
+                .getChannelOfExercise(courseId, this.exercise.id)
+                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .subscribe(getChannel());
+        }
+    }
+
+    /**
      * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+        if (this.channel) {
+            const conversation = this.channel;
+            this.shouldSendMessage = false;
+            this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+        } else {
+            this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+        }
     }
 
     /**
@@ -202,8 +273,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseId: this.exercise?.id,
-            lectureId: this.lecture?.id,
+            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
+            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
+            conversationId: this.channel?.id,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
@@ -227,6 +299,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
+            conversationId: this.channel?.id,
             exerciseId: this.exercise?.id,
             lectureId: this.lecture?.id,
             filterToUnresolved: false,
@@ -251,4 +324,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
         return 0;
     };
+
+    toggleSendMessage(): void {
+        this.shouldSendMessage = !this.shouldSendMessage;
+    }
 }

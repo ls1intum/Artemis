@@ -9,20 +9,23 @@ export class CourseCommunicationPage {
         cy.get('#new-post').click();
     }
 
-    selectContext(context: CourseWideContext) {
+    selectContextInModal(context: CourseWideContext) {
         cy.get('.modal-content #context').select(titleCaseWord(context));
     }
 
-    getContextSelector() {
+    getContextSelectorInModal() {
         return cy.get('.modal-content #context');
     }
 
-    setTitle(title: string) {
+    setTitleInModal(title: string) {
         cy.get('.modal-content').find('#title').clear().type(title);
     }
 
-    setContent(content: string) {
+    setContentInModal(content: string) {
         cy.get('.modal-content').find('.markdown-editor').find('.ace_editor').click().type(content, { delay: 8 });
+    }
+    setContentInline(content: string) {
+        cy.get('.markdown-editor-wrapper').find('.markdown-editor').find('.ace_editor').click().type(content, { delay: 8 });
     }
 
     save() {
@@ -31,13 +34,21 @@ export class CourseCommunicationPage {
         return cy.wait('@createPost');
     }
 
+    saveMessage() {
+        cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
+        cy.get('#save').click();
+        return cy.wait('@createMessage');
+    }
+
     searchForPost(search: string) {
         cy.get('#search').type(search);
         cy.get('#search-submit').click();
     }
 
     filterByContext(context: string) {
-        cy.get('#filter-context').select(context);
+        cy.get('#filter-context').click();
+        cy.get('mat-option').filter(`:contains("${context}")`).find('.mat-pseudo-checkbox').click();
+        cy.get('#filter-context-panel').type('{esc}');
     }
 
     filterByOwn() {
@@ -49,7 +60,7 @@ export class CourseCommunicationPage {
     }
 
     filterByReacted() {
-        cy.get('#filterToAnsweredOrReacted').check();
+        cy.get('#filterToAnsweredOrReacted').check().click();
     }
 
     getSinglePost(postID: number) {
@@ -63,6 +74,13 @@ export class CourseCommunicationPage {
     reply(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
         cy.intercept(POST, BASE_API + 'courses/*/answer-posts').as('createReply');
+        this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
+        return cy.wait('@createReply');
+    }
+
+    replyWithMessage(postID: number, content: string) {
+        this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
+        cy.intercept(POST, BASE_API + 'courses/*/answer-messages').as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
         return cy.wait('@createReply');
     }
@@ -90,8 +108,8 @@ export class CourseCommunicationPage {
     editPost(postID: number, title: string, content: string) {
         const post = this.getSinglePost(postID);
         post.find('.editIcon').click();
-        this.setTitle(title);
-        this.setContent(content);
+        this.setTitleInModal(title);
+        this.setContentInModal(content);
         cy.intercept(PUT, BASE_API + 'courses/*/posts/*').as('updatePost');
         cy.get('#save').click();
         cy.wait('@updatePost');
@@ -126,17 +144,17 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('fa-icon.resolved').should('exist');
     }
 
-    checkSinglePostByPosition(position: number, title: string, content: string, context?: CourseWideContext) {
+    checkSinglePostByPosition(position: number, title: string | undefined, content: string, context?: CourseWideContext) {
         if (context) {
             cy.get('.items-container .item').eq(position).find('.context-information').contains(titleCaseWord(context));
         }
-        cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
+        if (title !== undefined) {
+            cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
+        }
         cy.get('.items-container .item').eq(position).find('.markdown-preview').contains(content);
     }
 
-    checkSingleExercisePost(postID: number, title: string, content: string) {
-        this.getSinglePost(postID).find('.post-title').contains(title);
+    checkSingleExercisePost(postID: number, content: string) {
         this.getSinglePost(postID).find('.markdown-preview').contains(content);
-        this.getSinglePost(postID).find('.reference-hash').contains(`#${postID}`);
     }
 }

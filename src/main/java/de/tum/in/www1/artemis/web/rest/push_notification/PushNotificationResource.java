@@ -10,7 +10,6 @@ import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import io.jsonwebtoken.*;
 
 /**
@@ -58,7 +58,7 @@ public class PushNotificationResource {
      * @return an DTO containing information about the encryption
      */
     @PostMapping("register")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBody pushNotificationRegisterBody) {
         var newKey = aesKeyGenerator.generateKey();
 
@@ -96,7 +96,7 @@ public class PushNotificationResource {
      * @return HttpStatus as ResponseEntity
      */
     @DeleteMapping("unregister")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
         final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
 
