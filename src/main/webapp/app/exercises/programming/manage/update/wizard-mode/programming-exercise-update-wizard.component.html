@@ -34,14 +34,6 @@
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-problem>
 
-    <jhi-programming-exercise-infrastructure
-        class="form-step"
-        *ngIf="currentStep >= 6"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-        [programmingExercise]="programmingExercise"
-    >
-    </jhi-programming-exercise-infrastructure>
-
     <!-- Bottom Navigation Bar -->
     <jhi-programming-exercise-update-wizard-bottom-bar
         (onNextStep)="nextStep()"
