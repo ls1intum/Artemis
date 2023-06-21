@@ -1,6 +1,6 @@
 #!/bin/bash
 
-variable=$(grep "Interactive Learning with Individual Feedback" tests.log | wc -l)
+variable=$(grep "Interactive Learning with Individual Feedback" ../tests.log | wc -l)
 echo $variable
 
 if [[ $variable -gt 4 ]]
