@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.ChannelSubType;
 
 public class ChannelDTO extends ConversationDTO {
 
@@ -45,18 +46,18 @@ public class ChannelDTO extends ConversationDTO {
      * Determines the subtype of the channel, either "general" , "exercise" or "lecture" depending on whether the channel
      * is associated with an exercise/lecture or not
      */
-    private String subType;
+    private ChannelSubType subType;
 
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
         if (channel.getExercise() != null) {
-            this.subType = "exercise";
+            this.subType = ChannelSubType.EXERCISE;
         }
         else if (channel.getLecture() != null) {
-            this.subType = "lecture";
+            this.subType = ChannelSubType.LECTURE;
         }
         else {
-            this.subType = "general";
+            this.subType = ChannelSubType.GENERAL;
         }
         this.name = channel.getName();
         this.description = channel.getDescription();
@@ -151,7 +152,7 @@ public class ChannelDTO extends ConversationDTO {
     }
 
     public String getSubType() {
-        return subType;
+        return subType.toString().toLowerCase();
     }
 
     @Override

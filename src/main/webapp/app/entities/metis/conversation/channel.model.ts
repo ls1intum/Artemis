@@ -4,7 +4,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exam } from 'app/entities/exam.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
-// the ones defined in ChannelDTO.java
+// the types defined in ChannelSubType.java, but in lowercase
 export enum ChannelSubType {
     GENERAL = 'general',
     EXERCISE = 'exercise',
