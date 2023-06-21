@@ -16,8 +16,13 @@ If you are setting Artemis up for the first time, these are the steps you should
 - :ref:`Start Artemis`
 - :ref:`Test the Setup`
 
-.. HINT::
-    For a video version of the guide refer to https://live.rbg.tum.de/w/artemisintro/34536.
+Video version of the setup guide on TUM-Live:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34536" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video version of the setup guide on TUM-Live.
+    </iframe>
 
 .. contents:: Content of this section
     :local:
@@ -100,10 +105,35 @@ Test the Setup
 
 You can now test the setup:
 
-- Create a course and a programming exercise. See https://live.rbg.tum.de/w/artemisintro/34537 for a video showcasing the creation of a programming exercise.
-- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment. See https://live.rbg.tum.de/w/artemisintro/34538 for a video showing how to do this.
+- Create a course and a programming exercise.
+
+Video showcasing how to create a programming exercise:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34537" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video of creating a programming exercise on TUM-Live.
+    </iframe>
+
+- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
+
+Video showcasing how to participate in a programming exercise from the online editor and from a local Git client:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34538" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video showcasing how to participate in a programming exercise from the online editor and from a local Git client on TUM-Live.
+    </iframe>
+
 - Make sure that the result of your submission is displayed in the Artemis UI.
 
 .. HINT::
    At the moment, the local VC system only supports accessing repositories via HTTP(S) and Basic Auth. We plan to add SSH support in the future. For now, you need to enter your Artemis credentials (username and password) when accessing template, solution, test, and assignment repositories.
-   For unauthorized access, your Git client will display the respective error message (see https://live.rbg.tum.de/w/artemisintro/34539 for instance).
+
+For unauthorized access, your Git client will display the respective error message:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34538" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video showcasing unauthorized access to a local VC repository on TUM-Live.
+    </iframe>
