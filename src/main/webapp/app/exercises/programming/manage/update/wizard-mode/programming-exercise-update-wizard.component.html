@@ -20,19 +20,19 @@
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-language>
 
-    <jhi-programming-exercise-grading
-        class="form-step"
-        *ngIf="currentStep >= 4"
-        [programmingExercise]="programmingExercise"
-        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-    ></jhi-programming-exercise-grading>
-
     <jhi-programming-exercise-problem
         class="form-step"
-        *ngIf="currentStep >= 5"
+        *ngIf="currentStep >= 4"
         [(exercise)]="exercise"
         [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
     ></jhi-programming-exercise-problem>
+
+    <jhi-programming-exercise-grading
+        class="form-step"
+        *ngIf="currentStep >= 5"
+        [programmingExercise]="programmingExercise"
+        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-grading>
 
     <!-- Bottom Navigation Bar -->
     <jhi-programming-exercise-update-wizard-bottom-bar

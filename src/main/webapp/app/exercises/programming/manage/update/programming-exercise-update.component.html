@@ -52,15 +52,15 @@
             ></jhi-programming-exercise-difficulty>
             <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
             </jhi-programming-exercise-language>
+            <jhi-programming-exercise-problem
+                [(exercise)]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+            ></jhi-programming-exercise-problem>
             <jhi-programming-exercise-grading
                 class="form-step"
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-grading>
-            <jhi-programming-exercise-problem
-                [(exercise)]="programmingExercise"
-                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-            ></jhi-programming-exercise-problem>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">
