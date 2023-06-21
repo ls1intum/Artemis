@@ -20,7 +20,7 @@ Video version of the setup guide on TUM-Live:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/34536" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34536?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video version of the setup guide on TUM-Live.
     </iframe>
 
@@ -110,8 +110,7 @@ You can now test the setup:
 Video showcasing how to create a programming exercise:
 
 .. raw:: html
-
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/34537" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34537?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video of creating a programming exercise on TUM-Live.
     </iframe>
 
@@ -121,7 +120,7 @@ Video showcasing how to participate in a programming exercise from the online ed
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/34538" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34538?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video showcasing how to participate in a programming exercise from the online editor and from a local Git client on TUM-Live.
     </iframe>
 
@@ -134,6 +133,6 @@ For unauthorized access, your Git client will display the respective error messa
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/34538" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/34538?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video showcasing unauthorized access to a local VC repository on TUM-Live.
     </iframe>
