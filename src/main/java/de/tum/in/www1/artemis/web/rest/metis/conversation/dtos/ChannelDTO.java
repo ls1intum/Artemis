@@ -43,10 +43,10 @@ public class ChannelDTO extends ConversationDTO {
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
         if (channel.getExercise() != null) {
-            this.setType("exercise_channel");
+            this.setType("exerciseChannel");
         }
         if (channel.getLecture() != null) {
-            this.setType("lecture_channel");
+            this.setType("lectureChannel");
         }
         this.name = channel.getName();
         this.description = channel.getDescription();
