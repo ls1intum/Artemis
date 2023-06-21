@@ -57,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Check current dir
-      run: ls -a
+      run: ls -a supporting_scripts
     - name: Java Tests
       run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: "Codacy: Report coverage"
@@ -88,7 +88,7 @@ jobs:
         reporter: java-junit
     - name: Number of Server Starts
       if: success() || failure()
-      run: bash /supporting_scripts/test.sh
+      run: bash supporting_scripts/test.sh
 
   server-tests-mysql:
       needs: [ server-tests ]
