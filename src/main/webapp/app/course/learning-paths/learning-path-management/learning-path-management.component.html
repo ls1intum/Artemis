@@ -5,10 +5,17 @@
 </div>
 
 <div *ngIf="!isLoading">
+    <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
     <div *ngIf="!course?.learningPathEnabled">
-        <span jhiTranslate="artemisApp.learningPath.isDisabled">Disabled</span>
-        <div [ngbTooltip]="'artemisApp.learningPath.enableHint' | artemisTranslate">
-            <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" type="button" class="btn" (click)="enableLearningPaths()" jhiTranslate="artemisApp.learningPath.enable">
+        <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
+        <div [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate">
+            <button
+                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                type="button"
+                class="btn btn-primary"
+                (click)="enableLearningPaths()"
+                jhiTranslate="artemisApp.learningPath.manageLearningPaths.enable"
+            >
                 Enable
             </button>
         </div>

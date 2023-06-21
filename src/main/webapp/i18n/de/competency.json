@@ -144,9 +144,13 @@
             }
         },
         "learningPath": {
-            "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
-            "enable": "Lernpfade aktivieren",
-            "enableHint": "Die Erstellung von Lernppfaden für alle Studierende kann einige Minuten dauern."
+            "learningPathButton": "Lernpfade",
+            "manageLearningPaths": {
+                "title": "Lernpfadmanagement",
+                "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
+                "enable": "Lernpfade aktivieren",
+                "enableHint": "Die Erstellung von Lernppfaden für alle Studierende kann einige Minuten dauern."
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-learning-path-management',
@@ -13,7 +14,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     course: Course;
 
-    courseSub;
+    courseSub: Subscription;
 
     constructor(private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService) {}
 
