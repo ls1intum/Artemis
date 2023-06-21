@@ -139,7 +139,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
             )
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
-                    this.channels = channels ?? [];
+                    this.channels = channels ? channels.filter((channel) => channel.subType === this.channelSubType) : [];
                     this.noOfChannels = this.channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
