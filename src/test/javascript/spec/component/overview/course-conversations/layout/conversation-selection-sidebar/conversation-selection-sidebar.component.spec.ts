@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { BehaviorSubject, EMPTY } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -32,7 +32,14 @@ import { GroupChatIconComponent } from 'app/overview/course-conversations/other/
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
-const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDto | undefined)[] = [
+    undefined,
+    generateOneToOneChatDTO({}),
+    generateExampleGroupChatDTO({}),
+    generateExampleChannelDTO({}),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE }),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE }),
+];
 
 examples.forEach((activeConversation) => {
     describe('ConversationSelectionSidebarComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
@@ -51,9 +58,17 @@ examples.forEach((activeConversation) => {
         const hiddenChannel = generateExampleChannelDTO({ id: 6, isHidden: true });
         const favoriteChannel = generateExampleChannelDTO({ id: 7, isFavorite: true });
 
-        const visibleOneToOneChat = generateOneToOneChatDTO({ id: 8 });
-        const hiddenOneToOneChat = generateOneToOneChatDTO({ id: 9, isHidden: true });
-        const favoriteOneToOneChat = generateOneToOneChatDTO({ id: 10, isFavorite: true });
+        const visibleExerciseChannel = generateExampleChannelDTO({ id: 8, subType: ChannelSubType.EXERCISE });
+        const hiddenCExercisehannel = generateExampleChannelDTO({ id: 9, isHidden: true, subType: ChannelSubType.EXERCISE });
+        const favoritExerciseeChannel = generateExampleChannelDTO({ id: 10, isFavorite: true, subType: ChannelSubType.EXERCISE });
+
+        const visibleLectureChannel = generateExampleChannelDTO({ id: 11, subType: ChannelSubType.LECTURE });
+        const hiddenCLecturehannel = generateExampleChannelDTO({ id: 12, isHidden: true, subType: ChannelSubType.LECTURE });
+        const favoritLectureeChannel = generateExampleChannelDTO({ id: 13, isFavorite: true, subType: ChannelSubType.LECTURE });
+
+        const visibleOneToOneChat = generateOneToOneChatDTO({ id: 14 });
+        const hiddenOneToOneChat = generateOneToOneChatDTO({ id: 15, isHidden: true });
+        const favoriteOneToOneChat = generateOneToOneChatDTO({ id: 16, isFavorite: true });
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -87,6 +102,12 @@ examples.forEach((activeConversation) => {
                 visibleChannel,
                 hiddenChannel,
                 favoriteChannel,
+                visibleExerciseChannel,
+                hiddenCExercisehannel,
+                favoritExerciseeChannel,
+                visibleLectureChannel,
+                hiddenCLecturehannel,
+                favoritLectureeChannel,
                 visibleGroupChat,
                 hiddenGroupChat,
                 favoriteGroupChat,
@@ -128,7 +149,7 @@ examples.forEach((activeConversation) => {
             expect(component.starredConversations).toContain(favoriteChannel);
             expect(component.starredConversations).toContain(favoriteGroupChat);
             expect(component.starredConversations).toContain(favoriteOneToOneChat);
-            expect(component.starredConversations).toHaveLength(3);
+            expect(component.starredConversations).toHaveLength(5);
             expect(component.starredConversations).toEqual(component.displayedStarredConversations);
 
             expect(component.channelConversations).toContain(hiddenChannel);
@@ -155,7 +176,7 @@ examples.forEach((activeConversation) => {
             inputField.nativeElement.dispatchEvent(new Event('input'));
             tick(301);
             expect(component.searchTerm).toEqual(visibleGroupChat.id + '');
-            expect(component.displayedStarredConversations).toHaveLength(0);
+            expect(component.displayedStarredConversations).toHaveLength(1);
             expect(component.displayedChannelConversations).toHaveLength(0);
             expect(component.displayedGroupChats).toHaveLength(1);
             expect(component.displayedGroupChats).toContain(visibleGroupChat);
