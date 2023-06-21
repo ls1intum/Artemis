@@ -52,7 +52,7 @@ examples.forEach((exampleChannel) => {
         let registerUsersToChannelSpy: jest.SpyInstance;
         let deregisterUsersFromChannelSpy: jest.SpyInstance;
         let closeSpy: jest.SpyInstance;
-        let createChannelFnSpy: jest.SpyInstance;
+        let createChannelFnSpy: jest.SpyInstance | undefined;
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
