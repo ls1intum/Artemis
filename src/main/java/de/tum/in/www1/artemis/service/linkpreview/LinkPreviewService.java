@@ -38,6 +38,10 @@ public class LinkPreviewService {
         Content imageContent = openGraph.getContentOf("image");
         Content urlContent = openGraph.getContentOf("url");
 
-        return new LinkPreviewDTO(titleContent.getValue(), descriptionContent.getValue(), imageContent.getValue(), urlContent.getValue());
+        // Return a LinkPreviewDTO object containing the meta information if all of the required meta elements are present
+        if (titleContent != null && descriptionContent != null && imageContent != null && urlContent != null) {
+            return new LinkPreviewDTO(titleContent.getValue(), descriptionContent.getValue(), imageContent.getValue(), urlContent.getValue());
+        }
+        return new LinkPreviewDTO(null, null, null, null);
     }
 }

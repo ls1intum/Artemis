@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { ModuleWithProviders, NgModule } from '@angular/core';
-import { LinkPreviewDirective } from 'app/shared/link-preview/directives/link-preview.directive';
 
 import { HttpClientModule } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,8 +11,6 @@ import { LinkifyService } from 'app/shared/link-preview/linkify/services/linkify
 
 @NgModule({
     imports: [CommonModule, HttpClientModule, LinkifyModule, MatCardModule, MatButtonModule, MatProgressSpinnerModule],
-    exports: [LinkPreviewDirective],
-    declarations: [LinkPreviewDirective],
 })
 export class LinkPreviewModule {
     static forRoot(): ModuleWithProviders<any> {

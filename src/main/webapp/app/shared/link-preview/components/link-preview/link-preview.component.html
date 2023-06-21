@@ -1,6 +1,6 @@
 <ng-container *ngIf="!this.linkPreview && !this.loaded && this.showLoadingsProgress; then fetch; else preview"> </ng-container>
 <ng-template #preview>
-    <div *ngIf="linkPreview" class="preview-container">
+    <div *ngIf="linkPreview && linkPreview.shouldPreviewBeShown" class="preview-container">
         <!-- Link preview template -->
         <div class="preview-card">
             <div class="preview-image" *ngIf="linkPreview.image">

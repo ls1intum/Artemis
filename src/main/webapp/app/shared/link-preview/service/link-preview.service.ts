@@ -1,5 +1,5 @@
 import { EventEmitter, Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Link } from 'app/shared/link-preview/linkify/interfaces/linkify.interface';
@@ -9,40 +9,34 @@ export interface LinkPreview {
     description: string;
     image: string;
     url: string;
+    shouldPreviewBeShown?: boolean;
 }
+
 @Injectable()
 export class LinkPreviewService {
     public resourceUrl = 'api/link-preview';
 
-    private linkPreview$?: Observable<LinkPreview>;
-    onLinkFound: EventEmitter<Array<Link>> = new EventEmitter<Array<Link>>();
+    // object used to store the link preview data as observables, with the URL of the link as the key
+    private cache: { [url: string]: Observable<LinkPreview> } = {};
 
+    onLinkFound: EventEmitter<Link[]> = new EventEmitter<Link[]>();
     links: Link[] = [];
 
     constructor(private http: HttpClient) {
-        console.log('fetching LinkPreviewService  : ');
-        this.onLinkFound.subscribe((links: Array<Link>) => (this.links = links));
+        this.onLinkFound.subscribe((links: Link[]) => (this.links = links));
     }
 
-    // fetchLink(url: string): Observable<LinkPreview> {
-    //     console.log('fetching the following link: ', url);
-    //
-    //     return this.http.post(this.resourceUrl, url).pipe(map((value) => value as LinkPreview));
-    // }
-    // TODO: implement caching and re-check why the preview is the same all the time
-
     fetchLink(url: string): Observable<LinkPreview> {
-        console.log('fetching the following link: ', url);
-
-        if (!this.linkPreview$) {
-            this.linkPreview$ = this.http.post(this.resourceUrl, url, { observe: 'response' }).pipe(
-                map((res: HttpResponse<LinkPreview>) => {
-                    return res.body!;
-                }),
-                shareReplay({ bufferSize: 1, refCount: true }),
-            );
+        if (this.cache[url]) {
+            return this.cache[url];
         }
 
-        return this.linkPreview$;
+        const preview$ = this.http.post(this.resourceUrl, url).pipe(
+            map((value) => value as LinkPreview),
+            shareReplay(1),
+        );
+
+        this.cache[url] = preview$;
+        return preview$;
     }
 }

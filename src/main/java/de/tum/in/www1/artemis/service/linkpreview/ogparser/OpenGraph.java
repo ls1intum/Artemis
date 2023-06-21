@@ -28,6 +28,12 @@ public class OpenGraph {
     }
 
     public Content getContentOf(String property, int index) {
+        if (openGraphMap.get(property) == null) {
+            return null;
+        }
+        if (openGraphMap.get(property).size() == 0) {
+            return null;
+        }
         return openGraphMap.get(property).get(index);
     }
 
