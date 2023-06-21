@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
 import de.tum.in.www1.artemis.service.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.TextExerciseImportService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.ExamConfigurationException;
@@ -59,13 +61,15 @@ public class ExamImportService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ChannelService channelService;
+
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
             FileUploadExerciseImportService fileUploadExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -82,6 +86,7 @@ public class ExamImportService {
         this.fileUploadExerciseImportService = fileUploadExerciseImportService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -97,13 +102,15 @@ public class ExamImportService {
 
         preCheckProgrammingExercisesForShortNameUniqueness(examToCopy.getExerciseGroups(), targetCourse.getShortName());
 
-        // 1st: Save the exam without exercises to the database
+        // 1st: Save the exam without exercises to the database and create a new channel for the exam
         List<ExerciseGroup> exerciseGroupsToCopy = examToCopy.getExerciseGroups();
         examToCopy.setExerciseGroups(new ArrayList<>());
         Exam examCopied = createCopyOfExamWithoutConductionSpecificAttributes(examToCopy, targetCourse);
 
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
+        Channel createdChannel = channelService.createExamChannel(examCopied, examToCopy.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(false, examCopied.getCourse(), createdChannel);
 
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
     }
@@ -310,7 +317,6 @@ public class ExamImportService {
         examToCopy.setStudentExams(new HashSet<>());
         examToCopy.setId(null);
         examToCopy.setCourse(targetCourse);
-
         return examRepository.save(examToCopy);
     }
 }

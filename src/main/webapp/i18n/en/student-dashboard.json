@@ -9,17 +9,17 @@
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
-            "register": {
-                "title": "Course Registration",
-                "registerSuccessful": "Registration successful",
-                "registerForCourse": "Register",
-                "notInCourseButCanRegister": "You are not registered for this course, but you can register yourself.",
+            "enroll": {
+                "title": "Course Enrollment",
+                "enrollSuccessful": "Enrollment successful",
+                "enrollInCourse": "Enroll",
+                "notInCourseButCanEnroll": "You are not enrolled in this course, but you can enroll yourself.",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
-                "noCourse": "No courses available for registration",
+                "noCourse": "No courses available for enrollment",
                 "courseLoading": "Course is loading...",
                 "coursesLoading": "Courses are loading...",
-                "courseSignupConfirmationTitle": "Confirm Course Registration"
+                "courseEnrollmentConfirmationTitle": "Confirm Course Enrollment"
             },
             "course": "Course"
         },
@@ -33,7 +33,7 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorial Groups",
-                "learningGoals": "Competencies",
+                "competencies": "Competencies",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
@@ -90,8 +90,22 @@
                     "programmingTotal": "Total Programming Exercises:",
                     "textTotal": "Total Text Exercises:",
                     "file-uploadTotal": "Total File Upload Exercises:",
-                    "startDate": "Start Date:",
-                    "endDate": "End Date:",
+                    "startDate": "Start:",
+                    "endDate": "End:",
+                    "enrollmentStartDate": "Enrollment from:",
+                    "enrollmentEndDate": "Enrollment until:",
+                    "unenrollmentEndDate": "Unenrollment until:",
+                    "unenrollmentButton": "Unenroll",
+                    "unenrollmentModal": {
+                        "title": "Confirm Course Unenrollment",
+                        "confirmationQuestion": "Are you sure you want to unenroll from",
+                        "reenrollmentNotPossible": "The course does not allow you to enroll again. This is an irreversible action.",
+                        "reenrollmentPossible": "If you change your mind, the course will allow you to enroll again until:",
+                        "confirmationInput": "Enter the title of the course:",
+                        "cancelButton": "Cancel",
+                        "acceptButton": "Yes, I want to unenroll.",
+                        "unenrollmentSuccessful": "Unenrollment successful"
+                    },
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }
@@ -144,7 +158,7 @@
                 "exercisesWithNoCategories": "Exercises with no categories",
                 "pointsPerExercise": "Points per Exercise"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "No competencies available for this course."
             },
             "lectureList": {
@@ -196,10 +210,14 @@
                 "rated": "Rated",
                 "practice": "Practice",
                 "assessmentType": "Assessment:",
+                "releaseDate": "Release date:",
+                "releaseDateTooltip": "Students can see this exercise from {{date}}.",
                 "startDate": "Start date:",
                 "startDateTooltip": "Students can work on this exercise from {{date}}.",
                 "submissionDue": "Submission due:",
                 "submissionDueTooltip": "The submission is due by {{date}}.",
+                "exampleSolutionPublicationDate": "Example solution publication date:",
+                "exampleSolutionPublicationDateTooltip": "The example solution is published at {{date}}.",
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",

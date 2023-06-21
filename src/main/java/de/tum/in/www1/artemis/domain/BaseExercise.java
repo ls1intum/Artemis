@@ -245,4 +245,17 @@ public abstract class BaseExercise extends DomainObject {
         }
         return !previousDate.isAfter(laterDate);
     }
+
+    /**
+     * a helper method to get the exercise title in a sanitized form (i.e. usable in file names)
+     * exercise abc?+# -> exercise_abc
+     *
+     * @return the sanitized exercise title
+     **/
+    public String getSanitizedExerciseTitle() {
+        if (title == null) {
+            return "exercise";
+        }
+        return title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
+    }
 }

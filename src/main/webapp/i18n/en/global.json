@@ -31,7 +31,7 @@
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Lecture",
-                "learningGoal": "Competency",
+                "competency": "Competency",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -248,7 +248,6 @@
             "updateResult": "Update Result",
             "viewResult": "View Result",
             "cleanupBuildPlan": "Clean up Build Plan",
-            "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
             "exams": "Exams",
@@ -261,7 +260,8 @@
             "ldap": "Sync from LDAP",
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
-            "goBack": "Go back"
+            "goBack": "Go back",
+            "requestDataExport": "Request data export"
         },
         "detail": {
             "field": "Field",
@@ -326,7 +326,7 @@
         "aboutUs": "About",
         "course": "Course details",
         "lectures": "Lectures",
-        "learningGoals": "Competencies",
+        "competencies": "Competencies",
         "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
         "statistics": "Course statistics",

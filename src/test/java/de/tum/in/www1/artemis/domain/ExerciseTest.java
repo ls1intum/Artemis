@@ -293,4 +293,11 @@ class ExerciseTest {
 
         return participations;
     }
+
+    @Test
+    void testSanitizedExerciseTitleDoesntContainAnyIllegalCharacters() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Test?+#*                Exercise123%$§");
+        assertThat(exercise.getSanitizedExerciseTitle()).isEqualTo("Test_Exercise123");
+    }
 }

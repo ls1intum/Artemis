@@ -3,6 +3,8 @@
 System Design
 =============
 
+.. _top_level_design:
+
 Top-Level Design
 ----------------
 
@@ -24,6 +26,8 @@ to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations f
 1. **VCS:** Atlassian Bitbucket Server
 2. **CIS:** Atlassian Bamboo Server
 3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
+
+.. _deployment:
 
 Deployment
 ----------
@@ -67,6 +71,7 @@ Please note, that the actual database model is more complex. The UML class diagr
 readability (e.g. lectures, student questions, exercise details, static code analysis, quiz questions, exam sessions,
 submission subclasses, etc.)
 
+.. _server_architecture:
 
 Server Architecture
 -------------------
@@ -79,3 +84,9 @@ REST interfaces to the application client.
     :alt: Server Architecture
 
     Server Architecture
+
+
+Local VC and local CI
+---------------------
+
+.. include:: system-design/localvc-localci/localvc-localci-system-design.rst

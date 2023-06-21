@@ -31,7 +31,7 @@
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Vorlesung",
-                "learningGoal": "Kompetenz",
+                "competency": "Kompetenz",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -247,7 +247,6 @@
             "updateResult": "Ergebnis bearbeiten",
             "viewResult": "Ergebnis anzeigen",
             "cleanupBuildPlan": "Build-Plan aufräumen",
-            "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
             "exams": "Klausuren",
@@ -260,7 +259,8 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
-            "goBack": "Zurück"
+            "goBack": "Zurück",
+            "requestDataExport": "Datenexport anfordern"
         },
         "detail": {
             "field": "Feld",
@@ -326,7 +326,7 @@
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
-        "learningGoals": "Kompetenzen",
+        "competencies": "Kompetenzen",
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",

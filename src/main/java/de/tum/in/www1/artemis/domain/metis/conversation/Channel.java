@@ -4,11 +4,18 @@ import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @Entity
 @DiscriminatorValue("C")
@@ -19,7 +26,7 @@ public class Channel extends Conversation {
      * The name of the channel. Must be unique in the course.
      */
     @Column(name = "name")
-    @Size(min = 1, max = 20)
+    @Size(min = 1, max = 30)
     @NotBlank
     private String name;
 
@@ -62,6 +69,21 @@ public class Channel extends Conversation {
     @Column(name = "is_archived")
     @NotNull
     private Boolean isArchived;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "lecture_id")
+    @JsonIgnoreProperties("channel")
+    private Lecture lecture;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "exercise_id")
+    @JsonIgnoreProperties("channel")
+    private Exercise exercise;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "exam_id")
+    @JsonIgnoreProperties("channel")
+    private Exam exam;
 
     @Nullable
     public String getName() {
@@ -113,5 +135,29 @@ public class Channel extends Conversation {
 
     public void setIsAnnouncementChannel(Boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
+    }
+
+    public Lecture getLecture() {
+        return lecture;
+    }
+
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public Exam getExam() {
+        return exam;
+    }
+
+    public void setExam(Exam exam) {
+        this.exam = exam;
     }
 }
