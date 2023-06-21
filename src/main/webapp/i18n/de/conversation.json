@@ -184,7 +184,11 @@
                 }
             },
             "channelOverview": {
-                "title": "Alle Kanäle im Kurs {{ courseTitle }}",
+                "title": {
+                    "general": "Alle allgemeinen Kanäle im Kurs {{ courseTitle }}",
+                    "exercise": "Alle Aufgabenkanäle im Kurs {{ courseTitle }}",
+                    "lecture": "Alle Vorlesungskanäle im Kurs {{ courseTitle }}"
+                },
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
                     "joined:": "Beigetreten",
