@@ -36,7 +36,7 @@
             </div>
             <div class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
                 <fa-icon
                     [icon]="faQuestionCircle"
                     [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate : { extensions: allowedFileExtensions }"
@@ -68,12 +68,12 @@
                 <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
             </div>
             <div class="form-group">
-                <jhi-learning-goal-selection
-                    id="learning-goals"
-                    [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.learningGoal.link.lectureUnit' | artemisTranslate"
-                    formControlName="learningGoals"
-                ></jhi-learning-goal-selection>
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+                    formControlName="competencies"
+                ></jhi-competency-selection>
             </div>
             <div class="form-group" [hidden]="!isEditMode">
                 <label for="updateNotificationText">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationText' | artemisTranslate }}</label>

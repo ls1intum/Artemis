@@ -14,7 +14,6 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -73,7 +72,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
         private courseStorageService: CourseStorageService,
-        private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -321,7 +319,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /**
      * Check if the course has any competencies or prerequisites
      */
-    hasLearningGoals(): boolean {
+    hasCompetencies(): boolean {
         return !!(this.course?.competencies?.length || this.course?.prerequisites?.length);
     }
 

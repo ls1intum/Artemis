@@ -268,7 +268,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
-        competency_management: 'artemisApp.learningGoal.manageLearningGoals.title',
+        competency_management: 'artemisApp.competency.manageCompetencies.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
         communication: 'artemisApp.metis.communication.label',
@@ -338,7 +338,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
-        competencies: 'artemisApp.courseOverview.menu.learningGoals',
+        competencies: 'artemisApp.courseOverview.menu.competencies',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
         messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
@@ -461,7 +461,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                 break;
             case 'competencies':
-                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.COMPETENCY, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);

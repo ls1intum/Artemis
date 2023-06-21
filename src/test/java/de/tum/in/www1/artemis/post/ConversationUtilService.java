@@ -17,8 +17,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
@@ -89,29 +88,36 @@ public class ConversationUtilService {
 
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
-        Course course1 = courseUtilService.createCourse();
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
-        course1.addExercises(textExercise);
-        textExercise = exerciseRepo.save(textExercise);
+        List<Exercise> testExercises = new ArrayList<>();
+        List<Lecture> testLectures = new ArrayList<>();
 
-        Lecture lecture = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        course1.addLectures(lecture);
-        lecture = lectureRepo.save(lecture);
+        Course course1 = courseUtilService.createCourse();
+        for (int i = 0; i < 2; i++) {
+            TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+            course1.addExercises(textExercise);
+            textExercise = exerciseRepo.save(textExercise);
+            testExercises.add(textExercise);
+
+            Lecture lecture = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+            course1.addLectures(lecture);
+            lecture = lectureRepo.save(lecture);
+            testLectures.add(lecture);
+        }
 
         courseRepo.save(course1);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(textExercise);
+        plagiarismCase.setExercise(testExercises.get(0));
         plagiarismCase.setStudent(userUtilService.getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(textExercise, userPrefix));
+        posts.addAll(createBasicPosts(testExercises.toArray(Exercise[]::new), userPrefix));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(lecture, userPrefix));
+        posts.addAll(createBasicPosts(testLectures.toArray(Lecture[]::new), userPrefix));
 
         // add post to plagiarismCase
         posts.add(createBasicPost(plagiarismCase, userPrefix));
@@ -200,24 +206,29 @@ public class ConversationUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Exercise exerciseContext, String userPrefix) {
+    private List<Post> createBasicPosts(Exercise[] exerciseContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "student");
-            postToAdd.setExercise(exerciseContext);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
+        for (Exercise exerciseContext : exerciseContexts) {
+            for (int i = 0; i < 4; i++) {
+                Post postToAdd = createBasicPost(i, userPrefix + "student");
+                postToAdd.setExercise(exerciseContext);
+                postRepository.save(postToAdd);
+                posts.add(postToAdd);
+            }
         }
+
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext, String userPrefix) {
+    private List<Post> createBasicPosts(Lecture[] lectureContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "tutor");
-            postToAdd.setLecture(lectureContext);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
+        for (Lecture lectureContext : lectureContexts) {
+            for (int i = 0; i < 4; i++) {
+                Post postToAdd = createBasicPost(i, userPrefix + "tutor");
+                postToAdd.setLecture(lectureContext);
+                postRepository.save(postToAdd);
+                posts.add(postToAdd);
+            }
         }
         return posts;
     }
@@ -330,6 +341,17 @@ public class ConversationUtilService {
         return conversationRepository.save(conversation);
     }
 
+    public static Channel createChannel(Course course, String channelName) {
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName(channelName);
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setDescription("Test channel");
+        return channel;
+    }
+
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setConversation(conversation);
@@ -337,5 +359,80 @@ public class ConversationUtilService {
         conversationParticipant.setUser(userUtilService.getUserByLogin(userName));
 
         return conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    public Conversation addMessageWithReplyAndReactionInGroupChatOfCourseForUser(String login, Course course, String messageText) {
+        Conversation groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, groupChat);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(groupChat);
+    }
+
+    public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
+        Conversation oneToOneChat = new OneToOneChat();
+        oneToOneChat.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, oneToOneChat);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(oneToOneChat);
+    }
+
+    private void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(userUtilService.getUserByLogin(login));
+        answerPost.setContent("answer post");
+        answerPost.setCreationDate(ZonedDateTime.now());
+        answerPost.setPost(answerPostBelongsTo);
+        addReactionForUserToAnswerPost(login, answerPost);
+        postRepository.save(answerPostBelongsTo);
+        answerPostRepository.save(answerPost);
+    }
+
+    private void addReactionForUserToPost(String login, Post post) {
+        Reaction reaction = createReactionForUser(userUtilService.getUserByLogin(login));
+        reaction.setPost(post);
+        conversationRepository.save(post.getConversation());
+        postRepository.save(post);
+        reactionRepository.save(reaction);
+    }
+
+    private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
+        Reaction reaction = createReactionForUser(userUtilService.getUserByLogin(login));
+        reaction.setAnswerPost(answerPost);
+        answerPostRepository.save(answerPost);
+        reactionRepository.save(reaction);
+    }
+
+    private Reaction createReactionForUser(User user) {
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId("heart");
+        reaction.setUser(user);
+        return reaction;
+    }
+
+    public Conversation addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("channel");
+        channel.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, channel);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(channel);
+    }
+
+    private Post createMessageWithReactionForUser(String login, String messageText, Conversation conversation) {
+        Post message = new Post();
+        message.setConversation(conversation);
+        message.setAuthor(userUtilService.getUserByLogin(login));
+        message.setContent(messageText);
+        message.setCreationDate(ZonedDateTime.now());
+        conversation.setCreator(message.getAuthor());
+        addReactionForUserToPost(login, message);
+        conversationRepository.save(conversation);
+        message = postRepository.save(message);
+
+        return message;
     }
 }
