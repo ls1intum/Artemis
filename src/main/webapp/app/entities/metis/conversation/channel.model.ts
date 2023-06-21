@@ -35,7 +35,7 @@ export class Channel extends Conversation {
  * DTO
  */
 export class ChannelDTO extends ConversationDto {
-    public subType?: string;
+    public subType?: ChannelSubType;
     public name?: string;
     public description?: string;
     public topic?: string;

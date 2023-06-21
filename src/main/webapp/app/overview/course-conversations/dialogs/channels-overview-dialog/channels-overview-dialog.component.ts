@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
@@ -34,6 +34,9 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     @Input()
     course: Course;
 
+    @Input()
+    channelSubType: ChannelSubType;
+
     channelActions$ = new Subject<ChannelAction>();
 
     noOfChannels = 0;
@@ -44,7 +47,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     isInitialized = false;
 
     initialize() {
-        super.initialize(['course']);
+        super.initialize(['course', 'channelSubType']);
         if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }

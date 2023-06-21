@@ -65,7 +65,7 @@
                                         <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
-                                        <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, true)">
+                                        <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.GENERAL)">
                                             {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
                                         </button>
                                         <button id="createChannel" ngbDropdownItem (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
@@ -95,7 +95,7 @@
                                         <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
-                                        <button id="exerciseChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, false)">
+                                        <button id="exerciseChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXERCISE)">
                                             {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
                                         </button>
                                     </div>
@@ -122,7 +122,7 @@
                                         <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
-                                        <button id="lectureChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, false)">
+                                        <button id="lectureChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.LECTURE)">
                                             {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
                                         </button>
                                     </div>
