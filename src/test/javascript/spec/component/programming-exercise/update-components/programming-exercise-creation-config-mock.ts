@@ -65,7 +65,7 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     },
     updateTemplate: false,
     validIdeSelection(): boolean | undefined {
-        return undefined;
+        return true;
     },
     withDependencies: false,
 };

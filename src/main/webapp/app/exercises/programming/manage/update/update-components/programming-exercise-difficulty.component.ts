@@ -11,6 +11,8 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 export class ProgrammingExerciseDifficultyComponent {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+
     protected readonly ProjectType = ProjectType;
+
     faQuestionCircle = faQuestionCircle;
 }

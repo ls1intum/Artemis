@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
@@ -17,6 +18,11 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
+                CheckboxControlValueAccessor,
+                DefaultValueAccessor,
+                SelectControlValueAccessor,
+                NumberValueAccessor,
+                NgModel,
                 ProgrammingExerciseDifficultyComponent,
                 MockComponent(DifficultyPickerComponent),
                 MockComponent(TeamConfigFormGroupComponent),
