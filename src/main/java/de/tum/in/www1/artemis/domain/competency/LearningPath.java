@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.competency;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -61,23 +60,6 @@ public class LearningPath extends DomainObject {
 
     public void setCompetencies(Set<Competency> competencies) {
         this.competencies = competencies;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        LearningPath that = (LearningPath) obj;
-        return getId().equals(that.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
