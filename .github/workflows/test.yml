@@ -108,11 +108,11 @@ jobs:
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: success() || failure()
-            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+            run: cat tests.log | grep "Test >.*) FAILED" || [[ $? == 1 ]]
           - name: Count failed tests
             id: failedTestCounter
             if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*) FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
           - name: Report action
             uses: Sibz/github-status-action@v1
             with:
@@ -152,11 +152,11 @@ jobs:
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: success() || failure()
-            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+            run: cat tests.log | grep "Test >.*) FAILED" || [[ $? == 1 ]]
           - name: Count failed tests
             id: failedTestCounter
             if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*) FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
           - name: Report action
             uses: Sibz/github-status-action@v1
             with:
