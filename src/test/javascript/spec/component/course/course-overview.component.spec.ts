@@ -33,8 +33,8 @@ import { AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewChild } f
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam.model';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { CompetencyService } from 'app/course/competencies/competency.service';
+import { Competency } from 'app/entities/competency.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -87,9 +87,9 @@ const course2: Course = {
     exams: [exam2],
     description: 'Short description of course 2',
     shortName: 'shortName2',
-    competencies: [new LearningGoal()],
+    competencies: [new Competency()],
     tutorialGroups: [new TutorialGroup()],
-    prerequisites: [new LearningGoal()],
+    prerequisites: [new Competency()],
 };
 
 @Component({
@@ -112,7 +112,7 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let teamService: TeamService;
-    let learningGoalService: LearningGoalService;
+    let competencyService: CompetencyService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
@@ -155,7 +155,7 @@ describe('CourseOverviewComponent', () => {
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseExerciseService),
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 MockProvider(TeamService),
                 MockProvider(JhiWebsocketService),
                 MockProvider(ArtemisServerDateService),
@@ -178,7 +178,7 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 teamService = TestBed.inject(TeamService);
-                learningGoalService = TestBed.inject(LearningGoalService);
+                competencyService = TestBed.inject(CompetencyService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
@@ -401,11 +401,11 @@ describe('CourseOverviewComponent', () => {
         expect(bool).toBeFalse();
     });
 
-    it('should have learning goals and tutorial groups', () => {
+    it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
-        const learningGoalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-            body: [new LearningGoal()],
+        const competenciesResponse: HttpResponse<Competency[]> = new HttpResponse({
+            body: [new Competency()],
             status: 200,
         });
         const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
@@ -417,8 +417,8 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(learningGoalsResponse));
-        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsResponse));
+        jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(competenciesResponse));
+        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(competenciesResponse));
         jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
         jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
@@ -427,7 +427,7 @@ describe('CourseOverviewComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.hasLearningGoals()).toBeTrue();
+        expect(component.hasCompetencies()).toBeTrue();
         expect(component.hasTutorialGroups()).toBeTrue();
         expect(component.course?.competencies).not.toBeEmpty();
         expect(component.course?.prerequisites).not.toBeEmpty();

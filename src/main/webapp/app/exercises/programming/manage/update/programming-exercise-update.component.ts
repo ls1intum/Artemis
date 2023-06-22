@@ -772,6 +772,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (forStep >= 1) {
             this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseChannelName(validationErrorReasons);
             this.validateExerciseShortName(validationErrorReasons);
             this.validateExerciseAuxiliryRepositories(validationErrorReasons);
         }
@@ -803,6 +804,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateExerciseChannelName(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.channelName === '') {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
                 translateValues: {},
             });
         }

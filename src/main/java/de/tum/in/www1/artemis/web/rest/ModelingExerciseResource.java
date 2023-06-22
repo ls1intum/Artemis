@@ -11,21 +11,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -81,12 +87,19 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
+    private final ChannelService channelService;
+
+    private final ConversationService conversationService;
+
+    private final ChannelRepository channelRepository;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ConversationService conversationService,
+            ChannelRepository channelRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -102,6 +115,9 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
+        this.channelService = channelService;
+        this.conversationService = conversationService;
+        this.channelRepository = channelRepository;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -115,7 +131,7 @@ public class ModelingExerciseResource {
      */
     // TODO: we should add courses/{courseId} here
     @PostMapping("modeling-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
@@ -135,6 +151,9 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        Channel createdChannel = channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 
@@ -151,7 +170,7 @@ public class ModelingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("modeling-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -168,7 +187,7 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
@@ -194,6 +213,8 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
+        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
+
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
@@ -203,7 +224,6 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
-
         return ResponseEntity.ok(updatedModelingExercise);
     }
 
@@ -214,7 +234,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
     @GetMapping("courses/{courseId}/modeling-exercises")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -235,7 +255,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("modeling-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
@@ -244,6 +264,13 @@ public class ModelingExerciseResource {
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
+
+        if (modelingExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(modelingExercise.getId());
+            if (channel != null) {
+                modelingExercise.setChannelName(channel.getName());
+            }
+        }
 
         return ResponseEntity.ok().body(modelingExercise);
     }
@@ -255,7 +282,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("modeling-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -266,6 +293,7 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(modelingExercise);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
@@ -284,7 +312,7 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("modeling-exercises/import/{sourceExerciseId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -312,7 +340,7 @@ public class ModelingExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("modeling-exercises/{exerciseId}/export-submissions")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -338,7 +366,7 @@ public class ModelingExerciseResource {
      *         parameters are invalid
      */
     @GetMapping("modeling-exercises/{exerciseId}/plagiarism-result")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
@@ -361,7 +389,7 @@ public class ModelingExerciseResource {
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
@@ -394,7 +422,7 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
