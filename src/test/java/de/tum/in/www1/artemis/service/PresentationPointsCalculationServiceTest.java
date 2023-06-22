@@ -8,15 +8,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class PresentationPointsCalculationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -31,24 +35,36 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @Autowired
     private PresentationPointsCalculationService presentationPointsCalculationService;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Course course;
 
     private StudentParticipation studentParticipation;
 
     @BeforeEach
     void init() {
-        course = database.addEmptyCourse();
+        course = courseUtilService.addEmptyCourse();
 
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
-        ProgrammingExercise exercise = database.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(80.0);
         exerciseRepository.save(exercise);
 
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
+        studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
         studentParticipationRepository.save(studentParticipation);
     }
 
@@ -56,8 +72,8 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void calculateReachableAndAchievedPresentationPointsWithoutBaseReachablePoints() {
         // GIVEN
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 2, 20.0);
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 2, 20.0);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // WHEN
         double reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 0.0);
@@ -74,7 +90,7 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
         // GIVEN
         studentParticipation.setPresentationScore(50.0);
         studentParticipationRepository.save(studentParticipation);
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // WHEN
         double reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(null, 80.0);
@@ -89,8 +105,8 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void calculateReachableAndAchievedPresentationPoints() {
         // GIVEN
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 1, 20.0);
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 1, 20.0);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         studentParticipation.setPresentationScore(50.0);
         studentParticipationRepository.save(studentParticipation);
 
@@ -107,8 +123,8 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void calculateAchievedPresentationPointsWithoutPresentations() {
         // GIVEN
-        GradingScale gradingScale = ModelFactory.generateGradingScaleForCourse(course, 1, 20.0);
-        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, 1, 20.0);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // WHEN
         double reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 80.0);

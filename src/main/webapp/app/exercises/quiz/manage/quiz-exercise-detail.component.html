@@ -26,18 +26,18 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="quizExercise.id" readonly />
         </div>
         <div class="edit-quiz">
-            <div class="form-group">
-                <label for="quiz-title" jhiTranslate="artemisApp.exercise.title">Title</label>
-                <input
-                    required
-                    id="quiz-title"
-                    name="quiz-title"
-                    class="form-control"
-                    [(ngModel)]="quizExercise.title"
-                    (ngModelChange)="cacheValidation()"
-                    placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
-                />
-            </div>
+            <form name="editForm" role="form" novalidate>
+                <jhi-title-channel-name
+                    [title]="quizExercise.title"
+                    (titleChange)="updateTitle($event)"
+                    [channelName]="quizExercise.channelName"
+                    (channelNameChange)="updateChannelName($event)"
+                    channelNamePrefix="exercise-"
+                    [emphasizeLabels]="true"
+                    [hideChannelName]="this.isExamMode || (!this.isImport && this.quizExercise.channelName === undefined)"
+                ></jhi-title-channel-name>
+            </form>
+
             <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
@@ -198,13 +198,13 @@
             </div>
             <div class="row">
                 <div class="form-group" *ngIf="!isExamMode">
-                    <jhi-learning-goal-selection
-                        id="learning-goals"
-                        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                    <jhi-competency-selection
+                        id="competencies"
+                        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                        [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                         [(ngModel)]="quizExercise.competencies"
-                        name="learningGoals"
-                    ></jhi-learning-goal-selection>
+                        name="competencies"
+                    ></jhi-competency-selection>
                 </div>
             </div>
             <ng-container *ngIf="courseId">
@@ -242,21 +242,21 @@
                             <ng-template #tooltipTranslate>
                                 <div *ngFor="let reason of computeInvalidReasons()">
                                     <p
-                                        *ngIf="(reason.translateValues | json) != '{}'"
+                                        *ngIf="(reason.translateValues | json) !== '{}'"
                                         jhiTranslate="{{ reason.translateKey }}"
                                         [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
                                     ></p>
-                                    <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
+                                    <p *ngIf="(reason.translateValues | json) === '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
                                 </div>
                             </ng-template>
                             <ng-template #warningTranslate>
                                 <div *ngFor="let warning of computeInvalidWarnings()">
                                     <p
-                                        *ngIf="(warning.translateValues | json) != '{}'"
+                                        *ngIf="(warning.translateValues | json) !== '{}'"
                                         jhiTranslate="{{ warning.translateKey }}"
                                         [translateValues]="{ index: warning.translateValues.index }"
                                     ></p>
-                                    <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
+                                    <p *ngIf="(warning.translateValues | json) === '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
                                 </div>
                             </ng-template>
                             <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">

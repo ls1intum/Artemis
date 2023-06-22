@@ -26,6 +26,20 @@
                         <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                     </a>
 
+                    <!-- Edit build plan button -->
+                    <a
+                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                        *ngIf="programmingExercise.isAtLeastEditor && isBuildPlanEditable"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        [routerLink]="baseResource + 'edit-build-plan'"
+                        class="btn btn-warning btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                        <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
+                    </a>
+
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
@@ -238,7 +252,7 @@
                 <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title">Max Static Code Analysis Penalty</span></dt>
                     <dd>
-                        <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
+                        <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty ?? '-' }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
@@ -251,13 +265,13 @@
                         }}"
                     ></span>
                 </dd>
-                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                <ng-container *ngIf="programmingExercise.submissionPolicy">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission limit</span></dt>
                     <dd>
                         <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
                     </dd>
                 </ng-container>
-                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined && programmingExercise.submissionPolicy.exceedingPenalty">
+                <ng-container *ngIf="programmingExercise.submissionPolicy && programmingExercise.submissionPolicy.exceedingPenalty">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
                     <dd>
                         <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
@@ -273,7 +287,7 @@
                         <jhi-clone-repo-button
                             class="ms-2"
                             [smallButtons]="true"
-                            [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
+                            [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl || ''"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ms-2"

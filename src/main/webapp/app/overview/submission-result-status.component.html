@@ -18,35 +18,35 @@
     <ng-template #noResult>
         <!-- On desktop -->
         <div class="d-none d-sm-inline">
-            <span class="text-muted" *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId">{{
+            <span class="text-body-secondary" *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId">{{
                 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeam' | artemisTranslate
             }}</span>
-            <span class="text-muted" *ngIf="uninitialized">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | artemisTranslate }}</span>
-            <span class="text-muted" *ngIf="exerciseMissedDeadline">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | artemisTranslate }}</span>
-            <span class="text-muted" *ngIf="notSubmitted">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | artemisTranslate }}</span>
-            <span class="text-muted" *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED">{{
+            <span class="text-body-secondary" *ngIf="uninitialized">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="exerciseMissedDueDate">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDate' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="notSubmitted">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED">{{
                 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate
             }}</span>
-            <span class="text-muted" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
+            <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
                 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate
             }}</span>
-            <span class="text-muted" *ngIf="quizNotStarted">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="quizNotStarted">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | artemisTranslate }}</span>
         </div>
         <!-- On mobile -->
         <div class="d-sm-none">
-            <span class="text-muted" *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId">{{
+            <span class="text-body-secondary" *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId">{{
                 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort' | artemisTranslate
             }}</span>
-            <span class="text-muted" *ngIf="uninitialized">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | artemisTranslate }}</span>
-            <span class="text-muted" *ngIf="exerciseMissedDeadline">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadlineShort' | artemisTranslate }}</span>
-            <span class="text-muted" *ngIf="notSubmitted">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | artemisTranslate }}</span>
-            <span class="text-muted" *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED">{{
+            <span class="text-body-secondary" *ngIf="uninitialized">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="exerciseMissedDueDate">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="notSubmitted">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED">{{
                 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | artemisTranslate
             }}</span>
-            <span class="text-muted" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
+            <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
                 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | artemisTranslate
             }}</span>
-            <span class="text-muted" *ngIf="quizNotStarted">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
+            <span class="text-body-secondary" *ngIf="quizNotStarted">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
         </div>
     </ng-template>
 

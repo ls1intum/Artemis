@@ -336,16 +336,19 @@ public abstract class RepositoryResource {
             responseEntitySuccess = executor.exec();
         }
         catch (IllegalArgumentException | FileAlreadyExistsException ex) {
+            log.error("Illegal argument during operation or file already exists", ex);
             throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            log.error("CheckoutConflictException | WrongRepositoryStateException during repository operation", ex);
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {
+            log.error("FileNotFoundException during repository operation", ex);
             throw new EntityNotFoundException("File not found");
         }
         catch (GitAPIException | IOException | ContinuousIntegrationException ex) {
-            log.error("Exception during repository operation", ex);
+            log.error("GitAPIException | IOException | ContinuousIntegrationException during repository operation", ex);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;

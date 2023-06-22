@@ -20,7 +20,8 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.user.UserFactory;
 
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -33,11 +34,11 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @BeforeEach
     void setupTestScenario() {
         super.setupTestScenario();
-        this.database.addUsers(this.testPrefix, 1, 2, 1, 1);
+        userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "instructor42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
-        this.exampleTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
+        this.exampleTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
                 Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
     }
 
@@ -72,7 +73,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @BeforeEach
     void deleteExistingConfiguration() {
-        var course = this.database.createCourse();
+        var course = courseUtilService.createCourse();
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         courseId = course.getId();
@@ -91,7 +92,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     void testJustForInstructorEndpoints() throws Exception {
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
         this.deleteExampleConfiguration();
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
@@ -101,7 +102,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOneOfCourse_asStudent_shouldReturnTutorialGroupsConfiguration() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         // when
         var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupsConfiguration.class);
         // then
@@ -136,7 +137,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_configurationAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
-        databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         // when
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
         // then
@@ -147,7 +148,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_periodChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
 
         // when
         configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
@@ -169,16 +170,17 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void persistEntityWithIndirectConnectionToConfiguration_dateAsFullIsoString_shouldNotThrowDeserializationException() throws Exception {
         // given
-        databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         var course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
         var configuration = course.getTutorialGroupsConfiguration();
         // this date format should not throw an error here, even though it is not the uuuu-MM-dd format we use in the database as it neither updates nor creates the configuration
         configuration.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
         configuration.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
 
-        TextExercise textExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
         // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
         textExercise.setCourse(course);
+        textExercise.setChannelName("testchannelname");
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
@@ -186,7 +188,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_switchUseTutorialGroupSetting_shouldCreateAndThenDeleteTutorialGroupChannels() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
         this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
@@ -203,7 +205,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_switchUsePublicChannelsSetting_shouldSwitchChannelModeOfTutorialGroupChannels() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
         this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
@@ -220,11 +222,11 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_timeZoneChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).get();
         this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), firstSeptemberMonday);
-        databaseUtilService.addTutorialGroupFreeDay(configuration.getId(), fourthAugustMonday, "Holiday");
+        tutorialGroupUtilService.addTutorialGroupFreeDay(configuration.getId(), fourthAugustMonday, "Holiday");
 
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
         assertThat(sessions).hasSize(3);

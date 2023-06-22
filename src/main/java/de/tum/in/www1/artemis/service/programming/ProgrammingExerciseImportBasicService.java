@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class ProgrammingExerciseImportBasicService {
@@ -50,12 +52,15 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    private final ChannelService channelService;
+
     public ProgrammingExerciseImportBasicService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
             Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
+            ChannelService channelService) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -69,6 +74,7 @@ public class ProgrammingExerciseImportBasicService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.solutionEntryRepository = solutionEntryRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -94,7 +100,7 @@ public class ProgrammingExerciseImportBasicService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        newExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
+        newExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
@@ -103,39 +109,48 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, tasks, test cases and static code analysis categories
-        Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
-        programmingExerciseRepository.save(newExercise);
-        Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, newExercise);
-        Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, newExercise, newTestCaseIdByOldId);
-        updateTaskExerciseHintReferences(templateExercise, newExercise, newTaskIdByOldId, newHintIdByOldId);
-        importSolutionEntries(templateExercise, newExercise, newTestCaseIdByOldId, newHintIdByOldId);
+        final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
+
+        final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newExercise);
+
+        final Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, importedExercise);
+        final Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, importedExercise, newTestCaseIdByOldId);
+        updateTaskExerciseHintReferences(templateExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
+        importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
-            importStaticCodeAnalysisCategories(templateExercise, newExercise);
+        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
+            importStaticCodeAnalysisCategories(templateExercise, importedExercise);
         }
-        else if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
-            staticCodeAnalysisService.createDefaultCategories(newExercise);
+        else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
+            staticCodeAnalysisService.createDefaultCategories(importedExercise);
         }
 
         // An exam exercise can only be in individual mode
-        if (newExercise.isExamExercise()) {
-            newExercise.setMode(ExerciseMode.INDIVIDUAL);
-            newExercise.setTeamAssignmentConfig(null);
+        if (importedExercise.isExamExercise()) {
+            importedExercise.setMode(ExerciseMode.INDIVIDUAL);
+            importedExercise.setTeamAssignmentConfig(null);
         }
 
-        importSubmissionPolicy(newExercise);
+        importSubmissionPolicy(importedExercise);
 
         // Re-adding auxiliary repositories
-        List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
+        final List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
 
         for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoriesToBeImported) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
-            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
-            newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            newAuxiliaryRepository = auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
+            importedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        return programmingExerciseRepository.save(newExercise);
+        ProgrammingExercise savedImportedExercise = programmingExerciseRepository.save(importedExercise);
+
+        if (newExercise.getChannelName() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(savedImportedExercise, newExercise.getChannelName());
+            channelService.registerUsersToChannelAsynchronously(true, newExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        }
+
+        return savedImportedExercise;
     }
 
     /**
@@ -146,7 +161,7 @@ public class ProgrammingExerciseImportBasicService {
      */
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
+        newExercise.setTestRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
     }
 
     /**
@@ -232,17 +247,21 @@ public class ProgrammingExerciseImportBasicService {
      * @param targetExercise   for which static code analysis categories will be copied
      */
     private void importStaticCodeAnalysisCategories(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
-        targetExercise.setStaticCodeAnalysisCategories(templateExercise.getStaticCodeAnalysisCategories().stream().map(originalCategory -> {
-            var categoryCopy = new StaticCodeAnalysisCategory();
+        if (targetExercise.getStaticCodeAnalysisCategories() == null) {
+            targetExercise.setStaticCodeAnalysisCategories(new HashSet<>());
+        }
+
+        templateExercise.getStaticCodeAnalysisCategories().forEach(originalCategory -> {
+            final var categoryCopy = new StaticCodeAnalysisCategory();
             categoryCopy.setName(originalCategory.getName());
             categoryCopy.setPenalty(originalCategory.getPenalty());
             categoryCopy.setMaxPenalty(originalCategory.getMaxPenalty());
             categoryCopy.setState(originalCategory.getState());
             categoryCopy.setProgrammingExercise(targetExercise);
 
-            staticCodeAnalysisCategoryRepository.save(categoryCopy);
-            return categoryCopy;
-        }).collect(Collectors.toSet()));
+            final var savedCopy = staticCodeAnalysisCategoryRepository.save(categoryCopy);
+            targetExercise.addStaticCodeAnalysisCategory(savedCopy);
+        });
     }
 
     /**
@@ -257,20 +276,15 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setExampleSolutionPublicationDate(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);
-        newExercise.setExerciseHints(null);
-        newExercise.setTestCases(null);
-        newExercise.setStaticCodeAnalysisCategories(null);
-        newExercise.setAttachments(null);
-        newExercise.setPlagiarismCases(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
         newExercise.setTotalNumberOfAssessments(null);
-        newExercise.setTutorParticipations(null);
-        newExercise.setExampleSubmissions(null);
-        newExercise.setPosts(null);
-        newExercise.setStudentParticipations(null);
+
+        newExercise.disconnectRelatedEntities();
+
         // copy the grading instructions to avoid issues with references to the original exercise
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
+
         // only copy the config for team programming exercise in courses
         if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -19,10 +20,15 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -42,6 +48,21 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private User student1;
 
     private Exam exam;
@@ -52,12 +73,12 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        exercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exam = examRepository.findByCourseId(course.getId()).get(0);
-        studentExam = database.addStudentExam(exam);
+        studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
         studentExam.setUser(student1);
         studentExam.addExercise(exercise);
@@ -67,8 +88,8 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_passIfNonExamSubmission() {
-        Course tmpCourse = database.addEmptyCourse();
-        Exercise nonExamExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
+        Course tmpCourse = courseUtilService.addEmptyCourse();
+        Exercise nonExamExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         // should not throw
         examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, student1);
         boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(nonExamExercise, student1, false);
@@ -157,10 +178,10 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPreventMultipleSubmissions() {
-        StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
-        Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
-        existingSubmission = database.addSubmission(participation, existingSubmission);
-        Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        Submission existingSubmission = ParticipationFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
+        existingSubmission = participationUtilService.addSubmission(participation, existingSubmission);
+        Submission receivedSubmission = ParticipationFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
         receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
     }

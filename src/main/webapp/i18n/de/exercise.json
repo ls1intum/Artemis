@@ -205,6 +205,9 @@
                     "undefined": "Der Titel wurde nicht ausgefüllt!",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
                 },
+                "channelName": {
+                    "empty": "Der Kanalname wurde nicht ausgefüllt!"
+                },
                 "shortName": {
                     "undefined": "Der Kurzname wurde nicht ausgefüllt!",
                     "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
