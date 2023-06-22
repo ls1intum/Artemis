@@ -110,7 +110,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         assertThatDb(() -> {
 
-            submitAnswerOfExam(studentExam);
+            submitExam(studentExam);
             return null;
 
         }).hasBeenCalledAtMostTimes(getSubmitAnswerOfExamExpectedTotalQueryCount());
@@ -134,7 +134,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
                 HttpStatus.OK, StudentExam.class);
     }
 
-    private void submitAnswerOfExam(StudentExam studentExam) throws Exception {
+    private void submitExam(StudentExam studentExam) throws Exception {
         request.postWithoutLocation("/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit", studentExam,
                 HttpStatus.OK, null);
     }
