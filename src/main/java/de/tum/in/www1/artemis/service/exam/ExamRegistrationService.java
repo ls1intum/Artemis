@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -54,9 +55,11 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ChannelService channelService;
+
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -67,6 +70,7 @@ public class ExamRegistrationService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -91,6 +95,7 @@ public class ExamRegistrationService {
         }
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
             var registrationNumber = examUserDto.registrationNumber();
             var login = examUserDto.login();
@@ -117,6 +122,7 @@ public class ExamRegistrationService {
                     }
                     registeredExamUser = examUserRepository.save(registeredExamUser);
                     exam.addExamUser(registeredExamUser);
+                    usersAddedToExam.add(registeredExamUser.getUser().getLogin());
                 }
 
                 if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
@@ -125,11 +131,12 @@ public class ExamRegistrationService {
                     examUser.setPlannedSeat(examUserDto.seat());
                     examUser = examUserRepository.save(examUser);
                     exam.addExamUser(examUser);
+                    usersAddedToExam.add(examUser.getUser().getLogin());
                 }
-
             }
         }
         examRepository.save(exam);
+        channelService.registerUsersToExamChannel(usersAddedToExam, exam);
 
         try {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -198,6 +205,8 @@ public class ExamRegistrationService {
             registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
+
+            channelService.registerUsersToExamChannel(List.of(student.getLogin()), exam);
         }
         else {
             log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
@@ -258,6 +267,9 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         examUserRepository.delete(registeredExamUser);
 
+        // Remove the student from exam channel
+        channelService.deregisterUsersFromExamChannel(Set.of(student), exam.getId());
+
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
@@ -296,6 +308,11 @@ public class ExamRegistrationService {
         registeredExamUsers.forEach(exam::removeExamUser);
         examRepository.save(exam);
         examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
+
+        var students = userRepository.getStudents(exam.getCourse());
+        Set<User> studentSet = new HashSet<>(students);
+
+        channelService.deregisterUsersFromExamChannel(studentSet, exam.getId());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
