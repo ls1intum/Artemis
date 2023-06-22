@@ -14,6 +14,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -62,7 +63,7 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     it('should correctly initialize the number of submissions for submission policy', () => {
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
-        jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of({}));
+        jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of({ active: true }));
         const getParticipationSubmissionCountSpy = jest.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(5));
 
         comp.ngOnInit();
@@ -70,4 +71,17 @@ describe('CodeEditorStudentContainerComponent', () => {
         expect(getParticipationSubmissionCountSpy).toHaveBeenCalledOnce();
         expect(comp.numberOfSubmissionsForSubmissionPolicy).toBe(5);
     });
+
+    it.each([undefined, { active: false } as SubmissionPolicy])(
+        'should not calculate the number of submissions for no or inactive submission policy',
+        (submissionPolicy: SubmissionPolicy) => {
+            jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
+            jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
+            const getParticipationSubmissionCountSpy = jest.spyOn(submissionPolicyService, 'getParticipationSubmissionCount');
+
+            comp.ngOnInit();
+
+            expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
+        },
+    );
 });
