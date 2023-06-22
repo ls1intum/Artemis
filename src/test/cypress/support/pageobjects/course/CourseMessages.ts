@@ -24,6 +24,11 @@ export class CourseMessagesPage {
         cy.get('#lectureChannelOverview').click();
     }
 
+    browseExamChannelsButton() {
+        cy.get('#examChannelButton').click();
+        cy.get('#examChannelOverview').click();
+    }
+
     checkChannelsExists(name: string) {
         cy.get('.channels-overview').find('.list-group-item').contains(name);
     }

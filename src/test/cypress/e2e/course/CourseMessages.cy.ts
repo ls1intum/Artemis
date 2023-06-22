@@ -125,7 +125,7 @@ describe('Course messages', () => {
                 const examContent = new ExamBuilder(course).build();
                 courseManagementRequest.createExam(examContent);
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseExamChannelsButton();
                 courseMessages.checkChannelsExists(titleLowercase(examContent.title));
             });
         });
