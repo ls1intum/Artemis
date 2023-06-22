@@ -29,7 +29,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     canCreateChannel = canCreateChannel;
     @Input()
-    createChannelFn: (channel: ChannelDTO) => Observable<never>;
+    createChannelFn?: (channel: ChannelDTO) => Observable<never>;
 
     @Input()
     course: Course;
@@ -115,14 +115,15 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 this.close([channelAction.channel, this.channelModificationPerformed]);
                 break;
             case 'create':
-                this.createChannelFn(channelAction.channel)
-                    .pipe(takeUntil(this.ngUnsubscribe))
-                    .subscribe({
-                        complete: () => {
-                            this.loadChannelsOfCourse();
-                            this.channelModificationPerformed = true;
-                        },
-                    });
+                this.createChannelFn &&
+                    this.createChannelFn(channelAction.channel)
+                        .pipe(takeUntil(this.ngUnsubscribe))
+                        .subscribe({
+                            complete: () => {
+                                this.loadChannelsOfCourse();
+                                this.channelModificationPerformed = true;
+                            },
+                        });
                 break;
         }
     }
