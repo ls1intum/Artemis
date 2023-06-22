@@ -922,13 +922,13 @@ public class GitService {
             }
             else {
                 log.debug("Last valid submission is not present for participation");
-                // Get last commit before deadline
+                // Get last commit before due date
                 Date since = Date.from(Instant.EPOCH);
                 Date until = Date.from(filterLateSubmissionsDate.toInstant());
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-                RevCommit latestCommitBeforeDeadline = commits.iterator().next();
-                commitHash = latestCommitBeforeDeadline.getId().getName();
+                RevCommit latestCommitBeforeDueDate = commits.iterator().next();
+                commitHash = latestCommitBeforeDueDate.getId().getName();
             }
             log.debug("Last commit hash is {}", commitHash);
 
