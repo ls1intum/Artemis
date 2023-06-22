@@ -55,7 +55,7 @@ describe('ExerciseChatbotComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [ExerciseChatbotComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExerciseChatbotComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpSessionService,
                 { provide: MatDialog, useValue: mockDialog },
@@ -99,6 +99,7 @@ describe('ExerciseChatbotComponent', () => {
             data: expect.objectContaining({
                 stateStore: stateStore,
             }),
+            scrollStrategy: {},
         });
         expect(component.buttonDisabled).toBeTrue();
     });

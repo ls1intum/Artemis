@@ -1,5 +1,5 @@
 import { faChevronDown, faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { Component, HostListener, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
@@ -18,7 +18,7 @@ import { Subscription } from 'rxjs';
     providers: [IrisStateStore, IrisWebsocketService, IrisSessionService],
     animations: [shakeAnimation({ anchor: 'shake', direction: '=>', duration: 700 })],
 })
-export class ExerciseChatbotComponent implements OnDestroy {
+export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     public chatAccepted = false;
     public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;

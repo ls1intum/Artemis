@@ -206,7 +206,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
-    protected readonly ButtonType = ButtonType;
+    public ButtonType = ButtonType;
 
     onRowChange() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
