@@ -69,7 +69,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 window.HTMLElement.prototype.scrollTo = jest.fn();
                 fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
                 component = fixture.componentInstance;
-                component.buttonType = ButtonType.Primary;
+                component.ButtonType = ButtonType.PRIMARY;
                 fixture.detectChanges();
             });
     });
