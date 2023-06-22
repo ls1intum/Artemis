@@ -137,7 +137,7 @@
         "prettier": "2.8.8",
         "sass": "1.63.6",
         "ts-jest": "29.1.0",
-        "typescript": "5.0.4",
+        "typescript": "5.1.3",
         "weak-napi": "2.0.2",
         "webpack-bundle-analyzer": "4.9.0"
     },
