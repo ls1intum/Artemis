@@ -4,10 +4,10 @@ DB=$1
 
 if [ "$DB" = "mysql" ]; then
   COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
-elif [ "$DB" = "postgresql" ]; then
-  COMPOSE_FILE="cypress-E2E-tests-postgresql.yml"
+elif [ "$DB" = "postgres" ]; then
+  COMPOSE_FILE="cypress-E2E-tests-postgres.yml"
 else
-  echo "Invalid database type. Please choose either mysql or postgresql."
+  echo "Invalid database type. Please choose either mysql or postgres."
   exit 1
 fi
 

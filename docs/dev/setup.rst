@@ -119,7 +119,8 @@ PostgreSQL Setup
 
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
-An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_ is provided in ``src/main/docker/postgresql.yml``.
+An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
+is provided in ``src/main/docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -726,7 +727,7 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
-* ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
+* ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
 Two example commands to run such setups:
 
@@ -747,7 +748,7 @@ is defined in the following files:
 * ``artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
-* ``postgresql.yml``: **PostgreSQL DB Service**
+* ``postgres.yml``: **PostgreSQL DB Service**
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 
