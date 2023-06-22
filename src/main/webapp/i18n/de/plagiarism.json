@@ -44,7 +44,7 @@
             "loading": "Laden...",
             "fetchingResults": "Plagiate werden geladen...",
             "replyToAccusation": "Stellung zu dem Vorwurf nehmen",
-            "replyToAccusationDeadlineNotification": "Du kannst dich spätestens bis zum <b>{{ deadline }}</b> zu dem Vorwurf äußern.",
+            "replyToAccusationDueDateNotification": "Du kannst dich spätestens bis zum <b>{{ dueDate }}</b> zu dem Vorwurf äußern.",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Plagiatsvergleiche aufräumen",
@@ -61,7 +61,7 @@
                 "resolvedPlagiarismCase": "Gelöster Plagiatsfall",
                 "notification": {
                     "title": "Plagiatsfall: {{ exercise }}",
-                    "body": "Liebe(r) <b>{{ student }}</b>,<br><br>Nach einer sorgfältigen Durchsicht Deiner finalen Abgabe zur Übung \"{{ exercise }}\" {{ inCourseOrExam }} \"{{ courseOrExam }}\" sind wir zu dem Schluss gekommen, dass Du ein Plagiat begangen hast. Dies ist ein Verstoß gegen die <a href=\"{{ cocLink }}\">Grundsätze guter studentischer Praxis</a> die School of Computation, Information and Technology, denen Du zugestimmt hast. Die <a href=\"{{ aspoLink }}\">Allgemeine Studien- und Prüfungsordnung</a> regelt in §22.1 die Konsequenzen für solche Fälle. Dies bedeutet, dass die betreffende Prüfung potentiell mit \"5,0 (U)\" bewertet werden kann, was schwerwiegende Folgen für dein weiteres Studium haben kann.<br><br><b>Du hast eine Woche Zeit (bis {{ deadline }}), um eine Stellungnahme zu diesem Fall direkt in Artemis abzugeben (nicht per E-Mail).</b><br><br>Mit freundlichen Grüßen,<br>{{ instructor }}",
+                    "body": "Liebe(r) <b>{{ student }}</b>,<br><br>Nach einer sorgfältigen Durchsicht Deiner finalen Abgabe zur Übung \"{{ exercise }}\" {{ inCourseOrExam }} \"{{ courseOrExam }}\" sind wir zu dem Schluss gekommen, dass Du ein Plagiat begangen hast. Dies ist ein Verstoß gegen die <a href=\"{{ cocLink }}\">Grundsätze guter studentischer Praxis</a> die School of Computation, Information and Technology, denen Du zugestimmt hast. Die <a href=\"{{ aspoLink }}\">Allgemeine Studien- und Prüfungsordnung</a> regelt in §22.1 die Konsequenzen für solche Fälle. Dies bedeutet, dass die betreffende Prüfung potentiell mit \"5,0 (U)\" bewertet werden kann, was schwerwiegende Folgen für dein weiteres Studium haben kann.<br><br><b>Du hast eine Woche Zeit (bis {{ dueDate }}), um eine Stellungnahme zu diesem Fall direkt in Artemis abzugeben (nicht per E-Mail).</b><br><br>Mit freundlichen Grüßen,<br>{{ instructor }}",
                     "inCourse": "im Kurs",
                     "inExam": "in der Prüfung"
                 },
