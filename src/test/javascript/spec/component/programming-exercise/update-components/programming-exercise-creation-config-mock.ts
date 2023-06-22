@@ -1,5 +1,5 @@
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
@@ -55,13 +55,13 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     titleNamePattern: '',
     updateCategories(_categories: ExerciseCategory[]): void {},
     updateCheckoutDirectory(_editedAuxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
-        return function (p1: any) {
-            return undefined;
+        return function (_p1: any) {
+            return 'dirName';
         };
     },
     updateRepositoryName(_auxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
         return function (_p1: any) {
-            return undefined;
+            return 'repoName';
         };
     },
     updateTemplate: false,
