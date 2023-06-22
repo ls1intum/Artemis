@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -312,13 +310,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             boolean assessmentDueDateNotOver = ExerciseDateService.isBeforeAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.getLatestResult().setFeedbacks(new ArrayList<>());
+                fileUploadSubmission.setResults(Collections.emptyList());
             }
         }
 
         // do not send the assessor information to students
         if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getLatestResult().setAssessor(null);
+            fileUploadSubmission.getLatestResult().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(fileUploadSubmission);
