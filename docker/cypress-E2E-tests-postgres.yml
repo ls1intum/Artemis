@@ -17,7 +17,7 @@ services:
                 condition: service_healthy
         env_file:
             - ./artemis/config/cypress.env
-            - ./artemis/config/cypress-postgres.env
+            - ./artemis/config/postgres.env
 
     nginx:
         extends:
