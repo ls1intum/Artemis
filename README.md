@@ -229,16 +229,16 @@ The following universities are actively using Artemis or are currently evaluatin
 
 ##### Interested universities
 
-* HU Berlin
-  Main contact person: [Lars Grunske](https://www.informatik.hu-berlin.de/de/Members/lars-grunske)
-* Westsächsische Hochschule Zwickau  
-  Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum)
-* Technische Universität Chemnitz
-* Universität zu Köln
-  Main contact person: [Andreas Vogelsang](https://cs.uni-koeln.de/sse/team/prof-dr-andreas-vogelsang)
-* Universität Ulm
-  Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
-* Imperial College London
-  Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
-* University of South Australia
-  Main contact person: [Srecko Joksimovic](https://people.unisa.edu.au/srecko.joksimovic)
+* **HU Berlin**  
+   Main contact person: [Lars Grunske](https://www.informatik.hu-berlin.de/de/Members/lars-grunske)
+* **Westsächsische Hochschule Zwickau**  
+   Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum)
+* **Technische Universität Chemnitz**  
+* **Universität zu Köln**  
+   Main contact person: [Andreas Vogelsang](https://cs.uni-koeln.de/sse/team/prof-dr-andreas-vogelsang)
+* **Universität Ulm**  
+   Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
+* **Imperial College London**  
+   Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
+* **University of South Australia**  
+   Main contact person: [Srecko Joksimovic](https://people.unisa.edu.au/srecko.joksimovic)
