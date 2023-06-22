@@ -16,11 +16,23 @@ public class CompetencyUtilService {
     @Autowired
     private CompetencyRepository competencyRepo;
 
-    public Competency createCompetency(Course course) {
+    private Competency createCompetency(Course course, String suffix) {
         Competency competency = new Competency();
-        competency.setTitle("Example Competency");
+        competency.setTitle("Example Competency" + suffix);
         competency.setDescription("Magna pars studiorum, prodita quaerimus.");
         competency.setCourse(course);
         return competencyRepo.save(competency);
+    }
+
+    public Competency createCompetency(Course course) {
+        return createCompetency(course, "");
+    }
+
+    public Competency[] createCompetencies(Course course, int numberOfCompetencies) {
+        Competency[] competencies = new Competency[numberOfCompetencies];
+        for (int i = 0; i < competencies.length; i++) {
+            competencies[i] = createCompetency(course, "" + i);
+        }
+        return competencies;
     }
 }

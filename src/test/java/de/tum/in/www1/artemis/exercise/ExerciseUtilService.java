@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -304,5 +305,11 @@ public class ExerciseUtilService {
         fail("Could not find programming exercise with title " + title);
         // just to prevent compiler warnings, we have failed anyway here
         return new ProgrammingExercise();
+    }
+
+    public Exercise addCompetenciesToExercise(Exercise exercise, Set<Competency> competencies) {
+        exercise = exerciseRepo.findByIdElseThrow(exercise.getId());
+        exercise.setCompetencies(competencies);
+        return exerciseRepo.save(exercise);
     }
 }
