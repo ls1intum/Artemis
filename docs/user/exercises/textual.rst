@@ -165,16 +165,17 @@ When the due date is over you can assess the submissions. Text exercise
               :align: center
 
 - If automatic assessment suggestions were enabled for the exercise, you would get available suggestions from the service `Athena <https://github.com/ls1intum/Athena>`_. More details about this service can be found in the following research papers:
-:cite:t:`bernius2022machine`
-:cite:t:`bernius2021machine`
-:cite:t:`bernius2021computer`
-:cite:t:`bernius2020towards`
-:cite:t:`bernius2020segmenting`
-:cite:t:`bernius2019automatic`
 
-.. note::
+  .. note::
     .. bibliography::
        :list: bullet
+
+       bernius2022machine
+       bernius2021machine
+       bernius2021computer
+       bernius2020towards
+       bernius2020segmenting
+       bernius2019automatic
 
 Once you're done assessing the solution, you can either:
 
