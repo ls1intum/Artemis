@@ -22,7 +22,7 @@
                     <fa-icon size="xs" [icon]="faRobot" style="padding-right: 5px"></fa-icon>
                     Iris
                     <a [routerLink]="'/aboutIris'" target="_blank">
-                        <fa-icon style="cursor: pointer; vertical-align: middle; padding-left: 3px; font-size: 13px" [icon]="faCircleInfo" class="header-icon"></fa-icon>
+                        <fa-icon [icon]="faCircleInfo" class="info-button"></fa-icon>
                     </a>
                 </h3>
                 <div class="button-container">
@@ -41,7 +41,7 @@
         </div>
 
         <!-- main chat section -->
-        <div class="chat-body" #chatBody (scroll)="onChatScroll()">
+        <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
             <div class="p-chat" *ngIf="!userAccepted">
                 <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
                 <div class="button-container">
@@ -64,7 +64,7 @@
                     </div>
                 </div>
             </div>
-            <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottomOnClick()" #scrollArrow>
+            <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
             <div class="client-chat-error" *ngIf="error">

@@ -40,14 +40,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     dots = 1;
 
     userAccepted = false;
-    public firstName: string | undefined;
     isScrolledToBottom = true;
-    componentClass = 'chat-widget';
     rows = 1;
     fullSize = false;
     showChatWidget = true;
     widgetWidth = '330px';
     widgetHeight = '430px';
+    public ButtonType = ButtonType;
 
     constructor(
         private dialog: MatDialog,
@@ -151,15 +150,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.userAccepted = true;
     }
 
-    scrollToBottomOnClick() {
-        const chatBody = this.chatBody?.nativeElement;
-        if (chatBody) {
-            chatBody.scrollTop = chatBody.scrollHeight;
-            this.isScrolledToBottom = true;
-        }
-    }
-
-    onChatScroll() {
+    checkChatScroll() {
         const chatBody = this.chatBody.nativeElement;
         const scrollHeight = chatBody.scrollHeight;
         const scrollTop = chatBody.scrollTop;
@@ -206,8 +197,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
-    public ButtonType = ButtonType;
-
     onRowChange() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const newRows = textarea.value.split('\n').length;
@@ -226,8 +215,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows;
-        scrollArrow.style.bottom = `calc(10% + ${rowHeight}px)`;
-        chatBody.style.height = `calc(100% - ${rowHeight}px - 78px)`;
+        scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
+        chatBody.style.height = `calc(100% - ${rowHeight}px - 77px)`;
     }
 
     resetChatBodyHeight() {
