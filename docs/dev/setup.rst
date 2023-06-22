@@ -377,7 +377,7 @@ Debugging with Docker
 
 | The Docker containers have the possibility to enable Java Remote Debugging via Java environment variables.
 | Java Remote Debugging lets you use your preferred debugger connected to port 5005.
-  For IntelliJ, you can use the `Remote Java Debugging for Docker` profile being shipped in the git repository.
+  For IntelliJ, you can use the `Remote Java Debugging for Docker` profile shipped in the git repository.
 
 With the following Java environment variable, you can configure the Remote Java Debugging inside a container:
 
