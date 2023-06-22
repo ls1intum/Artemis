@@ -55,6 +55,9 @@ public class ChannelDTO extends ConversationDTO {
         else if (channel.getLecture() != null) {
             this.subType = ChannelSubType.LECTURE;
         }
+        else if (channel.getExam() != null) {
+            this.subType = ChannelSubType.EXAM;
+        }
         else {
             this.subType = ChannelSubType.GENERAL;
         }

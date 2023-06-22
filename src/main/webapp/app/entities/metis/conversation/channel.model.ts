@@ -10,6 +10,7 @@ export enum ChannelSubType {
     GENERAL = 'general',
     EXERCISE = 'exercise',
     LECTURE = 'lecture',
+    EXAM = 'exam',
 }
 
 /**
@@ -67,6 +68,10 @@ export function isExerciseChannelDto(conversation: ConversationDto): conversatio
 
 export function isLectureChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
     return isChannelDto(conversation) && conversation.subType === ChannelSubType.LECTURE;
+}
+
+export function isExamChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
+    return isChannelDto(conversation) && conversation.subType === ChannelSubType.EXAM;
 }
 
 export function getAsChannelDto(conversation: ConversationDto | undefined): ChannelDTO | undefined {

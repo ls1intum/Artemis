@@ -10,5 +10,8 @@ public enum ChannelSubType {
     EXERCISE,
 
     @JsonProperty("lecture")
-    LECTURE
+    LECTURE,
+
+    @JsonProperty("exam")
+    EXAM
 }
