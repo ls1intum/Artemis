@@ -99,7 +99,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         this.file = input.files[0];
         this.fileName = this.file.name;
         // automatically set the name in case it is not yet specified
-        if (this.nameControl?.value == undefined || this.nameControl?.value == '') {
+        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
             this.form.patchValue({
                 // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
