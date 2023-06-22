@@ -165,6 +165,7 @@ class ExerciseTest {
 
     @Test
     void filterForCourseDashboard_filterSensitiveInformation() {
+        when(exercise.getAssessmentDueDate()).thenReturn(ZonedDateTime.now().minusHours(1));
         Result ratedResultTmp = new Result();
         ratedResultTmp.setAssessor(mock(User.class));
         ratedResultTmp.setRated(true);
