@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 
@@ -38,10 +38,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseLanguageComponent);
                 comp = fixture.componentInstance;
-                comp.programmingExerciseCreationConfig = {};
-
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
             });
     });

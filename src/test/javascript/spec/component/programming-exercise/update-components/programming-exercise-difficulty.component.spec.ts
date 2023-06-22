@@ -40,7 +40,7 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseDifficultyComponent);
                 comp = fixture.componentInstance;
-                comp.programmingExercise = new ProgrammingExercise();
+                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
             });
     });

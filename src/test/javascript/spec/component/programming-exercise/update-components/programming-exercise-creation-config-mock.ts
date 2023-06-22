@@ -1,4 +1,5 @@
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { Observable, Subject } from 'rxjs';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
@@ -22,11 +23,11 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     isImportFromFile: false,
     maxPenaltyPattern: '',
     modePickerOptions: [],
-    onProgrammingLanguageChange(_language: ProgrammingLanguage): ProgrammingLanguage {
-        return undefined;
+    onProgrammingLanguageChange(language: ProgrammingLanguage): ProgrammingLanguage {
+        return language;
     },
-    onProjectTypeChange(_projectType: ProjectType): ProjectType {
-        return undefined;
+    onProjectTypeChange(projectType: ProjectType): ProjectType {
+        return projectType;
     },
     onRecreateBuildPlanOrUpdateTemplateChange(): void {},
     onStaticCodeAnalysisChanged(): void {},
@@ -41,7 +42,7 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     recreateBuildPlanOrUpdateTemplateChange(): void {},
     recreateBuildPlans: false,
     refreshAuxiliaryRepositoryChecks(): void {},
-    rerenderSubject: undefined,
+    rerenderSubject: new Observable(),
     selectedProgrammingLanguage: ProgrammingLanguage.JAVA,
     selectedProjectType: ProjectType.PLAIN_GRADLE,
     sequentialTestRunsAllowed: false,
