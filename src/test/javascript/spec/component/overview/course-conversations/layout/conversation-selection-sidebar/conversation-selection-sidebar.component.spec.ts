@@ -161,12 +161,12 @@ examples.forEach((activeConversation) => {
                 expect(component.starredConversations).toContain(favoriteChannel);
                 expect(component.starredConversations).toContain(favoriteGroupChat);
                 expect(component.starredConversations).toContain(favoriteOneToOneChat);
-                expect(component.starredConversations).toHaveLength(5);
+                expect(component.starredConversations).toHaveLength(6);
                 expect(component.starredConversations).toEqual(component.displayedStarredConversations);
 
                 expect(component.channelConversations).toContain(hiddenChannel);
                 expect(component.channelConversations).toContain(visibleChannel);
-                expect(component.channelConversations).toHaveLength(2);
+                expect(component.channelConversations).toHaveLength(8);
                 expect(component.channelConversations).toEqual(component.displayedChannelConversations);
 
                 expect(component.groupChats).toContain(hiddenGroupChat);
