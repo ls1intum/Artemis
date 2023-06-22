@@ -49,18 +49,7 @@ public class ChannelDTO extends ConversationDTO {
 
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
-        if (channel.getExercise() != null) {
-            this.subType = ChannelSubType.EXERCISE;
-        }
-        else if (channel.getLecture() != null) {
-            this.subType = ChannelSubType.LECTURE;
-        }
-        else if (channel.getExam() != null) {
-            this.subType = ChannelSubType.EXAM;
-        }
-        else {
-            this.subType = ChannelSubType.GENERAL;
-        }
+        this.setSubType(channel);
         this.name = channel.getName();
         this.description = channel.getDescription();
         this.isPublic = channel.getIsPublic();
@@ -163,5 +152,20 @@ public class ChannelDTO extends ConversationDTO {
                 + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator
                 + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}"
                 + super.toString();
+    }
+
+    private void setSubType(Channel channel) {
+        if (channel.getExercise() != null) {
+            this.subType = ChannelSubType.EXERCISE;
+        }
+        else if (channel.getLecture() != null) {
+            this.subType = ChannelSubType.LECTURE;
+        }
+        else if (channel.getExam() != null) {
+            this.subType = ChannelSubType.EXAM;
+        }
+        else {
+            this.subType = ChannelSubType.GENERAL;
+        }
     }
 }
