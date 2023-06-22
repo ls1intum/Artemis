@@ -142,7 +142,7 @@
         "webpack-bundle-analyzer": "4.9.0"
     },
     "engines": {
-        "node": ">=18.14.0 <=19"
+        "node": ">=18.14.0"
     },
     "scripts": {
         "postinstall": "husky install",
