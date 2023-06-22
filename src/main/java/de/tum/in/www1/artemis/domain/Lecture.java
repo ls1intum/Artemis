@@ -55,6 +55,12 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
 
+    /**
+     * Used for receiving the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
+
     public String getTitle() {
         return title;
     }
@@ -148,5 +154,13 @@ public class Lecture extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
     }
 }

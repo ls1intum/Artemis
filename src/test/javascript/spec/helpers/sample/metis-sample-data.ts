@@ -12,6 +12,7 @@ import { ConversationParticipant } from 'app/entities/metis/conversation/convers
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
@@ -269,3 +270,25 @@ export const directMessageUser2 = {
 } as Post;
 
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
+
+export const metisExerciseChannel = {
+    id: 14,
+    name: 'exercise-channel',
+    description: 'Channel for exercise related questions',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+    course: metisCourse,
+    exercise: metisExercise,
+} as Channel;
+
+export const metisLectureChannel = {
+    id: 15,
+    name: 'lecture-channel',
+    description: 'Channel for lecture related',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+    course: metisCourse,
+    exercise: metisLecture,
+} as Channel;
