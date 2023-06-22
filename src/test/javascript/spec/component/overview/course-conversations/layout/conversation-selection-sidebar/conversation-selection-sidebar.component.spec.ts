@@ -39,6 +39,7 @@ const examples: (ConversationDto | undefined)[] = [
     generateExampleChannelDTO({}),
     generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE }),
     generateExampleChannelDTO({ subType: ChannelSubType.LECTURE }),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM }),
 ];
 
 examples.forEach((activeConversation) => {
@@ -70,9 +71,13 @@ examples.forEach((activeConversation) => {
             const hiddenCLecturehannel = generateExampleChannelDTO({ id: 12, isHidden: true, subType: ChannelSubType.LECTURE });
             const favoritLectureeChannel = generateExampleChannelDTO({ id: 13, isFavorite: true, subType: ChannelSubType.LECTURE });
 
-            const visibleOneToOneChat = generateOneToOneChatDTO({ id: 14 });
-            const hiddenOneToOneChat = generateOneToOneChatDTO({ id: 15, isHidden: true });
-            const favoriteOneToOneChat = generateOneToOneChatDTO({ id: 16, isFavorite: true });
+            const visibleExamChannel = generateExampleChannelDTO({ id: 14, subType: ChannelSubType.EXAM });
+            const hiddenCExamhannel = generateExampleChannelDTO({ id: 15, isHidden: true, subType: ChannelSubType.EXAM });
+            const favoritExameChannel = generateExampleChannelDTO({ id: 16, isFavorite: true, subType: ChannelSubType.EXAM });
+
+            const visibleOneToOneChat = generateOneToOneChatDTO({ id: 17 });
+            const hiddenOneToOneChat = generateOneToOneChatDTO({ id: 18, isHidden: true });
+            const favoriteOneToOneChat = generateOneToOneChatDTO({ id: 19, isFavorite: true });
 
             beforeEach(waitForAsync(() => {
                 TestBed.configureTestingModule({
@@ -112,6 +117,9 @@ examples.forEach((activeConversation) => {
                     visibleLectureChannel,
                     hiddenCLecturehannel,
                     favoritLectureeChannel,
+                    visibleExamChannel,
+                    hiddenCExamhannel,
+                    favoritExameChannel,
                     visibleGroupChat,
                     hiddenGroupChat,
                     favoriteGroupChat,
