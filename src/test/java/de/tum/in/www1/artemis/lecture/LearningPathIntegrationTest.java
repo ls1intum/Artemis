@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
-public class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
 
