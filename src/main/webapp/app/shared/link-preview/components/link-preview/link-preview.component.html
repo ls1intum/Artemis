@@ -3,13 +3,13 @@
     <div *ngIf="linkPreview && linkPreview.shouldPreviewBeShown" class="preview-container">
         <!-- Link preview template -->
         <div class="preview-card">
-            <div class="preview-image" *ngIf="linkPreview.image">
-                <img [src]="linkPreview.image" alt="Preview Image" />
-            </div>
             <div class="preview-content">
                 <h2 class="preview-title">{{ linkPreview.title }}</h2>
                 <p class="preview-description">{{ linkPreview.description }}</p>
-                <a [href]="linkPreview.url" class="preview-url">{{ linkPreview.url }}</a>
+            </div>
+
+            <div class="preview-image" *ngIf="linkPreview.image">
+                <img [src]="linkPreview.image" alt="Preview Image" />
             </div>
         </div>
     </div>

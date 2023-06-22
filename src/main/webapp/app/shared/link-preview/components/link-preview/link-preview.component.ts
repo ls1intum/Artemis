@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { LinkPreview } from 'app/shared/link-preview/service/link-preview.service';
+import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 
 @Component({
     selector: 'jhi-link-preview',

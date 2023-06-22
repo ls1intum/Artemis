@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/service/link-preview.service';
-import { Link } from 'app/shared/link-preview/linkify/interfaces/linkify.interface';
-import { LinkifyService } from 'app/shared/link-preview/linkify/services/linkify.service';
+import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-link-preview-container',
@@ -24,12 +23,13 @@ export class LinkPreviewContainerComponent implements OnInit {
     ngOnInit() {
         this.data = this.data ?? '';
         const links: Link[] = this.linkifyService.find(this.data!);
-        // TODO: The limit of 5 link previews should be configurable
+        // TODO: The limit of 5 link previews should be configurable (maybe in course level)
         links
             .slice(0, 5) // limit to 5 links
             .forEach((link) => {
                 this.linkPreviewService.fetchLink(link.href).subscribe({
                     next: (linkPreview) => {
+                        // Check if all required fields are present, then the link preview can be shown
                         linkPreview.shouldPreviewBeShown = !!(linkPreview.url && linkPreview.title && linkPreview.description && linkPreview.image);
 
                         // Check if a link preview for the current link already exists

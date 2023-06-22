@@ -42,7 +42,6 @@ import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enl
 import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
 import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
-import { LinkifyModule } from 'app/shared/link-preview/linkify/linkify.module';
 
 @NgModule({
     imports: [
@@ -65,9 +64,6 @@ import { LinkifyModule } from 'app/shared/link-preview/linkify/linkify.module';
         MatFormFieldModule,
         MatDialogModule,
         LinkPreviewModule,
-        LinkifyModule,
-        // LinkPreviewModule,
-        // LinkPreviewModule.forRoot(),
     ],
     declarations: [
         PostingThreadComponent,

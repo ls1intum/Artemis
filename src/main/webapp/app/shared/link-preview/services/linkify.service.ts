@@ -1,10 +1,16 @@
 import { Injectable } from '@angular/core';
-import { Link } from 'app/shared/link-preview/linkify/interfaces/linkify.interface';
+
+export interface Link {
+    type: string;
+    value: string;
+    isLink?: boolean;
+    href: string;
+    start?: number;
+    end?: number;
+}
 
 @Injectable()
 export class LinkifyService {
-    constructor() {}
-
     /**
      * Find any links in a given text as a string
      *

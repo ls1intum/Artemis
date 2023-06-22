@@ -2,7 +2,7 @@ import { EventEmitter, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
-import { Link } from 'app/shared/link-preview/linkify/interfaces/linkify.interface';
+import { Link } from 'app/shared/link-preview/services/linkify.service';
 
 export interface LinkPreview {
     title: string;
