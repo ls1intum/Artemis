@@ -370,6 +370,10 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
     * LANG ``en_US.UTF-8``
     * LANGUAGE ``en_US.UTF-8``
 
+.. warning::
+  **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space.
+  On a *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
+
 .. _Docker Debugging:
 
 Debugging with Docker
