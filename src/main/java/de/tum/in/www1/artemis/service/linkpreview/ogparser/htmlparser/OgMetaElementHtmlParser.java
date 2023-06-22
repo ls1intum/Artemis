@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.linkpreview.ogparser.htmlparser;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -33,7 +32,7 @@ public class OgMetaElementHtmlParser {
                 final String property = m.attr("property").substring(3).trim();
                 final String content = m.attr("content");
                 return new OgMetaElement(property, content);
-            }).collect(Collectors.toList());
+            }).toList();
         }
         catch (IOException e) {
             log.info("IOException occurred while parsing html meta elements.");

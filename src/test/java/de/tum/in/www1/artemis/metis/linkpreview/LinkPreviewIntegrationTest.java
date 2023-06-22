@@ -1,76 +1,52 @@
 package de.tum.in.www1.artemis.metis.linkpreview;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 
 class LinkPreviewIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "linkpreviewintegrationtest";
 
-    @Autowired
-    private AnswerPostRepository answerPostRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
+    private static final String[] urls = { "https://github.com/ls1intum/Artemis/pull/6615",
+            "https://stackoverflow.com/questions/40965622/unit-testing-an-endpoint-with-requestbody", "https://github.com/" };
 
     @Autowired
     private UserUtilService userUtilService;
 
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ConversationUtilService conversationUtilService;
-
-    private List<Post> existingConversationPostsWithAnswers;
-
-    private List<Post> existingPostsWithAnswersCourseWide;
-
-    private Long courseId;
-
     @BeforeEach
     void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+    }
 
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+    @ParameterizedTest
+    @MethodSource("provideUrls")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateConversationPost(String url) throws Exception {
 
-        // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
-        // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
-                .filter(coursePost -> (coursePost.getAnswers() != null)).toList();
+        LinkPreviewDTO linkPreviewData = request.postWithPlainStringResponseBody("/api/link-preview", url, LinkPreviewDTO.class, HttpStatus.OK);
+        assertThat(linkPreviewData).isNotNull();
 
-        List<Post> existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
+        assertThat(linkPreviewData.url()).isNotNull();
+        assertThat(linkPreviewData.description()).isNotNull();
+        assertThat(linkPreviewData.image()).isNotNull();
+        assertThat(linkPreviewData.title()).isNotNull();
 
-        existingConversationPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() != null).toList();
+        assertThat(linkPreviewData.url()).isEqualTo(url);
+    }
 
-        // get all existing posts with answers in exercise context
-        List<Post> existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream()
-                .filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
-
-        // get all existing posts with answers in lecture context
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
-                .toList();
-
-        Course course = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
-        courseUtilService.enableMessagingForCourse(course);
-        courseId = course.getId();
-
-        SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
-        doNothing().when(simpMessageSendingOperations).convertAndSendToUser(any(), any(), any());
+    private static Stream<String> provideUrls() {
+        return Stream.of(urls);
     }
 }

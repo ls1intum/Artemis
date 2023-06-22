@@ -44,8 +44,4 @@ public class OpenGraph {
         }
         return openGraphMap.get(property).get(index);
     }
-
-    public int getContentSizeOf(String property) {
-        return openGraphMap.get(property).size();
-    }
 }
