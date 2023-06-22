@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis;
 
+import static java.time.ZonedDateTime.now;
+
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -10,6 +14,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -24,12 +31,15 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     private CourseUtilService courseUtilService;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private static final int NUMBER_OF_TUTORS = 1;
 
     @BeforeEach
     void setup() {
         participantScoreScheduleService.shutdown();
-        userUtilService.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 3, NUMBER_OF_TUTORS, 0, 0);
     }
 
     @Test
@@ -75,5 +85,79 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to get all team student participations with submissions and results
         // 2 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all plagiarism cases
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testStartWorkingOnExamQueryCount() throws Exception {
+        Exam exam = createActiveExam();
+        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student2");
+
+        assertThatDb(() -> {
+
+            startWorkingOnExam(studentExam);
+            return null;
+
+        }).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void testSubmitAnswerOfExamQueryCount() throws Exception {
+        Exam exam = createActiveExam();
+        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student3");
+        startWorkingOnExam(studentExam);
+
+        assertThatDb(() -> {
+
+            submitAnswerOfExam(studentExam);
+            return null;
+
+        }).hasBeenCalledAtMostTimes(getSubmitAnswerOfExamExpectedTotalQueryCount());
+    }
+
+    private Exam createActiveExam() {
+        Course course = courseUtilService.addEmptyCourse();
+        ZonedDateTime visibleDate = now().minusMinutes(10);
+        ZonedDateTime startDate = now().minusMinutes(5);
+        ZonedDateTime endDate = now().plusMinutes(5);
+        return examUtilService.addExam(course, visibleDate, startDate, endDate);
+    }
+
+    private StudentExam createStudentExamForUser(Exam exam, String studentUsername) {
+        return examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(studentUsername), 0);
+    }
+
+    private void startWorkingOnExam(StudentExam studentExam) throws Exception {
+        request.get(
+                "/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+    }
+
+    private void submitAnswerOfExam(StudentExam studentExam) throws Exception {
+        request.postWithoutLocation("/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit", studentExam,
+                HttpStatus.OK, null);
+    }
+
+    private long getStartWorkingOnExamExpectedTotalQueryCount() {
+        final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
+        final int findStudentExamByIdWithExercisesQueryCount = 1;
+        final int findExamByIdWithCourseQueryCount = 1;
+        final int updateStudentExamQueryCount = 1;
+        final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
+        final int createExamSessionQueryCount = 1;
+        final int findExamSessionCountByStudentExamIdQueryCount = 1;
+        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamByIdWithCourseQueryCount + updateStudentExamQueryCount
+                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount + createExamSessionQueryCount + findExamSessionCountByStudentExamIdQueryCount;
+    }
+
+    private long getSubmitAnswerOfExamExpectedTotalQueryCount() {
+        final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
+        final int findStudentExamByIdWithExercisesQueryCount = 1;
+        final int findExamSessionByStudentExamIdQueryCount = 1;
+        final int updateStudentExamQueryCount = 1;
+        final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
+        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamSessionByStudentExamIdQueryCount + updateStudentExamQueryCount
+                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount;
     }
 }
