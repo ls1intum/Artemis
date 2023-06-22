@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
