@@ -59,7 +59,7 @@
     --r: 13px; /* the radius */
     --t: 10px; /* the size of the tail */
 
-    width: fit-content;
+    max-width: 100%;
     margin-bottom: 5px;
     color: var(--bs-body-color);
     padding: 10px;
@@ -71,13 +71,16 @@
     background-color: var(--iris-client-chat-background);
     margin-right: var(--t);
     place-self: start;
+    overflow-wrap: break-word; /* Allow long messages to wrap within the bubble */
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .bubble-right {
     --r: 13px; /* the radius */
     --t: 10px; /* the size of the tail */
 
-    width: fit-content;
+    max-width: 100%;
     margin-bottom: 5px;
     color: var(--bs-body-color);
     -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
@@ -90,6 +93,9 @@
     place-self: end;
     float: right;
     background-color: var(--iris-my-chat-background);
+    overflow-wrap: break-word; /* Allow long messages to wrap within the bubble */
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .client-chat-error {
