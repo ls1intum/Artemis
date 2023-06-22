@@ -80,11 +80,6 @@ public class MailService implements InstantNotificationService {
 
     private static final String NOTIFICATION_TYPE = "notificationType";
 
-    // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
-    private final String newAnnouncementEN = "New announcement \"%s\" in course \"%s\"";
-
-    private final String newAnnouncementDE = "Neue Ankündigung \"%s\" im Kurs \"%s\"";
-
     // time related variables
     private static final String TIME_SERVICE = "timeService";
 
@@ -168,14 +163,13 @@ public class MailService implements InstantNotificationService {
     /**
      * Sets the context and subject for the case that the notificationSubject is a Post
      *
-     * @param context             that is modified
      * @param notificationSubject which has to be a Post
      * @param locale              used for translations
      * @return the modified subject of the email
      */
-    private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
-        // For Announcement Posts
-        String newAnnouncementString = locale.toString().equals("en") ? newAnnouncementEN : newAnnouncementDE;
+    private String createAnnouncementText(Object notificationSubject, Locale locale) {
+        // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
+        String newAnnouncementString = locale.toString().equals("en") ? "New announcement \"%s\" in course \"%s\"" : "Neue Ankündigung \"%s\" im Kurs \"%s\"";
         String postTitle = ((Post) notificationSubject).getTitle();
         String courseTitle = ((Post) notificationSubject).getCourse().getTitle();
 
@@ -195,7 +189,6 @@ public class MailService implements InstantNotificationService {
         users.forEach(user -> sendNotification(notification, user, notificationSubject));
     }
 
-    @Override
     /**
      * Sends a notification based email to one user
      *
@@ -203,6 +196,7 @@ public class MailService implements InstantNotificationService {
      * @param user                who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
+    @Override
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
@@ -238,7 +232,7 @@ public class MailService implements InstantNotificationService {
         if (notificationSubject instanceof Post post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(post, artemisServerUrl.toString()));
-            subject = setPostContextAndSubject(context, notificationSubject, locale);
+            subject = createAnnouncementText(notificationSubject, locale);
         }
         else {
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(notification, artemisServerUrl.toString()));
@@ -335,7 +329,6 @@ public class MailService implements InstantNotificationService {
      * @param context          that should be updated with the score property
      * @param exercise         that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
      * @param recipientStudent who will receive the email
-     * @return the updated context
      */
     private void checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
         if (notificationType.equals(EXERCISE_SUBMISSION_ASSESSED)) {
