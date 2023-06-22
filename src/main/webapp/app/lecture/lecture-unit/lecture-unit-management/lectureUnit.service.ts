@@ -15,7 +15,7 @@ type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
     providedIn: 'root',
 })
 export class LectureUnitService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private attachmentService: AttachmentService) {}
 

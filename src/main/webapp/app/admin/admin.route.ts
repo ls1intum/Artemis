@@ -79,6 +79,14 @@ export const adminState: Routes = [
                     pageTitle: 'statistics.title',
                 },
             },
+            {
+                path: 'privacy-statement',
+                loadChildren: () => import('./legal/legal-update.module').then((module) => module.LegalUpdateModule),
+            },
+            {
+                path: 'imprint',
+                loadChildren: () => import('./legal/legal-update.module').then((module) => module.LegalUpdateModule),
+            },
             ...organizationMgmtRoute,
             ...userManagementRoute,
             ...systemNotificationManagementRoute,

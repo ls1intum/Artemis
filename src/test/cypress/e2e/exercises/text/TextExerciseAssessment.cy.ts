@@ -63,7 +63,7 @@ describe('Text exercise assessment', () => {
             exerciseResult.shouldShowExerciseTitle(exercise.title!);
             exerciseResult.shouldShowProblemStatement(exercise.problemStatement!);
             exerciseResult.shouldShowScore(percentage);
-            exerciseResult.clickViewSubmission();
+            exerciseResult.clickOpenExercise(exercise.id!);
             textExerciseFeedback.shouldShowTextFeedback(1, tutorTextFeedback);
             textExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             textExerciseFeedback.shouldShowScore(percentage);

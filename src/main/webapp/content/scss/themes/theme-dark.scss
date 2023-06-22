@@ -6,12 +6,33 @@
 
 html {
     @include generate-css-vars.generate('dark-variables');
+
+    .mat-mdc-menu-item:hover:not([disabled]),
+    .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
+    .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]),
+    .mat-mdc-menu-item-highlighted:not([disabled]) {
+        background-color: $neutral-dark-l-10;
+    }
+
+    .mat-mdc-menu-panel {
+        background-color: $neutral-dark-l-5;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    }
+
+    .mat-mdc-button:disabled {
+        color: $secondary;
+    }
+
+    .mat-mdc-menu-trigger.mat-mdc-button:hover {
+        background-color: $neutral-dark-l-5;
+    }
 }
 
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
-@import '~highlight.js/styles/monokai.css';
+@import 'node_modules/highlight.js/styles/monokai.css';
 
 .blockquote {
     &-footer {
@@ -167,7 +188,6 @@ html {
         color: white !important;
     }
 }
-
 .bg-light {
     background: transparentize(white, 0.95) !important;
 }

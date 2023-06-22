@@ -28,6 +28,7 @@
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "embeddedFilesWarning": "All embedded files are available in the problem statement after the import.",
                 "search": "Search for exercise",
                 "loading": "Loading...",
                 "searchInCourses": "Search in courses?",
@@ -203,6 +204,9 @@
                 "title": {
                     "undefined": "There has to be a title set!",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
+                },
+                "channelName": {
+                    "empty": "There has to be a channel name set!"
                 },
                 "shortName": {
                     "undefined": "There has to be a short name set!",

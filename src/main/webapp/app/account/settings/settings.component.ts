@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -15,12 +15,7 @@ export class SettingsComponent implements OnInit {
     success = false;
     account: User;
     languages = LANGUAGES;
-    settingsForm = this.fb.group({
-        firstName: [undefined as string | undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-        lastName: [undefined as string | undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-        email: [undefined as string | undefined, [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
-        langKey: [undefined as string | undefined],
-    });
+    settingsForm: FormGroup;
     isRegistrationEnabled = false;
 
     constructor(private accountService: AccountService, private fb: FormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
@@ -41,6 +36,19 @@ export class SettingsComponent implements OnInit {
                 });
                 this.account = user;
             }
+        });
+        this.initializeForm();
+    }
+
+    private initializeForm() {
+        if (this.settingsForm) {
+            return;
+        }
+        this.settingsForm = this.fb.group({
+            firstName: [undefined as string | undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+            lastName: [undefined as string | undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+            email: [undefined as string | undefined, [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
+            langKey: [undefined as string | undefined],
         });
     }
 

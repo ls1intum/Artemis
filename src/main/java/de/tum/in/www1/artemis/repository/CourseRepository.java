@@ -53,6 +53,27 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.instructorGroupName = :name
+            """)
+    List<Course> findCoursesByInstructorGroupName(@Param("name") String name);
+
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.teachingAssistantGroupName = :name
+            """)
+    List<Course> findCoursesByTeachingAssistantGroupName(@Param("name") String name);
+
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.studentGroupName = :name
+            """)
+    List<Course> findCoursesByStudentGroupName(@Param("name") String name);
+
+    @Query("""
             SELECT CASE WHEN (count(c) > 0) THEN true ELSE false END
             FROM Course c
             WHERE c.id = :#{#courseId}
@@ -81,6 +102,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActiveWithLectures(@Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+                LEFT JOIN FETCH c.organizations organizations
+                LEFT JOIN FETCH c.prerequisites prerequisites
+            WHERE (c.enrollmentEnabled = true)
+                AND (c.enrollmentStartDate <= :now)
+                AND (c.enrollmentEndDate >= :now)
+            """)
+    List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     /**
      * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
@@ -120,8 +151,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningGoals", "prerequisites" })
-    Optional<Course> findWithEagerLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
+    Optional<Course> findWithEagerCompetenciesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
@@ -132,11 +163,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "learningGoals", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
-    Optional<Course> findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndOnlineConfigurationById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
+    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @Query("""
                 SELECT course
@@ -148,21 +179,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
     @Query("""
-                SELECT DISTINCT course
-                FROM Course course
-                    LEFT JOIN FETCH course.organizations organizations
-                    LEFT JOIN FETCH course.prerequisites prerequisites
-                WHERE (course.startDate IS NULL OR course.startDate <= :now)
-                    AND (course.endDate IS NULL OR course.endDate >= :now)
-                    AND course.onlineCourse = false
-                    AND course.registrationEnabled = true
-            """)
-    List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
-
-    @Query("""
                 SELECT course
                 FROM Course course
-                    LEFT JOIN FETCH course.organizations co
+                    LEFT JOIN FETCH course.organizations
                 WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
@@ -261,6 +280,25 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
+    /**
+     * Fetches the courses the user is currently a member of, regardless if the course is active or not
+     * This is used for the data export only.
+     *
+     * @param isAdmin    whether the user to fetch the courses for is an admin (which gets all courses)
+     * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
+     * @return a set of courses the user is a member of
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE (:isAdmin = TRUE
+                   OR c.studentGroupName IN :userGroups
+                   OR c.teachingAssistantGroupName IN :userGroups
+                   OR c.editorGroupName IN :userGroups
+                   OR c.instructorGroupName IN :userGroups)
+            """)
+    Set<Course> getAllCoursesUserIsMemberOf(@Param("isAdmin") boolean isAdmin, @Param("userGroups") Set<String> userGroups);
+
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
@@ -311,23 +349,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get a single course to register with eagerly loaded organizations and prerequisites.
+     * Get a single course to enroll with eagerly loaded organizations and prerequisites.
      *
      * @param courseId the id of the course
      * @return the course entity
      */
     default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
         return findSingleWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-    }
-
-    /**
-     * Get all the courses to register with eagerly loaded organizations and prerequisites.
-     * Online courses are not included, as they are not meant to be registered for.
-     *
-     * @return the list of course entities
-     */
-    default List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
-        return findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**
@@ -374,18 +402,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(long courseId) {
-        return findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(long courseId) {
+        return findWithEagerOrganizationsAndCompetenciesAndOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
-    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(long courseId) {
-        return findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
+        return findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
-    default Course findWithEagerLearningGoalsByIdElseThrow(long courseId) {
-        return findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
+        return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
@@ -413,7 +441,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Utility method used to check whether a user is member of at least one organization of a given course
      *
-     * @param user   the user to check
+     * @param user   the user to check, organizations must NOT be lazily loaded
      * @param course the course to check
      * @return true if the user is member of at least one organization of the course. false otherwise
      */

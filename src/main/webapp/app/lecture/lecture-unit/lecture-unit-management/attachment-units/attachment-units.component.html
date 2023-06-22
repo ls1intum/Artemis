@@ -84,7 +84,13 @@
         <fa-icon [icon]="faExclamationTriangle"></fa-icon>
         {{ 'artemisApp.attachmentUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}
     </div>
-    <button type="button" (click)="createAttachmentUnits()" [disabled]="!validUnitInformation() || units.length < 1" class="btn btn-primary">
+    <button
+        [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.processTimeInfo' | artemisTranslate"
+        type="button"
+        (click)="createAttachmentUnits()"
+        [disabled]="units.length < 1"
+        class="btn btn-primary"
+    >
         <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
     </button>
     <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>

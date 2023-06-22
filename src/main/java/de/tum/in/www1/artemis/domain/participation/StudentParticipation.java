@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class StudentParticipation extends Participation {
 
     @Column(name = "presentation_score")
-    private Integer presentationScore;
+    private Double presentationScore;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -30,11 +30,11 @@ public class StudentParticipation extends Participation {
     @JsonView(QuizView.Before.class)
     private Team team;
 
-    public Integer getPresentationScore() {
+    public Double getPresentationScore() {
         return presentationScore;
     }
 
-    public void setPresentationScore(Integer presentationScore) {
+    public void setPresentationScore(Double presentationScore) {
         this.presentationScore = presentationScore;
     }
 

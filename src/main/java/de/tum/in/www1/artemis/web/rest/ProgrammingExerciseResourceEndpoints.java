@@ -52,7 +52,7 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
 
-    public static final String RECREATE_BUILD_PLANS = PROGRAMMING_EXERCISE + "/recreate-build-plans";
+    public static final String RESET = PROGRAMMING_EXERCISE + "/reset";
 
     public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
@@ -65,8 +65,6 @@ public final class ProgrammingExerciseResourceEndpoints {
     public static final String TEMPLATE_REPOSITORY_FILES_WITH_CONTENT = PROGRAMMING_EXERCISE + "/template-files-content";
 
     public static final String SOLUTION_REPOSITORY_FILE_NAMES = PROGRAMMING_EXERCISE + "/file-names";
-
-    public static final String BUILD_PLAN = PROGRAMMING_EXERCISE + "/build-plan";
 
     public static final String BUILD_LOG_STATISTICS = PROGRAMMING_EXERCISE + "/build-log-statistics";
 

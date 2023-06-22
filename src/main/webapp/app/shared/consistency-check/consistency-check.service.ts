@@ -6,7 +6,7 @@ import { ConsistencyCheckError } from 'app/entities/consistency-check-result.mod
     providedIn: 'root',
 })
 export class ConsistencyCheckService {
-    private readonly resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    private readonly resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}
 

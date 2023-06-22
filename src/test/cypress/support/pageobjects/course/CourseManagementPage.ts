@@ -114,6 +114,10 @@ export class CourseManagementPage {
         cy.url().should('include', '/assessment-dashboard');
     }
 
+    openAssessmentDashboard() {
+        cy.get('#assessment-dashboard').click();
+    }
+
     /**
      * helper methods to get information about the course
      * */
@@ -171,14 +175,6 @@ export class CourseManagementPage {
 
     getCourseOnlineCourse() {
         return cy.get('#course-online-course');
-    }
-
-    getCoursePresentationScoreEnabled() {
-        return cy.get('#course-presentation-score-enabled');
-    }
-
-    getCoursePresentationScore() {
-        return cy.get('#course-presentation-score');
     }
 
     getCourseMaxComplaints() {

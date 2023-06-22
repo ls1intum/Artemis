@@ -35,7 +35,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
@@ -61,6 +61,8 @@ import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-co
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
 
 @NgModule({
     imports: [
@@ -75,7 +77,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         ArtemisLectureModule,
         ArtemisFullscreenModule,
         ArtemisCourseScoresModule,
-        ArtemisLearningGoalsModule,
+        ArtemisCompetenciesModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFileUploadExerciseManagementModule,
@@ -110,6 +112,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         FeatureToggleModule,
         ExerciseCategoriesModule,
         NgbNavModule,
+        ArtemisExerciseCreateButtonsModule,
     ],
     declarations: [
         CourseManagementComponent,
@@ -128,6 +131,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         CourseGroupMembershipComponent,
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
+        CourseManagementTabBarComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

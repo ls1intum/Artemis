@@ -20,10 +20,11 @@ import { MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular-ivy';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 
@@ -45,7 +46,7 @@ describe('User Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule)],
+            imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatAutocompleteModule)],
             declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel)],
             providers: [
                 FormBuilder,
@@ -205,6 +206,17 @@ describe('User Management Update Component', () => {
                 expect(setTitleOnTitleServiceSpy).not.toHaveBeenCalled();
             }),
         ));
+
+        it('foo', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.editForm.controls['idInput']).toBeDefined();
+        }));
     });
 
     describe('save', () => {
@@ -301,17 +313,42 @@ describe('User Management Update Component', () => {
         expect(comp.user.organizations).toEqual([org0]);
     });
 
-    it('should add users to groups', () => {
-        const groupCtrlSetValueSpy = jest.spyOn(comp.groupCtrl, 'setValue');
-
+    it('should add the selected group from autocomplete panel to user', () => {
         const newGroup = 'nicegroup';
+        comp.user = { groups: [] } as any as User;
+        comp.allGroups = [newGroup];
+        const option = { viewValue: newGroup };
+        const event = { option } as any as MatAutocompleteSelectedEvent;
+        comp.onSelected(event);
+        expect(comp.user.groups).toEqual([newGroup]);
+    });
+
+    it('should add group to user', () => {
+        const newGroup = 'nicegroup';
+        comp.allGroups = [newGroup];
         comp.user = { groups: [] } as any as User;
         const event = { value: newGroup, chipInput: { clear: jest.fn() } } as any as MatChipInputEvent;
         comp.onGroupAdd(comp.user, event);
-
         expect(comp.user.groups).toEqual([newGroup]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
-        expect(groupCtrlSetValueSpy).toHaveBeenCalledOnce();
-        expect(groupCtrlSetValueSpy).toHaveBeenCalledWith(null);
+    });
+
+    it('should not add groups to user', () => {
+        const newGroup1 = 'nicegroup';
+        const newGroup2 = 'badgroup';
+        comp.allGroups = [newGroup1];
+        comp.user = { groups: [] } as any as User;
+        const event = { value: newGroup2, chipInput: { clear: jest.fn() } } as any as MatChipInputEvent;
+        comp.onGroupAdd(comp.user, event);
+        expect(comp.user.groups).toEqual([]);
+        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+    });
+
+    it('should remove group from user', () => {
+        const group1 = 'nicegroup';
+        const group2 = 'badgroup';
+        comp.user = { groups: [group1, group2] } as any as User;
+        comp.onGroupRemove(comp.user, group1);
+        expect(comp.user.groups).toEqual([group2]);
     });
 });

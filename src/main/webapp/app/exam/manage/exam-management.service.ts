@@ -26,8 +26,8 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExamManagementService {
-    public resourceUrl = SERVER_API_URL + 'api/courses';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/courses';
+    public resourceUrl = 'api/courses';
+    public adminResourceUrl = 'api/admin/courses';
 
     constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
 
@@ -96,7 +96,7 @@ export class ExamManagementService {
      * @param examId The id of the exam to get.
      */
     findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
-        return this.http.get<Exam>(`${SERVER_API_URL}api/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        return this.http.get<Exam>(`api/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     /**

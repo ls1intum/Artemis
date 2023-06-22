@@ -3,5 +3,5 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 
 export class ConversationWebsocketDTO {
     public conversation: ConversationDto;
-    public crudAction: MetisPostAction;
+    public metisCrudAction: MetisPostAction;
 }

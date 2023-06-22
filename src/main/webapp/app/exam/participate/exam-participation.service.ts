@@ -13,7 +13,7 @@ import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 
 export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -24,7 +24,7 @@ export class ExamParticipationService {
     private examExerciseIds: number[];
 
     public getResourceURL(courseId: number, examId: number): string {
-        return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
+        return `api/courses/${courseId}/exams/${examId}`;
     }
 
     constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
@@ -137,7 +137,7 @@ export class ExamParticipationService {
      * @returns a List of all StudentExams without Exercises per User and Course
      */
     public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
-        const url = `${SERVER_API_URL}api/courses/${courseId}/test-exams-per-user`;
+        const url = `api/courses/${courseId}/test-exams-per-user`;
         return this.httpClient
             .get<StudentExam[]>(url, { observe: 'response' })
             .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
@@ -242,7 +242,7 @@ export class ExamParticipationService {
      * @param quizSubmission
      */
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `${SERVER_API_URL}api/exercises/${exerciseId}/submissions/exam`;
+        const url = `api/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 

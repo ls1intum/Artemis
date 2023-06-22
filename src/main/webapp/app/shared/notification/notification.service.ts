@@ -42,7 +42,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    public resourceUrl = SERVER_API_URL + 'api/notifications';
+    public resourceUrl = 'api/notifications';
     subscribedTopics: string[] = [];
     notificationObserver: ReplaySubject<Notification>;
     cachedNotifications: Observable<HttpResponse<Notification[]>>;

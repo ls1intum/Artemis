@@ -1,23 +1,23 @@
 <div class="d-flex">
     <h2 class="col-9">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h2>
-    <div *ngIf="typeFilter.typeSet.size > 0" class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
+    <div *ngIf="exerciseTypeFilter.typeSet.size > 0" class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
         <button
             class="btn"
-            [class.btn-secondary]="typeFilter.numberOfActiveFilters === 0"
-            [class.btn-success]="typeFilter.numberOfActiveFilters > 0"
+            [class.btn-secondary]="exerciseTypeFilter.numberOfActiveFilters === 0"
+            [class.btn-success]="exerciseTypeFilter.numberOfActiveFilters > 0"
             ngbDropdownToggle
             id="filter-dropdown-button"
         >
             <fa-icon [icon]="faFilter"></fa-icon>
-            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate : { num: typeFilter.numberOfActiveFilters } }}</span>
+            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate : { num: exerciseTypeFilter.numberOfActiveFilters } }}</span>
         </button>
         <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
             <li>
                 <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
             </li>
-            <li *ngFor="let type of typeFilter.typeSet">
+            <li *ngFor="let type of exerciseTypeFilter.typeSet">
                 <label>
-                    <input class="ms-2 form-check-input" (change)="toggleType(type)" [checked]="typeFilter.getCurrentFilterState(convertToMapKey(type))" type="checkbox" />
+                    <input class="ms-2 form-check-input" (change)="toggleType(type)" [checked]="exerciseTypeFilter.getCurrentFilterState(convertToMapKey(type))" type="checkbox" />
                     <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
                 </label>
             </li>

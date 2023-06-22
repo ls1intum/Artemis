@@ -37,7 +37,7 @@
                 </div>
             </span>
         </div>
-        <div class="submission-row" *ngIf="submissionPolicy">
+        <div class="submission-row" *ngIf="submissionPolicy && submissionPolicy.active">
             <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
             <div>
                 {{
@@ -57,78 +57,57 @@
         </div>
     </div>
     <div class="right-col">
-        <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
-            <ng-container *ngIf="!isTestRun">
-                <div [class.fw-500]="nextDueDate === NextDate.EXAM_END_DATE">
-                    {{ 'artemisApp.exam.endDate' | artemisTranslate }}
-                    {{ exam?.endDate | artemisDate }}
-                    <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
-                        {{ exam?.endDate | artemisTimeAgo }}
+        <ng-container *ngIf="!nextRelevantDateLabel || (nextRelevantDateLabel !== 'releaseDate' && nextRelevantDateLabel !== 'startDate'); else displayNextRelevantDate" />
+        <div *ngIf="dueDate" class="fw-500">
+            {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
+            <span
+                [ngClass]="dueDateStatusBadge"
+                class="badge"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate : { date: dueDate | artemisDate }"
+            >
+                {{ dueDate | artemisTimeAgo }}
+            </span>
+        </div>
+        <ng-container *ngIf="!nextRelevantDateLabel || (nextRelevantDateLabel !== 'assessmentDue' && nextRelevantDateLabel !== 'complaintDue'); else displayNextRelevantDate" />
+        <div *ngIf="!nextRelevantDate && canComplainLaterOn" class="fw-500">
+            {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
+            <span
+                class="badge bg-success"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate : { days: course?.maxComplaintTimeDays }"
+            >
+                {{ 'global.generic.yes' | artemisTranslate }}
+            </span>
+        </div>
+        <ng-template #displayNextRelevantDate>
+            <div *ngIf="nextRelevantDate && (!exam || !isTestRun)" class="fw-500">
+                {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+                <span
+                    [ngClass]="nextRelevantDateStatusBadge"
+                    class="badge"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate : { date: nextRelevantDate | artemisDate }"
+                >
+                    {{ nextRelevantDate | artemisTimeAgo }}
+                </span>
+            </div>
+            <div *ngIf="exercise.presentationScoreEnabled">
+                <ng-template [ngIf]="course?.presentationScore" [ngIfElse]="notBasicPresentation">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
+                    <span *ngIf="(studentParticipation?.presentationScore ?? 0) > 0" class="badge bg-success">
+                        {{ 'global.generic.yes' | artemisTranslate }}
                     </span>
-                </div>
-                <div [class.fw-500]="nextDueDate === NextDate.RESULT_PUBLISH_DATE">
-                    {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
-                    {{ exam?.publishResultsDate | artemisDate }}
-                    <span *ngIf="exam?.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
-                        {{ exam?.publishResultsDate | artemisTimeAgo }}
+                    <span *ngIf="(studentParticipation?.presentationScore ?? 0) <= 0" class="badge bg-secondary">
+                        {{ 'global.generic.no' | artemisTranslate }}
                     </span>
-                </div>
-            </ng-container>
-        </ng-template>
-        <ng-template #courseMode>
-            <div *ngIf="isBeforeStartDate && dayjs().isBefore(exercise.startDate ?? exercise.releaseDate)" [class.fw-500]="nextDueDate === NextDate.START_OR_RELEASE_DATE">
-                {{ 'artemisApp.courseOverview.exerciseDetails.startDate' | artemisTranslate }}
-                <span
-                    [ngClass]="statusBadges[0]"
-                    class="badge"
-                    [ngbTooltip]="
-                        'artemisApp.courseOverview.exerciseDetails.startDateTooltip' | artemisTranslate : { date: exercise.startDate ?? exercise.releaseDate | artemisDate }
-                    "
-                >
-                    {{ exercise.startDate ?? exercise.releaseDate | artemisTimeAgo }}
-                </span>
-            </div>
-            <div *ngIf="dueDate" [class.fw-500]="nextDueDate === NextDate.SUBMISSION_DUE_DATE">
-                {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
-                <span
-                    [ngClass]="statusBadges[1]"
-                    class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate : { date: dueDate | artemisDate }"
-                >
-                    {{ dueDate | artemisTimeAgo }}
-                </span>
-            </div>
-            <div *ngIf="exercise.assessmentDueDate" [class.fw-500]="nextDueDate === NextDate.ASSESSMENT_DUE_DATE">
-                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
-                <span
-                    [ngClass]="statusBadges[2]"
-                    class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip' | artemisTranslate : { date: exercise.assessmentDueDate | artemisDate }"
-                >
-                    {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                </span>
-            </div>
-            <div *ngIf="individualComplaintDeadline" [class.fw-500]="nextDueDate === NextDate.COMPLAINT">
-                {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
-                <span
-                    [ngClass]="statusBadges[3]"
-                    class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate : { date: individualComplaintDeadline | artemisDate }"
-                >
-                    {{ individualComplaintDeadline | artemisTimeAgo }}
-                </span>
-            </div>
-            <div *ngIf="canComplainLaterOn" [class.fw-500]="nextDueDate === NextDate.COMPLAINT">
-                {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
-                <span
-                    class="badge bg-success"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate : { days: course?.maxComplaintTimeDays }"
-                >
-                    {{
-                        (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC ? 'global.generic.yes' : 'global.generic.no')
-                            | artemisTranslate
-                    }}
-                </span>
+                </ng-template>
+                <ng-template #notBasicPresentation>
+                    {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
+                    <span *ngIf="studentParticipation?.presentationScore" class="badge bg-success">
+                        {{ studentParticipation!.presentationScore + '%' }}
+                    </span>
+                    <span *ngIf="!studentParticipation?.presentationScore" class="badge bg-secondary">
+                        {{ 'global.generic.unset' | artemisTranslate }}
+                    </span>
+                </ng-template>
             </div>
         </ng-template>
     </div>

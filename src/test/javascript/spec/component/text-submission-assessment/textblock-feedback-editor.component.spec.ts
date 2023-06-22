@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
@@ -222,7 +222,7 @@ describe('TextblockFeedbackEditorComponent', () => {
             });
     });
 
-    it('should connect automatic feedback origin blocks with current feedback', fakeAsync(() => {
+    it('should connect automatic feedback origin blocks with current feedback', async () => {
         component.feedback.suggestedFeedbackOriginSubmissionReference = 1;
         component.feedback.suggestedFeedbackParticipationReference = 1;
         const textAssessmentService = TestBed.inject(TextAssessmentService);
@@ -267,8 +267,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
         const participationStub = jest.spyOn(textAssessmentService, 'getFeedbackDataForExerciseSubmission').mockReturnValue(of(participation));
 
-        component.connectAutomaticFeedbackOriginBlocksWithFeedback();
-        tick();
+        await component.connectAutomaticFeedbackOriginBlocksWithFeedback();
 
         expect(participationStub).toHaveBeenCalledOnce();
         expect(component.listOfBlocksWithFeedback).toEqual([
@@ -280,7 +279,7 @@ describe('TextblockFeedbackEditorComponent', () => {
                 type: 'MANUAL',
             },
         ]);
-    }));
+    });
 
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback.gradingInstruction = new GradingInstruction();

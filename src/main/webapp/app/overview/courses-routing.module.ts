@@ -19,7 +19,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'courses/register',
+        path: 'courses/enroll',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     // /courses/:courseId/register is special,
@@ -62,8 +62,8 @@ const routes: Routes = [
                 loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
             },
             {
-                path: 'learning-goals',
-                loadChildren: () => import('../overview/course-learning-goals/course-learning-goals.module').then((m) => m.CourseLearningGoalsModule),
+                path: 'competencies',
+                loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
             },
             {
                 path: 'discussion',

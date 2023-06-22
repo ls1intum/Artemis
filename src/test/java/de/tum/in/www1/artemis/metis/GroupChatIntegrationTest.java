@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -21,12 +21,14 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "grtest";
 
+    private static final int NUMBER_OF_STUDENTS = 11;
+
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        this.database.addUsers(TEST_PREFIX, 11, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 0);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
         }
     }
 
@@ -59,7 +61,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // chat with too many users
         // then
         var loginList = new ArrayList<String>();
-        for (int i = 2; i <= 11; i++) {
+        for (int i = 2; i <= NUMBER_OF_STUDENTS; i++) {
             loginList.add(testPrefix + "student" + i);
         }
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", loginList, GroupChatDTO.class, HttpStatus.BAD_REQUEST);
@@ -165,7 +167,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         chat.setName("updated");
-        database.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(testPrefix + "student42");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId(), chat, GroupChatDTO.class, HttpStatus.FORBIDDEN);
         // then
         var groupChat = groupChatRepository.findById(chat.getId()).get();
@@ -229,7 +231,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
-        database.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(testPrefix + "student42");
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register",
                 List.of(testPrefix + "student1", testPrefix + "student2", testPrefix + "student4", testPrefix + "student5"), HttpStatus.FORBIDDEN);
 
@@ -248,7 +250,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         var loginList = new ArrayList<String>();
-        for (int i = 4; i <= 11; i++) {
+        for (int i = 4; i <= NUMBER_OF_STUDENTS; i++) {
             loginList.add(testPrefix + "student" + i);
         }
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register", loginList, HttpStatus.BAD_REQUEST);
@@ -303,7 +305,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
-        database.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(testPrefix + "student42");
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of(testPrefix + "student2"), HttpStatus.FORBIDDEN);
         // then
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");

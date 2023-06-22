@@ -43,7 +43,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
@@ -66,6 +66,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     private currentUser: User;
     private exerciseId: number;
@@ -90,7 +91,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -185,7 +185,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
-            this.getLatestRatedResult();
+            this.loadComplaintAndLatestRatedResult();
         });
         this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
             this.plagiarismCaseInfo = res.body ?? undefined;
@@ -209,10 +209,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
-                this.hasSubmissionPolicy = true;
             });
         }
 
@@ -385,23 +383,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return this.sortedHistoryResults.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
-    get showResults(): boolean {
-        if (!this.sortedHistoryResults?.length) {
-            return false;
-        }
-
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.isAfterAssessmentDueDate;
-        } else {
-            return true;
-        }
-    }
-
     /**
-     * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
-     * For other exercise types it returns a rated result.
+     * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
-    getLatestRatedResult() {
+    loadComplaintAndLatestRatedResult(): void {
         if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
             return;
         }
@@ -418,7 +403,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.gradedStudentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
+            return;
         }
 
         const ratedResults = this.gradedStudentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
@@ -450,6 +435,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
+            instance.isCommunicationPage = false;
         }
     }
 

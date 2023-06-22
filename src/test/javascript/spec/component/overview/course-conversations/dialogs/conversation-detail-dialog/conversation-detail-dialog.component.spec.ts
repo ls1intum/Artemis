@@ -91,7 +91,6 @@ examples.forEach((activeConversation) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationDetailDialogComponent);
             component = fixture.componentInstance;
-            component.getConversationName = () => 'dummy';
             fixture.detectChanges();
             initializeDialog(component, fixture, { course, activeConversation, selectedTab: ConversationDetailTabs.INFO });
         });

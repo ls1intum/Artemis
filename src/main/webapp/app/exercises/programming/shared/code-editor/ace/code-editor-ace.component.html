@@ -1,22 +1,5 @@
 <div class="card code-editor-ace">
-    <div class="d-flex justify-content-between card-header bg-primary text-white">
-        <h3 class="mt-1 card-title">
-            <fa-icon [icon]="farFileAlt"></fa-icon>
-            <span> &nbsp;{{ selectedFile }}</span>
-            <fa-icon *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
-        </h3>
-        <div ngbDropdown class="ms-2" placement="bottom-end auto" [autoClose]="'outside'" aria-label="Code Editor Settings">
-            <button ngbDropdownToggle class="btn btn-sm btn-primary" type="button" id="dropdownCodeEditorSettings" aria-expanded="false">
-                <fa-icon [icon]="faGear"></fa-icon>
-            </button>
-            <div ngbDropdownMenu aria-labelledby="dropdownCodeEditorSettings">
-                <div ngbDropdownItem class="d-flex">
-                    <span class="dropdown-item" jhiTranslate="artemisApp.editor.tabSize"></span>
-                    <input class="form-control-sm" type="number" min="1" [max]="MAX_TAB_SIZE" step="1" size="1" [(ngModel)]="tabSize" (change)="validateTabSize()" />
-                </div>
-            </div>
-        </div>
-    </div>
+    <jhi-code-editor-header [filename]="selectedFile" [isLoading]="isLoading" (tabSizeChanged)="updateTabSize($event)"></jhi-code-editor-header>
 
     <div class="card-body code-editor-ace__content">
         <div class="btn-inline-comment">
@@ -53,7 +36,7 @@
         <p
             *ngIf="!selectedFile && !isLoading"
             id="no-file-selected"
-            class="code-editor-ace__content__no-selected text-center lead text-muted pt-5"
+            class="code-editor-ace__content__no-selected text-center lead text-body-secondary pt-5"
             jhiTranslate="artemisApp.editor.selectFile"
         >
             Select a file to get started!

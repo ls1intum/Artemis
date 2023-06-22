@@ -40,14 +40,20 @@
             id="handleUnlockAllRepositoriesButton"
             class="btn btn-danger mt-1"
             (click)="handleUnlockAllRepositories()"
-            *ngIf="course?.isAtLeastInstructor"
+            *ngIf="!localVCEnabled && course?.isAtLeastInstructor"
             [disabled]="isLoading"
         >
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
             <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
         </button>
-        <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+        <button
+            id="lockAllRepositoriesButton"
+            class="btn btn-danger mt-1"
+            (click)="handleLockAllRepositories()"
+            *ngIf="!localVCEnabled && course?.isAtLeastInstructor"
+            [disabled]="isLoading"
+        >
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
             <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
@@ -97,6 +103,7 @@
 <jhi-data-table
     [isLoading]="isLoading"
     entityType="studentExam"
+    id="student-exam"
     [allEntities]="studentExams"
     entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
     showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
@@ -135,7 +142,7 @@
 
             <ngx-datatable-column prop="user" [minWidth]="120" [width]="120">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('user.name')">
+                    <span class="datatable-header-cell-wrapper username" (click)="controls.onSort('user.name')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"> Student </span>
                         <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
                     </span>
@@ -177,12 +184,12 @@
             <ngx-datatable-column prop="submitted" [minWidth]="80" [width]="80">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"> Started </span>
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"> Submitted </span>
                         <fa-icon [icon]="controls.iconForSortPropField('submitted')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    <span class="submitted">{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </ng-template>
             </ngx-datatable-column>
 
@@ -214,7 +221,10 @@
                 <ng-template ngx-datatable-cell-template let-value="value">
                     <div class="w-100 text-end">
                         <div class="btn-group" *ngIf="course?.isAtLeastTutor">
-                            <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]">
+                            <a
+                                class="btn btn-primary btn-sm me-1 mb-1 view-submission"
+                                [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]"
+                            >
                                 <span jhiTranslate="artemisApp.studentExams.view">View</span>
                             </a>
                         </div>

@@ -1,13 +1,11 @@
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 
 describe('FeedbackService', () => {
     let service: FeedbackService;
 
     beforeEach(() => {
-        const fake = {};
-        service = new FeedbackService(fake as ResultService);
+        service = new FeedbackService();
     });
 
     it('should filter feedbacks by strings', () => {

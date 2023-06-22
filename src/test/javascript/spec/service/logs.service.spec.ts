@@ -22,7 +22,7 @@ describe('Logs Service', () => {
 
     describe('Service methods', () => {
         it('should call correct URL', fakeAsync(() => {
-            const resourceUrl = SERVER_API_URL + 'management/loggers';
+            const resourceUrl = 'management/loggers';
 
             service.findAll().subscribe(() => {});
 

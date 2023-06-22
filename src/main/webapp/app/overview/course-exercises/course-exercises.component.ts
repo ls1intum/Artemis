@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -15,12 +16,13 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faAngleDown, faAngleUp, faFilter, faMagnifyingGlass, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faFilter, faMagnifyingGlass, faPlayCircle, faSortNumericDown, faSortNumericUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -89,6 +91,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     faSortNumericUp = faSortNumericUp;
     faSortNumericDown = faSortNumericDown;
     faMagnifyingGlass = faMagnifyingGlass;
+    faXmark = faXmark;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
@@ -106,6 +109,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         private guidedTourService: GuidedTourService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private localStorage: LocalStorageService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -226,6 +230,18 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.searchExercisesInput = this.searchExercisesInput.trim();
         this.exerciseFilter = new ExerciseFilterModel(this.searchExercisesInput);
         this.applyFiltersAndOrder();
+    }
+
+    get canUnenroll(): boolean {
+        return !!this.course?.unenrollmentEnabled && dayjs().isBefore(this.course?.unenrollmentEndDate);
+    }
+
+    /**
+     * Method is called when unenroll button is clicked
+     */
+    onUnenroll() {
+        const modalRef = this.modalService.open(CourseUnenrollmentModalComponent, { size: 'xl' });
+        modalRef.componentInstance.course = this.course;
     }
 
     /**

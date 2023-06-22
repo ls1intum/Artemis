@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,6 +11,7 @@ import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 
@@ -32,11 +32,11 @@ export enum ConversationMemberSearchFilter {
 }
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
-    public resourceUrl = SERVER_API_URL + '/api/courses/';
+    public resourceUrl = '/api/courses/';
 
     constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
 
-    getConversationName = (conversation: ConversationDto | undefined, showLogin = false): string => {
+    getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
         if (!conversation) {
             return '';
         }
@@ -72,7 +72,7 @@ export class ConversationService {
         } else {
             return '';
         }
-    };
+    }
 
     searchMembersOfConversation(
         courseId: number,
@@ -114,10 +114,14 @@ export class ConversationService {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/hidden`, null, { observe: 'response', params });
     }
 
+    checkForUnreadMessages(courseId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}${courseId}/unread-messages`, { observe: 'response' });
+    }
+
     public convertDateFromClient = (conversation: Conversation) => ({
         ...conversation,
-        creationDate: conversation.creationDate && dayjs(conversation.creationDate).isValid() ? dayjs(conversation.creationDate).toJSON() : undefined,
-        lastMessageDate: conversation.lastMessageDate && dayjs(conversation.lastMessageDate).isValid() ? dayjs(conversation.lastMessageDate).toJSON() : undefined,
+        creationDate: convertDateFromClient(conversation.creationDate),
+        lastMessageDate: convertDateFromClient(conversation.lastMessageDate),
     });
 
     public convertDateFromServer = (res: HttpResponse<ConversationDto>): HttpResponse<ConversationDto> => {
@@ -128,9 +132,9 @@ export class ConversationService {
     };
 
     public convertServerDates(conversation: ConversationDto) {
-        conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
-        conversation.lastMessageDate = conversation.lastMessageDate ? dayjs(conversation.lastMessageDate) : undefined;
-        conversation.lastReadDate = conversation.lastReadDate ? dayjs(conversation.lastReadDate) : undefined;
+        conversation.creationDate = convertDateFromServer(conversation.creationDate);
+        conversation.lastMessageDate = convertDateFromServer(conversation.lastMessageDate);
+        conversation.lastReadDate = convertDateFromServer(conversation.lastReadDate);
         return conversation;
     }
 

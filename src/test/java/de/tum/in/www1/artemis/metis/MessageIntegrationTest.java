@@ -10,16 +10,14 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import javax.validation.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -36,6 +34,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -43,11 +42,13 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -73,6 +74,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private List<Post> existingPostsAndConversationPosts;
 
     private List<Post> existingConversationPosts;
@@ -89,6 +96,17 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private ValidatorFactory validatorFactory;
 
+    private static final int NUMBER_OF_POSTS = 5;
+
+    private static final int HIGHER_PAGE_SIZE = NUMBER_OF_POSTS + 10;
+
+    private static final int LOWER_PAGE_SIZE = NUMBER_OF_POSTS - 2;
+
+    private static final int EQUAL_PAGE_SIZE = NUMBER_OF_POSTS;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
@@ -96,11 +114,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 1);
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        existingPostsAndConversationPosts = database.createPostsWithinCourse(TEST_PREFIX);
+        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
         List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
@@ -108,12 +126,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();
 
         // filter existing posts with exercise context
-        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
+        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
 
         // filter existing posts with lecture context
-        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList());
+        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
 
@@ -136,13 +155,39 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
+        var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(createdPost.getConversation().getId());
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(1);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { HIGHER_PAGE_SIZE, LOWER_PAGE_SIZE, EQUAL_PAGE_SIZE })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessagesWithPageSizes(int pageSize) {
+
+        var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
+        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").get();
+        List<Post> posts = conversationUtilService.createPostsWithAnswersAndReactionsAndConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
+        long conversationId = posts.get(0).getConversation().getId();
+        for (Post post : posts) {
+            assertThat(post.getConversation().getId()).isNotNull();
+            assertThat(post.getConversation().getId()).isEqualTo(conversationId);
+        }
+        var requestingUser = userRepository.getUser();
+
+        PostContextFilter postContextFilter = new PostContextFilter(course.getId());
+        postContextFilter.setConversationId(posts.get(0).getConversation().getId());
+        if (pageSize == LOWER_PAGE_SIZE) {
+            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(LOWER_PAGE_SIZE);
+        }
+        else {
+            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(NUMBER_OF_POSTS);
+        }
     }
 
     @Test
@@ -164,15 +209,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(postToSave.getConversation().getId());
-        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
+        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(numberOfPostsBefore);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
@@ -190,14 +236,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         // attempt to save new post under someone else's conversation
         postToSave.setConversation(existingConversationPosts.get(0).getConversation());
+        var requestingUser = userRepository.getUser();
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(postToSave.getConversation().getId());
-        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
+        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(numberOfPostsBefore);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
@@ -338,7 +385,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
 
-        assertThat(unreadMessages).isEqualTo(0);
+        assertThat(unreadMessages).isZero();
     }
 
     @Test

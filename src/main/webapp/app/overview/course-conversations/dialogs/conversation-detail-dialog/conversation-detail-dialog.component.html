@@ -8,7 +8,7 @@
                 <ng-container *ngIf="getAsGroupChat(activeConversation) as groupChat">
                     <jhi-group-chat-icon></jhi-group-chat-icon>
                 </ng-container>
-                {{ getConversationName(activeConversation, true) }}
+                {{ conversationService.getConversationName(activeConversation, true) }}
             </span>
             <ng-container *ngIf="getAsChannel(activeConversation) as channel">
                 <a

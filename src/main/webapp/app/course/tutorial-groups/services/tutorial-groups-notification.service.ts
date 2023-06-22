@@ -5,7 +5,7 @@ import { Observable, map, shareReplay } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsNotificationService {
-    private resourceUrl = SERVER_API_URL + 'api/tutorial-groups';
+    private resourceUrl = 'api/tutorial-groups';
 
     tutorialGroupsForNotifications$: Observable<TutorialGroup[]>;
 

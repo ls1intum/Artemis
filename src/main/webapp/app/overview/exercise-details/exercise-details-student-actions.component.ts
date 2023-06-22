@@ -18,6 +18,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -29,16 +31,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
-    readonly dayjs = dayjs;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
     @Input() courseId: number;
-    @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
-    @Input() showResult: boolean;
     @Input() examMode: boolean;
 
     // extension points, see shared/extension-point
@@ -49,6 +48,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     gradedParticipation?: StudentParticipation;
     practiceParticipation?: StudentParticipation;
     programmingExercise?: ProgrammingExercise;
+    isTeamAvailable: boolean;
+    hasRatedGradedResult: boolean;
+    beforeDueDate: boolean;
+    editorLabel?: string;
+    localVCEnabled = false;
 
     // Icons
     faComment = faComment;
@@ -66,6 +70,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         private router: Router,
         private translateService: TranslateService,
         private participationService: ParticipationService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
@@ -75,11 +80,26 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
+            });
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.editorLabel = 'openModelingEditor';
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            this.editorLabel = 'openTextEditor';
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            this.editorLabel = 'uploadFile';
         }
+
+        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
     }
 
+    /**
+     * Viewing the team is only possible if it's a team exercise and the student is already assigned to a team.
+     */
     ngOnChanges() {
         this.updateParticipations();
+        this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
@@ -96,13 +116,17 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
+
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
     }
 
     /**
-     * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
+     * Starting an exercise is not possible in the exam or if it's a team exercise and the student is not yet assigned a team, otherwise see exercise.utils ->
+     * isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return !this.examMode && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
+        const individualExerciseOrTeamAssigned = !!(!this.exercise.teamMode || this.exercise.studentAssignedTeamId);
+        return !this.examMode && individualExerciseOrTeamAssigned && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
     }
 
     /**
@@ -120,10 +144,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     startExercise() {
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            // Start the quiz
-            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id, 'live']);
-        }
         this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.exercise.id!)

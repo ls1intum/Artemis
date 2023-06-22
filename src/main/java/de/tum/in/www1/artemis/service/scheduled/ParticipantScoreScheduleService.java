@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
@@ -59,7 +59,7 @@ public class ParticipantScoreScheduleService {
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
@@ -81,11 +81,11 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, LearningGoalProgressService learningGoalProgressService,
+    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, CompetencyProgressService competencyProgressService,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.scheduler = scheduler;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
@@ -314,8 +314,8 @@ public class ParticipantScoreScheduleService {
                 updateParticipantScore(score);
             }
 
-            // Update the progress for learning goals linked to this exercise
-            learningGoalProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
+            // Update the progress for competencies linked to this exercise
+            competencyProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
         }
         catch (Exception e) {
             logger.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

@@ -7,6 +7,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -124,6 +125,12 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);
         }
         return false;
+    }
+
+    @Override
+    @JsonIgnore
+    public void initializeStatistic() {
+        setQuizQuestionStatistic(new MultipleChoiceQuestionStatistic());
     }
 
     /**

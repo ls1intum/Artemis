@@ -23,33 +23,23 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
 
-    @Input()
-    buildable = true;
-    @Input()
-    unsavedFiles: { [fileName: string]: string };
+    @Input() buildable = true;
+    @Input() unsavedFiles: { [fileName: string]: string };
     @Input() disableActions = false;
     @Input() disableAutoSave = false;
-    @Input()
-    get editorState() {
+    @Input() get editorState() {
         return this.editorStateValue;
     }
-    @Input()
-    get commitState() {
+    @Input() get commitState() {
         return this.commitStateValue;
     }
 
-    @Output()
-    commitStateChange = new EventEmitter<CommitState>();
-    @Output()
-    editorStateChange = new EventEmitter<EditorState>();
-    @Output()
-    isBuildingChange = new EventEmitter<boolean>();
-    @Output()
-    onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
-    @Output()
-    onRefreshFiles = new EventEmitter();
-    @Output()
-    onError = new EventEmitter<string>();
+    @Output() commitStateChange = new EventEmitter<CommitState>();
+    @Output() editorStateChange = new EventEmitter<EditorState>();
+    @Output() isBuildingChange = new EventEmitter<boolean>();
+    @Output() onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
+    @Output() onRefreshFiles = new EventEmitter();
+    @Output() onError = new EventEmitter<string>();
 
     isBuilding: boolean;
     editorStateValue: EditorState;
@@ -202,7 +192,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 }),
             );
         }
-        return of(null);
+        return of(undefined);
     }
 
     /**
@@ -216,7 +206,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             return;
         }
         // If there are unsaved changes, save them before trying to commit again.
-        of(null)
+        of(undefined)
             .pipe(
                 tap(() => (this.commitState = CommitState.COMMITTING)),
                 switchMap(() => {

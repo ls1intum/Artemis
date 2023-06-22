@@ -8,6 +8,10 @@ import { ExamActivity } from 'app/entities/exam-user-activity.model';
 
 export class StudentExam implements BaseEntity {
     public id?: number;
+    /**
+     * The individual working time per student in seconds
+     * The default working time of an exam is stored in exam.workingTime
+     */
     public workingTime?: number;
     public submitted?: boolean;
     public started?: boolean;

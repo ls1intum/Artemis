@@ -400,7 +400,7 @@ describe('Exercise Service', () => {
         });
         const expectedReturnedExercise = { id: exercise.id } as Exercise;
 
-        const expectedUrl = `${SERVER_API_URL}api/exercises`;
+        const expectedUrl = `api/exercises`;
         let result$: Observable<EntityResponseType>;
         let method: string;
         if (action === 'create') {
@@ -452,7 +452,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/details`,
+            url: `api/exercises/${exerciseId}/details`,
             method: 'GET',
         });
 
@@ -481,7 +481,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/example-solution`,
+            url: `api/exercises/${exerciseId}/example-solution`,
             method: 'GET',
         });
 
@@ -498,25 +498,7 @@ describe('Exercise Service', () => {
         service.reset(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/reset`,
-            method: 'DELETE',
-        });
-    });
-
-    it('should send a cleanup request', () => {
-        const exerciseId = 126;
-
-        service.cleanup(exerciseId, true).subscribe();
-
-        httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=true`,
-            method: 'DELETE',
-        });
-
-        service.cleanup(exerciseId, false).subscribe();
-
-        httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=false`,
+            url: `api/exercises/${exerciseId}/reset`,
             method: 'DELETE',
         });
     });
@@ -527,7 +509,7 @@ describe('Exercise Service', () => {
         service.toggleSecondCorrection(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/toggle-second-correction`,
+            url: `api/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
         });
     });

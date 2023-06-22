@@ -29,7 +29,7 @@ describe('User Service', () => {
             service.find('user').subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = SERVER_API_URL + 'api/users';
+            const resourceUrl = 'api/users';
             expect(req.request.url).toBe(`${resourceUrl}/user`);
         });
         it('should return User', () => {
@@ -53,21 +53,21 @@ describe('User Service', () => {
         it('should call correct URL to update lastNotificationRead', () => {
             service.updateLastNotificationRead().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = SERVER_API_URL + 'api/users/notification-date';
+            const resourceUrl = 'api/users/notification-date';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
         it('should call correct URL to update notification visibility', () => {
             service.updateNotificationVisibility(true).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = SERVER_API_URL + 'api/users/notification-visibility';
+            const resourceUrl = 'api/users/notification-visibility';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
         it('should call correct URL to initialize LTI user', () => {
             service.initializeLTIUser().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = SERVER_API_URL + 'api/users/initialize';
+            const resourceUrl = 'api/users/initialize';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
 

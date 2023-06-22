@@ -90,7 +90,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(consoleSpy).toHaveBeenCalledOnce();
         expect(consoleSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a successful launch');
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(`/api/lti13/auth-login`, expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti13/auth-login', expect.anything(), expect.anything());
 
         expect(comp.isLaunching).toBeFalse();
     });
@@ -104,7 +104,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(`/api/lti13/auth-login`, expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti13/auth-login', expect.anything(), expect.anything());
     });
 
     it('onInit launch fails on error', () => {
@@ -118,7 +118,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(`/api/lti13/auth-login`, expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti13/auth-login', expect.anything(), expect.anything());
 
         expect(comp.isLaunching).toBeFalse();
     });

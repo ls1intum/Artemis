@@ -18,9 +18,9 @@ public final class Constants {
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
-    public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
+    public static final int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
 
-    public static int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
+    public static final int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
 
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
@@ -37,25 +37,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_PATH = "programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/" + NEW_RESULT_RESOURCE_PATH;
-
-    public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
-
-    public static final String TEST_CASE_CHANGED_API_PATH = "/api" + TEST_CASE_CHANGED_PATH;
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
-
-    public static final String ATHENE_RESULT_PATH = "/athene-result/";
-
-    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
-
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
-
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";
+    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -88,6 +72,12 @@ public final class Constants {
 
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
+
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Deleted";
+
+    public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
+
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.deleted";
 
     // TODO: the following numbers should be configurable in the yml files
 
@@ -123,7 +113,26 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
 
-    public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
+    /**
+     * Maximum length in the database for the feedback detail text.
+     */
+    public static final int FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH = 5000;
+
+    /**
+     * Maximum length of feedback detail texts before a long feedback is created.
+     */
+    public static final int FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH = 1000;
+
+    /**
+     * Maximum length for feedback detail text that is trimmed and moved to a connected long feedback instead.
+     */
+    public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
+
+    /**
+     * Arbitrary limit that is unlikely to be reached by real feedback in practice.
+     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
+     */
+    public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
 
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
@@ -143,7 +152,9 @@ public final class Constants {
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
-    public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
+    public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
+
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
@@ -242,6 +253,10 @@ public final class Constants {
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
+    public static final String VERSION_CONTROL_NAME = "versionControlName";
+
+    public static final String CONTINUOUS_INTEGRATION_NAME = "continuousIntegrationName";
+
     public static final String USE_EXTERNAL = "useExternal";
 
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
@@ -251,6 +266,18 @@ public final class Constants {
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
+
+    /**
+     * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.
+     */
+    public static final String PROFILE_LOCALVC = "localvc";
+
+    /**
+     * The name of the Spring profile used to choose the local CI system instead of Bamboo, Jenkins, or GitLabCI.
+     */
+    public static final String PROFILE_LOCALCI = "localci";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database

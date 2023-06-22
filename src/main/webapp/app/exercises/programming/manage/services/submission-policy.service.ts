@@ -14,7 +14,7 @@ export interface ISubmissionPolicyService {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionPolicyService implements ISubmissionPolicyService {
-    public baseResourceUrl = SERVER_API_URL + 'api/programming-exercises/{exerciseId}/submission-policy';
+    public baseResourceUrl = 'api/programming-exercises/{exerciseId}/submission-policy';
 
     constructor(private http: HttpClient) {}
 
@@ -81,6 +81,10 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
      */
     updateSubmissionPolicyToProgrammingExercise(submissionPolicy: SubmissionPolicy, exerciseId: number): Observable<SubmissionPolicy> {
         return this.http.patch<SubmissionPolicy>(this.requestUrl(exerciseId), submissionPolicy);
+    }
+
+    getParticipationSubmissionCount(participationId: number): Observable<number> {
+        return this.http.get<number>(`api/participations/${participationId}/submission-count`);
     }
 
     /**

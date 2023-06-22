@@ -1,7 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, DoCheck, Input, OnDestroy } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { Subscription } from 'rxjs';
+import { GradeStepsDTO } from 'app/entities/grade-step.model';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',
@@ -31,14 +34,43 @@ import { Authority } from 'app/shared/constants/authority.constants';
     `,
     styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
-export class PresentationScoreComponent {
+export class PresentationScoreComponent implements DoCheck, OnDestroy {
     @Input() exercise: Exercise;
 
     Authority = Authority;
     // Icons
     faQuestionCircle = faQuestionCircle;
 
+    private gradeStepsDTO?: GradeStepsDTO;
+    private gradeStepsDTOSub?: Subscription;
+
+    constructor(private gradingSystemService: GradingSystemService) {}
+
+    ngDoCheck(): void {
+        if (!this.gradeStepsDTOSub && this.exercise.course?.id) {
+            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(this.exercise.course.id).subscribe((gradeStepsDTO) => {
+                if (gradeStepsDTO.body) {
+                    this.gradeStepsDTO = gradeStepsDTO.body;
+                }
+            });
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.gradeStepsDTOSub) {
+            this.gradeStepsDTOSub.unsubscribe();
+        }
+    }
+
     showPresentationScoreCheckbox(): boolean {
+        return this.isBasicPresentation() || this.isGradedPresentation();
+    }
+
+    private isBasicPresentation(): boolean {
         return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);
+    }
+
+    private isGradedPresentation(): boolean {
+        return !!(this.exercise.course && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0);
     }
 }

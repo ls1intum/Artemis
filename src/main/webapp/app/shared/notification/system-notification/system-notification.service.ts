@@ -12,7 +12,8 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationService {
-    public resourceUrl = SERVER_API_URL + 'api/system-notifications';
+    public resourceUrl = 'api/system-notifications';
+    public publicResourceUrl = 'api/public/system-notifications';
 
     constructor(private router: Router, private http: HttpClient) {}
 
@@ -38,7 +39,7 @@ export class SystemNotificationService {
      */
     getActiveNotifications(): Observable<SystemNotification[]> {
         return this.http
-            .get<SystemNotification[]>(`${this.resourceUrl}/active`, { observe: 'response' })
+            .get<SystemNotification[]>(`${this.publicResourceUrl}/active`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)))
             .pipe(map((res) => res.body || []));
     }

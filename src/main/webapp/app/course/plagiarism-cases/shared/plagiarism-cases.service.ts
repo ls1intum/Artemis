@@ -14,8 +14,8 @@ export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
-    private resourceUrlExercises = SERVER_API_URL + 'api/exercises';
+    private resourceUrl = 'api/courses';
+    private resourceUrlExercises = 'api/exercises';
 
     constructor(private http: HttpClient) {}
 

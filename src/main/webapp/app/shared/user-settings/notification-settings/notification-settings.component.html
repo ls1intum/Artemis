@@ -35,7 +35,7 @@
                     {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
                 </span>
                 <!--Setting Specific Properties-->
-                <div class="d-flex border-bottom">
+                <div class="d-flex">
                     <div *ngIf="setting.webapp != undefined && (setting.webappSupport == undefined || setting.webappSupport)" class="form-check pe-3">
                         <input
                             type="checkbox"

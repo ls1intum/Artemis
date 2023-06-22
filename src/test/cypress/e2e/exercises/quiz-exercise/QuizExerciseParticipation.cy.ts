@@ -3,14 +3,7 @@ import { Course } from 'app/entities/course.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import {
-    courseManagementRequest,
-    courseOverview,
-    quizExerciseCreation,
-    quizExerciseDragAndDropQuiz,
-    quizExerciseMultipleChoice,
-    quizExerciseShortAnswerQuiz,
-} from '../../../support/artemis';
+import { courseManagementRequest, courseOverview, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
 
 // Common primitives

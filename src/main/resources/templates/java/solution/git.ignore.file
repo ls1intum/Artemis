@@ -1,4 +1,7 @@
 .gradle
+**/build/
+!src/**/build/
+target/
 
 # Taken from https://github.com/github/gitignore
 

@@ -43,7 +43,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
-    getConversationName = this.conversationService.getConversationName;
 
     canAddUsers = canAddUsersToConversation;
 

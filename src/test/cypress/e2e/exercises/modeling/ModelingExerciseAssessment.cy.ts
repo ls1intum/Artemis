@@ -55,7 +55,7 @@ describe('Modeling Exercise Assessment Spec', () => {
             cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             exerciseResult.shouldShowScore(20);
-            exerciseResult.clickViewSubmission();
+            exerciseResult.clickOpenExercise(modelingExercise.id!);
             modelingExerciseFeedback.shouldShowScore(20);
             modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');

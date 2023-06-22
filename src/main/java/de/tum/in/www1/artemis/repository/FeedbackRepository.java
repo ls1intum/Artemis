@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -105,7 +105,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
                 if (issue.getMessage() != null) {
                     // Note: the feedback detail text is limited to 5.000 characters, so we limit the issue message to 4.500 characters to avoid issues
                     // the remaining 500 characters are used for the json structure of the issue
-                    int maxLength = Math.min(issue.getMessage().length(), FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS - 500);
+                    int maxLength = Math.min(issue.getMessage().length(), FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
                     issue.setMessage(issue.getMessage().substring(0, maxLength));
                 }
 
@@ -117,7 +117,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
                 // Store static code analysis in JSON format
                 try {
-                    feedback.setDetailText(mapper.writeValueAsString(issue));
+                    // the feedback is already pre-truncated to fit, it should not be shortened further
+                    feedback.setDetailTextTruncated(mapper.writeValueAsString(issue));
                 }
                 catch (JsonProcessingException e) {
                     continue;

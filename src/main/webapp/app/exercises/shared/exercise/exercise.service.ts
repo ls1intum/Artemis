@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -46,8 +46,8 @@ export interface ExerciseServicable<T extends Exercise> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/exercises';
+    public resourceUrl = 'api/exercises';
+    public adminResourceUrl = 'api/admin/exercises';
 
     constructor(
         private http: HttpClient,
@@ -179,16 +179,6 @@ export class ExerciseService {
                 this.processExerciseEntityResponse(res);
             }),
         );
-    }
-
-    /**
-     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
-     * @param { number } exerciseId - programming exercise for which build plans in respective student participations are deleted
-     * @param { boolean } deleteRepositories - if true, the repositories get deleted
-     */
-    cleanup(exerciseId: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/cleanup`, { params, observe: 'response' });
     }
 
     /**

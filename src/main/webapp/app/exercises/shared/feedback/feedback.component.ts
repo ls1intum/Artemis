@@ -1,7 +1,7 @@
-import { Component, Injector, Input, OnInit } from '@angular/core';
+import { Component, Injector, Input, OnInit, Optional } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -15,7 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -25,7 +24,7 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
@@ -103,7 +102,6 @@ export class FeedbackComponent implements OnInit {
     feedbackItemNodes: FeedbackNode[];
 
     constructor(
-        public activeModal: NgbActiveModal,
         private resultService: ResultService,
         private buildLogService: BuildLogService,
         private translateService: TranslateService,
@@ -111,6 +109,8 @@ export class FeedbackComponent implements OnInit {
         private feedbackService: FeedbackService,
         private feedbackChartService: FeedbackChartService,
         private injector: Injector,
+        @Optional()
+        public activeModal?: NgbActiveModal,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
@@ -134,8 +134,8 @@ export class FeedbackComponent implements OnInit {
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
 
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.commitHashURLTemplate = info?.commitHashURLTemplate;
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl();
         });
     }
@@ -172,14 +172,17 @@ export class FeedbackComponent implements OnInit {
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     // don't query the server if feedback already exists
                     if (feedbacks?.length) {
+                        // ensure connection to result, required for FeedbackItems in the next step
+                        feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.feedbackService.getFeedbacksForResult(this.result.participation!.id!, this.result);
+                        return this.resultService.getFeedbackDetailsForResult(this.result.participation!.id!, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
+
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 

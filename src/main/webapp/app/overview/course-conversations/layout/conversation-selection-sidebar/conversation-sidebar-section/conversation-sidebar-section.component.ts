@@ -14,31 +14,40 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class ConversationSidebarSectionComponent implements OnInit {
     @Output() conversationSelected = new EventEmitter<ConversationDto>();
+    @Output() settingsChanged = new EventEmitter<void>();
+    @Output() conversationHiddenStatusChange = new EventEmitter<void>();
+    @Output() conversationFavoriteStatusChange = new EventEmitter<void>();
 
-    @Output()
-    settingsChanged = new EventEmitter<void>();
-
-    @Output()
-    conversationHiddenStatusChange = new EventEmitter<void>();
-
-    @Output()
-    conversationFavoriteStatusChange = new EventEmitter<void>();
-
-    @Input()
-    label: string;
-
-    @Input()
-    course: Course;
-
-    @Input()
-    activeConversation?: ConversationDto;
-
+    @Input() label: string;
+    @Input() course: Course;
+    @Input() activeConversation?: ConversationDto;
     @Input() headerKey: string;
+
+    @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
     readonly prefix = 'collapsed.';
 
-    @Input()
-    set conversations(conversations: ConversationDto[]) {
+    isCollapsed: boolean;
+
+    hiddenConversations: ConversationDto[] = [];
+    visibleConversations: ConversationDto[] = [];
+    allConversations: ConversationDto[] = [];
+    numberOfConversations = 0;
+
+    getAsChannel = getAsChannelDto;
+
+    // icon imports
+    faChevronRight = faChevronRight;
+    faMessage = faMessage;
+
+    constructor(public conversationService: ConversationService, public localStorageService: LocalStorageService) {}
+
+    ngOnInit(): void {
+        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
+    }
+
+    @Input() set conversations(conversations: ConversationDto[]) {
         this.hiddenConversations = [];
         this.visibleConversations = [];
         this.allConversations = conversations ?? [];
@@ -86,35 +95,13 @@ export class ConversationSidebarSectionComponent implements OnInit {
         return containsUnreadConversation;
     }
 
-    isCollapsed: boolean;
-    @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
-
     toggleCollapsed() {
         this.isCollapsed = !this.isCollapsed;
         this.localStorageService.store(this.storageKey, this.isCollapsed);
     }
 
-    hiddenConversations: ConversationDto[] = [];
-    visibleConversations: ConversationDto[] = [];
-    allConversations: ConversationDto[] = [];
-    numberOfConversations = 0;
-
-    getAsChannel = getAsChannelDto;
-    getConversationName = this.conversationService.getConversationName;
-
-    // icon imports
-    faChevronRight = faChevronRight;
-    faMessage = faMessage;
-
-    constructor(public conversationService: ConversationService, public localStorageService: LocalStorageService) {}
-
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
     showHiddenConversations = false;
-
-    ngOnInit(): void {
-        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
-        this.localStorageService.store(this.storageKey, this.isCollapsed);
-    }
 
     get storageKey() {
         return this.prefix + this.headerKey;

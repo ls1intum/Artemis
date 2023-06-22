@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet id="20230419102000" author="dominik_remo" >
+        <!-- Add columns to grading_scale table to support grading for presentations -->
+        <addColumn tableName="grading_scale">
+            <column name="presentations_number" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="presentations_weight" type="double">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Update the datatype of presentation_score column to support grading for presentations -->
+        <modifyDataType tableName="participation" columnName="presentation_score" newDataType="double"/>
+    </changeSet>
+</databaseChangeLog>

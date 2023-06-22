@@ -104,6 +104,8 @@ export class GradingKeyOverviewComponent implements OnInit {
                         maxPoints: this.gradingSystemService.getGradingScaleMaxPoints(source),
                         plagiarismGrade: source.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
                         noParticipationGrade: source.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+                        presentationsNumber: source.presentationsNumber,
+                        presentationsWeight: source.presentationsWeight,
                     };
                 }),
             );

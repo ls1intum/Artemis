@@ -53,7 +53,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseGradingTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-task.component';
+import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -65,9 +65,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let updateTestCasesStub: jest.SpyInstance;
     let updateCategoriesStub: jest.SpyInstance;
-    let resetTestCasesStub: jest.SpyInstance;
     let resetCategoriesStub: jest.SpyInstance;
     let testCasesChangedStub: jest.SpyInstance;
     let getExerciseTestCaseStateStub: jest.SpyInstance;
@@ -200,7 +200,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 ProgrammingExerciseGradingTableActionsComponent,
                 TableEditableFieldComponent,
                 MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
-                MockComponent(ProgrammingExerciseGradingTaskComponent),
+                MockComponent(ProgrammingExerciseGradingTasksTableComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),
@@ -241,9 +241,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
                 modalService = debugElement.injector.get(NgbModal);
 
-                updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
                 updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
-                resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
                 resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
                 loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
                 importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
@@ -544,7 +542,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         initGradingComponent();
         comp.changedTestCaseIds = [1, 2, 3];
 
-        window.confirm = (message) => false;
+        // Ignore window confirm
+        window.confirm = () => {
+            return false;
+        };
 
         expect(comp.canDeactivate()).toBeFalse();
     });

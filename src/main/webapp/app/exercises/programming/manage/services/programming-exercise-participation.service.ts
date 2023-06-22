@@ -16,7 +16,7 @@ export interface IProgrammingExerciseParticipationService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercise-participations/';
+    public resourceUrl = 'api/programming-exercise-participations/';
 
     constructor(private http: HttpClient, private entityTitleService: EntityTitleService, private accountService: AccountService) {}
 

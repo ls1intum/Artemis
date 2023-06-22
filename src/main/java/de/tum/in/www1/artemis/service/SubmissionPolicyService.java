@@ -307,21 +307,44 @@ public class SubmissionPolicyService {
      * Calculates and returns the number of submissions for one participation. This amount represents
      * the amount of unique manual submissions with at least one result.
      *
-     * @param participation for which the number of submissions should be determined
+     * @param participation              for which the number of submissions should be determined
+     * @param withSubmissionCompensation flag that indicates that the newest result is not yet saved and should be accounted for
      * @return the number of submissions of this participation
      */
-    private int getParticipationSubmissionCount(Participation participation) {
-        final Long participationId = participation.getId();
+    public int getParticipationSubmissionCount(Participation participation, boolean withSubmissionCompensation) {
+        long participationId = participation.getId();
+
+        // The newest result is not yet stored in the database. Therefore, we have to add one additional submission if the latest submission does not have a result yet, since it
+        // is currently getting one
         int submissionCompensation = 0;
-        participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        var submissions = participation.getSubmissions();
-        if (submissions != null && !submissions.isEmpty()) {
-            submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
+        if (withSubmissionCompensation) {
+            participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
+                    .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+            var submissions = participation.getSubmissions();
+            if (submissions != null && !submissions.isEmpty()) {
+                submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
+            }
         }
+
+        // Note: The way the participation submissions are counted here (filtering out submissions without results), leads to unexpected behavior when the user submits to their
+        // repository in rapid succession.
+        // When the user submits while the result for the previous submission is not yet available, the previous submission will not be counted.
+        // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
+        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behaviour is acceptable.
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count() + submissionCompensation;
+    }
+
+    /**
+     * Calculates and returns the number of submissions for one participation. This amount represents
+     * the amount of unique manual submissions with at least one result.
+     *
+     * @param participation for which the number of submissions should be determined
+     * @return the number of submissions of this participation
+     */
+    public int getParticipationSubmissionCount(Participation participation) {
+        return getParticipationSubmissionCount(participation, true);
     }
 
     private SubmissionPolicy toggleSubmissionPolicy(SubmissionPolicy policy, boolean active) {

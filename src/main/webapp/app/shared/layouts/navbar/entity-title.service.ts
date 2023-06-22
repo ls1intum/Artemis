@@ -1,13 +1,13 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
 
 export enum EntityType {
     COURSE = 'COURSE',
     EXERCISE = 'EXERCISE',
     LECTURE = 'LECTURE',
-    LEARNING_GOAL = 'LEARNING_GOAL',
+    COMPETENCY = 'COMPETENCY',
     HINT = 'HINT',
     DIAGRAM = 'DIAGRAM',
     ORGANIZATION = 'ORGANIZATION',
@@ -107,8 +107,8 @@ export class EntityTitleService {
             case EntityType.LECTURE:
                 resourceUrl += 'lectures';
                 break;
-            case EntityType.LEARNING_GOAL:
-                resourceUrl += 'learning-goals';
+            case EntityType.COMPETENCY:
+                resourceUrl += 'competencies';
                 break;
             case EntityType.HINT:
                 resourceUrl += `programming-exercises/${ids[1]}/exercise-hints`;
@@ -127,7 +127,7 @@ export class EntityTitleService {
                 break;
         }
 
-        this.http.get(`${SERVER_API_URL}${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
+        this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
             if (response.body) {
                 this.setTitle(type, ids, response.body);
             }

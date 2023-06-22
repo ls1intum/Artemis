@@ -21,8 +21,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
 export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
-    @Input()
-    filteredExerciseIDs: number[];
+    @Input() filteredExerciseIDs: number[];
 
     courseId: number;
     isLoading = false;
@@ -33,7 +32,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
     readonly convertToMapKey = ChartExerciseTypeFilter.convertToMapKey;
-    readonly typeFilter = this.exerciseTypeFilter;
 
     // Icons
     faFilter = faFilter;
@@ -60,7 +58,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
-        private exerciseTypeFilter: ChartExerciseTypeFilter,
+        public exerciseTypeFilter: ChartExerciseTypeFilter, // used in html, therefore it must be public
         private translateService: TranslateService,
     ) {
         this.translateService.onLangChange.subscribe(() => {

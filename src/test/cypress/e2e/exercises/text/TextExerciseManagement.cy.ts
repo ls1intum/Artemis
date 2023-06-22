@@ -31,7 +31,7 @@ describe('Text exercise management', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExercisesOfCourse(course.shortName!);
-        cy.get('#create-text-exercise').click();
+        courseManagementExercises.createTextExercise();
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();

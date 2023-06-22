@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -65,7 +66,12 @@ public class RequestUtilService {
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json)).andExpect(status().is(expectedStatus.value())).andReturn();
+        var builder = MockMvcRequestBuilders.multipart(new URI(path));
+        if (file != null) {
+            builder = builder.file(file);
+        }
+        builder.file(json);
+        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
@@ -168,11 +174,7 @@ public class RequestUtilService {
             request.headers(httpHeaders);
         }
         MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         restoreSecurityContext();
         return res.getResponse();
     }
@@ -194,18 +196,14 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
-        if (res == null) {
+        if (res == null || res.isEmpty() || res.trim().isEmpty()) {
             return null;
         }
         return mapper.readValue(res, responseType);
@@ -240,11 +238,7 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         return res.getResponse().getContentAsString();
     }
 
@@ -295,7 +289,8 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
+            LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
@@ -304,7 +299,10 @@ public class RequestUtilService {
             return request;
         });
         if (file != null) {
-            builder = builder.file(file);
+            builder.file(file);
+        }
+        if (params != null) {
+            builder.params(params);
         }
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
@@ -330,11 +328,7 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
 
         if (res.getResponse().getStatus() >= 299) {
             return null;
@@ -343,8 +337,8 @@ public class RequestUtilService {
         if (responseType == String.class) {
             return (R) res.getResponse().getContentAsString();
         }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        // default encoding is iso-8859-1 since v5.2.0, but we want utf-8
+        return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
     }
 
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
@@ -465,7 +459,8 @@ public class RequestUtilService {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
-        final var contentAsString = res.getResponse().getContentAsString();
+        // default charset is iso-8859-1 since v5.2.0 but we want utf-8
+        final var contentAsString = res.getResponse().getContentAsString(StandardCharsets.UTF_8);
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")
                     && !res.getResponse().getContentType().equals("application/octet-stream")) {
@@ -485,7 +480,7 @@ public class RequestUtilService {
         if (responseType == Void.class && contentAsString.isEmpty()) {
             return (T) "";
         }
-        if (res.getResponse().getContentType() == null) {
+        if (contentAsString.isEmpty() || res.getResponse().getContentType() == null) {
             return null;
         }
         return mapper.readValue(contentAsString, responseType);
@@ -581,6 +576,13 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public <T> void delete(String path, HttpStatus expectedStatus, T body) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
+        restoreSecurityContext();
+    }
+
     /**
      * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
@@ -604,5 +606,19 @@ public class RequestUtilService {
             multiMap.add(key, value.toString());
         });
         return multiMap;
+    }
+
+    /**
+     * Verifies the expected response headers against the actual response headers.
+     *
+     * @param expectedResponseHeaders a map containing the expected response headers
+     * @param res                     the {@link MvcResult} containing the actual response headers
+     */
+    private static void verifyExpectedResponseHeaders(Map<String, String> expectedResponseHeaders, MvcResult res) {
+        if (expectedResponseHeaders != null) {
+            for (Map.Entry<String, String> responseHeader : expectedResponseHeaders.entrySet()) {
+                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).get(0)).isEqualTo(responseHeader.getValue());
+            }
+        }
     }
 }

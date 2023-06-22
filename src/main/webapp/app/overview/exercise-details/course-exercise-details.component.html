@@ -8,10 +8,9 @@
     <div class="tab-bar tab-bar-exercise-details ps-3 pe-3 justify-content-end">
         <jhi-exercise-details-student-actions
             class="col"
-            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult }"
+            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
             [courseId]="courseId"
             [exercise]="exercise"
-            [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
 
@@ -31,7 +30,6 @@
                     [studentParticipation]="gradedStudentParticipation"
                     [showBadge]="true"
                     [triggerLastGraded]="false"
-                    [short]="true"
                 >
                 </jhi-submission-result-status>
             </div>
@@ -158,23 +156,8 @@
                 </ng-container>
             </div>
             <!-- RESULTS END -->
-            <!-- PROBLEM STATEMENT START -->
-            <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="row mb-4">
-                <jhi-programming-exercise-instructions
-                    [exercise]="exercise"
-                    [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"
-                    [personalParticipation]="true"
-                >
-                </jhi-programming-exercise-instructions>
-            </div>
-            <ng-template #exerciseTemplate>
-                <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
-                    <div class="col-12 col-md-12 markdown-preview problem-statement">
-                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
-                        <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
-                    </div>
-                </div>
-            </ng-template>
+            <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"> </jhi-problem-statement>
+
             <jhi-reset-repo-button
                 *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length"
                 [exercise]="exercise"
@@ -182,7 +165,6 @@
                 [smallButtons]="false"
             >
             </jhi-reset-repo-button>
-            <!-- PROBLEM STATEMENT END -->
             <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
@@ -221,6 +203,7 @@
                     </ng-container>
                 </dl>
             </ng-container>
+            <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation"></jhi-exercise-info>
             <jhi-complaint-student-view
                 *ngIf="
                     exercise &&
@@ -263,7 +246,10 @@
             </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="exercise.course && isCommunicationEnabled(exercise.course)" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet
+                *ngIf="exercise.course && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course))"
+                (activate)="onChildActivate($event)"
+            ></router-outlet>
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>

@@ -243,7 +243,7 @@ export class ExamActionService {
      * @return the load actions endpoint
      */
     public static loadActionsEndpoint(examId: number): string {
-        return `${SERVER_API_URL}api/exam-monitoring/${examId}/load-actions`;
+        return `api/exam-monitoring/${examId}/load-actions`;
     }
 
     /**

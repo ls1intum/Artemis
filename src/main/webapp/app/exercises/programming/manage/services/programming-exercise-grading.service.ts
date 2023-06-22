@@ -36,7 +36,7 @@ export interface IProgrammingExerciseGradingService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};

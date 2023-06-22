@@ -198,7 +198,7 @@ describe('Notification Service', () => {
         it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
             notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET' });
-            const url = SERVER_API_URL + 'api/notifications';
+            const url = 'api/notifications';
             expect(req.request.url).toBe(url);
         });
 

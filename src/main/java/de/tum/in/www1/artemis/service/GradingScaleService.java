@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -119,5 +120,15 @@ public class GradingScaleService {
         // last step should end with an inclusive value
         boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive();
         return validAdjacency && validFirstElement && validLastElement;
+    }
+
+    /**
+     * Find a grading scale in the database given the courseId
+     *
+     * @param courseId the grading scale corresponding to the courseId
+     * @return the grading scale
+     */
+    public Optional<GradingScale> findGradingScaleByCourseId(Long courseId) {
+        return gradingScaleRepository.findByCourseId(courseId);
     }
 }

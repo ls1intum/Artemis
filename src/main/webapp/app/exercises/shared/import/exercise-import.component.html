@@ -40,7 +40,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let exercise of content.resultsOnPage; trackBy: trackId" class="flex-row">
+            <tr *ngFor="let exercise of content.resultsOnPage; trackBy: trackId" [class]="'flex-row exercise-' + exercise.id">
                 <td class="col-1">
                     <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
                 </td>
@@ -59,7 +59,7 @@
                     </div>
                 </td>
                 <td class="col-1">
-                    <jhi-button (onClick)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
+                    <jhi-button (onClick)="openImport(exercise)" class="import" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
                 </td>
             </tr>
         </tbody>

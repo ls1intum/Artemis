@@ -14,7 +14,8 @@ import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { Router } from '@angular/router';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -37,6 +38,7 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     // Icons
     faSpinner = faSpinner;
@@ -47,6 +49,7 @@ export class CourseLectureDetailsComponent implements OnInit {
         private lectureUnitService: LectureUnitService,
         private activatedRoute: ActivatedRoute,
         private fileService: FileService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -86,6 +89,10 @@ export class CourseLectureDetailsComponent implements OnInit {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    redirectToLectureManagement(): void {
+        this.router.navigate(['course-management', this.lecture?.course?.id, 'lectures', this.lecture?.id]);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {
@@ -134,6 +141,7 @@ export class CourseLectureDetailsComponent implements OnInit {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;
+            instance.isCommunicationPage = false;
         }
     }
 }

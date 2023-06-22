@@ -1,11 +1,4 @@
-<jhi-exercise-details-student-actions
-    [exercise]="exercise"
-    [courseId]="courseId"
-    [actionsOnly]="actionsOnly"
-    [smallButtons]="smallButtons"
-    [showResult]="showResult"
-    [examMode]="examMode"
->
+<jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [smallButtons]="smallButtons" [examMode]="examMode">
     <ng-template #overrideCloneOnlineEditorButton>
         <jhi-ide-button
             [featureToggle]="FeatureToggle.ProgrammingExercises"

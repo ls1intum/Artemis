@@ -55,7 +55,7 @@ describe('Programming Exercise Management', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagement.openExercisesOfCourse(course.shortName!);
-            courseManagementExercises.clickCreateProgrammingExerciseButton();
+            courseManagementExercises.createProgrammingExercise();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
             const exerciseTitle = 'Cypress programming exercise ' + generateUUID();

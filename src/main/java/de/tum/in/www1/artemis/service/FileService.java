@@ -341,8 +341,19 @@ public class FileService implements DisposableBean {
             return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
         if (publicPath.contains("files/attachments/attachment-unit")) {
-            String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-            return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+            if (!publicPath.contains("/slide")) {
+                String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
+                return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+            }
+            final var slideSubPath = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "").split("/");
+            final var shouldBeAttachmentUnitId = slideSubPath[0];
+            final var shouldBeSlideId = slideSubPath.length >= 3 ? slideSubPath[2] : null;
+            if (!NumberUtils.isCreatable(shouldBeAttachmentUnitId) || !NumberUtils.isCreatable(shouldBeSlideId)) {
+                throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath);
+            }
+            final var attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+            final var slideId = Long.parseLong(shouldBeSlideId);
+            return Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnitId), "slide", String.valueOf(slideId), filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -374,7 +385,6 @@ public class FileService implements DisposableBean {
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
-
         // check for known path to convert
         if (actualPathString.contains(FilePathService.getTempFilePath())) {
             return DEFAULT_FILE_SUBPATH + filename;
@@ -398,7 +408,19 @@ public class FileService implements DisposableBean {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath())) {
-            return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
+            if (!actualPathString.contains("/slide")) {
+                return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
+            }
+            try {
+                // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
+                // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
+                final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 4).toString();
+                final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                return "/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
+            }
+            catch (IllegalArgumentException e) {
+                throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + actualPathString);
+            }
         }
         if (actualPathString.contains(FilePathService.getFileUploadExercisesFilePath())) {
             final long exerciseId;
@@ -448,6 +470,9 @@ public class FileService implements DisposableBean {
         }
         if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath())) {
             filenameBase = "AttachmentUnit_";
+        }
+        if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath()) && targetFolder.contains("/slide")) {
+            filenameBase = "AttachmentUnitSlide_";
         }
 
         // extract the file extension
@@ -1133,7 +1158,7 @@ public class FileService implements DisposableBean {
      * Convert byte[] to MultipartFile by using CommonsMultipartFile
      *
      * @param fileName        file name to set file name
-     * @param extension       extension of the file
+     * @param extension       extension of the file (e.g .pdf or .png)
      * @param streamByteArray byte array to save to the temp file
      * @return multipartFile wrapper for the file stored on disk
      */
@@ -1142,7 +1167,7 @@ public class FileService implements DisposableBean {
             Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
             Files.write(tempPath, streamByteArray);
             File outputFile = tempPath.toFile();
-            FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+            FileItem fileItem = new DiskFileItem(fileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
 
             try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
                 IOUtils.copy(input, fileItemOutputStream);

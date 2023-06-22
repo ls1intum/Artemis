@@ -24,14 +24,10 @@ import { finalize } from 'rxjs/operators';
 export class ConversationAddUsersDialogComponent extends AbstractDialogComponent implements OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    @Input()
-    course: Course;
-
-    @Input()
-    activeConversation: ConversationDto;
+    @Input() course: Course;
+    @Input() activeConversation: ConversationDto;
 
     isInitialized = false;
-
     maxSelectable: number | undefined;
 
     initialize() {
@@ -65,8 +61,6 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
-
-    getConversationName = this.conversationService.getConversationName;
 
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);

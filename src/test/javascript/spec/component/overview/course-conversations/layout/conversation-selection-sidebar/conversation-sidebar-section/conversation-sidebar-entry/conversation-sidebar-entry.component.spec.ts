@@ -53,7 +53,6 @@ examples.forEach((conversation) => {
             changeFavoriteStatusSpy = jest.spyOn(conversationService, 'changeFavoriteStatus').mockReturnValue(of(new HttpResponse<void>()));
 
             component = fixture.componentInstance;
-            component.getConversationName = () => 'dummy';
             component.conversation = conversation;
             component.activeConversation = activeConversation;
             component.course = course;

@@ -38,7 +38,7 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Aufgabe zur Bestätigung ein.",
                 "resetToTemplate": "Zurücksetzen auf Template-Repository",
                 "resetToGradedParticipation": "Zurücksetzen auf bewertete Abgabe",
-                "success": "Repository zurückgesetzt"
+                "success": "Repository erfolgreich zurückgesetzt. Du kannst die Aufgabe jetzt neu bearbeiten."
             },
             "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Abgabefrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies beeinflusst deine Bewertung nicht! Artemis setzt dafür ein separates Repository auf, das du erneut clonen musst.",
             "cloneRepository": "Repository klonen",

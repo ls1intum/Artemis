@@ -10,15 +10,13 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
 
 @Entity
 @Table(name = "conversation")
@@ -36,8 +34,13 @@ public abstract class Conversation extends DomainObject {
     @JoinColumn(name = "creator_id")
     private User creator;
 
+    @JsonIgnoreProperties("conversation")
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
+
+    @JsonIgnoreProperties("conversation")
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    private Set<Post> posts = new HashSet<>();
 
     @ManyToOne
     @JsonIgnore
@@ -90,4 +93,11 @@ public abstract class Conversation extends DomainObject {
         this.creator = creator;
     }
 
+    public Set<Post> getPosts() {
+        return posts;
+    }
+
+    public void setPosts(Set<Post> posts) {
+        this.posts = posts;
+    }
 }

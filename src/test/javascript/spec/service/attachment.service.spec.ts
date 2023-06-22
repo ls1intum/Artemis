@@ -15,7 +15,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = SERVER_API_URL + 'api/attachments';
+    const resourceUrl = 'api/attachments';
     let expectedResult: any;
     let elemDefault: Attachment;
 
@@ -48,10 +48,11 @@ describe('Attachment Service', () => {
 
     describe('Service methods', () => {
         it('should create an attachment in the database', async () => {
+            const file = new File([], 'testName.txt');
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .create(elemDefault)
+                .create(elemDefault, file)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
@@ -62,15 +63,15 @@ describe('Attachment Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should update an attachment in the database', async () => {
+        it.each([new File([], 'testName.txt'), undefined])('should create an attachment in the database with file %s', async (file: File | undefined) => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .update(elemDefault)
+                .update(1, elemDefault, file)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: resourceUrl,
+                url: resourceUrl + '/1',
                 method: 'PUT',
             });
             req.flush(returnedFromService);

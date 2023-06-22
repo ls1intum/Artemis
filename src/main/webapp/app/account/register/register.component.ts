@@ -5,7 +5,7 @@ import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
 import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 
@@ -31,14 +31,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     usernamePattern = '^[a-zA-Z0-9]*';
 
-    registerForm = this.fb.nonNullable.group({
-        firstName: ['', [Validators.required, Validators.minLength(2)]],
-        lastName: ['', [Validators.required, Validators.minLength(2)]],
-        login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH), Validators.pattern(this.usernamePattern)]],
-        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-    });
+    registerForm: FormGroup;
     isRegistrationEnabled = false;
     allowedEmailPattern?: string;
     allowedEmailPatternReadable?: string;
@@ -62,6 +55,21 @@ export class RegisterComponent implements OnInit, AfterViewInit {
                     this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(100), Validators.pattern(jsRegexPattern)]);
                 }
             }
+        });
+        this.initializeForm();
+    }
+
+    private initializeForm() {
+        if (this.registerForm) {
+            return;
+        }
+        this.registerForm = this.fb.nonNullable.group({
+            firstName: ['', [Validators.required, Validators.minLength(2)]],
+            lastName: ['', [Validators.required, Validators.minLength(2)]],
+            login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH), Validators.pattern(this.usernamePattern)]],
+            email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
+            password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
         });
     }
 

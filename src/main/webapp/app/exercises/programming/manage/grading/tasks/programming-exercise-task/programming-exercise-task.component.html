@@ -1,5 +1,5 @@
 <div class="task">
-    <div class="d-flex">
+    <div class="d-flex" *ngIf="!onlyViewTestCases">
         <button type="button" (click)="open = !open" class="task__collapse">
             <fa-icon class="me-2" [icon]="open ? faAngleDown : faAngleRight"></fa-icon>
         </button>

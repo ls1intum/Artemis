@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<VideoUnit>;
     providedIn: 'root',
 })
 export class VideoUnitService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 

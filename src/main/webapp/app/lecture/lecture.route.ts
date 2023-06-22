@@ -13,6 +13,7 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
@@ -33,37 +34,13 @@ export class LectureResolve implements Resolve<Lecture> {
 export const lectureRoute: Routes = [
     {
         path: ':courseId/lectures',
-        component: LectureComponent,
-        resolve: {
-            course: CourseManagementResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        // Create a new path without a component defined to prevent the LectureComponent from being always rendered
-        path: ':courseId/lectures',
-        resolve: {
-            course: CourseManagementResolve,
-        },
+        component: CourseManagementTabBarComponent,
         children: [
             {
-                path: 'new',
-                component: LectureUpdateComponent,
-                data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'global.generic.create',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: ':lectureId',
-                component: LectureDetailComponent,
+                path: '',
+                component: LectureComponent,
                 resolve: {
-                    lecture: LectureResolve,
+                    course: CourseManagementResolve,
                 },
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -72,30 +49,60 @@ export const lectureRoute: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: ':lectureId',
+                // Create a new path without a component defined to prevent the LectureComponent from being always rendered
+                path: '',
                 resolve: {
-                    lecture: LectureResolve,
+                    course: CourseManagementResolve,
                 },
                 children: [
                     {
-                        path: 'attachments',
-                        component: LectureAttachmentsComponent,
+                        path: 'new',
+                        component: LectureUpdateComponent,
                         data: {
                             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.lecture.attachments.title',
+                            pageTitle: 'global.generic.create',
                         },
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'edit',
-                        component: LectureUpdateComponent,
+                        path: ':lectureId',
+                        component: LectureDetailComponent,
+                        resolve: {
+                            lecture: LectureResolve,
+                        },
                         data: {
                             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'global.generic.edit',
+                            pageTitle: 'artemisApp.lecture.home.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
-                    ...lectureUnitRoute,
+                    {
+                        path: ':lectureId',
+                        resolve: {
+                            lecture: LectureResolve,
+                        },
+                        children: [
+                            {
+                                path: 'attachments',
+                                component: LectureAttachmentsComponent,
+                                data: {
+                                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.lecture.attachments.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'edit',
+                                component: LectureUpdateComponent,
+                                data: {
+                                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'global.generic.edit',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            ...lectureUnitRoute,
+                        ],
+                    },
                 ],
             },
         ],

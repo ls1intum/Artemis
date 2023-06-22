@@ -20,9 +20,7 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
 
     @Input() exercise: Exercise;
     @Input() courseId: number;
-    @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
-    @Input() showResult: boolean;
     @Input() examMode: boolean;
 
     constructor(private orionConnectorService: OrionConnectorService, private ideBuildAndTestService: OrionBuildAndTestService, private route: ActivatedRoute) {}

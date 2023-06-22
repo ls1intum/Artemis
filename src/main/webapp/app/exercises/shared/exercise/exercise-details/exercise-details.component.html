@@ -52,11 +52,6 @@
     </dd>
 </ng-container>
 <ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING && exercise.course">
-    <dt><span jhiTranslate="artemisApp.exercise.startDate">Start Date</span></dt>
-    <dd>
-        <span *ngIf="exercise.startDate">{{ exercise.startDate | artemisDate }}</span>
-        <span *ngIf="!exercise.startDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-    </dd>
     <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
     <dd>
         <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
@@ -72,7 +67,7 @@
         <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>
         <span *ngIf="!exercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
     </dd>
-    <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+    <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span></dt>
     <dd>
         <span *ngIf="exercise.assessmentDueDate">{{ exercise.assessmentDueDate | artemisDate }}</span>
         <span *ngIf="!exercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>

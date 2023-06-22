@@ -35,12 +35,11 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     isOneToOneChat = isOneToOneChatDto;
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
-    getConversationName = this.conversationService.getConversationName;
 
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
-    constructor(activeModal: NgbActiveModal, private conversationService: ConversationService) {
+    constructor(activeModal: NgbActiveModal, public conversationService: ConversationService) {
         super(activeModal);
     }
 

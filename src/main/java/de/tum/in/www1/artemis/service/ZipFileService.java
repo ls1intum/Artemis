@@ -26,18 +26,20 @@ public class ZipFileService {
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
-     * @param zipFilePath     path where the zip file should be saved
-     * @param paths           multiple paths that should be zipped
-     * @param createParentDir if set to true, each zip file entry will be placed within its parent directory
+     * @param zipFilePath path where the zip file should be saved
+     * @param paths       multiple paths that should be zipped
      * @throws IOException if an error occurred while zipping
      */
-    public void createZipFile(Path zipFilePath, List<Path> paths, boolean createParentDir) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
-                var zipPath = createParentDir ? path : path.getFileName();
-                ZipEntry zipEntry = new ZipEntry(zipPath.toString());
-                copyToZipFile(zipOutputStream, path, zipEntry);
-            });
+    public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+            for (var path : paths) {
+                if (Files.isReadable(path) && !Files.isDirectory(path)) {
+                    zipFile.addFile(path.toFile());
+                }
+                else if (Files.isReadable(path) && Files.isDirectory(path)) {
+                    zipFile.addFolder(path.toFile());
+                }
+            }
         }
     }
 

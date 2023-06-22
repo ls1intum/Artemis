@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -84,6 +85,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     List<StudentParticipation> findByTeamId(Long teamId);
 
+    Optional<StudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
+
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
 
@@ -115,6 +118,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.testRun = :#{#testRun}
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
+            @Param("testRun") boolean testRun);
+
+    @Query("""
+            SELECT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.student.login = :#{#username}
+            AND p.testRun = :#{#testRun}
+            """)
+    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
             @Param("testRun") boolean testRun);
 
     @Query("""
@@ -192,6 +205,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
+            LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (r.id = (SELECT max(id) FROM p.results)
                     OR r.assessmentType <> 'AUTOMATIC'
@@ -576,6 +590,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
+            WHERE p.student.id = :studentId
+                AND p.exercise in :exercises
+                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+            """)
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises,
+            @Param("includeTestRuns") boolean includeTestRuns);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
             WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
@@ -900,11 +925,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Gets all the participations of the user in the given exercises
      *
-     * @param user      the user to get the participations for
-     * @param exercises the exercise to get the participations for
+     * @param user            the user to get the participations for
+     * @param exercises       the exercise to get the participations for
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      * @return an unmodifiable list of participations of the user in the exercises
      */
-    default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises) {
+    default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises, boolean includeTestRuns) {
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
         List<Exercise> individualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of());
         List<Exercise> teamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of());
@@ -917,7 +943,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         // would lead to a SQL statement that cannot be optimized
 
         // 1st: fetch participations, submissions and results for individual exercises
-        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), individualExercises, includeTestRuns);
 
         // 2nd: fetch participations, submissions and results for team exercises
         var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
@@ -954,4 +980,76 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
+
+    /**
+     * Gets the sum of all presentation scores for the given course and student.
+     *
+     * @param courseId  the id of the course
+     * @param studentId the id of the student
+     * @return the sum of all presentation scores for the given course and student
+     */
+    @Query("""
+            SELECT COALESCE(SUM(p.presentationScore), 0)
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                 AND p.presentationScore IS NOT NULL
+                 AND (p.student.id = :studentId OR ts.id = :studentId)
+            """)
+    double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
+
+    /**
+     * Maps all given studentIds to their presentation score sum for the given course.
+     *
+     * @param courseId   the id of the course
+     * @param studentIds the ids of the students
+     * @return a set of id to presentation score sum mappings
+     */
+    @Query("""
+            SELECT COALESCE(p.student.id, ts.id) AS id, COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                 AND p.presentationScore IS NOT NULL
+                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
+            GROUP BY COALESCE(p.student.id, ts.id)
+            """)
+    Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
+
+    /**
+     * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
+     */
+    interface IdToPresentationScoreSum {
+
+        long getId();
+
+        double getPresentationScoreSum();
+    }
+
+    /**
+     * Maps all given studentIds to their presentation score sum for the given course.
+     *
+     * @param courseId   the id of the course
+     * @param studentIds the ids of the students
+     * @return a map of studentId to presentation score sum
+     */
+    default Map<Long, Double> mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(long courseId, Set<Long> studentIds) {
+        return sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds).stream()
+                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
+    }
+
+    /**
+     * Gets the average presentation score for all participations of the given course.
+     *
+     * @param courseId the id of the course
+     * @return the average presentation score
+     */
+    @Query("""
+            SELECT COALESCE(AVG(p.presentationScore), 0)
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                 AND p.presentationScore IS NOT NULL
+            """)
+    double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 }

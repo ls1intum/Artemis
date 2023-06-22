@@ -20,6 +20,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
                 },
                 {
+                    path: 'privacy',
+                    loadChildren: () => import('./core/legal/privacy.module').then((m) => m.ArtemisPrivacyModule),
+                },
+                {
+                    path: 'imprint',
+                    loadChildren: () => import('./core/legal/imprint.module').then((m) => m.ArtemisImprintModule),
+                },
+                {
                     path: 'about',
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
@@ -33,8 +41,8 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
                 },
                 {
-                    path: 'courses/:courseId/learning-goals/:learningGoalId',
-                    loadChildren: () => import('./overview/course-learning-goals/course-learning-goals-details.module').then((m) => m.ArtemisCourseLearningGoalsDetailsModule),
+                    path: 'courses/:courseId/competencies/:competencyId',
+                    loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
                 },
                 {
                     path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',

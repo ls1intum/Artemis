@@ -4,7 +4,7 @@
         <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
     </h3>
 
-    <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
+    <button *ngIf="activeModal" type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
         <fa-icon [icon]="faXmark" size="xl"></fa-icon>
     </button>
 </div>
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Loading state -->
-    <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
+    <div *ngIf="isLoading; else feedbackContainer" class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
     </div>
 
@@ -130,5 +130,5 @@
     </ng-template>
 </div>
 <div class="modal-footer">
-    <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    <button *ngIf="activeModal" id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
 </div>

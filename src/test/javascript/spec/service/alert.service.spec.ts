@@ -43,7 +43,6 @@ describe('Alert Service Test', () => {
         });
         service = TestBed.inject(AlertService);
         eventManager = TestBed.inject(EventManager);
-        jest.useFakeTimers();
     });
 
     it('should produce a proper alert object and fetch it', () => {
@@ -89,6 +88,8 @@ describe('Alert Service Test', () => {
     });
 
     it('should close an alert on timeout correctly', () => {
+        jest.useFakeTimers();
+
         const alert = { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: jest.fn() } as AlertCreationProperties;
         service.addAlert(alert);
 
@@ -299,4 +300,22 @@ describe('Alert Service Test', () => {
 
         flush();
     }));
+
+    it.each([400, 403, 405, 412])('should not show alerts with skipAlert=true', (statusCode) => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders().append('app-error', 'Error Message').append('app-params', 'foo'),
+            status: statusCode,
+            statusText: 'Some Error',
+            error: {
+                status: statusCode,
+                message: 'error.validation',
+                skipAlert: true,
+            },
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toBeEmpty();
+    });
 });

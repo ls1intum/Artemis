@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "short_answer_solution")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSolution extends TempIdObject {
+public class ShortAnswerSolution extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
     @Column(name = "text")
     @JsonView(QuizView.Before.class)

@@ -28,6 +28,7 @@
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "embeddedFilesWarning": "Alle eingebetteten Dateien sind erst nach dem Import in der Aufgabenstellung verfügbar.",
                 "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
                 "searchInCourses": "Suche in Kursen?",
@@ -203,6 +204,9 @@
                 "title": {
                     "undefined": "Der Titel wurde nicht ausgefüllt!",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                },
+                "channelName": {
+                    "empty": "Der Kanalname wurde nicht ausgefüllt!"
                 },
                 "shortName": {
                     "undefined": "Der Kurzname wurde nicht ausgefüllt!",

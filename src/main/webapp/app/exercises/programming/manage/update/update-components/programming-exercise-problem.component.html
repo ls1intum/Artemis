@@ -1,13 +1,20 @@
 <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ng-container *ngIf="isImportFromExistingExercise">
-        <ngb-alert [dismissible]="false">
-            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
-            ><span>{{ 'artemisApp.exercise.import.markdownWarning' | artemisTranslate }}</span>
-        </ngb-alert>
-        <jhi-programming-exercise-instructions [exercise]="programmingExercise" [participation]="programmingExercise.templateParticipation!" [personalParticipation]="false">
-        </jhi-programming-exercise-instructions>
-    </ng-container>
+    <ngb-alert *ngIf="isImportFromExistingExercise || isImportFromFile" [dismissible]="false">
+        <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
+        ><span>{{
+            isImportFromExistingExercise
+                ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
+                : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
+        }}</span>
+    </ngb-alert>
+    <jhi-programming-exercise-instructions
+        *ngIf="isImportFromExistingExercise"
+        [exercise]="programmingExercise"
+        [participation]="programmingExercise.templateParticipation!"
+        [personalParticipation]="false"
+    ></jhi-programming-exercise-instructions>
+
     <jhi-programming-exercise-editable-instructions
         *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImportFromExistingExercise"
         [participation]="programmingExercise.templateParticipation!"
@@ -20,13 +27,13 @@
     ></jhi-programming-exercise-editable-instructions>
 </div>
 <div class="form-group" *ngIf="!isExamMode">
-    <jhi-learning-goal-selection
-        id="learning-goals"
-        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
-        [(ngModel)]="programmingExercise.learningGoals"
-        name="learningGoals"
-    ></jhi-learning-goal-selection>
+    <jhi-competency-selection
+        id="competencies"
+        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+        [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+        [(ngModel)]="programmingExercise.competencies"
+        name="competencies"
+    ></jhi-competency-selection>
 </div>
 <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
     <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>

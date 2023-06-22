@@ -12,6 +12,7 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -23,8 +24,8 @@ export class SubmissionWithComplaintDTO {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
-    public resourceUrl = SERVER_API_URL + 'api/submissions';
-    public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
+    public resourceUrl = 'api/submissions';
+    public resourceUrlParticipation = 'api/participations';
 
     constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService, private accountService: AccountService) {}
 
@@ -219,6 +220,7 @@ export class SubmissionService {
     private static convertConnectedParticipationFromServer(submission: Submission): Submission {
         if (submission.participation) {
             submission.participation = ParticipationService.convertParticipationDatesFromServer(submission.participation);
+            ExerciseService.convertExerciseDatesFromServer(submission.participation?.exercise);
         }
         return submission;
     }

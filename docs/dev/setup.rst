@@ -6,7 +6,7 @@ Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
 development on the application server using Java 17, and TypeScript
 development on the application client in the browser using
-`Angular <https://angular.io>`__ and Webpack. To get an overview of the
+`Angular <https://angular.io>`__. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
 and other tutorials on the JHipster homepage.
 
@@ -42,7 +42,8 @@ following dependencies/tools on your machine:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
-   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
+   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -52,6 +53,8 @@ following dependencies/tools on your machine:
 
 ------------------------------------------------------------------------------------------------------------------------
 
+
+.. _Database Setup:
 
 Database Setup
 --------------
@@ -157,6 +160,7 @@ You can override the following configuration options in this file.
 
    artemis:
        repo-clone-path: ./repos/
+       legal-path: ./legal/
        repo-download-clone-path: ./repos-download/
        bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                                 # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
@@ -351,12 +355,13 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
       This directory should be used for any data (e.g., local clone of repositories).
       This is preconfigured in the ``docker`` Java Spring profile (which sets the following values:
       ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``,
-      ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``).
+      ``artemis.course-archives-path``, ``artemis.submission-export-path`` ``artemis.legal-path``, and ``artemis.file-upload-path``).
+
 
     * **/opt/artemis/public/content:**
 
       This directory will be used for branding.
-      You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
+      You can specify a favicon here.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
@@ -406,6 +411,7 @@ Other run / debug configurations
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
   (see `Athene Service <#athene-service>`__).
 
@@ -525,9 +531,8 @@ command:
 
    npm run serve
 
-This compiles TypeScript code to JavaScript code, starts the hot module
-replacement feature in Webpack (i.e. whenever you change a TypeScript
-file and save, the client is automatically reloaded with the new code)
+This compiles TypeScript code to JavaScript code, starts the live reloading feature
+(i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code)
 and will start the client application in your browser on
 ``http://localhost:9000``. If you have activated the JIRA profile (see
 above in `Server Setup <#server-setup>`__) and if you have configured
@@ -565,11 +570,13 @@ instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/logo/favicon.svg``
-* The privacy statement HTML → ``${artemisRunDirectory}/public/content/privacy_statement.html``
-* The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
 ------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/legal-documents.rst
+
+-------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/programming-exercises.rst
 
@@ -584,6 +591,10 @@ instead of the TUM defaults:
 ------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/localci-localvc.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 

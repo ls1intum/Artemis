@@ -23,7 +23,7 @@ export interface ICodeHintService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeHintService implements ICodeHintService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(protected http: HttpClient) {}
 

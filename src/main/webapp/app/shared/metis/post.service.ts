@@ -13,7 +13,7 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 
 @Injectable({ providedIn: 'root' })
 export class PostService extends PostingService<Post> {
-    public resourceUrl = SERVER_API_URL + 'api/courses/';
+    public resourceUrl = 'api/courses/';
 
     constructor(protected http: HttpClient) {
         super();
@@ -48,14 +48,14 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.sortingOrder) {
             params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
         }
-        if (postContextFilter.courseWideContext) {
-            params = params.set('courseWideContext', postContextFilter.courseWideContext.toString());
+        if (postContextFilter.courseWideContexts?.length) {
+            params = params.set('courseWideContexts', postContextFilter.courseWideContexts.toString());
         }
-        if (postContextFilter.lectureId) {
-            params = params.set('lectureId', postContextFilter.lectureId.toString());
+        if (postContextFilter.lectureIds?.length) {
+            params = params.set('lectureIds', postContextFilter.lectureIds.toString());
         }
-        if (postContextFilter.exerciseId) {
-            params = params.set('exerciseId', postContextFilter.exerciseId.toString());
+        if (postContextFilter.exerciseIds?.length) {
+            params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
         }
         if (postContextFilter.plagiarismCaseId) {
             params = params.set('plagiarismCaseId', postContextFilter.plagiarismCaseId.toString());

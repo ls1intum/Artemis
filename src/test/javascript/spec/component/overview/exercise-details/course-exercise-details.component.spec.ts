@@ -64,6 +64,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
+import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
+import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -113,6 +115,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(ExerciseHintButtonOverlayComponent),
                 MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                MockComponent(ProblemStatementComponent),
                 MockComponent(ResetRepoButtonComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
@@ -122,6 +125,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(LtiInitializerComponent),
                 MockComponent(ModelingEditorComponent),
+                MockComponent(ExerciseInfoComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -318,13 +322,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const courseId = programmingExercise.course!.id!;
 
-        comp.hasSubmissionPolicy = false;
         comp.courseId = courseId;
 
         comp.handleNewExercise(programmingExercise);
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
-        expect(comp.hasSubmissionPolicy).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
@@ -341,7 +343,7 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...exercise };
 
-        comp.getLatestRatedResult();
+        comp.loadComplaintAndLatestRatedResult();
         tick();
 
         expect(complaintServiceSpy).toHaveBeenCalledOnce();

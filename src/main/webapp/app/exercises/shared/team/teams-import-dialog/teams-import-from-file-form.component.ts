@@ -45,7 +45,7 @@ export class TeamsImportFromFileFormComponent {
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private changeDetector: ChangeDetectorRef, private translate: TranslateService) {}
+    constructor(private changeDetector: ChangeDetectorRef, private translateService: TranslateService) {}
 
     /**
      * Move file reader creation to separate function to be able to mock
@@ -68,7 +68,7 @@ export class TeamsImportFromFileFormComponent {
                 const csvEntries = await this.parseCSVFile(fileReader.result as string);
                 this.importedTeams = this.convertCsvEntries(csvEntries);
             } else {
-                throw new Error(this.translate.instant('artemisApp.team.invalidFileType', { fileType: this.importFile?.type }));
+                throw new Error(this.translateService.instant('artemisApp.team.invalidFileType', { fileType: this.importFile?.type }));
             }
             this.sourceTeams = this.convertTeams(this.importedTeams);
             this.teamsChanged.emit(this.sourceTeams);
@@ -82,7 +82,7 @@ export class TeamsImportFromFileFormComponent {
             }
         } catch (e) {
             this.loading = false;
-            const message = `${this.translate.instant('artemisApp.team.errors.importFailed')} ${e}`;
+            const message = `${this.translateService.instant('artemisApp.team.errors.importFailed')} ${e}`;
             alert(message);
         }
     }
@@ -167,17 +167,17 @@ export class TeamsImportFromFileFormComponent {
             const entryNr = index + 1;
 
             if ((typeof student.username !== 'string' || !student.username.trim()) && (typeof student.registrationNumber !== 'string' || !student.registrationNumber.trim())) {
-                throw new Error(this.translate.instant('artemisApp.team.missingUserNameOrId', { entryNr }));
+                throw new Error(this.translateService.instant('artemisApp.team.missingUserNameOrId', { entryNr }));
             }
             newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`.trim();
 
             if (typeof student.teamName !== 'string' || !student.teamName.trim()) {
-                throw new Error(this.translate.instant('artemisApp.team.teamName.missingTeamName', { entryNr, studentName: newStudent.name }));
+                throw new Error(this.translateService.instant('artemisApp.team.teamName.missingTeamName', { entryNr, studentName: newStudent.name }));
             }
 
             const shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
             if (!shortName.match(SHORT_NAME_PATTERN)) {
-                throw new Error(this.translate.instant('artemisApp.team.teamName.pattern', { entryNr, teamName: shortName }));
+                throw new Error(this.translateService.instant('artemisApp.team.teamName.pattern', { entryNr, teamName: shortName }));
             }
 
             const teamIndex = teams.findIndex((team) => team.name === student.teamName);

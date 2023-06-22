@@ -1,24 +1,16 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { CanBecomeInvalid, DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { captureException } from '@sentry/browser';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-
-type InvalidFlaggedQuestions = {
-    [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
-};
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/shared/constants/input.constants';
+import {
+    InvalidFlaggedQuestions,
+    checkForInvalidFlaggedQuestions,
+    computeQuizQuestionInvalidReason,
+    isQuizQuestionValid,
+} from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Directive()
 export abstract class QuizExerciseValidationDirective {
@@ -28,11 +20,6 @@ export abstract class QuizExerciseValidationDirective {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly QuizMode = QuizMode;
     readonly ButtonType = ButtonType;
-
-    readonly maxLengthThreshold = 250;
-    readonly explanationLengthThreshold = 500;
-    readonly hintLengthThreshold = 255;
-    readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     warningQuizCache = false;
     quizIsValid: boolean;
@@ -71,71 +58,13 @@ export abstract class QuizExerciseValidationDirective {
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
-            this.quizExercise.title.length < this.maxLengthThreshold &&
+            this.quizExercise.title.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
             this.quizExercise.duration !== 0 &&
             this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
 
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined || question.points < 1 || question.points > this.maxPoints) {
-                return false;
-            }
-            if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
-                return false;
-            }
-            if (question.hint && question.hint.length > this.hintLengthThreshold) {
-                return false;
-            }
-            switch (question.type) {
-                case QuizQuestionType.MULTIPLE_CHOICE: {
-                    const mcQuestion = question as MultipleChoiceQuestion;
-                    const correctOptions = mcQuestion.answerOptions!.filter((answerOption) => answerOption.isCorrect).length;
-                    return (
-                        (mcQuestion.singleChoice ? correctOptions === 1 : correctOptions > 0) &&
-                        question.title &&
-                        question.title !== '' &&
-                        question.title.length < this.maxLengthThreshold &&
-                        mcQuestion.answerOptions!.every(
-                            (answerOption) =>
-                                answerOption.isCorrect !== undefined &&
-                                (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
-                                (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
-                        )
-                    );
-                }
-                case QuizQuestionType.DRAG_AND_DROP: {
-                    const dndQuestion = question as DragAndDropQuestion;
-                    return (
-                        question.title &&
-                        question.title !== '' &&
-                        question.title.length < this.maxLengthThreshold &&
-                        dndQuestion.correctMappings &&
-                        dndQuestion.correctMappings.length > 0 &&
-                        this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
-                        this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
-                    );
-                }
-                case QuizQuestionType.SHORT_ANSWER: {
-                    const shortAnswerQuestion = question as ShortAnswerQuestion;
-                    return (
-                        question.title &&
-                        question.title !== '' &&
-                        shortAnswerQuestion.correctMappings &&
-                        shortAnswerQuestion.correctMappings.length > 0 &&
-                        this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
-                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots!) &&
-                        this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
-                        shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
-                        shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
-                        !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
-                        this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
-                    );
-                }
-                default: {
-                    captureException(new Error('Unknown question type: ' + question));
-                    return question.title && question.title !== '';
-                }
-            }
+            return isQuizQuestionValid(question, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
         }, this);
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
@@ -193,10 +122,10 @@ export abstract class QuizExerciseValidationDirective {
                 translateValues: {},
             });
         }
-        if (this.quizExercise.title!.length >= this.maxLengthThreshold) {
+        if (this.quizExercise.title!.length >= MAX_QUIZ_QUESTION_LENGTH_THRESHOLD) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
-                translateValues: { threshold: this.maxLengthThreshold },
+                translateValues: { threshold: MAX_QUIZ_QUESTION_LENGTH_THRESHOLD },
             });
         }
         if (!this.quizExercise.duration) {
@@ -229,159 +158,13 @@ export abstract class QuizExerciseValidationDirective {
         //     }
         // }
         this.quizExercise.quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
-            if (!question.title || question.title === '') {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitle',
-                    translateValues: { index: index + 1 },
-                });
-            }
-            if (question.points == undefined) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
-                    translateValues: { index: index + 1 },
-                });
-            } else if (question.points < 1 || question.points > this.maxPoints) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionScoreInvalid',
-                    translateValues: { index: index + 1 },
-                });
-            }
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const mcQuestion = question as MultipleChoiceQuestion;
-                const correctOptions = mcQuestion.answerOptions!.filter((answerOption) => answerOption.isCorrect).length;
-                if (correctOptions === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (mcQuestion.singleChoice && correctOptions > 1) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionSingleChoiceCorrectAnswerOptions',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!mcQuestion.answerOptions!.every((answerOption) => answerOption.explanation !== '')) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.explanation && answerOption.explanation.length > this.explanationLengthThreshold)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.answerExplanationLength',
-                        translateValues: { index: index + 1, threshold: this.explanationLengthThreshold },
-                    });
-                }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length > this.hintLengthThreshold)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.answerHintLength',
-                        translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
-                    });
-                }
-                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect === undefined)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.multipleChoiceQuestionAnswerOptionInvalid',
-                        translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
-                    });
-                }
-            }
-            if (question.title && question.title.length >= this.maxLengthThreshold) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
-                    translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
-                });
-            }
-            if (question.explanation && question.explanation.length > this.explanationLengthThreshold) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionExplanationLength',
-                    translateValues: { index: index + 1, threshold: this.explanationLengthThreshold },
-                });
-            }
-            if (question.hint && question.hint.length > this.hintLengthThreshold) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionHintLength',
-                    translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
-                });
-            }
-
-            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const dndQuestion = question as DragAndDropQuestion;
-                if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionUnsolvable',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-            }
-            if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const shortAnswerQuestion = question as ShortAnswerQuestion;
-                if (!shortAnswerQuestion.correctMappings || shortAnswerQuestion.correctMappings.length === 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!(shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length !== 0) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.quizAnswerOptionLength',
-                        translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
-                    });
-                }
-                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-                if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
-                        translateValues: { index: index + 1 },
-                    });
-                }
-            }
+            computeQuizQuestionInvalidReason(invalidReasons, question, index, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
         }, this);
         const invalidFlaggedReasons = !this.quizExercise
             ? []
             : this.quizExercise.quizQuestions
                   ?.map((question, index) => {
-                      if (this.invalidFlaggedQuestions[question.title!]) {
+                      if (this.invalidFlaggedQuestions[question.id!]) {
                           return {
                               translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
                               translateValues: { index: index + 1 },
@@ -405,56 +188,13 @@ export abstract class QuizExerciseValidationDirective {
         return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
     }
 
-    checkForInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {
+    checkForInvalidFlaggedQuestions() {
         if (!this.quizExercise) {
             return;
         }
-        if (questions.length === 0) {
-            questions = this.quizExercise.quizQuestions!;
-        }
-        const invalidQuestions: {
-            [questionId: number]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
-        } = {};
-        questions.forEach((question) => {
-            const invalidQuestion = question.invalid;
-            const invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] = [];
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
-                this.pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
-                this.pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
-            } else {
-                this.pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
-                this.pushToInvalidElements((<ShortAnswerQuestion>question).correctMappings, invalidElements);
-                this.pushToInvalidElements((<ShortAnswerQuestion>question).spots, invalidElements);
-            }
-            if (invalidQuestion || invalidElements.length !== 0) {
-                invalidQuestions[question.title!] = invalidElements.length !== 0 ? { invalidElements } : {};
-            }
-        });
-        this.invalidFlaggedQuestions = invalidQuestions;
+        this.invalidFlaggedQuestions = checkForInvalidFlaggedQuestions(this.quizExercise.quizQuestions ?? []);
     }
 
-    /**
-     * Helper function in order to prevent code duplication in computeInvalidReasons
-     * Iterates over the array and pushes invalid elements to invalidElements
-     * @param array the array containing elements that can be invalid
-     * @param invalidElements the array all invalid elements are pushed to
-     * @private
-     */
-    private pushToInvalidElements(
-        array: CanBecomeInvalid[] | undefined,
-        invalidElements: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[],
-    ): void {
-        if (array !== undefined) {
-            array!.forEach(function (option: CanBecomeInvalid) {
-                if (option.invalid) {
-                    invalidElements.push(option);
-                }
-            });
-        }
-    }
     /**
      * check if Dictionary is empty
      * @param obj the dictionary to be checked

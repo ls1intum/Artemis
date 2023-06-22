@@ -12,8 +12,8 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
     private basePath = 'management/statistics/';
-    private resourceUrl = SERVER_API_URL + 'api/' + this.basePath;
-    private adminResourceUrl = SERVER_API_URL + 'api/admin/' + this.basePath;
+    private resourceUrl = 'api/' + this.basePath;
+    private adminResourceUrl = 'api/admin/' + this.basePath;
 
     constructor(private http: HttpClient) {}
 

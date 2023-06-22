@@ -7,7 +7,7 @@
             <ng-container *ngIf="getAsGroupChat(conversation) as groupChatDto">
                 <jhi-group-chat-icon></jhi-group-chat-icon>
             </ng-container>
-            {{ getConversationName(conversation) }}
+            {{ conversationService.getConversationName(conversation) }}
         </span>
         <span [hidden]="!isConversationUnread">
             <span class="badge bg-info">

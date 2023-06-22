@@ -6,7 +6,6 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.fileupload.*;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -17,9 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -31,21 +31,32 @@ public class LectureUnitProcessingService {
 
     private final FileService fileService;
 
-    public LectureUnitProcessingService(FileService fileService) {
+    private final SlideSplitterService slideSplitterService;
+
+    private final LectureRepository lectureRepository;
+
+    private final AttachmentUnitService attachmentUnitService;
+
+    public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
+            AttachmentUnitService attachmentUnitService) {
         this.fileService = fileService;
+        this.slideSplitterService = slideSplitterService;
+        this.lectureRepository = lectureRepository;
+        this.attachmentUnitService = attachmentUnitService;
     }
 
     /**
-     * Split units from given file according to given split information.
+     * Split units from given file according to given split information and saves them.
      *
      * @param lectureUnitInformationDTO The split information
      * @param file                      The file (lecture slide) to be split
+     * @param lecture                   The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
-    public List<LectureUnitDTO> splitUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file) throws IOException {
+    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = PDDocument.load(file.getBytes())) {
-            List<LectureUnitDTO> units = new ArrayList<>();
+            List<AttachmentUnit> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
@@ -73,11 +84,12 @@ public class LectureUnitProcessingService {
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-
-                LectureUnitDTO lectureUnitsDTO = new LectureUnitDTO(attachmentUnit, attachment, multipartFile);
-                units.add(lectureUnitsDTO);
+                AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit, multipartFile.getOriginalFilename());
                 documentUnits.get(0).close(); // make sure to close the document
+                units.add(savedAttachmentUnit);
             }
+            lectureRepository.save(lecture);
             document.close();
             return units;
         }

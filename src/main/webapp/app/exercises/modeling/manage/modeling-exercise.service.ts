@@ -14,8 +14,8 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
-    public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/modeling-exercises';
+    public resourceUrl = 'api/modeling-exercises';
+    public adminResourceUrl = 'api/admin/modeling-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {
         this.exerciseService = exerciseService;
@@ -79,7 +79,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
-            .post(`${SERVER_API_URL}api/apollon/convert-to-pdf`, { model }, { observe: 'response', responseType: 'blob' })
+            .post('api/apollon/convert-to-pdf', { model }, { observe: 'response', responseType: 'blob' })
             .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 

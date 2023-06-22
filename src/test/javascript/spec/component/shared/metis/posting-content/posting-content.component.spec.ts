@@ -408,12 +408,48 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [attachment]PDF File(attachmentPath/attachment.pdf)[/attachment].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
+            // the attachment directory that is removed when showing the text in edit mode
+            const attachmentDirectory = 'api/files/attachments/';
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File`,
                     referenceType: ReferenceType.ATTACHMENT,
-                    attachmentToReference: 'attachmentPath/attachment.pdf',
+                    attachmentToReference: attachmentDirectory + 'attachmentPath/attachment.pdf',
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should compute parts when referencing an lecture unit', fakeAsync(() => {
+            component.content = `I want to reference [lecture-unit]PDF File lecture unit(attachmentPath/attachmentUnit.pdf)[/lecture-unit].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            // the attachment directory that is removed when showing the text in edit mode
+            const attachmentDirectory = 'api/files/attachments/';
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'I want to reference ',
+                    referenceStr: `PDF File lecture unit`,
+                    referenceType: ReferenceType.ATTACHMENT_UNITS,
+                    attachmentToReference: attachmentDirectory + 'attachmentPath/attachmentUnit.pdf',
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should compute parts when referencing a single slide', fakeAsync(() => {
+            component.content = `I want to reference [slide]PDF File Slide 7(slides/attachment-unit/123/slide/9)[/slide].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            // the attachment directory that is removed when showing the text in edit mode
+            const attachmentDirectory = 'api/files/attachments/';
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'I want to reference ',
+                    referenceStr: `PDF File Slide 7`,
+                    referenceType: ReferenceType.SLIDE,
+                    slideToReference: attachmentDirectory + 'slides/attachment-unit/123/slide/9',
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);

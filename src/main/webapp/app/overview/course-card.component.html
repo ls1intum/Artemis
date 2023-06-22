@@ -1,10 +1,5 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
-    <div
-        id="course-{{ course.id }}-header"
-        class="card-header text-white"
-        [routerLink]="['/courses', course.id!]"
-        [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }"
-    >
+    <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
             <div class="row d-flex">
@@ -36,8 +31,8 @@
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
             <div class="chart-text">
-                <h2 class="text-center">{{ totalRelativeScore }}%</h2>
-                <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
+                <h3 class="text-center">{{ totalRelativeScore }}%</h3>
+                <h6 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h6>
             </div>
             <ngx-charts-pie-chart
                 id="score-chart"
@@ -61,7 +56,7 @@
         </ng-template>
     </div>
 
-    <div class="card-footer text-muted" *ngIf="nextRelevantExercise">
+    <div class="card-footer text-body-secondary" *ngIf="nextRelevantExercise">
         <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
         <div class="container">
             <div class="row">
@@ -81,7 +76,7 @@
             </div>
         </div>
     </div>
-    <div class="card-footer text-muted" *ngIf="!nextRelevantExercise">
+    <div class="card-footer text-body-secondary" *ngIf="!nextRelevantExercise">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="col no-exercise">
             <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>

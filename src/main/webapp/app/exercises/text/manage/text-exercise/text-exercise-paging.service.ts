@@ -5,7 +5,7 @@ import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-pagi
 
 @Injectable({ providedIn: 'root' })
 export class TextExercisePagingService extends ExercisePagingService<TextExercise> {
-    private static readonly resourceUrl = SERVER_API_URL + 'api/text-exercises';
+    private static readonly resourceUrl = 'api/text-exercises';
 
     constructor(http: HttpClient) {
         super(http, TextExercisePagingService.resourceUrl);

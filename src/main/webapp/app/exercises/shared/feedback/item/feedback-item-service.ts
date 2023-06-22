@@ -55,6 +55,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
+            feedbackReference: feedback,
         };
     }
 
@@ -73,6 +74,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
             positive: feedback.positive,
             credits: feedback.credits,
+            feedbackReference: feedback,
         };
     }
 }

@@ -16,7 +16,7 @@ export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
-    private resourceUrl = SERVER_API_URL + 'api/text-exercises';
+    private resourceUrl = 'api/text-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 

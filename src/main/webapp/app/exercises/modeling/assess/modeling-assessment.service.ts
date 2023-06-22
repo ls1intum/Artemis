@@ -13,7 +13,7 @@ export type EntityResponseType = HttpResponse<Result>;
 export class ModelingAssessmentService {
     private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
     private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
-    private resourceUrl = SERVER_API_URL + 'api';
+    private resourceUrl = 'api';
 
     constructor(private http: HttpClient) {}
 

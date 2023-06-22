@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
@@ -144,15 +145,15 @@ class ObjectMethodTest {
     private static void generateObjectMethodTests(List<DynamicNode> tests, Constructor<?> noArgsConstructor) {
         tests.add(dynamicTest("toString() does not throw exceptions", () -> {
             Object instance = noArgsConstructor.newInstance();
-            assertDoesNotThrow(instance::toString);
+            assertThatNoException().isThrownBy(instance::toString);
         }));
         tests.add(dynamicTest("equals(null) does not throw exceptions", () -> {
             Object instance = noArgsConstructor.newInstance();
-            assertDoesNotThrow(() -> instance.equals(null));
+            assertThatNoException().isThrownBy(() -> instance.equals(null));
         }));
         tests.add(dynamicTest("hashCode() does not throw exceptions", () -> {
             Object instance = noArgsConstructor.newInstance();
-            assertDoesNotThrow(instance::hashCode);
+            assertThatNoException().isThrownBy(instance::hashCode);
         }));
     }
 

@@ -8,8 +8,8 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
-    public resourceUrl = SERVER_API_URL + 'api/organizations';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/organizations';
+    public resourceUrl = 'api/organizations';
+    public adminResourceUrl = 'api/admin/organizations';
 
     constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
 

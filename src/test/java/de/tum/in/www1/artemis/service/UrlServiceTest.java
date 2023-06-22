@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -51,7 +51,8 @@ class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         repoSlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl4);
         assertThat(repoSlug).isEqualTo("ftcscagrading1-username");
 
-        assertThrows(VersionControlException.class, () -> urlService.getRepositorySlugFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> urlService.getRepositorySlugFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
     }
 
     @Test
@@ -65,7 +66,8 @@ class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         repoSlug = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl4);
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1/ftcscagrading1-username");
 
-        assertThrows(VersionControlException.class, () -> urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
     }
 
     @Test
@@ -79,7 +81,8 @@ class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         repoSlug = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl4);
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1");
 
-        assertThrows(VersionControlException.class, () -> urlService.getProjectKeyFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> urlService.getProjectKeyFromRepositoryUrl(new VcsRepositoryUrl("https://bitbucket.ase.in.tum.de")));
     }
 
     @Test

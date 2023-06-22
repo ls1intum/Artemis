@@ -12,7 +12,7 @@ export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorParticipationService {
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
+    public resourceUrl = 'api/exercises';
 
     constructor(private http: HttpClient, private accountService: AccountService) {}
 

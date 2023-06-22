@@ -13,11 +13,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -38,6 +41,18 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
     private Lecture lecture1;
 
     private TextUnit textUnit;
@@ -46,9 +61,30 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private TextUnit textUnit3;
 
-    private void testAllPreAuthorize() throws Exception {
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
+    @BeforeEach
+    void initTestCase() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
+        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        this.lecture1 = course1.getLectures().stream().findFirst().get();
+
+        // Add users that are not in the course
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+
+        this.textUnit = lectureUtilService.createTextUnit();
+        this.textUnit2 = lectureUtilService.createTextUnit();
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(false);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
+        // textUnit3 is not one of the lecture units connected to the lecture
+        this.textUnit3 = lectureUtilService.createTextUnit();
+
+        lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().get(), List.of(textUnit2));
+        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentUnit));
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
+        this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).get();
     }
 
     @Test
@@ -63,30 +99,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         this.testAllPreAuthorize();
     }
 
-    @BeforeEach
-    void initTestCase() throws Exception {
-        this.database.addUsers(TEST_PREFIX, 6, 6, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        this.lecture1 = course1.getLectures().stream().findFirst().get();
-
-        // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
-
-        this.textUnit = database.createTextUnit();
-        this.textUnit2 = database.createTextUnit();
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
-        OnlineUnit onlineUnit = database.createOnlineUnit();
-        // textUnit3 is not one of the lecture units connected to the lecture
-        this.textUnit3 = database.createTextUnit();
-
-        database.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().get(), Set.of(textUnit2));
-        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.textUnit, onlineUnit, attachmentUnit));
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
-        this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
-        this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).get();
+    private void testAllPreAuthorize() throws Exception {
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -100,14 +115,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
+    void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var learningGoal = database.createLearningGoal(lecture1.getCourse());
-        lectureUnit.setLearningGoals(Set.of(learningGoal));
+        var competency = competencyUtilService.createCompetency(lecture1.getCourse());
+        lectureUnit.setCompetencies(Set.of(competency));
         lectureRepository.save(lecture1);
 
-        var lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().get(0).getLearningGoals()).isNotEmpty();
+        var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().get(0).getCompetencies()).isNotEmpty();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
@@ -118,7 +133,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var user = userRepo.findOneByLogin(TEST_PREFIX + "student1").get();
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         LectureUnitCompletion completion = new LectureUnitCompletion();
         completion.setLectureUnit(lectureUnit);
@@ -156,11 +171,11 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(3);
         LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(2).noneMatch(Objects::isNull);
     }
 
@@ -210,7 +225,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
                 HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
@@ -221,7 +236,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
                 HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().get(0);
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();

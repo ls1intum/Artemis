@@ -22,7 +22,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     @Input() showCreationCard = true;
-    @Input() showLearningGoals = true;
+    @Input() showCompetencies = true;
     @Input() emitEditEvents = false;
 
     @Input() lectureId: number | undefined;
@@ -82,7 +82,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
-        // TODO: we actually would like to have the lecture with all units! Posts and learning goals are not required here
+        // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
             .findWithDetails(this.lectureId!)

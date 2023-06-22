@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocationCounter extends QuizStatisticCounter {
+public class DropLocationCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<DragAndDropQuestionStatistic, DropLocation, DragAndDropQuestion> {
 
     @ManyToOne
     @JsonIgnore
@@ -35,6 +35,24 @@ public class DropLocationCounter extends QuizStatisticCounter {
 
     public void setDropLocation(DropLocation dropLocation) {
         this.dropLocation = dropLocation;
+    }
+
+    @Override
+    @JsonIgnore
+    public void setQuizQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
+        setDragAndDropQuestionStatistic(dragAndDropQuestionStatistic);
+    }
+
+    @Override
+    @JsonIgnore
+    public DropLocation getQuizQuestionComponent() {
+        return getDropLocation();
+    }
+
+    @Override
+    @JsonIgnore
+    public void setQuizQuestionComponent(DropLocation dropLocation) {
+        setDropLocation(dropLocation);
     }
 
     @Override

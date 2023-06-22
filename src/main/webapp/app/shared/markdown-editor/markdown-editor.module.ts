@@ -4,9 +4,11 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { FormsModule } from '@angular/forms';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, FormsModule, ArtemisColorSelectorModule],
+    imports: [ArtemisSharedModule, AceEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule],
     declarations: [MarkdownEditorComponent],
     exports: [MarkdownEditorComponent],
 })

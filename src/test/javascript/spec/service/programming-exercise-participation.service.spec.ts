@@ -11,7 +11,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
-    const resourceUrl = SERVER_API_URL + 'api/programming-exercise-participations/';
+    const resourceUrl = 'api/programming-exercise-participations/';
 
     let titleSpy: jest.SpyInstance;
     let accessRightsSpy: jest.SpyInstance;
@@ -51,8 +51,8 @@ describe('ProgrammingExerciseParticipation Service', () => {
                 const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
                 req.flush(result);
                 tick();
-                expect(titleSpy).toHaveBeenCalledOnceWith(participation);
-                expect(accessRightsSpy).toHaveBeenCalledOnceWith(participation.exercise);
+                expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
+                expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
             }),
         );
 
@@ -65,8 +65,8 @@ describe('ProgrammingExerciseParticipation Service', () => {
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${participation.id}/student-participation-with-latest-result-and-feedbacks` });
             req.flush(participation);
             tick();
-            expect(titleSpy).toHaveBeenCalledOnceWith(participation);
-            expect(accessRightsSpy).toHaveBeenCalledOnceWith(participation.exercise);
+            expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
+            expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
         }));
 
         it('checkIfParticipationHasResult', fakeAsync(() => {

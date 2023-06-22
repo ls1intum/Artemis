@@ -22,6 +22,11 @@ describe('CourseRegistrationComponent', () => {
         title: 'Course A',
     } as Course;
 
+    const course2 = {
+        id: 2,
+        title: 'Course B',
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -59,5 +64,13 @@ describe('CourseRegistrationComponent', () => {
         component.removeCourseFromList(course1.id!);
 
         expect(component.coursesToSelect).toHaveLength(0);
+    });
+
+    it('should sort registrable courses by title', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course1] })));
+
+        component.loadRegistrableCourses();
+
+        expect(component.coursesToSelect).toEqual([course1, course2]);
     });
 });

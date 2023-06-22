@@ -1,5 +1,5 @@
 import { ErrorHandler, Injectable } from '@angular/core';
-import { captureException, init, instrumentAngularRouting } from '@sentry/angular';
+import { captureException, init, instrumentAngularRouting } from '@sentry/angular-ivy';
 import { BrowserTracing } from '@sentry/tracing';
 import { VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';

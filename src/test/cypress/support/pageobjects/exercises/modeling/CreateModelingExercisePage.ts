@@ -1,4 +1,7 @@
+import { Dayjs } from 'dayjs/esm';
 import { MODELING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
+import { enterDate } from '../../../utils';
+import { BASE_API, POST } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Creation Page.
@@ -27,28 +30,34 @@ export class CreateModelingExercisePage {
         return cy.wait('@createModelingExercise');
     }
 
+    import() {
+        cy.intercept(POST, BASE_API + 'modeling-exercises/import/*').as('modelingExerciseImport');
+        cy.get('#modeling-exercise-creation-save').click();
+        return cy.wait('@modelingExerciseImport');
+    }
+
     /**
      * Sets the release Date field
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
-    setReleaseDate(date: string) {
-        cy.get('#pick-releaseDate').find('#date-input-field').clear().type(date, { force: true });
+    setReleaseDate(date: Dayjs) {
+        enterDate('#pick-releaseDate', date);
     }
 
     /**
      * Sets the Due Date field
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
-    setDueDate(date: string) {
-        cy.get('#pick-dueDate').find('#date-input-field').clear().type(date, { force: true });
+    setDueDate(date: Dayjs) {
+        enterDate('#pick-dueDate', date);
     }
 
     /**
      * Sets the Assessment Due Date field
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
-    setAssessmentDueDate(date: string) {
-        cy.get('#pick-assessmentDueDate').find('#date-input-field').clear().type(date, { force: true });
+    setAssessmentDueDate(date: Dayjs) {
+        enterDate('#pick-assessmentDueDate', date);
     }
 
     includeInOverallScore() {

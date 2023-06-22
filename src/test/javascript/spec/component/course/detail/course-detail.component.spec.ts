@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
-import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
@@ -10,10 +9,8 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import dayjs from 'dayjs/esm';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
@@ -23,13 +20,11 @@ import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-
 import { EventManager } from 'app/core/util/event-manager.service';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseManagementService: CourseManagementService;
-    let courseAdminService: CourseAdminService;
     let eventManager: EventManager;
 
     const course: Course = {
@@ -73,14 +68,11 @@ describe('Course Management Detail Component', () => {
                 MockComponent(UsersImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExamArchiveButtonComponent),
-                MockDirective(HasAnyAuthorityDirective),
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
                 MockComponent(FullscreenComponent),
-                MockComponent(HeaderCourseComponent),
                 MockDirective(FeatureToggleLinkDirective),
             ],
             providers: [
@@ -102,7 +94,6 @@ describe('Course Management Detail Component', () => {
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        courseAdminService = fixture.debugElement.injector.get(CourseAdminService);
         eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
@@ -129,20 +120,5 @@ describe('Course Management Detail Component', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
-    });
-
-    it('should broadcast course modification on delete', () => {
-        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-        const deleteStub = jest.spyOn(courseAdminService, 'delete');
-        deleteStub.mockReturnValue(of(new HttpResponse<void>()));
-
-        const courseId = 444;
-        component.deleteCourse(courseId);
-
-        expect(deleteStub).toHaveBeenCalledWith(courseId);
-        expect(broadcastSpy).toHaveBeenCalledWith({
-            name: 'courseListModification',
-            content: 'Deleted an course',
-        });
     });
 });

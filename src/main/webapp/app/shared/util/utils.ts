@@ -1,5 +1,5 @@
 import { omit, sum } from 'lodash-es';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 
@@ -123,25 +123,6 @@ export const average = (values: Array<number>): number => {
  */
 export const findLatestResult = (results: Result[] | undefined) => {
     return results?.length ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
-};
-
-/**
- * Splits a camel case string into individual words and combines them to a new string separated by spaces
- */
-export const splitCamelCase = (word: string) => {
-    const output = [];
-    const regex = /[A-Z]/;
-    for (let i = 0; i < word.length; i += 1) {
-        if (i === 0) {
-            output.push(word[i].toUpperCase());
-        } else {
-            if (i > 0 && regex.test(word[i])) {
-                output.push(' ');
-            }
-            output.push(word[i]);
-        }
-    }
-    return output.join('');
 };
 
 export const isDate = (input: any) => {

@@ -70,7 +70,6 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     getAsGroupChat = getAsGroupChatDto;
 
     isOneToOneChat = isOneToOneChatDto;
-    getConversationName = this.conversationService.getConversationName;
 
     onHiddenClicked(event: MouseEvent) {
         event.stopPropagation();

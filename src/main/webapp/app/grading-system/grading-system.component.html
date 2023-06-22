@@ -44,7 +44,7 @@
             </select>
         </div>
         <div class="form-group">
-            <ng-container *ngIf="childComponent.gradingScale.gradeType == GradeType.GRADE">
+            <ng-container *ngIf="childComponent.gradingScale.gradeType === GradeType.GRADE">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade">First Passing Grade</span>
                 <select class="form-select" title="first passing grade" [(ngModel)]="childComponent.firstPassingGrade">
                     <option *ngFor="let gradeStep of childComponent.gradeStepsWithNonemptyNames()" [ngValue]="gradeStep.gradeName">
@@ -54,6 +54,7 @@
             </ng-container>
         </div>
     </div>
+    <jhi-grading-system-presentations [gradingScale]="childComponent.gradingScale" [presentationsConfig]="childComponent.presentationsConfig"></jhi-grading-system-presentations>
 </div>
 <div class="tab-bar" id="tab-bar">
     <div class="col-12 no-indent">

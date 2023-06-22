@@ -21,20 +21,14 @@ export class QuizExerciseExportComponent implements OnInit {
     courseId: number;
     course: Course;
 
-    translateService: TranslateService;
-    router: Router;
-
     constructor(
         private route: ActivatedRoute,
         private quizExerciseService: QuizExerciseService,
         private courseService: CourseManagementService,
         private alertService: AlertService,
-        router: Router,
-        translateService: TranslateService,
-    ) {
-        this.router = router;
-        this.translateService = translateService;
-    }
+        private router: Router,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * Load the quizzes of the course for export on init.

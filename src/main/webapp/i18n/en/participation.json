@@ -18,6 +18,10 @@
                 "label": "Add presentation",
                 "error": "Could not add presentation. Please try again."
             },
+            "savePresentation": {
+                "label": "Save presentation",
+                "error": "Could not save presentation. Please try again."
+            },
             "removePresentation": {
                 "label": "Remove presentation",
                 "error": "Could not remove presentation. Please try again."
@@ -35,7 +39,8 @@
             "initializationDate": "Participation Start Date",
             "individualDueDate": "Individual Due Date",
             "initializationNotYetStarted": "Not yet started",
-            "presentationScore": "Presentation Score",
+            "presentationScore": "Presentation",
+            "presentationGrade": "Presentation Grade",
             "results": "Results",
             "student": "Student",
             "team": "Team",

@@ -10,3 +10,4 @@ Artemis now includes an online exam mode:
    exams/students_guide
    exams/instructors_guide
    exams/live_statistics
+   exams/exam_participation_checker

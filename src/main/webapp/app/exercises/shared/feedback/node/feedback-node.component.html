@@ -11,7 +11,7 @@
         </span>
     </div>
 
-    <jhi-feedback-collapse *ngIf="feedbackItem.text" class="d-block mt-3" [text]="feedbackItem.text!"></jhi-feedback-collapse>
+    <jhi-feedback-collapse *ngIf="feedbackItem.text" class="d-block mt-3" [feedback]="feedbackItem"></jhi-feedback-collapse>
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 

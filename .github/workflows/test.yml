@@ -30,7 +30,14 @@ on:
     types:
     - created
 
-# Keep in sync with codeql-analysis.yml and build-deploy.yml
+# Limit the number of concurrent runs to one per PR
+# If a run is already in progress, cancel it
+# If the run is not for a PR, then this limit does not apply
+concurrency:
+  group: test-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
   node: 18
@@ -50,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -77,10 +84,17 @@ jobs:
         name: H2 Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
+    - name: Number of Server Starts
+      if: success() || failure()
+      run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-mysql:
+      needs: [ server-tests ]
       runs-on: ubuntu-latest
       timeout-minutes: 120
+      # Limit the number of concurrent mysql tests to one in total
+      concurrency:
+          group: server-tests-mysql
       steps:
           - uses: actions/checkout@v3
           - name: Setup Java
@@ -114,10 +128,17 @@ jobs:
                 name: MySQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-postgres:
+      needs: [ server-tests ]
       runs-on: ubuntu-latest
       timeout-minutes: 150
+      # Limit the number of concurrent postgres tests to one in total
+      concurrency:
+          group: server-tests-postgres
       steps:
           - uses: actions/checkout@v3
           - name: Setup Java
@@ -151,6 +172,9 @@ jobs:
                 name: PostgreSQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-style:
     runs-on: ubuntu-latest

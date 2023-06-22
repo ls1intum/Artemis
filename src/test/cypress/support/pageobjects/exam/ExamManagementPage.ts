@@ -55,11 +55,13 @@ export class ExamManagementPage {
 
     /**
      * Opens the exam assessment dashboard
-     * @param examId the id of the exam
+     * @param courseID the id of the course
+     * @param examID the id of the exam
      * @param timeout how long to wait for the assessment dashboard button
      */
-    openAssessmentDashboard(examId: number, timeout: number) {
-        cy.get('#exercises-button-' + examId, { timeout }).click();
+    openAssessmentDashboard(courseID: number, examID: number, timeout = 60000) {
+        cy.visit(`/course-management/${courseID}/exams`);
+        cy.get(`#exercises-button-${examID}`, { timeout }).click();
     }
 
     /**
@@ -67,6 +69,18 @@ export class ExamManagementPage {
      */
     openTestRun() {
         cy.get(`#testrun-button`).click();
+    }
+
+    verifySubmitted(courseID: number, examID: number, username: string) {
+        cy.visit(`/course-management/${courseID}/exams/${examID}/student-exams`);
+        cy.get('#student-exam').find('.datatable-body-row').filter(`:contains("${username}")`).find('.submitted').contains('Yes');
+    }
+
+    checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
+        cy.visit(`/course-management/${courseID}/exams/${examID}/student-exams`);
+        cy.get('#student-exam').find('.datatable-body-row').filter(`:contains("${username}")`).find('.view-submission').click();
+        cy.get('.summery').click();
+        cy.get('#result-score').contains(score);
     }
 
     /**

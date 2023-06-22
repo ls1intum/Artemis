@@ -5,7 +5,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 
-const resourceUrl = SERVER_API_URL + 'api';
+const resourceUrl = 'api';
 
 describe('ApollonDiagramService', () => {
     let courseId: number;

@@ -12,7 +12,7 @@ export abstract class DomainDependentService implements OnDestroy {
     protected domain: DomainChange;
     protected domainChangeSubscription: Subscription;
 
-    constructor(private domainService: DomainService) {}
+    protected constructor(private domainService: DomainService) {}
 
     /**
      * Initializes a domain subscription.

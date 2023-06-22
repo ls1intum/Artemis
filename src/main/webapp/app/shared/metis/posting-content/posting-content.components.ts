@@ -21,6 +21,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
 
     private postsSubscription: Subscription;
 
+    // Directory for attachments. If the endpoint of the file service changes, this needs to be adapted
+    private readonly ATTACHMENT_DIR = 'api/files/attachments/';
+
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
@@ -65,7 +68,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
      */
     computePostingContentParts(patternMatches: PatternMatch[]): void {
         this.postingContentParts = [];
-
         // if there are references found in the posting content, we need to create a PostingContentPart per reference match
         if (patternMatches && patternMatches.length > 0) {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
@@ -74,6 +76,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 let referenceStr; // e.g. '#6', 'Lecture-1.pdf', 'Modeling Exercise'
                 let linkToReference;
                 let attachmentToReference;
+                let slideToReference;
                 let queryParams;
                 if (ReferenceType.POST === referenceType) {
                     // if the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
@@ -99,13 +102,26 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
-                } else if (ReferenceType.ATTACHMENT === referenceType) {
+                } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
+                    // attachmentRefDir: directory of the attachment
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    const attachmentRefDir = this.ATTACHMENT_DIR;
+                    attachmentToReference =
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        attachmentRefDir + this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                } else if (ReferenceType.SLIDE === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // slideToReference: location of attachment to be opened on reference click
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    const attachmentUnitRefDir = this.ATTACHMENT_DIR;
+                    slideToReference =
+                        attachmentUnitRefDir +
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
                 }
 
                 // determining the endIndex of the content after the reference
@@ -125,6 +141,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     contentBeforeReference: index === 0 ? this.content!.substring(0, patternMatch.startIndex) : undefined, // only defined for the first match
                     linkToReference,
                     attachmentToReference,
+                    slideToReference,
                     queryParams,
                     referenceStr,
                     referenceType,
@@ -158,9 +175,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 5: reference pattern for File Upload Exercises
         // Group 6: reference pattern for Lectures
         // Group 7: reference pattern for Lecture Attachments
+        // Group 8: reference pattern for Lecture Units
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];
@@ -175,7 +193,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     group = ReferenceType[groupsKey as keyof typeof ReferenceType];
                 }
             }
-
             if (group) {
                 patternMatches.push({
                     startIndex: match.index,

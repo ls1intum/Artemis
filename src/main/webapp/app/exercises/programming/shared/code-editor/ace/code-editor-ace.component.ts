@@ -15,7 +15,7 @@ import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
-import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subscription, fromEvent, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
@@ -28,10 +28,9 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
-import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
-import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 
-export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -86,8 +85,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     readonly Range = acequire('ace/range').Range;
 
-    readonly MAX_TAB_SIZE = MAX_TAB_SIZE;
-
     /** Ace Editor Options **/
     editorMode: string; // string or mode object
     isLoading = false;
@@ -105,10 +102,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     tabSize = 4;
 
     // Icons
-    farFileAlt = faFileAlt;
-    faPlusSquare = faPlusSquare;
-    faCircleNotch = faCircleNotch;
-    faGear = faGear;
+    readonly faPlusSquare = faPlusSquare;
+    readonly faCircleNotch = faCircleNotch;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -249,7 +244,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     }
                 }),
                 catchError(() => {
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
@@ -461,9 +456,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     addLineWidgetWithFeedback(line: number) {
         // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
-        let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+        let inlineFeedback: Element | undefined = this.elementArray.find((element) => element.id === 'test-' + line);
         if (!inlineFeedback) {
-            inlineFeedback = document.querySelector(`#test-${line}`);
+            inlineFeedback = document.querySelector(`#test-${line}`) ?? undefined;
             if (inlineFeedback) {
                 this.elementArray.push(inlineFeedback);
             }
@@ -567,12 +562,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         callback();
     }
 
-    /**
-     * Changes the tab size to a valid value in case it is not.
-     *
-     * Valid values are in range [1, {@link MAX_TAB_SIZE}].
-     */
-    validateTabSize(): void {
-        this.tabSize = Math.max(1, Math.min(this.tabSize, MAX_TAB_SIZE));
+    updateTabSize(event: number) {
+        this.tabSize = event;
     }
 }

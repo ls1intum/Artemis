@@ -49,7 +49,6 @@ examples.forEach((activeConversation) => {
 
             fixture = TestBed.createComponent(ConversationHeaderComponent);
             component = fixture.componentInstance;
-            component.getConversationName = () => 'dummy';
             component.canAddUsers = canAddUsers;
             fixture.detectChanges();
         });

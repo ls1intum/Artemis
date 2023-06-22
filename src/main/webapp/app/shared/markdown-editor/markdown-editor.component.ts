@@ -36,12 +36,15 @@ import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-s
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
+    EXTRA_LARGE = 1500,
 }
 
 export enum EditorMode {
@@ -150,6 +153,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {visualMode} when editor is created the visual mode is set to false, since the edit mode is set active */
     visualMode = false;
+    @Input()
+    minHeightEditor = MarkdownEditorHeight.SMALL.valueOf();
 
     @ContentChild(MultipleChoiceVisualQuestionComponent, { static: false }) visualChild: MultipleChoiceVisualQuestionComponent;
 
@@ -173,6 +178,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
     faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     uniqueMarkdownEditorId: string;
 
@@ -209,6 +215,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     removeCommand(classRef: typeof Command) {
         setTimeout(() => (this.defaultCommands = this.defaultCommands.filter((element) => !(element instanceof classRef))));
+    }
+
+    isTypeOfExerciseReferenceCommand(commandToCheck: MultiOptionCommand) {
+        return commandToCheck instanceof ExerciseReferenceCommand;
     }
 
     ngAfterViewInit(): void {

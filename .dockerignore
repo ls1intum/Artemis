@@ -28,6 +28,13 @@ node_modules
 build/*
 !build/libs/*.war
 
+#########################
+# exclude Artemis configs
+#########################
+/src/main/resources/config/application-local*.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts
+
 # exclude the docker files and the /docker/.docker-data folders
 docker/
 

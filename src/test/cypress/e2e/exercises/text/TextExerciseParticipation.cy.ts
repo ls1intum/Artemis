@@ -20,7 +20,7 @@ describe('Text exercise participation', () => {
         });
     });
 
-    it('Creates a text exercise in the UI', () => {
+    it('Makes a text exercise submission as student', () => {
         cy.login(studentOne, `/courses/${course.id}/exercises`);
         courseOverview.startExercise(exercise.id!);
         courseOverview.openRunningExercise(exercise.id!);
