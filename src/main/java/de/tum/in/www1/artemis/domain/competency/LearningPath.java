@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class LearningPath extends DomainObject {
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 
