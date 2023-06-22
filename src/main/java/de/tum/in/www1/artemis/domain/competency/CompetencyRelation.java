@@ -1,6 +1,8 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.competency;
 
 import javax.persistence.*;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  * This class models the relation between two competencies. Imagine a graph: (tail) --- type --> (head)
