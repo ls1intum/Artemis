@@ -22,7 +22,6 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ButtonType } from 'app/shared/components/button.component';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -69,7 +68,6 @@ describe('ExerciseChatWidgetComponent', () => {
                 window.HTMLElement.prototype.scrollTo = jest.fn();
                 fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
                 component = fixture.componentInstance;
-                component.ButtonType = ButtonType.PRIMARY;
                 fixture.detectChanges();
             });
     });
