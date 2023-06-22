@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import * as linkify from 'linkifyjs';
 import { Link } from 'app/shared/link-preview/linkify/interfaces/linkify.interface';
 
 @Injectable()
@@ -11,7 +10,32 @@ export class LinkifyService {
      *
      * @param text - the string to find some links
      */
-    find(text: string): Array<Link> {
-        return linkify.find(text);
+    find(text: string): Link[] {
+        const linkableItems: Link[] = [];
+
+        // Regular expression pattern to match URLs
+        const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
+
+        // Find all URL matches in the text (in the content of the post)
+        let match;
+        while ((match = urlRegex.exec(text)) !== null) {
+            const url = match[0];
+            const start = match.index;
+            const end = start + url.length;
+
+            // Create a linkable item object
+            const linkableItem = {
+                type: 'url',
+                value: url,
+                isLink: true,
+                href: url,
+                start,
+                end,
+            };
+
+            linkableItems.push(linkableItem);
+        }
+
+        return linkableItems;
     }
 }
