@@ -127,6 +127,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 break;
         }
     }
+
     loadChannelsOfCourse() {
         this.isLoading = true;
         this.channelService
