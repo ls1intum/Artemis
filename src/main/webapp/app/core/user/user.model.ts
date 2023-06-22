@@ -16,6 +16,7 @@ export class User extends Account {
     public password?: string;
     public vcsAccessToken?: string;
     public tutorialGroupRegistrations?: TutorialGroupRegistration[];
+    public isLinkPreviewEnabled?: boolean;
 
     constructor(
         id?: number,

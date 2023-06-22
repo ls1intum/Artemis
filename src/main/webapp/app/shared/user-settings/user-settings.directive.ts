@@ -1,10 +1,12 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Directive, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MessagesPreferencesSetting } from 'app/shared/user-settings/messages/messages-preferences-structure';
 
 /**
  * Is used as the abstract user-settings "parent" with all the necessary basic logic for other "child" components to implement/inherit from.
@@ -23,7 +25,12 @@ export abstract class UserSettingsDirective implements OnInit {
     page = 0;
     error?: string;
 
-    protected constructor(protected userSettingsService: UserSettingsService, protected alertService: AlertService, protected changeDetector: ChangeDetectorRef) {}
+    protected constructor(
+        protected userSettingsService: UserSettingsService,
+        protected alertService: AlertService,
+        protected changeDetector: ChangeDetectorRef,
+        private sessionStorageService: SessionStorageService,
+    ) {}
 
     ngOnInit(): void {
         this.alertService.closeAll();
@@ -40,6 +47,14 @@ export abstract class UserSettingsDirective implements OnInit {
             next: (res: HttpResponse<Setting[]>) => {
                 this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
                 this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                // store the setting for link previews in session storage TODO: find a solution this only works when settings page is loaded
+                if (this.userSettings.category === UserSettingsCategory.MESSAGES_PREFERENCES_SETTINGS) {
+                    this.settings.map((setting: MessagesPreferencesSetting) => {
+                        if (setting.settingId === SettingId.MESSAGES_PREFERENCES__SHOW_LINK_PREVIEWS) {
+                            this.sessionStorageService.store(SettingId.MESSAGES_PREFERENCES__SHOW_LINK_PREVIEWS, JSON.stringify(setting.enabled));
+                        }
+                    });
+                }
                 this.changeDetector.detectChanges();
                 this.alertService.closeAll();
             },
@@ -59,6 +74,14 @@ export abstract class UserSettingsDirective implements OnInit {
                 this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
                 this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.finishSaving();
+                // store the setting for link previews in session storage TODO: find a solution this only works when settings page is loaded
+                if (this.userSettings.category === UserSettingsCategory.MESSAGES_PREFERENCES_SETTINGS) {
+                    this.settings.map((setting: MessagesPreferencesSetting) => {
+                        if (setting.settingId === SettingId.MESSAGES_PREFERENCES__SHOW_LINK_PREVIEWS) {
+                            this.sessionStorageService.store(SettingId.MESSAGES_PREFERENCES__SHOW_LINK_PREVIEWS, JSON.stringify(setting.enabled));
+                        }
+                    });
+                }
             },
             error: (res: HttpErrorResponse) => this.onError(res),
         });

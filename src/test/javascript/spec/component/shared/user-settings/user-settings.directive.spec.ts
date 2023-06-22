@@ -17,6 +17,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { SessionStorageService } from 'ngx-webstorage';
 
 /**
  * needed for testing the abstract UserSettingsDirective
@@ -28,11 +29,13 @@ import { AlertService } from 'app/core/util/alert.service';
 class UserSettingsMockComponent extends UserSettingsDirective {
     changeDetector: ChangeDetectorRef;
     alertService: AlertService;
+    sessionStorageService: SessionStorageService;
 
-    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
-        super(userSettingsService, alertService, changeDetector);
+    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService, sessionStorageService: SessionStorageService) {
+        super(userSettingsService, alertService, changeDetector, sessionStorageService);
         this.changeDetector = changeDetector;
         this.alertService = alertService;
+        this.sessionStorageService = sessionStorageService;
     }
 }
 

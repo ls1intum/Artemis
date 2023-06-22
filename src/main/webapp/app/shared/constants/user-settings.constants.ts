@@ -1,5 +1,6 @@
 export enum UserSettingsCategory {
     NOTIFICATION_SETTINGS = 'NOTIFICATION_SETTINGS',
+    MESSAGES_PREFERENCES_SETTINGS = 'MESSAGES_PREFERENCES_SETTINGS',
 }
 
 /**
@@ -47,4 +48,7 @@ export enum SettingId {
     NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE = 'notification.user-notification.conversation-message',
 
     NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = 'notification.user-notification.new-reply-in-conversation',
+
+    // messages preferences settingIds
+    MESSAGES_PREFERENCES__SHOW_LINK_PREVIEWS = 'messages-preferences.show-link-previews',
 }

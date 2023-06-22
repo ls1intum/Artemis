@@ -24,17 +24,29 @@ export class LinkPreviewContainerComponent implements OnInit {
     ngOnInit() {
         this.data = this.data ?? '';
         const links: Link[] = this.linkifyService.find(this.data!);
-        links.forEach((link) => {
-            this.linkPreviewService.fetchLink(link.href).subscribe({
-                next: (linkPreview) => {
-                    linkPreview.shouldPreviewBeShown = !!(linkPreview.url && linkPreview.title && linkPreview.description && linkPreview.image);
-                    this.linkPreviews.push(linkPreview);
-                    this.hasError = false;
-                    this.loaded = true;
-                    this.showLoadingsProgress = false;
-                },
+        // TODO: The limit of 5 link previews should be configurable
+        links
+            .slice(0, 5) // limit to 5 links
+            .forEach((link) => {
+                this.linkPreviewService.fetchLink(link.href).subscribe({
+                    next: (linkPreview) => {
+                        linkPreview.shouldPreviewBeShown = !!(linkPreview.url && linkPreview.title && linkPreview.description && linkPreview.image);
+
+                        // Check if a link preview for the current link already exists
+                        const existingLinkPreview = this.linkPreviews.find((preview) => preview.url === linkPreview.url);
+                        if (existingLinkPreview) {
+                            // Update the existing link preview instead of pushing a new one
+                            Object.assign(existingLinkPreview, linkPreview);
+                        } else {
+                            this.linkPreviews.push(linkPreview);
+                        }
+
+                        this.hasError = false;
+                        this.loaded = true;
+                        this.showLoadingsProgress = false;
+                    },
+                });
             });
-        });
     }
 
     trackLinks(index: number, preview: LinkPreview) {

@@ -8,6 +8,7 @@ import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.mo
 import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { SessionStorageService } from 'ngx-webstorage';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -28,9 +29,10 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         userSettingsService: UserSettingsService,
         changeDetector: ChangeDetectorRef,
         alertService: AlertService,
+        sessionStorageService: SessionStorageService,
         private notificationSettingsService: NotificationSettingsService,
     ) {
-        super(userSettingsService, alertService, changeDetector);
+        super(userSettingsService, alertService, changeDetector, sessionStorageService);
     }
 
     declare userSettings: UserSettingsStructure<NotificationSetting>;

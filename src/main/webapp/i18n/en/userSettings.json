@@ -16,7 +16,9 @@
                 "joinedArtemis": "Joined Artemis on"
             },
             "categories": {
-                "NOTIFICATION_SETTINGS": "Notification Settings"
+                "NOTIFICATION_SETTINGS": "Notification Settings",
+                "MESSAGES_PREFERENCES_SETTINGS": "Messages Preferences Settings",
+                "messages": "Messages"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
@@ -27,7 +29,8 @@
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
                 "tutorNotifications": "Tutor Notifications",
                 "editorNotifications": "Editor Notifications",
-                "instructorNotifications": "Instructor Notifications"
+                "instructorNotifications": "Instructor Notifications",
+                "linkPreview": "Link Preview"
             },
             "settingNames": {
                 "basicWeeklySummary": "Basic Weekly Summary",
@@ -49,7 +52,8 @@
                 "newConversationMessages": "New messages in conversations",
                 "newReplyMessage": "New replies in conversations",
                 "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
-                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"
+                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups",
+                "linkPreviewPreference": "Link Preview Preferences"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Receive a basic weekly summary every Friday at 5pm (e.g. what new exercises have been released this week and are still open)",
@@ -72,7 +76,8 @@
                 "newConversationMessageDescription": "Get notified when you receive a new message in a conversation",
                 "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
-                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group"
+                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
+                "linkPreviewPreferenceDescription": "Enable or disable link previews for all messages"
             }
         }
     }
