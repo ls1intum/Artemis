@@ -153,8 +153,8 @@ public class ChannelDTO extends ConversationDTO {
         this.tutorialGroupTitle = tutorialGroupTitle;
     }
 
-    public String getSubType() {
-        return subType != null ? subType.toString().toLowerCase() : null;
+    public ChannelSubType getSubType() {
+        return subType;
     }
 
     @Override

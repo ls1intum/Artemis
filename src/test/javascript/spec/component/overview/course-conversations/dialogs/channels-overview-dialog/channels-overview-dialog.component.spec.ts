@@ -33,10 +33,11 @@ const examples: ChannelDTO[] = [
     generateExampleChannelDTO({}),
     generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE }),
     generateExampleChannelDTO({ subType: ChannelSubType.LECTURE }),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM }),
 ];
 
 examples.forEach((exampleChannel) => {
-    describe('ChannelsOverviewDialogComponent', () => {
+    describe('ChannelsOverviewDialogComponent for ' + exampleChannel.subType + ' channels', () => {
         let component: ChannelsOverviewDialogComponent;
         let fixture: ComponentFixture<ChannelsOverviewDialogComponent>;
         const course = { id: 1, isAtLeastInstructor: true } as Course;
@@ -92,6 +93,7 @@ examples.forEach((exampleChannel) => {
 
             channelItems = fixture.debugElement.queryAll(By.directive(ChannelItemStubComponent)).map((debugElement) => debugElement.componentInstance);
         });
+
         it('should create', () => {
             expect(component).toBeTruthy();
             expect(getChannelsOfCourseSpy).toHaveBeenCalledWith(course.id);
@@ -135,18 +137,16 @@ examples.forEach((exampleChannel) => {
             }));
         }
 
-        it('should call create channel function when channel action create is performed', fakeAsync(() => {
-            if (createChannelFnSpy === undefined) {
-                return;
-            }
-
-            const channelAction = { channel: new ChannelDTO(), action: 'create' } as ChannelAction;
-            channelItems[0].channelAction.emit(channelAction);
-            fixture.detectChanges();
-            tick(501);
-            expect(createChannelFnSpy).toHaveBeenCalledOnce();
-            expect(component.channelModificationPerformed).toBeTrue();
-        }));
+        if (createChannelFnSpy) {
+            it('should call create channel function when channel action create is performed', fakeAsync(() => {
+                const channelAction = { channel: new ChannelDTO(), action: 'create' } as ChannelAction;
+                channelItems[0].channelAction.emit(channelAction);
+                fixture.detectChanges();
+                tick(501);
+                expect(createChannelFnSpy).toHaveBeenCalledOnce();
+                expect(component.channelModificationPerformed).toBeTrue();
+            }));
+        }
 
         it('should not show create channel button if user is missing the permission', fakeAsync(() => {
             canCreateChannel.mockReturnValue(false);
