@@ -37,7 +37,7 @@
                 </div>
             </span>
         </div>
-        <div class="submission-row" *ngIf="submissionPolicy">
+        <div class="submission-row" *ngIf="submissionPolicy && submissionPolicy.active">
             <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
             <div>
                 {{
