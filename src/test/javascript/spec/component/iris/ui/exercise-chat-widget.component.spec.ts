@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockPipe } from 'ng-mocks';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
@@ -13,6 +16,13 @@ import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/ir
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisSender } from 'app/entities/iris/iris-message.model';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ButtonType } from 'app/shared/components/button.component';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -38,18 +48,28 @@ describe('ExerciseChatWidgetComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
-            declarations: [ExerciseChatWidgetComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
                 { provide: MatDialog, useValue: mockDialog },
+                { provide: ActivatedRoute, useValue: {} },
+                { provide: LocalStorageService, useValue: {} },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: HttpClient, useClass: MockHttpService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
             .then(() => {
+                jest.spyOn(console, 'error').mockImplementation(() => {});
+                global.window ??= window;
+                window.scroll = jest.fn();
+                window.HTMLElement.prototype.scrollTo = jest.fn();
                 fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
                 component = fixture.componentInstance;
-                fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+                component.buttonType = ButtonType.Primary;
                 fixture.detectChanges();
             });
     });
