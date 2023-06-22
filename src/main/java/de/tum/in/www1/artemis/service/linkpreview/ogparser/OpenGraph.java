@@ -27,6 +27,14 @@ public class OpenGraph {
         return getContentOf(property, 0);
     }
 
+    /**
+     * Returns the content of the property at the given index.
+     * If the property does not exist, null is returned.
+     *
+     * @param property the property
+     * @param index    the index
+     * @return the content of the property at the given index
+     */
     public Content getContentOf(String property, int index) {
         if (openGraphMap.get(property) == null) {
             return null;

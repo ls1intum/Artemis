@@ -24,6 +24,12 @@ public class LinkPreviewResource {
         this.linkPreviewService = linkPreviewService;
     }
 
+    /**
+     * GET /link-preview : get link preview for url.
+     *
+     * @param url the url to parse
+     * @return the LinkPreviewDTO containing the meta information
+     */
     @PostMapping("/link-preview")
     @PreAuthorize("hasRole('USER')")
     @Cacheable(value = "linkPreview", key = "#url", unless = "#result == null")

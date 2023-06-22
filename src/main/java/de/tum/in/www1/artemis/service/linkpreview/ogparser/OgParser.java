@@ -23,6 +23,12 @@ public class OgParser {
         this.ogMetaElementHtmlParser = ogMetaElementHtmlParser;
     }
 
+    /**
+     * Returns the OpenGraph data of the given url.
+     *
+     * @param url the url
+     * @return the OpenGraph data of the given url
+     */
     public OpenGraph getOpenGraphOf(String url) {
         final List<OgMetaElement> ogMetaElements = ogMetaElementHtmlParser.getOgMetaElementsFrom(url);
 
