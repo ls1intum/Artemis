@@ -49,7 +49,7 @@ public class ChannelDTO extends ConversationDTO {
 
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
-        this.setSubType(channel);
+        this.setSubTypeFromChannel(channel);
         this.name = channel.getName();
         this.description = channel.getDescription();
         this.isPublic = channel.getIsPublic();
@@ -154,7 +154,7 @@ public class ChannelDTO extends ConversationDTO {
                 + super.toString();
     }
 
-    private void setSubType(Channel channel) {
+    private void setSubTypeFromChannel(Channel channel) {
         if (channel.getExercise() != null) {
             this.subType = ChannelSubType.EXERCISE;
         }
