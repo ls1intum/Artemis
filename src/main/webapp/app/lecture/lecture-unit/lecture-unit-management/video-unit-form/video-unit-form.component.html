@@ -38,12 +38,12 @@
                 <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
             </div>
             <div class="form-group">
-                <jhi-learning-goal-selection
-                    id="learning-goals"
-                    [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.learningGoal.link.lectureUnit' | artemisTranslate"
-                    formControlName="learningGoals"
-                ></jhi-learning-goal-selection>
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+                    formControlName="competencies"
+                ></jhi-competency-selection>
             </div>
             <div class="container" style="padding: 0">
                 <div class="row">
@@ -87,7 +87,9 @@
                     </div>
                     <div class="col-1"></div>
                     <div class="col-7">
-                        <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
+                        <small id="urlHelperExplanation" class="form-text text-body-secondary">{{
+                            'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate
+                        }}</small>
                         <div *ngIf="urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)" class="alert alert-danger">
                             <div *ngIf="urlHelperControl?.errors?.invalidVideoUrl">
                                 {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | artemisTranslate }}

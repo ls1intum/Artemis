@@ -1,0 +1,265 @@
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading">
+    <div class="d-flex flex-wrap">
+        <div class="my-auto d-flex align-items-center">
+            <h2 jhiTranslate="artemisApp.competency.manageCompetencies.title">Competency Management</h2>
+            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+        </div>
+        <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+            <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>
+            </button>
+
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.competency.manageCompetencies.create' | artemisTranslate }}</span>
+            </a>
+        </div>
+    </div>
+
+    <div *ngIf="showRelations" class="container mt-3 mb-3">
+        <ngb-accordion [closeOthers]="true">
+            <ngb-panel id="panel-1">
+                <ng-template ngbPanelTitle
+                    >{{ 'artemisApp.competency.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                </ng-template>
+                <ng-template ngbPanelContent>
+                    <form class="row p-3 g-3 align-items-center">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="tail">{{ 'artemisApp.competency.relation.tailCompetency' | artemisTranslate }}</label>
+                                <select
+                                    [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
+                                    class="form-select"
+                                    id="tail"
+                                    name="tail"
+                                    [(ngModel)]="tailCompetency"
+                                    (change)="validate()"
+                                >
+                                    <option *ngFor="let competency of competencies" [value]="competency.id">{{ competency.title }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
+                                <select
+                                    [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
+                                    class="form-select"
+                                    id="type"
+                                    name="type"
+                                    [(ngModel)]="relationType"
+                                    (change)="validate()"
+                                >
+                                    >
+                                    <option value="RELATES" selected>{{ 'artemisApp.competency.relation.relates' | artemisTranslate }}</option>
+                                    <option value="ASSUMES">{{ 'artemisApp.competency.relation.assumes' | artemisTranslate }}</option>
+                                    <option value="EXTENDS">{{ 'artemisApp.competency.relation.extends' | artemisTranslate }}</option>
+                                    <option value="MATCHES">{{ 'artemisApp.competency.relation.matches' | artemisTranslate }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="head">{{ 'artemisApp.competency.relation.headCompetency' | artemisTranslate }}</label>
+                                <select
+                                    [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
+                                    class="form-select"
+                                    id="head"
+                                    name="head"
+                                    [(ngModel)]="headCompetency"
+                                    (ngModelChange)="validate()"
+                                >
+                                    <option *ngFor="let competency of competencies" [value]="competency.id">{{ competency.title }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <input
+                                type="button"
+                                class="btn btn-primary"
+                                value="{{ 'artemisApp.competency.relation.createRelation' | artemisTranslate }}"
+                                (click)="createRelation()"
+                                [disabled]="!headCompetency || !tailCompetency || !relationType || relationError !== competencyRelationError.NONE"
+                            />
+                            <span
+                                *ngIf="relationError !== competencyRelationError.NONE"
+                                jhiTranslate="{{ getErrorMessage(relationError) }}"
+                                id="relation-not-valid-text"
+                                class="invalid-feedback"
+                            >
+                                You can not create this relation.
+                            </span>
+                        </div>
+                    </form>
+                    <ngx-graph
+                        class="m-1 chart-container"
+                        layout="dagreCluster"
+                        [view]="[1200, 600]"
+                        [enableZoom]="false"
+                        [draggingEnabled]="false"
+                        [nodes]="nodes"
+                        [links]="edges"
+                        [clusters]="clusters"
+                    >
+                        <ng-template #defsTemplate>
+                            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+                            </svg:marker>
+                        </ng-template>
+
+                        <ng-template #clusterTemplate let-cluster>
+                            <svg:g class="node cluster">
+                                <svg:rect rx="5" ry="5" [attr.width]="cluster.dimension.width" [attr.height]="cluster.dimension.height" [attr.fill]="cluster.data.color" />
+                            </svg:g>
+                        </ng-template>
+
+                        <ng-template #nodeTemplate let-node>
+                            <svg:g class="node">
+                                <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" [attr.fill]="node.data.color" />
+                                <svg:text alignment-baseline="central" [attr.x]="10" [attr.y]="node.dimension.height / 2">
+                                    {{ node.label }}
+                                </svg:text>
+                            </svg:g>
+                        </ng-template>
+
+                        <ng-template #linkTemplate let-link>
+                            <svg:g class="edge" (click)="removeRelation(link)">
+                                <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
+                                <svg:text class="edge-label" text-anchor="middle">
+                                    <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
+                                        {{ ('artemisApp.competency.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
+                                    </textPath>
+                                </svg:text>
+                            </svg:g>
+                        </ng-template>
+                    </ngx-graph>
+                </ng-template>
+            </ngb-panel>
+        </ngb-accordion>
+    </div>
+
+    <div class="container-fluid" style="min-height: 100px">
+        <table class="table table-striped" *ngIf="competencies.length">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="global.field.id">ID</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.title">Title</span></th>
+                    <th width="300"><span jhiTranslate="artemisApp.competency.description">Description</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.taxonomy">Taxonomy</span></th>
+                    <th class="d-none d-lg-table-cell"><span jhiTranslate="artemisApp.competency.masteredStudents">Mastered Students</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let competency of competencies; trackBy: identify; let i = index" id="competency-row-{{ i }}">
+                    <td>
+                        <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.id }}</a>
+                    </td>
+                    <td>
+                        <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
+                    </td>
+                    <td [innerHTML]="competency.description"></td>
+                    <td>
+                        <div *ngIf="competency.taxonomy">
+                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                            {{ getIconTooltip(competency.taxonomy) | artemisTranslate }}
+                        </div>
+                    </td>
+                    <td class="d-none d-lg-table-cell">
+                        <ngb-progressbar
+                            type="primary"
+                            [showValue]="true"
+                            [value]="competency.courseProgress?.numberOfMasteredStudents ?? 0"
+                            [max]="competency.courseProgress?.numberOfStudents ?? 0"
+                        ></ngb-progressbar>
+                    </td>
+                    <td class="text-end">
+                        <a
+                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                            class="btn btn-sm btn-primary"
+                            [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']"
+                        >
+                            <fa-icon [icon]="faPencilAlt"></fa-icon>
+                            <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                        </a>
+                        <button
+                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                            jhiDeleteButton
+                            [entityTitle]="competency.title || ''"
+                            [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
+                            [deleteConfirmationText]="'artemisApp.competency.competencyCard.delete.typeNameToConfirm'"
+                            (delete)="deleteCompetency(competency.id!)"
+                            [dialogError]="dialogError$"
+                        >
+                            <fa-icon [icon]="faTimes"></fa-icon>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex flex-wrap">
+        <h2 jhiTranslate="artemisApp.competency.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
+        <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+            <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.competency.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="container-fluid" style="min-height: 100px">
+        <table class="table table-striped" *ngIf="prerequisites.length">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="global.field.id">ID</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.title">Title</span></th>
+                    <th width="300"><span jhiTranslate="artemisApp.competency.description">Description</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.taxonomy">Taxonomy</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.course">Course</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let prerequisite of prerequisites; trackBy: identify; let i = index" id="competency-row-{{ i }}">
+                    <td>
+                        {{ prerequisite.id }}
+                    </td>
+                    <td>
+                        {{ prerequisite.title }}
+                    </td>
+                    <td [innerHTML]="prerequisite.description"></td>
+                    <td>
+                        <div *ngIf="prerequisite.taxonomy">
+                            <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                            {{ getIconTooltip(prerequisite.taxonomy) | artemisTranslate }}
+                        </div>
+                    </td>
+                    <td>
+                        <div *ngIf="prerequisite.course">
+                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'competency-management']">{{ prerequisite.course!.title }}</a>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <button
+                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                            id="removeButton"
+                            class="btn btn-secondary btn-sm"
+                            (click)="removePrerequisite(prerequisite.id!)"
+                        >
+                            <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

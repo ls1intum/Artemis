@@ -32,7 +32,7 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
-                "learningGoals": "Kompetenzen",
+                "competencies": "Kompetenzen",
                 "tutorialGroups": "Übungsgruppen",
                 "exams": "Klausuren",
                 "testExam": "Testklausur",
@@ -156,7 +156,7 @@
                 "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
                 "pointsPerExercise": "Punkte pro Aufgabe"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "Es sind keine Kompetenzen für diesen Kurs vorhanden."
             },
             "lectureList": {
@@ -208,10 +208,14 @@
                 "rated": "Bewertet",
                 "practice": "Übung",
                 "assessmentType": "Bewertung:",
+                "releaseDate": "Veröffentlichungsdatum:",
+                "releaseDateTooltip": "Studierende können diese Aufgabe ab {{date}} sehen.",
                 "startDate": "Startdatum:",
                 "startDateTooltip": "Studierende können diese Aufgabe ab {{date}} bearbeiten.",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
+                "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung:",
+                "exampleSolutionPublicationDateTooltip": "Die Beispiellösung wird am {{date}} veröffentlicht.",
                 "assessmentDue": "Bewertung bis:",
                 "assessmentDueTooltip": "Die Frist für die Bewertung ist am {{date}}.",
                 "complaintDue": "Beschwerde bis:",
