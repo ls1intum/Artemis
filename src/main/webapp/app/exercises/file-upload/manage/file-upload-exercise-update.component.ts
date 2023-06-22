@@ -100,6 +100,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    if (!this.isExamMode) {
+                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channelName == undefined) {
+                            this.fileUploadExercise.channelName = '';
+                        }
+                    }
                     this.handleExerciseSettings();
                     this.handleImport(params);
                 }),
@@ -161,6 +166,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+
         new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.fileUploadExercise, this.isExamMode, this.notificationText)
             .subscribe({
@@ -199,6 +205,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
+        if (error.error && error.error.title) {
+            this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.params);
+        }
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         this.alertService.addAlert({
             type: AlertType.DANGER,
