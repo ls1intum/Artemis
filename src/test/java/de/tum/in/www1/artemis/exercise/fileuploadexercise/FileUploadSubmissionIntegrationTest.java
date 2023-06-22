@@ -400,6 +400,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
     @Test
@@ -415,6 +416,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
     @Test
@@ -429,6 +431,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
     @Test
