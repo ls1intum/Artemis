@@ -36,6 +36,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private static final String TEST_PREFIX = "tutorialgroup";
 
+    private User instructor1;
+
     private User tutor1;
 
     private User tutor2;
@@ -60,6 +62,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
 
+        instructor1 = userRepository.findOneByLogin(testPrefix + "instructor1").orElseThrow();
         tutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
         tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
         student1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
@@ -317,8 +320,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      */
     void averageAttendanceTestScaffold(Integer[] attendance, Integer expectedAverage, boolean useSingleEndpoint) throws Exception {
         // given
-        var tutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of()).getId();
+        var tutorialGroupId = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of()).getId();
         var sessionToSave = new ArrayList<TutorialGroupSession>();
         var date = firstAugustMonday;
         for (Integer att : attendance) {
@@ -584,7 +587,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerMultipleStudents_asInstructor_shouldRegisterStudents() throws Exception {
         // given
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         student3.setRegistrationNumber("number3");
         userRepository.saveAndFlush(student3);
 
@@ -648,7 +650,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null));
         assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, studentPropertiesNullExpected);
 
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
         assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>(), instructor1);
         assertTutorialGroupWithTitleExistsInDb(existingTitle);
@@ -674,7 +675,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // we test with student4 that a previously unregistered student will be registered to a fresh tutorial group
         var freshTitle = "freshTitle";
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
-        var student4 = userRepository.findOneByLogin(TEST_PREFIX + "student4").orElseThrow();
         assertUserIsNotRegisteredInATutorialGroup(student4);
         // we test with student2 that a previously registered student will be registered to a fresh tutorial group
         assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student2);
@@ -711,7 +711,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student1);
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student3);
 
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, Set.of(student4, student2), instructor1);
     }
 
@@ -757,7 +756,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(1);
         var importResultDTO = importResult.get(0);
@@ -804,7 +802,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(4);
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
