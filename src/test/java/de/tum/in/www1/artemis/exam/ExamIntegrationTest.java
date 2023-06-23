@@ -2660,6 +2660,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.FORBIDDEN, String.class);
     }
 
+    // TODO remove RepeatedTest annotation
+    // @RepeatedTest(1000)
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDownloadExamArchiveAsInstructor() throws Exception {
