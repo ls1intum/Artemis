@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
 import { ArtemisTestModule } from '../../test.module';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { MockLinkPreviewService } from '../../helpers/mocks/service/mock-link-preview.service';
 import { of } from 'rxjs';
@@ -38,7 +38,10 @@ describe('LinkPreviewContainerComponent', () => {
 
     it('should fetch link previews and update linkPreviews array', () => {
         component.data = 'Check out these links: https://example.com/link1 and https://example.com/link2';
-        const links = [{ href: 'https://example.com/link1' }, { href: 'https://example.com/link2' }];
+        const links: Link[] = [
+            { type: '', value: '', href: 'https://example.com/link1' },
+            { type: '', value: '', href: 'https://example.com/link2' },
+        ];
         const mockLinkPreviews: LinkPreview[] = [
             { url: 'https://example.com/link1', title: 'Link 1', description: 'Description 1', image: 'image1.jpg', shouldPreviewBeShown: true },
             { url: 'https://example.com/link2', title: 'Link 2', description: 'Description 2', image: 'image2.jpg', shouldPreviewBeShown: true },
@@ -61,7 +64,7 @@ describe('LinkPreviewContainerComponent', () => {
 
     it('should update existing link preview if it already exists', () => {
         component.data = 'Check out these links: https://example.com/link1';
-        const links = [{ href: 'https://example.com/link1' }];
+        const links: Link[] = [{ type: '', value: '', href: 'https://example.com/link1' }];
         const existingLinkPreview: LinkPreview = {
             url: 'https://example.com/link1',
             title: 'Existing Link',
