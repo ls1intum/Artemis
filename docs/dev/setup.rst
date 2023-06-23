@@ -671,6 +671,8 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
+.. _docker_compose_setup_dev:
+
 Alternative: Docker Compose Setup
 ---------------------------------
 
@@ -717,7 +719,11 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-dev-postgres.yml``: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and
+  a PostgreSQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
+  a PostgreSQL DB
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
   (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
   for the configuration of this setup)
@@ -729,12 +735,13 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
 * ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
-Two example commands to run such setups:
+Three example commands to run such setups:
 
 .. code:: bash
 
   docker compose -f docker/atlassian.yml up
   docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
+  docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
