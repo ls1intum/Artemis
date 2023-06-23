@@ -105,7 +105,7 @@ Its main features are
 
 * a security manager to prevent students crashing the tests or cheating
 * more robust tests and builds due to limits on time, threads and io
-* support for public and hidden Artemis tests, where hidden ones obey a custom deadline
+* support for public and hidden Artemis tests, where hidden ones obey a custom due date
 * utilities for improved feedback in Artemis like processing multiline error messages
   or pointing to a possible location that caused an Exception
 * utilities to test exercises using System.out and System.in comfortably

@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -62,6 +63,7 @@ public class ExamSubmissionService {
      * @param withGracePeriod whether the grace period should be taken into account or not
      * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
      *         the user's student exam
+     *         TODO: Simplify this method and potentially usages of it by using {@link ProgrammingExerciseStudentParticipation#isLocked()}.
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
         if (exercise.isExamExercise()) {

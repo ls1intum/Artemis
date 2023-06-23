@@ -34,7 +34,7 @@
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
-        "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Abgabefrist erstellt werden.",
+        "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Einreichungsfrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
         "noSubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",

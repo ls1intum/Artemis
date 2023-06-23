@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
@@ -41,8 +44,7 @@ public class CompetencyResource {
 
     private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
-    // TODO: change to `competency` once the translation labels are changed on client
-    private static final String ENTITY_NAME = "learningGoal";
+    private static final String ENTITY_NAME = "competency";
 
     private final CourseRepository courseRepository;
 
