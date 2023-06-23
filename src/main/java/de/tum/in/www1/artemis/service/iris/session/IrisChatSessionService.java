@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service to handle the chat subsystem of Iris.
@@ -163,15 +164,14 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         Repository studentRepo;
 
         if (templateParticipation.isEmpty()) {
-            throw new BadRequestException("Iris cannot function without template participation");
+            throw new InternalServerErrorException("Iris cannot function without template participation");
         }
         if (studentParticipation.isEmpty()) {
             try {
                 templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
             }
             catch (GitAPIException e) {
-                log.error("Could not checkout template repository", e);
-                return;
+                throw new InternalServerErrorException("Iris cannot function without template participation");
             }
             parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
             return;
@@ -182,8 +182,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
         }
         catch (GitAPIException e) {
-            log.error("Could not fetch repositories", e);
-            return;
+            throw new InternalServerErrorException("Could not fetch existing student or template participation");
         }
         parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
         parameters.put("studentRepository", repositoryService.getFilesWithContent(studentRepo));
@@ -201,7 +200,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             parameters.put("gitDiff", diffOutputStream.toString());
         }
         catch (GitAPIException | IOException e) {
-            log.error("Could not generate diff", e);
+            throw new InternalServerErrorException("Could not generate diff from existing template and student participation");
         }
     }
 }
