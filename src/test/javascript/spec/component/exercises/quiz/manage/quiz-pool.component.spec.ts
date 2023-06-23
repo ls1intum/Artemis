@@ -104,7 +104,8 @@ describe('QuizPoolComponent', () => {
         const addQuestionSpy = jest.spyOn(component.quizPoolMappingComponent, 'addQuestion');
         const quizQuestion = new MultipleChoiceQuestion();
         component.handleQuestionAdded(quizQuestion);
-        expect(addQuestionSpy).toHaveBeenCalledOnceWith(quizQuestion);
+        expect(addQuestionSpy).toHaveBeenCalledOnce();
+        expect(addQuestionSpy).toHaveBeenCalledWith(quizQuestion);
     });
 
     it('should call QuizGroupQuestionMappingComponent.deleteQuestion when a question is deleted', () => {
@@ -113,7 +114,8 @@ describe('QuizPoolComponent', () => {
         const deleteQuestionSpy = jest.spyOn(component.quizPoolMappingComponent, 'deleteQuestion');
         const quizQuestion = new MultipleChoiceQuestion();
         component.handleQuestionDeleted(quizQuestion);
-        expect(deleteQuestionSpy).toHaveBeenCalledOnceWith(quizQuestion);
+        expect(deleteQuestionSpy).toHaveBeenCalledOnce();
+        expect(deleteQuestionSpy).toHaveBeenCalledWith(quizQuestion);
     });
 
     it('should call QuizPoolService.update when saving', () => {

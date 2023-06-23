@@ -87,7 +87,8 @@ describe('QuizPoolMappingComponent', () => {
         component.deleteGroup(0);
 
         expect(component.quizGroups).toBeArrayOfSize(0);
-        expect(addQuestion).toHaveBeenCalledOnceWith(question);
+        expect(addQuestion).toHaveBeenCalledOnce();
+        expect(addQuestion).toHaveBeenCalledWith(question);
     });
 
     it('should add question', () => {
