@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.web.rest.iris;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +26,6 @@ import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 @RestController
 @RequestMapping("api/iris/")
 public class IrisSessionResource {
-
-    private final Logger log = LoggerFactory.getLogger(IrisSessionResource.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
