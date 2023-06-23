@@ -123,10 +123,11 @@ public class ProgrammingExerciseGradingService {
 
         Result newResult = null;
         try {
-            var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
+            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+            var buildResult = ciResultService.convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
-            newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
+            newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -139,7 +140,7 @@ public class ProgrammingExerciseGradingService {
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
-                continuousIntegrationResultService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
