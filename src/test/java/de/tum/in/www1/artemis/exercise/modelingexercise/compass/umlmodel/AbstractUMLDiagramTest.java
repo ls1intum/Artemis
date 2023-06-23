@@ -34,15 +34,15 @@ public abstract class AbstractUMLDiagramTest {
         var comparisonResult = modelingPlagiarismDetectionService.checkPlagiarism(submissions, minimumSimilarity, 1, 0, 1L);
         assertThat(comparisonResult).isNotNull();
         assertThat(comparisonResult.getComparisons()).hasSize(1);
-        assertThat(comparisonResult.getComparisons().stream().findFirst().get().getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
+        assertThat(comparisonResult.getComparisons().stream().findFirst().orElseThrow().getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
     }
 
     protected UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {
-        return componentDiagram.getComponentList().stream().filter(component -> component.getName().equals(name)).findFirst().get();
+        return componentDiagram.getComponentList().stream().filter(component -> component.getName().equals(name)).findFirst().orElseThrow();
     }
 
     protected UMLComponentInterface getInterface(UMLComponentDiagram componentDiagram, String name) {
-        return componentDiagram.getComponentInterfaceList().stream().filter(componentInterface -> componentInterface.getName().equals(name)).findFirst().get();
+        return componentDiagram.getComponentInterfaceList().stream().filter(componentInterface -> componentInterface.getName().equals(name)).findFirst().orElseThrow();
     }
 
     protected UMLComponentRelationship getRelationship(UMLComponentDiagram componentDiagram, UMLElement source, UMLElement target) {

@@ -34,7 +34,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
-                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").get(), Collections.emptySet()).getId();
+                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Collections.emptySet()).getId();
     }
 
     private static final String TEST_PREFIX = "tutorialgroupfreeperiod";
@@ -117,7 +117,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_overlapsWithExistingScheduledSession_shouldCancelSession() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday");
         // when

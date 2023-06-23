@@ -154,7 +154,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void getAuditEvent() throws Exception {
         var auditEvent = request.get("/api/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
-        var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).get();
+        var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).orElseThrow();
         assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());
     }
 }

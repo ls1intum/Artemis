@@ -115,7 +115,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         userUtilService.changeUser(testPrefix + "instructor1");
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
         userUtilService.changeUser(testPrefix + "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
         var firstAugustMondaySession = sessions.get(0);

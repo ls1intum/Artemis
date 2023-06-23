@@ -105,7 +105,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     void testGetOrRetrieveDefaultBranch() throws GitLabApiException {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
         programmingExercise.setBranch(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 

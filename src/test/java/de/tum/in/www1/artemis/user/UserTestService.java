@@ -208,7 +208,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
+        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -228,7 +228,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student), HttpStatus.OK);
-        final var userInDB = userRepository.findById(student.getId()).get();
+        final var userInDB = userRepository.findById(student.getId()).orElseThrow();
 
         assertThat(oldPassword).as("Password did not change").isEqualTo(userInDB.getPassword());
     }
@@ -240,7 +240,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(oldLogin, student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student), HttpStatus.OK);
-        final var userInDB = userRepository.findById(student.getId()).get();
+        final var userInDB = userRepository.findById(student.getId()).orElseThrow();
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
@@ -253,7 +253,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userRepository.findById(oldId).get();
+        final var userInDB = userRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
@@ -266,7 +266,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userRepository.findById(oldId).get();
+        final var userInDB = userRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }

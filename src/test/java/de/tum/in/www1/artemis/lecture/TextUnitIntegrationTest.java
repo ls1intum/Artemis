@@ -115,7 +115,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture.getId()).get().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -149,7 +149,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private void persistTextUnitWithLecture() {
         this.textUnit = textUnitRepository.save(this.textUnit);
-        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).get();
+        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         lecture.addLectureUnit(this.textUnit);
         lecture = lectureRepository.save(lecture);
         this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnits(lecture.getId()).get().getLectureUnits().stream().findFirst().get();
