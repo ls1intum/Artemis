@@ -99,26 +99,35 @@ public class GitUtilService {
     }
 
     public void deleteRepos() {
-        try {
-            if (remoteRepo != null) {
-                remoteRepo.close();
-            }
-            if (localRepo != null) {
-                localRepo.close();
-            }
-            if (localGit != null) {
-                localGit.close();
-            }
-            if (remoteGit != null) {
-                remoteGit.close();
-            }
-            FileUtils.deleteDirectory(localPath.toFile());
-            FileUtils.deleteDirectory(remotePath.toFile());
-            localRepo = null;
-            remoteRepo = null;
+        if (remoteRepo != null) {
+            remoteRepo.close();
         }
-        catch (IOException ignored) {
+        if (localRepo != null) {
+            localRepo.close();
         }
+        if (localGit != null) {
+            localGit.close();
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+        while (FileUtils.isDirectory(localPath.toFile())) {
+            try {
+                FileUtils.deleteDirectory(localPath.toFile());
+            }
+            catch (IOException ignored) {
+            }
+        }
+        localRepo = null;
+
+        while (FileUtils.isDirectory(remotePath.toFile())) {
+            try {
+                FileUtils.deleteDirectory(remotePath.toFile());
+            }
+            catch (IOException ignored) {
+            }
+        }
+        remoteRepo = null;
     }
 
     public void deleteRepo(REPOS repo) {

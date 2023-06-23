@@ -110,12 +110,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
     }
 
-    // TODO Remove this method (just here to temporarily isolate flaky test)
-    // @RepeatedTest(1000)
-    void testPushSourceToTargetRepoWithoutBranchFlaky() throws GitAPIException, IOException {
-        this.testPushSourceToTargetRepoWithoutBranch("someOtherName");
-    }
-
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
     void testPushSourceToTargetRepoWithoutBranch(String defaultBranch) throws GitAPIException, IOException {
