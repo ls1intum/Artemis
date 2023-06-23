@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
@@ -89,9 +90,10 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStartWorkingOnExamQueryCount() throws Exception {
+    void testExamQueryCount() throws Exception {
         Exam exam = createActiveExam();
-        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student1");
+        User studentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, studentUser, 0);
 
         assertThatDb(() -> {
 
@@ -99,14 +101,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
             return null;
 
         }).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmitAnswerOfExamQueryCount() throws Exception {
-        Exam exam = createActiveExam();
-        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student1");
-        startWorkingOnExam(studentExam);
 
         assertThatDb(() -> {
 
@@ -122,10 +116,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         ZonedDateTime startDate = now().minusMinutes(5);
         ZonedDateTime endDate = now().plusMinutes(5);
         return examUtilService.addExam(course, visibleDate, startDate, endDate);
-    }
-
-    private StudentExam createStudentExamForUser(Exam exam, String studentUsername) {
-        return examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(studentUsername), 0);
     }
 
     private void startWorkingOnExam(StudentExam studentExam) throws Exception {
