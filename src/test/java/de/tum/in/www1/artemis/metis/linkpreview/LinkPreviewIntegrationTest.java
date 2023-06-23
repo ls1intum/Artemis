@@ -20,10 +20,10 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private static final String TEST_PREFIX = "linkpreviewintegrationtest";
 
     // this link will return null for all fields because it does not include OG tags
-    private static final String googleUrl = "https://google.com";
+    private static final String GOOGLE_URL = "https://google.com";
 
-    private static final String[] urls = { "https://github.com/ls1intum/Artemis/pull/6615",
-            "https://stackoverflow.com/questions/40965622/unit-testing-an-endpoint-with-requestbody", "https://github.com/", googleUrl };
+    private static final String[] URLS = { "https://github.com/ls1intum/Artemis/pull/6615",
+            "https://stackoverflow.com/questions/40965622/unit-testing-an-endpoint-with-requestbody", "https://github.com/", GOOGLE_URL };
 
     @Autowired
     private UserUtilService userUtilService;
@@ -41,7 +41,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         LinkPreviewDTO linkPreviewData = request.postWithPlainStringResponseBody("/api/link-preview", url, LinkPreviewDTO.class, HttpStatus.OK);
         assertThat(linkPreviewData).isNotNull();
 
-        if (url.equals(googleUrl)) {
+        if (url.equals(GOOGLE_URL)) {
             assertThat(linkPreviewData.url()).isNull();
             assertThat(linkPreviewData.description()).isNull();
             assertThat(linkPreviewData.image()).isNull();
@@ -58,6 +58,6 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private static Stream<String> provideUrls() {
-        return Stream.of(urls);
+        return Stream.of(URLS);
     }
 }
