@@ -26,6 +26,7 @@ describe('LinkPreviewComponent', () => {
             title: 'Test Title',
             description: 'Test Description',
             image: 'test-image.jpg',
+            url: 'https://example.com',
             shouldPreviewBeShown: true,
         };
         fixture.detectChanges();
