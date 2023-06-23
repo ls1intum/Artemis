@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -411,12 +410,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
-    }
-
-    @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
-    @RepeatedTest(3000)
-    void testQuizSubmitNoDatabaseRequests() throws Exception {
-        testQuizSubmitNoDatabaseRequests(QuizMode.INDIVIDUAL);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
