@@ -1,0 +1,39 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-Postgres Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        # just add this linux workaround for docker compose in a development version of artemis as developers
+        # might want to access external services on the docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "8080:8080"
+            - "5005:5005" # Java Remote Debugging port declared in the java cmd options
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5005"
+        env_file:
+            - ./artemis/config/dev.env
+            - ./artemis/config/postgres.env
+        depends_on:
+            postgres:
+                condition: service_healthy
+    postgres:
+        extends:
+            file: ./postgres.yml
+            service: postgres
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-postgres-data:
+        name: artemis-postgres-data
+    artemis-data:
+        name: artemis-data
