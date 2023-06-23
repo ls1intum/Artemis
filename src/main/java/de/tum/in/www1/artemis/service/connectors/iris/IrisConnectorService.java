@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestDTO;
 
@@ -60,7 +59,7 @@ public class IrisConnectorService {
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
         var response = restTemplate.postForEntity(irisUrl + "/api/v1/messages", objectMapper.valueToTree(request), JsonNode.class);
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-            return CompletableFuture.failedFuture(new IrisConnectorException(parseResponse(response, IrisErrorResponseDTO.class).errorMessage()));
+            return CompletableFuture.failedFuture(new IrisConnectorException(/* parseResponse(response, IrisErrorResponseDTO.class).errorMessage() */"Could not receive response"));
         }
         return CompletableFuture.completedFuture(parseResponse(response, IrisMessageResponseDTO.class));
     }
