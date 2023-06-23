@@ -98,7 +98,7 @@ public final class QuizCache extends CacheHandler<Long> {
      */
     void updateQuizExercise(QuizExercise quizExercise) {
         Objects.requireNonNull(quizExercise, "quizExercise must not be null");
-        // ensure that a cache exists to save the exercise in
+        // ensure that a local cache exists to save the exercise in
         getTransientWriteCacheFor(quizExercise.getId());
         // Send every instance (including itself) a message to update the quizExercise of the corresponding QuizExerciseCache locally
         cachedQuizExerciseUpdates.publish(quizExercise);

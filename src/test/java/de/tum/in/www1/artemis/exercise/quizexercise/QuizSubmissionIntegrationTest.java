@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -412,6 +413,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
     }
 
+    @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
+    @RepeatedTest(3000)
+    void testQuizSubmitNoDatabaseRequests() throws Exception {
+        testQuizSubmitNoDatabaseRequests(QuizMode.INDIVIDUAL);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
     @EnumSource(QuizMode.class)
@@ -432,8 +439,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         if (!lock.await(2000, TimeUnit.MILLISECONDS)) {
             fail("Timed out waiting for the quiz exercise cache.");
         }
-
-        Thread.sleep(20);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
