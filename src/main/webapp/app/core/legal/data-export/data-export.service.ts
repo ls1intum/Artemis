@@ -8,7 +8,7 @@ export class DataExportService {
     constructor(private http: HttpClient) {}
 
     requestDataExport(): Observable<DataExport> {
-        return this.http.put<DataExport>(`api/data-exports`, {});
+        return this.http.post<DataExport>(`api/data-exports`, {});
     }
 
     downloadDataExport(dataExportId: number): Observable<HttpResponse<Blob>> {

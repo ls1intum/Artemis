@@ -273,7 +273,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(10));
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -284,7 +284,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -299,7 +299,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRequestingDataExportCreatesCorrectDataExportObject() throws Exception {
         dataExportRepository.deleteAll();
-        var dataExport = request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
+        var dataExport = request.postWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
         assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
         assertThat(dataExport.getCreatedDate()).isNotNull();
     }

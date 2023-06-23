@@ -20,7 +20,7 @@ describe('DataExportService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it('should make PUT request to request data export', fakeAsync(() => {
+    it('should make POST request to request data export', fakeAsync(() => {
         const dataExport = new DataExport();
         dataExport.user = new User();
         dataExport.user.id = 1;
@@ -28,7 +28,7 @@ describe('DataExportService', () => {
         dataExport.requestDate = dayjs();
         dataExport.creationDate = dayjs();
         service.requestDataExport().subscribe((resp) => expect(resp).toEqual(dataExport));
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/data-exports` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/data-exports` });
         req.flush(dataExport);
         tick();
     }));
