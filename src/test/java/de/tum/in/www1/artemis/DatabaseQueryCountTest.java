@@ -39,7 +39,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     @BeforeEach
     void setup() {
         participantScoreScheduleService.shutdown();
-        userUtilService.addUsers(TEST_PREFIX, 3, NUMBER_OF_TUTORS, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
     }
 
     @Test
@@ -88,10 +88,10 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartWorkingOnExamQueryCount() throws Exception {
         Exam exam = createActiveExam();
-        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student2");
+        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student1");
 
         assertThatDb(() -> {
 
@@ -102,10 +102,10 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitAnswerOfExamQueryCount() throws Exception {
         Exam exam = createActiveExam();
-        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student3");
+        StudentExam studentExam = createStudentExamForUser(exam, TEST_PREFIX + "student1");
         startWorkingOnExam(studentExam);
 
         assertThatDb(() -> {
