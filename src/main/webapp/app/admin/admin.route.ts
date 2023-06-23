@@ -13,7 +13,6 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
-import { IrisSettingsUpdateRoutingModule } from 'app/iris/settings/iris-settings-update-routing.module';
 
 export const adminState: Routes = [
     {

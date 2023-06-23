@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 
+/**
+ * Spring Data repository for the IrisSettings entity.
+ */
 public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long> {
 
     @Query("""

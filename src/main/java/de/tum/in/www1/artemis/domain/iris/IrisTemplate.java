@@ -26,10 +26,18 @@ public class IrisTemplate extends DomainObject {
     @Column(name = "content", columnDefinition = "LONGTEXT")
     private String content;
 
+    /**
+     * Empty constructor required for Hibernate and Jackson.
+     */
     public IrisTemplate() {
 
     }
 
+    /**
+     * Create a new IrisTemplate with content.
+     *
+     * @param content the content of the template
+     */
     public IrisTemplate(String content) {
         this.content = content;
     }
@@ -43,14 +51,22 @@ public class IrisTemplate extends DomainObject {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
-        if (!super.equals(o))
+        }
+        if (!super.equals(other)) {
             return false;
-        IrisTemplate template = (IrisTemplate) o;
+        }
+        IrisTemplate template = (IrisTemplate) other;
         return Objects.equals(content, template.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), content);
     }
 }

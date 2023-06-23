@@ -380,8 +380,9 @@ public class IrisSettingsService {
     }
 
     private IrisSubSettings copyIrisSubSettings(IrisSubSettings target, IrisSubSettings source) {
-        if (target == null || source == null)
+        if (target == null || source == null) {
             return source;
+        }
         target.setEnabled(source.isEnabled());
         target.setPreferredModel(source.getPreferredModel());
         if (!Objects.equals(source.getTemplate(), target.getTemplate())) {
