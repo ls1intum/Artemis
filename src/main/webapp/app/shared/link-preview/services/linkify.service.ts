@@ -21,7 +21,8 @@ export class LinkifyService {
         const linkableItems: Link[] = [];
 
         // Regular expression pattern to match URLs
-        const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
+        // eslint-disable-next-line no-useless-escape
+        const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*?(?=\s|[\]\)]|$)/g;
 
         // Find all URL matches in the text (in the content of the post)
         let match;
