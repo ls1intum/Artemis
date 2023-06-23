@@ -53,7 +53,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
-    isAllowedToSubmitAfterDeadline: boolean;
+    isAllowedToSubmitAfterDueDate: boolean;
     // answer is the text that is stored in the user interface
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
@@ -149,12 +149,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
         const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
-        this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
+        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate;
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
     /**
-     * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
+     * True, if the due date is after the current date, or there is no due date, or the exercise is always active
      */
     get isActive(): boolean {
         const isActive =
@@ -165,16 +165,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     get submitButtonTooltip(): string {
-        if (this.isAllowedToSubmitAfterDeadline) {
-            return 'entity.action.submitDeadlineMissedTooltip';
+        if (this.isAllowedToSubmitAfterDueDate) {
+            return 'entity.action.submitDueDateMissedTooltip';
         }
         if (this.isActive && !this.textExercise.dueDate) {
-            return 'entity.action.submitNoDeadlineTooltip';
+            return 'entity.action.submitNoDueDateTooltip';
         } else if (this.isActive) {
             return 'entity.action.submitTooltip';
         }
 
-        return 'entity.action.deadlineMissedTooltip';
+        return 'entity.action.dueDateMissedTooltip';
     }
 
     /**
@@ -237,10 +237,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 }
                 this.isSaving = false;
 
-                if (!this.isAllowedToSubmitAfterDeadline) {
+                if (!this.isAllowedToSubmitAfterDueDate) {
                     this.alertService.success('entity.action.submitSuccessfulAlert');
                 } else {
-                    this.alertService.warning('entity.action.submitDeadlineMissedAlert');
+                    this.alertService.warning('entity.action.submitDueDateMissedAlert');
                 }
             },
             error: (err: HttpErrorResponse) => {
