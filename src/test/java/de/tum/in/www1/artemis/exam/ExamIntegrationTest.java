@@ -1806,8 +1806,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfLockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositories(programmingExercise);
-        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositories(programmingExercise2);
+        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositoriesAndParticipations(programmingExercise);
+        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositoriesAndParticipations(programmingExercise2);
     }
 
     @Test
@@ -1877,8 +1877,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositories(programmingExercise);
-        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositories(programmingExercise2);
+        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesAndParticipations(programmingExercise);
+        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesAndParticipations(programmingExercise2);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
