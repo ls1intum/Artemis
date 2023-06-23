@@ -76,7 +76,7 @@
         </a>
         <div class="ms-auto">
             <button
-                *ngIf="course!.isAtLeastInstructor && irisEnabled"
+                *ngIf="course?.isAtLeastInstructor && irisEnabled"
                 type="button"
                 (click)="showIrisSettings()"
                 class="tab-item btn btn-warning btn-md ms-1"
