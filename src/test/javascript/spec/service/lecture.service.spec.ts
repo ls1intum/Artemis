@@ -40,6 +40,7 @@ describe('Lecture Service', () => {
         elemDefault.id = 1;
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
+        elemDefault.channelName = 'lecture-default';
     });
 
     afterEach(() => {

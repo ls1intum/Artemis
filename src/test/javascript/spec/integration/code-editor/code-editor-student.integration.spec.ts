@@ -187,12 +187,13 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
-    it('should show the repository locked badge and disable the editor actions if the exercises buildAndTestAfterDueDate is set and the due date has passed', () => {
+    it('should show the repository locked badge and disable the editor actions if the participation is locked', () => {
         container.ngOnInit();
         const participation = {
             id: 1,
             results: [result],
-            exercise: { id: 99, buildAndTestStudentSubmissionsAfterDueDate: dayjs().subtract(1, 'hours'), dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise,
+            exercise: { id: 99, dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise,
+            locked: true,
         } as any;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();

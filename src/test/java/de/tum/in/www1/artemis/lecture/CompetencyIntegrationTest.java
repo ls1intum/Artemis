@@ -18,7 +18,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
@@ -26,10 +32,14 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.team.TeamUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 
 class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -75,6 +85,21 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private LectureUnitService lectureUnitService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     private Course course;
 
     private Course course2;
@@ -94,16 +119,16 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         participantScoreScheduleService.activate();
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         // creating course
-        course = this.database.createCourse();
+        course = courseUtilService.createCourse();
 
-        course2 = this.database.createCourse();
+        course2 = courseUtilService.createCourse();
 
         competency = createCompetency();
         createPrerequisiteForCourse2();
@@ -168,7 +193,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<Competency> competencies,
             boolean isTeamExercise) {
         // creating text exercise with Result
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
 
         if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
@@ -201,7 +226,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         submission = submissionRepository.save(submission);
 
         // result
-        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
         result.setParticipation(studentParticipation);
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.save(result);
@@ -307,7 +332,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteCompetency_witRelatedCompetencies_shouldReturnBadRequest() throws Exception {
-        Competency competency1 = database.createCompetency(course);
+        Competency competency1 = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(competency);
@@ -335,7 +360,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createCompetencyRelation() throws Exception {
-        Long idOfOtherCompetency = database.createCompetency(course).getId();
+        Long idOfOtherCompetency = competencyUtilService.createCompetency(course).getId();
 
         request.postWithoutResponseBody("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/relations/" + idOfOtherCompetency + "?type="
                 + CompetencyRelation.RelationType.EXTENDS.name(), HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -348,7 +373,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createCompetencyRelation_shouldReturnBadRequest() throws Exception {
-        Long idOfOtherCompetency = database.createCompetency(course).getId();
+        Long idOfOtherCompetency = competencyUtilService.createCompetency(course).getId();
 
         request.post("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/relations/" + idOfOtherCompetency + "?type=" + "abc123xyz", null,
                 HttpStatus.BAD_REQUEST);
@@ -357,9 +382,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createCompetencyRelation_shouldReturnBadRequest_ForCircularRelations() throws Exception {
-        Long idOfOtherCompetency1 = database.createCompetency(course).getId();
+        Long idOfOtherCompetency1 = competencyUtilService.createCompetency(course).getId();
         Competency otherCompetency1 = competencyRepository.findByIdElseThrow(idOfOtherCompetency1);
-        Long idOfOtherCompetency2 = database.createCompetency(course).getId();
+        Long idOfOtherCompetency2 = competencyUtilService.createCompetency(course).getId();
         Competency otherCompetency2 = competencyRepository.findByIdElseThrow(idOfOtherCompetency1);
 
         var relation1 = new CompetencyRelation();
@@ -381,7 +406,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void createCompetencyRelation_shouldReturnForbidden() throws Exception {
-        Long idOfOtherCompetency = database.createCompetency(course).getId();
+        Long idOfOtherCompetency = competencyUtilService.createCompetency(course).getId();
 
         request.post("/api/courses/" + course.getId() + "/competencies/" + competency.getId() + "/relations/" + idOfOtherCompetency + "?type="
                 + CompetencyRelation.RelationType.EXTENDS.name(), null, HttpStatus.FORBIDDEN);
@@ -390,7 +415,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCompetencyRelations() throws Exception {
-        Competency otherCompetency = database.createCompetency(course);
+        Competency otherCompetency = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(competency);
@@ -407,7 +432,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteCompetencyRelation() throws Exception {
-        Competency otherCompetency = database.createCompetency(course);
+        Competency otherCompetency = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(competency);
@@ -424,7 +449,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteCompetencyRelation_shouldReturnBadRequest() throws Exception {
-        Competency otherCompetency = database.createCompetency(course);
+        Competency otherCompetency = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(otherCompetency); // invalid
@@ -455,7 +480,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCompetencyCourseProgressTeamsTest_asInstructorOne() throws Exception {
         User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        var teams = database.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
+        var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
 
         createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
         createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
@@ -598,24 +623,24 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
-        final var search = database.configureSearch("");
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, database.searchMapping(search));
+        final var search = pageableSearchUtilService.configureSearch("");
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var search = database.configureSearch(competency.getTitle());
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, database.searchMapping(search));
+        final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
-        final var search = database.configureSearch(competency.getTitle());
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, database.searchMapping(search));
+        final var search = pageableSearchUtilService.configureSearch(competency.getTitle());
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 

@@ -6,11 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.user.UserService;
 
 /**
@@ -35,7 +35,7 @@ public class GuidedTourSettingsResource {
      * @return the guided tour settings
      */
     @PutMapping("/guided-tour-settings")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<GuidedTourSetting>> updateGuidedTourSettings(@RequestBody Set<GuidedTourSetting> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSetting : {}", guidedTourSettings);
         User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
@@ -49,7 +49,7 @@ public class GuidedTourSettingsResource {
      * @return the guided tour settings
      */
     @DeleteMapping("/guided-tour-settings/{settingsKey}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<GuidedTourSetting>> deleteGuidedTourSetting(@PathVariable String settingsKey) {
         log.debug("REST request to delete GuidedTourSetting : {}", settingsKey);
         // Note: there is no explicit permission check here, because every user can delete the guided tour settings, e.g. by restarting a tutorial

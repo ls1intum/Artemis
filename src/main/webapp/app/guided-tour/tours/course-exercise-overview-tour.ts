@@ -62,8 +62,8 @@ export const courseExerciseOverviewTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour.course-information .guided-tour.exercise-panel .guided-tour.panel-wrapper',
-            headlineTranslateKey: 'tour.courseExerciseOverview.upcomingDeadlines.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.upcomingDeadlines.content',
+            headlineTranslateKey: 'tour.courseExerciseOverview.upcomingDueDates.headline',
+            contentTranslateKey: 'tour.courseExerciseOverview.upcomingDueDates.content',
             highlightPadding: 10,
             orientation: Orientation.LEFT,
         }),

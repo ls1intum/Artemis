@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -22,8 +23,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -34,7 +36,16 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     private QuizPoolService quizPoolService;
 
     @Autowired
-    private DatabaseUtilService database;
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     @Autowired
     private RequestUtilService request;
@@ -53,11 +64,11 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        course = database.addEmptyCourse();
-        User instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        course = courseUtilService.addEmptyCourse();
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        exam = database.addExam(course);
+        exam = examUtilService.addExam(course);
         quizPool = quizPoolService.update(exam.getId(), new QuizPool());
     }
 
@@ -79,10 +90,10 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testUpdateQuizPoolSuccessful() throws Exception {
         QuizPool quizPool = createQuizPool();
 
-        QuizGroup quizGroup3 = database.createQuizGroup("Exception Handling");
-        QuizQuestion saQuizQuestion1 = database.createShortAnswerQuestionWithTitleAndGroup("SA 1", quizGroup2);
-        QuizQuestion saQuizQuestion2 = database.createShortAnswerQuestionWithTitleAndGroup("SA 2", quizGroup3);
-        QuizQuestion saQuizQuestion3 = database.createShortAnswerQuestionWithTitleAndGroup("SA 3", null);
+        QuizGroup quizGroup3 = quizExerciseUtilService.createQuizGroup("Exception Handling");
+        QuizQuestion saQuizQuestion1 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 1", quizGroup2);
+        QuizQuestion saQuizQuestion2 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 2", quizGroup3);
+        QuizQuestion saQuizQuestion3 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 3", null);
         quizPool.setQuizGroups(List.of(quizPool.getQuizGroups().get(0), quizPool.getQuizGroups().get(2), quizGroup3));
         quizPool.setQuizQuestions(List.of(quizPool.getQuizQuestions().get(0), quizPool.getQuizQuestions().get(1), quizPool.getQuizQuestions().get(2), saQuizQuestion1,
                 saQuizQuestion2, saQuizQuestion3));
@@ -103,7 +114,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolBadRequestInvalidMCQuestion() throws Exception {
-        MultipleChoiceQuestion quizQuestion = database.createMultipleChoiceQuestion();
+        MultipleChoiceQuestion quizQuestion = quizExerciseUtilService.createMultipleChoiceQuestion();
         quizQuestion.setTitle(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
@@ -113,7 +124,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolBadRequestInvalidDnDQuestion() throws Exception {
-        DragAndDropQuestion quizQuestion = database.createDragAndDropQuestion();
+        DragAndDropQuestion quizQuestion = quizExerciseUtilService.createDragAndDropQuestion();
         quizQuestion.setCorrectMappings(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
@@ -123,7 +134,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolBadRequestInvalidSAQuestion() throws Exception {
-        ShortAnswerQuestion quizQuestion = database.createShortAnswerQuestion();
+        ShortAnswerQuestion quizQuestion = quizExerciseUtilService.createShortAnswerQuestion();
         quizQuestion.setCorrectMappings(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
@@ -133,7 +144,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolNotFoundCourse() throws Exception {
-        QuizQuestion quizQuestion = database.createMultipleChoiceQuestion();
+        QuizQuestion quizQuestion = quizExerciseUtilService.createMultipleChoiceQuestion();
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundCourseId = 0;
@@ -143,7 +154,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolNotFoundExam() throws Exception {
-        QuizQuestion quizQuestion = database.createMultipleChoiceQuestion();
+        QuizQuestion quizQuestion = quizExerciseUtilService.createMultipleChoiceQuestion();
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundExamId = 0;
@@ -153,11 +164,11 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQuizPoolSuccessful() throws Exception {
-        QuizGroup quizGroup0 = database.createQuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = database.createQuizGroup("Inheritance");
-        QuizQuestion mcQuizQuestion = database.createMultipleChoiceQuestionWithTitleAndGroup("MC", quizGroup0);
-        QuizQuestion dndQuizQuestion = database.createDragAndDropQuestionWithTitleAndGroup("DND", quizGroup1);
-        QuizQuestion saQuizQuestion = database.createShortAnswerQuestionWithTitleAndGroup("SA", null);
+        QuizGroup quizGroup0 = quizExerciseUtilService.createQuizGroup("Encapsulation");
+        QuizGroup quizGroup1 = quizExerciseUtilService.createQuizGroup("Inheritance");
+        QuizQuestion mcQuizQuestion = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC", quizGroup0);
+        QuizQuestion dndQuizQuestion = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND", quizGroup1);
+        QuizQuestion saQuizQuestion = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA", null);
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion, dndQuizQuestion, saQuizQuestion));
         QuizPool savedQuizPool = quizPoolService.update(exam.getId(), quizPool);
@@ -178,14 +189,14 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private QuizPool createQuizPool() throws Exception {
-        quizGroup0 = database.createQuizGroup("Encapsulation");
-        quizGroup1 = database.createQuizGroup("Inheritance");
-        quizGroup2 = database.createQuizGroup("Polymorphism");
-        QuizQuestion mcQuizQuestion0 = database.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
-        QuizQuestion mcQuizQuestion1 = database.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
-        QuizQuestion dndQuizQuestion0 = database.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
-        QuizQuestion dndQuizQuestion1 = database.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
-        QuizQuestion saQuizQuestion0 = database.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
+        quizGroup0 = quizExerciseUtilService.createQuizGroup("Encapsulation");
+        quizGroup1 = quizExerciseUtilService.createQuizGroup("Inheritance");
+        quizGroup2 = quizExerciseUtilService.createQuizGroup("Polymorphism");
+        QuizQuestion mcQuizQuestion0 = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
+        QuizQuestion mcQuizQuestion1 = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
+        QuizQuestion dndQuizQuestion0 = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
+        QuizQuestion dndQuizQuestion1 = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
+        QuizQuestion saQuizQuestion0 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
 
