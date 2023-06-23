@@ -136,14 +136,14 @@ export class LectureUpdateComponent implements OnInit {
         this.processUnitMode = !this.processUnitMode;
     }
 
-    onFileChange(event: any): void {
-        if (event.target.files.length) {
-            const fileList = event.target.files;
-            this.file = fileList[0];
-            this.fileName = this.file.name;
-        } else {
+    onFileChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
             this.fileName = '';
+            return;
         }
+        this.file = input.files[0];
+        this.fileName = this.file.name;
     }
 
     /**
