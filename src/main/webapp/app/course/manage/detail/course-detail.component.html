@@ -143,6 +143,28 @@
                     <a [routerLink]="['/course-management', course?.id, 'lti-configuration']">LTI Configuration</a>
                 </dd>
             </ng-container>
+            <dt><span jhiTranslate="artemisApp.course.registrationEnabled.title">Student Course Registration Enabled</span></dt>
+            <dd id="course-enrollment-enabled">
+                <span *ngIf="course.enrollmentEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="!course.enrollmentEnabled">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <dt *ngIf="course.enrollmentEnabled"><span jhiTranslate="artemisApp.course.enrollmentStartDate">Enrollment Start</span></dt>
+            <dd *ngIf="course.enrollmentEnabled" id="course-enrollment-start-date">
+                <span>{{ course.enrollmentStartDate | artemisDate }}</span>
+            </dd>
+            <dt *ngIf="course.enrollmentEnabled"><span jhiTranslate="artemisApp.course.enrollmentEndDate">Enrollment End</span></dt>
+            <dd *ngIf="course.enrollmentEnabled" id="course-enrollment-end-date">
+                <span>{{ course.enrollmentEndDate | artemisDate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.unenrollmentEnabled.title">Student Course Unenrollment Enabled</span></dt>
+            <dd *ngIf="course.enrollmentEnabled" id="course-unenrollment-enabled">
+                <span *ngIf="course.unenrollmentEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="!course.unenrollmentEnabled">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <dt *ngIf="course.unenrollmentEnabled"><span jhiTranslate="artemisApp.course.unenrollmentEndDate">Latest date to unenroll</span></dt>
+            <dd *ngIf="course.unenrollmentEnabled" id="course-unenrollment-end-date">
+                <span>{{ course.unenrollmentEndDate | artemisDate }}</span>
+            </dd>
             <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
             <dd id="course-presentation-score-enabled">
                 <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
@@ -161,12 +183,6 @@
                     </div>
                 </dd>
             </ng-container>
-            <ng-container *ngIf="course.presentationScore !== 0">
-                <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
-                <dd id="course-presentation-score">
-                    <span>{{ course.presentationScore }}</span>
-                </dd>
-            </ng-container>
             <ng-container *ngIf="course.maxComplaints !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxComplaints.title">Maximum amount of complaints per student</span></dt>
                 <dd id="course-max-complaints">
@@ -180,13 +196,13 @@
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxComplaintTimeDays !== 0">
-                <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Deadline for complaints in days after result date</span></dt>
+                <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Due date for complaints in days after result date</span></dt>
                 <dd id="course-max-time-days">
                     <span>{{ course.maxComplaintTimeDays }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxRequestMoreFeedbackTimeDays !== 0">
-                <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Deadline for more feedback requests in days after result date</span></dt>
+                <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Due date for more feedback requests in days after result date</span></dt>
                 <dd id="course-max-request-more-feedback-days">
                     <span>{{ course.maxRequestMoreFeedbackTimeDays }}</span>
                 </dd>

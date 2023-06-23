@@ -60,6 +60,9 @@ export class ExamUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
 
+            if (this.exam.id == undefined && this.exam.testExam !== true) {
+                this.exam.channelName = '';
+            }
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
 
@@ -102,6 +105,7 @@ export class ExamUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+
         if (this.isImport) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
             if (this.exam?.exerciseGroups) {
@@ -141,7 +145,11 @@ export class ExamUpdateComponent implements OnInit {
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else {
-            onError(this.alertService, httpErrorResponse);
+            if (httpErrorResponse.error && httpErrorResponse.error.title) {
+                this.alertService.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+            } else {
+                onError(this.alertService, httpErrorResponse);
+            }
         }
         this.isSaving = false;
     }

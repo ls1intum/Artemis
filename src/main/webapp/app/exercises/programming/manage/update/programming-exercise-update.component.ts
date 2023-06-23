@@ -625,11 +625,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-artemisApp-alert')!;
+        let errorMessage;
+        let disableTranslation;
+        // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
+        if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
+            errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
+            disableTranslation = false;
+        } else {
+            errorMessage = error.headers.get('X-artemisApp-alert')!;
+            disableTranslation = true;
+        }
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
-            disableTranslation: true,
+            disableTranslation: disableTranslation,
         });
         this.isSaving = false;
         window.scrollTo(0, 0);
@@ -763,6 +772,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (forStep >= 1) {
             this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseChannelName(validationErrorReasons);
             this.validateExerciseShortName(validationErrorReasons);
             this.validateExerciseAuxiliryRepositories(validationErrorReasons);
         }
@@ -794,6 +804,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateExerciseChannelName(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.channelName === '') {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
                 translateValues: {},
             });
         }

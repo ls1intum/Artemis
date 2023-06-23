@@ -8,7 +8,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -43,7 +42,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     course?: Course;
 
@@ -58,6 +57,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     latestResult: Result | undefined;
     hasTutorAssessment = false;
     isIllegalSubmission = false;
+    numberOfSubmissionsForSubmissionPolicy?: number;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -96,7 +96,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course = getCourseFromExercise(this.exercise);
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
-                            this.exercise.submissionPolicy = submissionPolicy;
+                            if (submissionPolicy?.active) {
+                                this.exercise.submissionPolicy = submissionPolicy;
+                                this.getNumberOfSubmissionsForSubmissionPolicy();
+                            }
                         });
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
@@ -130,7 +133,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation> {
+    loadParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             mergeMap((participation: ProgrammingExerciseStudentParticipation) =>
                 participation.results?.length
@@ -168,8 +171,16 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
-        // Also check for assessment due date to never show manual feedback before the deadline
+        // Also check for assessment due date to never show manual feedback before the due date
         this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
+    }
+
+    getNumberOfSubmissionsForSubmissionPolicy() {
+        if (this.participation.id) {
+            this.submissionPolicyService.getParticipationSubmissionCount(this.participation.id).subscribe((numberOfSubmissions) => {
+                this.numberOfSubmissionsForSubmissionPolicy = numberOfSubmissions;
+            });
+        }
     }
 
     /**
@@ -181,6 +192,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
+    }
+
+    receivedNewResult() {
+        this.loadStudentExerciseHints();
+        this.getNumberOfSubmissionsForSubmissionPolicy();
     }
 
     loadStudentExerciseHints() {

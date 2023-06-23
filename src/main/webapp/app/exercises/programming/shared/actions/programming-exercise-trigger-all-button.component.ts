@@ -3,7 +3,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { hasDueDatePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -56,7 +56,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     openTriggerAllModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exercise.id;
-        modalRef.componentInstance.deadlinePassed = hasDeadlinePassed(this.exercise);
+        modalRef.componentInstance.dueDatePassed = hasDueDatePassed(this.exercise);
         modalRef.result.then(() => {
             this.submissionService
                 .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id!)
@@ -86,8 +86,8 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                 <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
             </div>
             <div class="modal-body">
-                <p *ngIf="deadlinePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDeadline">
-                    The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
+                <p *ngIf="dueDatePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
+                    The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
                     would replace the manual results as the latest result for the participation.
                 </p>
                 <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
@@ -108,7 +108,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     @Input() exerciseId: number;
-    @Input() deadlinePassed: boolean;
+    @Input() dueDatePassed: boolean;
 
     // Icons
     faBan = faBan;

@@ -27,7 +27,9 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.programmingexercise.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 
@@ -43,6 +45,12 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseImportService programmingExerciseImportService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -119,9 +127,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
@@ -145,9 +153,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
@@ -164,9 +172,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testImportBuildPlansThrowsExceptionOnGivePermissions() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
@@ -181,9 +189,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testDeleteBuildPlan() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
@@ -198,9 +206,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testRecreateBuildPlanDeletedFolder() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         final String templateJobName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
         final String solutionJobName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
@@ -232,10 +240,10 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException, URISyntaxException {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         String projectKey = programmingExercise.getProjectKey();
         String planName = programmingExercise.getProjectKey();

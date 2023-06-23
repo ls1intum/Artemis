@@ -49,6 +49,7 @@ describe('FileUploadExercise Management Update Component', () => {
         describe('new exercise', () => {
             const course = { id: 1 } as Course;
             const fileUploadExercise = new FileUploadExercise(course, undefined);
+            fileUploadExercise.channelName = 'test';
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -77,6 +78,7 @@ describe('FileUploadExercise Management Update Component', () => {
             const course = { id: 1 } as Course;
             const fileUploadExercise = new FileUploadExercise(course, undefined);
             fileUploadExercise.id = 123;
+            fileUploadExercise.channelName = 'test';
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -172,6 +174,7 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+        fileUploadExercise.channelName = 'test';
         const courseId = 1;
 
         beforeEach(() => {
@@ -203,6 +206,8 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+
+        fileUploadExercise.channelName = 'test';
         const courseId = 1;
 
         beforeEach(() => {
@@ -231,6 +236,7 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+        fileUploadExercise.channelName = 'test';
         const groupId = 1;
 
         beforeEach(() => {
@@ -261,6 +267,7 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+        fileUploadExercise.channelName = 'test';
         const groupId = 1;
 
         beforeEach(() => {

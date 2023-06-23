@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -83,6 +84,18 @@ public class Course extends DomainObject {
     @Column(name = "end_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
+
+    @Column(name = "enrollment_start_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime enrollmentStartDate;
+
+    @Column(name = "enrollment_end_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime enrollmentEndDate;
+
+    @Column(name = "unenrollment_end_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime unenrollmentEndDate;
 
     @Column(name = "semester")
     @JsonView(QuizView.Before.class)
@@ -155,6 +168,9 @@ public class Course extends DomainObject {
 
     @Column(name = "registration_confirmation_message") // TODO: rename column in database
     private String enrollmentConfirmationMessage;
+
+    @Column(name = "unenrollment_enabled")
+    private boolean unenrollmentEnabled = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -322,15 +338,56 @@ public class Course extends DomainObject {
         this.endDate = endDate;
     }
 
+    public ZonedDateTime getEnrollmentStartDate() {
+        return enrollmentStartDate;
+    }
+
+    public void setEnrollmentStartDate(ZonedDateTime enrollmentStartDate) {
+        this.enrollmentStartDate = enrollmentStartDate;
+    }
+
+    public ZonedDateTime getEnrollmentEndDate() {
+        return enrollmentEndDate;
+    }
+
+    public void setEnrollmentEndDate(ZonedDateTime enrollmentEndDate) {
+        this.enrollmentEndDate = enrollmentEndDate;
+    }
+
     /**
-     * Determine whether the current date is within the course period (after start, before end).
+     * Determine whether the current date is within the enrollment period (after start, before end).
      *
-     * @return true if the current date is within the course period, false otherwise
+     * @return true if the current date is within the enrollment period, false otherwise
      */
     @JsonIgnore
-    public boolean isActive() {
+    public boolean enrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
-        return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
+        return (getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now)) && (getEnrollmentEndDate() == null || getEnrollmentEndDate().isAfter(now));
+    }
+
+    public ZonedDateTime getUnenrollmentEndDate() {
+        return unenrollmentEndDate;
+    }
+
+    public void setUnenrollmentEndDate(ZonedDateTime unenrollmentEndDate) {
+        this.unenrollmentEndDate = unenrollmentEndDate;
+    }
+
+    /**
+     * Determine whether the current date is within the unenrollment period (after start, before end).
+     * <p>
+     * The unenrollment period starts with the enrollment start date and ends with the unenrollment end date if present,
+     * otherwise the course end date will be used as the end of the period.
+     *
+     * @return true if the current date is within the unenrollment period, false otherwise
+     */
+    @JsonIgnore
+    public boolean unenrollmentIsActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
+                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        return startCondition && endCondition;
     }
 
     public String getSemester() {
@@ -480,6 +537,14 @@ public class Course extends DomainObject {
         this.enrollmentConfirmationMessage = enrollmentConfirmationMessage;
     }
 
+    public boolean isUnenrollmentEnabled() {
+        return unenrollmentEnabled;
+    }
+
+    public void setUnenrollmentEnabled(boolean unenrollmentEnabled) {
+        this.unenrollmentEnabled = unenrollmentEnabled;
+    }
+
     public Integer getPresentationScore() {
         return presentationScore;
     }
@@ -609,8 +674,10 @@ public class Course extends DomainObject {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
-                + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
+                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
+                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
+                + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -785,13 +852,82 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Returns true if the start and end date of the course fulfill all requirements
-     *
-     * @return true if the dates are valid
+     * Validates if the start and end dates of the course fulfill all requirements.
      */
-    @JsonIgnore
-    public boolean isValidStartAndEndDate() {
-        return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
+    public void validateStartAndEndDate() {
+        if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+    }
+
+    /**
+     * Validates if the start and end date to enroll in the course fulfill all requirements.
+     * <p>
+     * The enrollment period is considered valid if
+     * <ul>
+     * <li>start and end date of the course are set and valid ({@link #validateStartAndEndDate()})</li>
+     * <li>start and end date of the enrollment period are in the correct order,</li>
+     * <li>and the start and end date of the enrollment is before the end date of the course.</li>
+     * </ul>
+     *
+     * @throws BadRequestAlertException
+     */
+    public void validateEnrollmentStartAndEndDate() {
+        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
+            return;
+        }
+        final String errorKey = "enrollmentPeriodInvalid";
+        if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
+            throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getStartDate() == null || getEndDate() == null) {
+            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
+        }
+
+        validateStartAndEndDate();
+
+        if (getEnrollmentStartDate().isAfter(getStartDate())) {
+            throw new BadRequestAlertException("Enrollment start date can not be after the start date of the course.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getEnrollmentEndDate().isAfter(getEndDate())) {
+            throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
+        }
+    }
+
+    /**
+     * Validates if the end date to unenroll from the course fulfills all requirements.
+     * <p>
+     * The unenrollment end date is considered valid if
+     * <ul>
+     * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
+     * <li>the enrollment period ends before the unenrollment end date,</li>
+     * <li>and the end date for unenrollment is not after the end date of the course.</li>
+     * </ul>
+     *
+     * @throws BadRequestAlertException
+     */
+    public void validateUnenrollmentEndDate() {
+        if (getUnenrollmentEndDate() == null) {
+            return;
+        }
+
+        validateEnrollmentStartAndEndDate();
+
+        final String errorKey = "unenrollmentEndDateInvalid";
+
+        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
+            throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getUnenrollmentEndDate().isAfter(getEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
+        }
     }
 
     /**

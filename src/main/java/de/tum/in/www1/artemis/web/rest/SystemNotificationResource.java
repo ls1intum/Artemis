@@ -10,13 +10,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
-import de.tum.in.www1.artemis.service.SystemNotificationService;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
@@ -32,11 +32,8 @@ public class SystemNotificationResource {
 
     private final SystemNotificationRepository systemNotificationRepository;
 
-    private final SystemNotificationService systemNotificationService;
-
-    public SystemNotificationResource(SystemNotificationRepository systemNotificationRepository, SystemNotificationService systemNotificationService) {
+    public SystemNotificationResource(SystemNotificationRepository systemNotificationRepository) {
         this.systemNotificationRepository = systemNotificationRepository;
-        this.systemNotificationService = systemNotificationService;
     }
 
     /**
@@ -46,7 +43,7 @@ public class SystemNotificationResource {
      * @return the list of system notifications
      */
     @GetMapping("system-notifications")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
@@ -61,22 +58,10 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("system-notifications/{notificationId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long notificationId) {
         log.debug("REST request to get SystemNotification : {}", notificationId);
         Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(notificationId);
         return ResponseUtil.wrapOrNotFound(systemNotification);
-    }
-
-    /**
-     * Returns all system notifications with an expiry date in the future or no expiry date.
-     * This route is also accessible for unauthenticated users.
-     *
-     * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
-     */
-    @GetMapping("system-notifications/active")
-    public List<SystemNotification> getActiveAndFutureSystemNotifications() {
-        log.debug("REST request to get relevant system notifications");
-        return systemNotificationService.findAllActiveAndFutureSystemNotifications();
     }
 }
