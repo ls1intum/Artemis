@@ -34,6 +34,7 @@ html {
 // Needed for highlighting code in the markdown editor
 @import 'node_modules/highlight.js/styles/vs.css';
 
+// Added to match the already existing style in theme-dark.scss
 .btn-outline-primary:not(.list-group-item) {
     color: $link-color;
 }
