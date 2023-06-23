@@ -103,7 +103,7 @@ public class NotificationResource {
      * @return the amount of unread notifications
      */
     @GetMapping("notifications/unread-count")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Integer> getUnreadCountForCurrentUserFilteredBySettings() {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         ZonedDateTime lastNotificationReadDate = currentUser.getLastNotificationRead();
