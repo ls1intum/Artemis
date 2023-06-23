@@ -247,7 +247,7 @@ public class DataExportCreationService {
 
     private void handleCreationFailure(DataExport dataExport, Exception e) {
         dataExport.setDataExportState(DataExportState.FAILED);
-        dataExportRepository.save(dataExport);
+        dataExport = dataExportRepository.save(dataExport);
         singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
         Optional<User> admin = userService.findInternalAdminUser();
         if (admin.isEmpty()) {
@@ -255,7 +255,6 @@ public class DataExportCreationService {
             return;
         }
         mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, e);
-
     }
 
     private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {

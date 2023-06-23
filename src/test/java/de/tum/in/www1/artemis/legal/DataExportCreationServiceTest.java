@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
@@ -119,9 +118,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
-
-    @Autowired
-    private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
     private PostRepository postRepository;
