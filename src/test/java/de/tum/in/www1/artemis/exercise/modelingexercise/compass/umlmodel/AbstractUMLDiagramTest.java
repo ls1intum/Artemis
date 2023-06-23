@@ -48,7 +48,7 @@ public abstract class AbstractUMLDiagramTest {
     protected UMLComponentRelationship getRelationship(UMLComponentDiagram componentDiagram, UMLElement source, UMLElement target) {
         // Source and target do not really matter in this test so we can also check the other way round
         return componentDiagram.getComponentRelationshipList().stream().filter(relationship -> (relationship.getSource().equals(source) && relationship.getTarget().equals(target))
-                || (relationship.getSource().equals(target) && relationship.getTarget().equals(source))).findFirst().get();
+                || (relationship.getSource().equals(target) && relationship.getTarget().equals(source))).findFirst().orElseThrow();
     }
 
     protected ModelingSubmission modelingSubmission(String model) {

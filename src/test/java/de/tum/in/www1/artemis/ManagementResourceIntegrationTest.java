@@ -146,7 +146,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var auditEvent = auditEvents.get(0);
         var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
-        assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().get().getPrincipal());
+        assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());
     }
 
     @Test

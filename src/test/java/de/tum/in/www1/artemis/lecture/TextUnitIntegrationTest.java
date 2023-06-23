@@ -152,6 +152,6 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         lecture.addLectureUnit(this.textUnit);
         lecture = lectureRepository.save(lecture);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnits(lecture.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 }

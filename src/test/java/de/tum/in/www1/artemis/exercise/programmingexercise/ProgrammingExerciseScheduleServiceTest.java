@@ -712,7 +712,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     private StudentParticipation getParticipation(String login) {
-        return programmingExercise.getStudentParticipations().stream().filter(participation -> login.equals(participation.getStudent().get().getLogin())).findFirst().get();
+        return programmingExercise.getStudentParticipations().stream().filter(participation -> login.equals(participation.getStudent().orElseThrow().getLogin())).findFirst()
+                .orElseThrow();
     }
 
     private List<StudentParticipation> getParticipationsWithoutIndividualDueDate() {

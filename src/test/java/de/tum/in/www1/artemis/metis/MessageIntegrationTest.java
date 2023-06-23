@@ -382,8 +382,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .andExpect(status().isOk());
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).get().getConversationParticipants()
-                .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).orElseThrow()
+                .getConversationParticipants().stream()
+                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
 
         assertThat(unreadMessages).isZero();
@@ -417,8 +418,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).get().getConversationParticipants()
-                .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).orElseThrow()
+                .getConversationParticipants().stream()
+                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
 
         assertThat(unreadMessages).isEqualTo(1);
@@ -426,7 +428,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private Post createPostWithOneToOneChat(String userPrefix) {
         var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").orElseThrow();
-        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student2").get();
+        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student2").orElseThrow();
         var chat = new OneToOneChat();
         chat.setCourse(course);
         chat.setCreator(student1);
@@ -445,7 +447,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
         Post post = new Post();
         post.setAuthor(student1);
         post.setDisplayPriority(DisplayPriority.NONE);
