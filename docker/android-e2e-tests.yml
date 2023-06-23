@@ -1,0 +1,54 @@
+services:
+    artemis-android-e2e:
+        image: artemis-android:test
+        depends_on:
+            - nginx
+        environment:
+            username: artemis_test_user_4
+            password: ArTEMiS_4_pw2017
+            serverUrl: https://nginx
+        command: test
+        networks:
+            - artemis
+
+    mysql:
+        extends:
+            file: ./mysql.yml
+            service: mysql
+
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        depends_on:
+            mysql:
+                condition: service_healthy
+        env_file:
+            - ./artemis/config/cypress.env
+
+    nginx:
+        extends:
+            file: ./nginx.yml
+            service: nginx
+        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        depends_on:
+            artemis-app:
+                condition: service_started
+        volumes:
+            - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
+        ports:
+            - "80:80"
+            - "443:443"
+            # see comments in artemis/config/cypress.env why this port is necessary
+            - "54321:54321"
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data
