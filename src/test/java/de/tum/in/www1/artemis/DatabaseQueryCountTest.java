@@ -88,7 +88,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(TEST_PREFIX + "student1");
 
         assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
-        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(getSubmitAnswerOfExamExpectedTotalQueryCount());
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(getSubmitExamExpectedTotalQueryCount());
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
@@ -115,7 +115,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
                 + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount + createExamSessionQueryCount + findExamSessionCountByStudentExamIdQueryCount;
     }
 
-    private long getSubmitAnswerOfExamExpectedTotalQueryCount() {
+    private long getSubmitExamExpectedTotalQueryCount() {
         final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
         final int findStudentExamByIdWithExercisesQueryCount = 1;
         final int findExamSessionByStudentExamIdQueryCount = 1;
