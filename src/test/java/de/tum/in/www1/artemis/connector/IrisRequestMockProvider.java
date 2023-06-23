@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.connector;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
@@ -68,6 +69,10 @@ public class IrisRequestMockProvider {
      * Mocks response call for the pyris call
      */
     public void mockResponse(String responseMessage) throws JsonProcessingException {
+        if (responseMessage == null) {
+            mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+            return;
+        }
         var irisMessage = new IrisMessage();
         var irisMessageContent = new IrisMessageContent();
         irisMessageContent.setTextContent(responseMessage);
@@ -79,5 +84,9 @@ public class IrisRequestMockProvider {
         var json = mapper.writeValueAsString(response);
 
         mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+    }
+
+    public void mockError() {
+        mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
     }
 }

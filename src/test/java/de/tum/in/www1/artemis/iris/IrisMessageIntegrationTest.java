@@ -51,7 +51,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 12, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 14, 0, 0, 0);
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -247,6 +247,46 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student13", roles = "USER")
+    void sendOneMessageBadRequest() throws Exception {
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student13"));
+        var messageToSend = new IrisMessage();
+        messageToSend.setSession(irisSession);
+        messageToSend.setSentAt(ZonedDateTime.now());
+        messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
+
+        irisRequestMockProvider.mockError();
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student13");
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        activateIrisFor(savedExercise);
+
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
+
+        verifyNoMessageWasSentOverWebsocket();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student14", roles = "USER")
+    void sendOneMessageEmptyBody() throws Exception {
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student14"));
+        var messageToSend = new IrisMessage();
+        messageToSend.setSession(irisSession);
+        messageToSend.setSentAt(ZonedDateTime.now());
+        messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
+
+        irisRequestMockProvider.mockResponse(null);
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student14");
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        activateIrisFor(savedExercise);
+
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
+
+        verifyNoMessageWasSentOverWebsocket();
     }
 
     private IrisMessageContent createMockContent(IrisMessage message) {

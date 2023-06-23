@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import org.junit.jupiter.api.AfterEach;
@@ -110,5 +109,10 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(irisMessageContent.getTextContent()).isEqualTo(message);
             }
         }));
+    }
+
+    protected void verifyNoMessageWasSentOverWebsocket() throws InterruptedException {
+        Thread.sleep(1000);
+        verifyNoInteractions(websocketMessagingService);
     }
 }
