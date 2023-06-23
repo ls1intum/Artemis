@@ -72,6 +72,7 @@
     margin-bottom: 5px;
     color: var(--bs-body-color);
     padding: 10px;
+    // prettier-ignore
     -webkit-mask:
         radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
         conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
