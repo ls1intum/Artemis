@@ -317,7 +317,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         if (projectType == ProjectType.MAVEN_BLACKBOX) {
-            Path dejagnuLibFolderPath = repoLocalPath.resolve("dejagnu").resolve("lib");
+            Path dejagnuLibFolderPath = repoLocalPath.resolve("testsuite").resolve("lib");
             fileService.replaceVariablesInFileName(dejagnuLibFolderPath.toString(), PACKAGE_NAME_FILE_PLACEHOLDER, programmingExercise.getPackageName());
         }
 
