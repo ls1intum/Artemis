@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -64,6 +65,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ExerciseDateService exerciseDateService;
+
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final GroupNotificationService groupNotificationService;
@@ -78,7 +81,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
+            GitService gitService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -87,6 +91,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseParticipationRepository = programmingExerciseParticipationRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.groupNotificationService = groupNotificationService;
+        this.exerciseDateService = exerciseDateService;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -273,7 +278,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         final boolean updateScores = isScoreUpdateAfterDueDateNeeded(exercise);
 
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
-            lockStudentRepositoriesRegularDueDate(exercise).run();
+            lockStudentRepositoriesAndParticipationsRegularDueDate(exercise).run();
             if (updateScores) {
                 updateStudentScoresRegularDueDate(exercise).run();
             }
@@ -334,7 +339,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
         scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
-            lockStudentRepository(participation).run();
+            lockStudentRepositoryAndParticipation(participation).run();
 
             if (isScoreUpdateNeeded) {
                 final List<Result> updatedResult = programmingExerciseGradingService.updateParticipationResults(participation);
@@ -378,15 +383,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         ZonedDateTime unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
         if (now.isBefore(unlockDate)) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositories(exercise))));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositoriesAndParticipations(exercise))));
         }
         // DURING EXAM
         else if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             // TODO: Christian Femers: this can lead to a weired edge case after the normal exam end date and before the last individual exam end date (in case of working time
             // extensions)
-            var scheduledRunnable = Set
-                    .of(new Tuple<>(now.plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositories(exercise)));
+            var scheduledRunnable = Set.of(
+                    new Tuple<>(now.plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositoriesAndParticipations(exercise)));
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
         }
         // NOTHING TO DO AFTER EXAM
@@ -433,8 +438,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     /**
      * Returns a runnable that, once executed, will
      * (1) lock all student repositories and
+     * (2) lock all student participations and
+     * (3) stash all student changes in the online editor for manual assessments.
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise for which the repositories should be locked.
+     * @return a Runnable that will lock the repositories once it is executed.
+     */
+    @NotNull
+    public Runnable lockAllStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
+        return lockStudentRepositoriesAndParticipations(exercise, participation -> true);
+    }
+
+    /**
+     * Returns a runnable that, once executed, will
+     * (1) lock all student repositories and
      * (2) stash all student changes in the online editor for manual assessments.
      *
+     * NOTE: this will not lock the student participations. See {@link #lockAllStudentRepositoriesAndParticipations(ProgrammingExercise)} for that.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
      * @param exercise for which the repositories should be locked.
@@ -443,6 +464,35 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @NotNull
     public Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
         return lockStudentRepositories(exercise, participation -> true);
+    }
+
+    /**
+     * Returns a runnable that, once executed, will
+     * (1) lock all student repositories and participations that have a due date in the past.
+     * (2) stash all student changes in the online editor for manual assessments.
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise for which the repositories should be locked.
+     * @return a Runnable that will lock the repositories and participations once it is executed.
+     */
+    @NotNull
+    public Runnable lockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(ProgrammingExercise exercise) {
+        return lockStudentRepositoriesAndParticipations(exercise, exerciseDateService::isAfterDueDate);
+    }
+
+    /**
+     * Returns a runnable that, once executed, will
+     * (1) lock all student participations that have a due date in the past.
+     * (2) stash all student changes in the online editor for manual assessments.
+     * NOTE: this will not lock the student repositories. See {@link #lockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(ProgrammingExercise)} for that.
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise for which the repositories should be locked.
+     * @return a Runnable that will lock the participations once it is executed.
+     */
+    @NotNull
+    public Runnable lockAllStudentParticipationsWithEarlierDueDate(ProgrammingExercise exercise) {
+        return lockStudentParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
 
     /**
@@ -456,8 +506,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will lock the repositories once it is executed.
      */
     @NotNull
-    public Runnable lockStudentRepositoriesRegularDueDate(ProgrammingExercise exercise) {
-        return lockStudentRepositories(exercise, participation -> participation.getIndividualDueDate() == null);
+    public Runnable lockStudentRepositoriesAndParticipationsRegularDueDate(ProgrammingExercise exercise) {
+        return lockStudentRepositoriesAndParticipations(exercise, participation -> participation.getIndividualDueDate() == null);
     }
 
     /**
@@ -486,7 +536,33 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
+     * Returns a runnable that, once executed, will (1) lock all student repositories, and (2) lock all student participations, and (3) stash all student changes in the online
+     * editor for manual assessments
+     * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
+     *
+     * @param exercise  The exercise for which the repositories should be locked
+     * @param condition a condition that determines whether the operation will be executed for a specific participation
+     * @return a Runnable that will lock the repositories once it is executed
+     */
+    @NotNull
+    public Runnable lockStudentRepositoriesAndParticipations(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
+        Long programmingExerciseId = exercise.getId();
+        return () -> {
+            SecurityUtils.setAuthorizationObject();
+            try {
+                List<ProgrammingExerciseStudentParticipation> failedLockOperations = removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(programmingExerciseId,
+                        condition);
+                stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition);
+            }
+            catch (EntityNotFoundException ex) {
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
+            }
+        };
+    }
+
+    /**
      * Returns a runnable that, once executed, will (1) lock all student repositories and (2) stash all student changes in the online editor for manual assessments
+     * NOTE: this will not lock the student participations. See {@link #lockStudentRepositoriesAndParticipations(ProgrammingExercise, Predicate)} for that.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
      * @param exercise  The exercise for which the repositories should be locked
@@ -500,39 +576,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
             try {
                 List<ProgrammingExerciseStudentParticipation> failedLockOperations = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
-                // We sent a notification to the instructor about the success of the repository locking and stashing operations.
-                long numberOfFailedLockOperations = failedLockOperations.size();
-
-                Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                        .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-                if (programmingExercise.isEmpty()) {
-                    throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-                }
-                if (numberOfFailedLockOperations > 0) {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
-                }
-                else {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
-                }
-
-                // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
-                // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
-                // in the case they still have saved changes on the Artemis server which have not been committed / pushed
-                // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
-                if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
-                    List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
-                    long numberOfFailedStashOperations = failedStashOperations.size();
-                    if (numberOfFailedStashOperations > 0) {
-                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                                Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
-                    }
-                    else {
-                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                                Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
-                    }
-                }
+                stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition);
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
@@ -541,17 +585,82 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Creates a runnable that will lock the Git repository of the given participation when run.
+     * Returns a runnable that, once executed, will (1) lock all student participations and (2) stash all student changes in the online editor for manual assessments
+     * NOTE: this will not lock the student repositories. See {@link #lockStudentRepositoriesAndParticipations(ProgrammingExercise, Predicate)} for that.
+     * NOTE: this will not immediately lock the participations as only a Runnable is returned!
+     *
+     * @param exercise  The exercise for which the participations should be locked
+     * @param condition a condition that determines whether the operation will be executed for a specific participation
+     * @return a Runnable that will lock the participations once it is executed
+     */
+    @NotNull
+    public Runnable lockStudentParticipations(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
+        Long programmingExerciseId = exercise.getId();
+        return () -> {
+            SecurityUtils.setAuthorizationObject();
+            try {
+                List<ProgrammingExerciseStudentParticipation> failedLockOperations = updateParticipationsLockedInDatabase(programmingExerciseId, condition);
+                stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition);
+            }
+            catch (EntityNotFoundException ex) {
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
+            }
+        };
+    }
+
+    /**
+     * Stash all student changes in the online editor for manual assessments and notify the instructor about the success of the repository locking and stashing operations.
+     *
+     * @throws EntityNotFoundException if the programming exercise with template and solution participation was not found
+     */
+    private void stashStudentChangesAndNotifyInstructor(ProgrammingExercise exercise, long numberOfFailedLockOperations,
+            Predicate<ProgrammingExerciseStudentParticipation> condition) {
+        Long programmingExerciseId = exercise.getId();
+
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
+        if (programmingExercise.isEmpty()) {
+            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
+        }
+        if (numberOfFailedLockOperations > 0) {
+            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
+        }
+        else {
+            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+        }
+
+        // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
+        // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
+        // in the case they still have saved changes on the Artemis server which have not been committed / pushed
+        // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
+        if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
+            List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
+            long numberOfFailedStashOperations = failedStashOperations.size();
+            if (numberOfFailedStashOperations > 0) {
+                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                        Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
+            }
+            else {
+                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                        Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
+            }
+        }
+    }
+
+    /**
+     * Creates a runnable that will lock the Git repository of the given participation as well as the participation itself when run.
      *
      * @param participation of which the Git repository will be locked.
      * @return a runnable that will lock the Git repository of the participation when run.
      */
     @NotNull
-    private Runnable lockStudentRepository(ProgrammingExerciseStudentParticipation participation) {
+    private Runnable lockStudentRepositoryAndParticipation(ProgrammingExerciseStudentParticipation participation) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                programmingExerciseParticipationService.lockStudentRepository(participation.getProgrammingExercise(), participation);
+                programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(participation.getProgrammingExercise(), participation);
             }
             catch (EntityNotFoundException ex) {
                 log.error("Participation with id {} is no longer available in the database for a scheduled lock repository task.", participation.getId());
@@ -560,16 +669,18 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Returns a runnable that, once executed, will unlock all student repositories that fulfill the condition and will schedule all repository lock tasks.
+     * Returns a runnable that, once executed, will unlock all student repositories and participations that fulfill the condition and will schedule all repository lock tasks.
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
-     * @param exercise  The exercise for which the repositories should be unlocked
-     * @param condition a condition that determines whether the operation will be executed for a specific participation
+     * @param exercise        The exercise for which the repositories should be unlocked
+     * @param unlockOperation the operation that will be executed for every participation that fulfills the condition
+     * @param condition       a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockStudentRepositories(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
+    public Runnable runUnlockOperation(ProgrammingExercise exercise, BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockOperation,
+            Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -582,12 +693,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
                     programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+                    unlockOperation.accept(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, condition, "add write permissions to all student repositories");
 
-                // We sent a notification to the instructor about the success of the repository unlocking operation.
+                // We send a notification to the instructor about the success of the repository unlocking operation.
                 long numberOfFailedUnlockOperations = failedUnlockOperations.size();
                 if (numberOfFailedUnlockOperations > 0) {
                     groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
@@ -602,7 +713,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 // one use case is to unlock all operation is invoked directly after exam start
                 Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
                         .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
-                scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
+                scheduleIndividualRepositoryAndParticipationLockTasks(exercise, futureIndividualDueDates);
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
@@ -619,8 +730,51 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllStudentRepositories(ProgrammingExercise exercise) {
-        return unlockStudentRepositories(exercise, participation -> true);
+    public Runnable unlockAllStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation, participation -> true);
+    }
+
+    /**
+     * Returns a runnable that, once executed, will unlock all student repositories and participations for participations that are inside the working time frame and will schedule
+     * all repository lock tasks.
+     * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be unlocked
+     * @return a Runnable that will unlock the repositories once it is executed
+     */
+    @NotNull
+    public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+    }
+
+    /**
+     * Returns a runnable that, once executed, will unlock all student repositories that are inside the working time frame and will schedule all repository lock tasks.
+     * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be unlocked
+     * @return a Runnable that will unlock the repositories once it is executed
+     */
+    @NotNull
+    public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+    }
+
+    /**
+     * Returns a runnable that, once executed, will unlock all student participations that are inside the working time frame and will schedule all participation lock tasks.
+     * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * NOTE: this will not immediately unlock the participations as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the participations should be unlocked
+     * @return a Runnable that will unlock the participations once it is executed
+     */
+    @NotNull
+    public Runnable unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentParticipation,
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
@@ -629,7 +783,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise           the programming exercise for which the lock is executed
      * @param individualDueDates these are the individual due dates for students taking individual workingTimes of student exams into account
      */
-    private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise, Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
+    private void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
+            Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
         // 1. Group all participations by due date (TODO use student exams for safety if some participations are not pre-generated)
         var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.x() != null)
                 .collect(Collectors.groupingBy(Tuple::x, Collectors.mapping(Tuple::y, Collectors.toSet())));
@@ -638,7 +793,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             // Check that this participation is planed to be locked and has still the same due date
             Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation)
                     && entry.getKey().equals(studentExamRepository.getIndividualDueDate(exercise, participation));
-            var task = lockStudentRepositories(exercise, lockingCondition);
+            var task = lockStudentRepositoriesAndParticipations(exercise, lockingCondition);
             return new Tuple<>(entry.getKey(), task);
         }).collect(Collectors.toSet());
         // 3. Schedule all tasks
@@ -662,7 +817,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             ZonedDateTime dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, programmingParticipation);
 
-            scheduleIndividualRepositoryLockTasks(programmingExercise, Set.of(new Tuple<>(dueDate, programmingParticipation)));
+            scheduleIndividualRepositoryAndParticipationLockTasks(programmingExercise, Set.of(new Tuple<>(dueDate, programmingParticipation)));
         });
     }
 
@@ -671,10 +826,22 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
 
+    private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(Long programmingExerciseId,
+            Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentRepositoryAndParticipation, condition,
+                "remove write permissions from all student repositories and lock participations");
+    }
+
     private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentRepository, condition,
                 "remove write permissions from all student repositories");
+    }
+
+    private List<ProgrammingExerciseStudentParticipation> updateParticipationsLockedInDatabase(Long programmingExerciseId,
+            Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentParticipation, condition,
+                "lock all student participations");
     }
 
     private List<ProgrammingExerciseStudentParticipation> stashChangesInAllStudentRepositories(Long programmingExerciseId,

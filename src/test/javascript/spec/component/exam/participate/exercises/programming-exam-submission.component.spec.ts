@@ -1,6 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -77,25 +76,24 @@ describe('ProgrammingExamSubmissionComponent', () => {
     it('should initialize with unlocked repository', () => {
         const exercise = newExercise();
         component.exercise = exercise;
+        component.studentParticipation = {};
 
         fixture.detectChanges();
 
         expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
         expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
 
-        expect(component.repositoryIsLocked).toBeFalse();
+        expect(component.participationIsLocked).toBeFalse();
         expect(component.getExercise()).toEqual(newExercise());
     });
 
-    it('should set the repositoryIsLocked value to true', () => {
-        const programmingExercise = newExercise();
-        programmingExercise.dueDate = dayjs().subtract(10, 'seconds');
-        programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().subtract(60, 'seconds');
+    it('should set the participationIsLocked value to true', () => {
+        component.exercise = newExercise();
+        component.studentParticipation = { locked: true };
 
-        component.exercise = programmingExercise;
         fixture.detectChanges();
 
-        expect(component.repositoryIsLocked).toBeTrue();
+        expect(component.participationIsLocked).toBeTrue();
     });
 
     it('should change state on commit', () => {
