@@ -25,6 +25,7 @@ export class LinkPreviewContainerComponent implements OnInit {
         const links: Link[] = this.linkifyService.find(this.data!);
         // TODO: The limit of 5 link previews should be configurable (maybe in course level)
         links
+            .filter((link) => !link.isLinkPreviewRemoved)
             .slice(0, 5) // limit to 5 links
             .forEach((link) => {
                 this.linkPreviewService.fetchLink(link.href).subscribe({

@@ -7,6 +7,7 @@ export interface Link {
     href: string;
     start?: number;
     end?: number;
+    isLinkPreviewRemoved?: boolean;
 }
 
 @Injectable()
@@ -29,14 +30,18 @@ export class LinkifyService {
             const start = match.index;
             const end = start + url.length;
 
+            // Check if <!--LinkPreviewRemoved--> is present within 30 characters to the right
+            const isRemoved = text.substring(end, end + 30).includes('<!--LinkPreviewRemoved-->');
+
             // Create a linkable item object
-            const linkableItem = {
+            const linkableItem: Link = {
                 type: 'url',
                 value: url,
                 isLink: true,
                 href: url,
                 start,
                 end,
+                isLinkPreviewRemoved: isRemoved,
             };
 
             linkableItems.push(linkableItem);
