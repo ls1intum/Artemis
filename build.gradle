@@ -91,6 +91,8 @@ springBoot {
 modernizer {
     failOnViolations = false
     includeTestClasses = true
+    // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
+    exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
 // Execute the test cases: ./gradlew test
