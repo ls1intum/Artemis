@@ -95,19 +95,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         User studentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, studentUser, 0);
 
-        assertThatDb(() -> {
-
-            startWorkingOnExam(studentExam);
-            return null;
-
-        }).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
-
-        assertThatDb(() -> {
-
-            submitExam(studentExam);
-            return null;
-
-        }).hasBeenCalledAtMostTimes(getSubmitAnswerOfExamExpectedTotalQueryCount());
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(getSubmitAnswerOfExamExpectedTotalQueryCount());
     }
 
     private Exam createActiveExam() {
@@ -118,15 +107,16 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         return examUtilService.addExam(course, visibleDate, startDate, endDate);
     }
 
-    private void startWorkingOnExam(StudentExam studentExam) throws Exception {
-        request.get(
+    private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
+        return request.get(
                 "/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
     }
 
-    private void submitExam(StudentExam studentExam) throws Exception {
+    private Void submitExam(StudentExam studentExam) throws Exception {
         request.postWithoutLocation("/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit", studentExam,
                 HttpStatus.OK, null);
+        return null;
     }
 
     private long getStartWorkingOnExamExpectedTotalQueryCount() {
