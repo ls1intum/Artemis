@@ -1,9 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static java.time.ZonedDateTime.now;
-
-import java.time.ZonedDateTime;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -14,8 +10,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -91,20 +85,10 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamQueryCount() throws Exception {
-        Exam exam = createActiveExam();
-        User studentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, studentUser, 0);
+        StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(TEST_PREFIX + "student1");
 
         assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
         assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(getSubmitAnswerOfExamExpectedTotalQueryCount());
-    }
-
-    private Exam createActiveExam() {
-        Course course = courseUtilService.addEmptyCourse();
-        ZonedDateTime visibleDate = now().minusMinutes(10);
-        ZonedDateTime startDate = now().minusMinutes(5);
-        ZonedDateTime endDate = now().plusMinutes(5);
-        return examUtilService.addExam(course, visibleDate, startDate, endDate);
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
