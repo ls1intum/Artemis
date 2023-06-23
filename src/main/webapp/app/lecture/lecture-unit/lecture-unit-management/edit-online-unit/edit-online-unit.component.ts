@@ -46,7 +46,7 @@ export class EditOnlineUnitComponent implements OnInit {
                         description: this.onlineUnit.description,
                         releaseDate: this.onlineUnit.releaseDate,
                         source: this.onlineUnit.source,
-                        learningGoals: this.onlineUnit.competencies,
+                        competencies: this.onlineUnit.competencies,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -54,12 +54,12 @@ export class EditOnlineUnitComponent implements OnInit {
     }
 
     updateOnlineUnit(formData: OnlineUnitFormData) {
-        const { name, description, releaseDate, source, learningGoals } = formData;
+        const { name, description, releaseDate, source, competencies } = formData;
         this.onlineUnit.name = name;
         this.onlineUnit.description = description;
         this.onlineUnit.releaseDate = releaseDate;
         this.onlineUnit.source = source;
-        this.onlineUnit.competencies = learningGoals;
+        this.onlineUnit.competencies = competencies;
         this.isLoading = true;
         this.onlineUnitService
             .update(this.onlineUnit, this.lectureId)

@@ -1,15 +1,22 @@
 import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { Exam } from 'app/entities/exam.model';
 
 /**
  * Entity
  */
 export class Channel extends Conversation {
-    public name?: string; // max 20 characters
+    public name?: string; // max 30 characters
     public description?: string; // max 250 characters
     public topic?: string; // max 250 characters;
     public isPublic?: boolean;
     public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
+
+    public exercise?: Exercise;
+    public lecture?: Lecture;
+    public exam?: Exam;
 
     constructor() {
         super(ConversationType.CHANNEL);

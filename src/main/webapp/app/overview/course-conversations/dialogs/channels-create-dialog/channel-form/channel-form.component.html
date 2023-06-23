@@ -21,7 +21,7 @@
                         {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="nameControl?.errors?.maxlength">
-                        {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError' | artemisTranslate : { max: '20' } }}
+                        {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError' | artemisTranslate : { max: '30' } }}
                     </div>
                     <div *ngIf="!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern">
                         {{ 'artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError' | artemisTranslate }}
@@ -32,7 +32,7 @@
             <div class="form-group">
                 <label for="description">{{ 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label' | artemisTranslate }}</label>
                 <input type="text" class="form-control" id="description" formControlName="description" />
-                <small id="descriptionHelp" class="form-text text-muted">{{
+                <small id="descriptionHelp" class="form-text text-body-secondary">{{
                     'artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp' | artemisTranslate
                 }}</small>
                 <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
@@ -51,7 +51,7 @@
                         <input formControlName="isPublic" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
                         <label class="btn btn-outline-secondary" for="private">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate }}</label>
                     </div>
-                    <small id="isPublicHelp" class="form-text text-muted d-block">{{
+                    <small id="isPublicHelp" class="form-text text-body-secondary d-block">{{
                         'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
                     }}</small>
                 </div>
@@ -70,7 +70,7 @@
                             'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false' | artemisTranslate
                         }}</label>
                     </div>
-                    <small id="isAnnouncementChannelHelp" class="form-text text-muted d-block">{{
+                    <small id="isAnnouncementChannelHelp" class="form-text text-body-secondary d-block">{{
                         'artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.explanation' | artemisTranslate
                     }}</small>
                 </div>

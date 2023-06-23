@@ -29,12 +29,16 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIResultService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
@@ -58,14 +62,26 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Long programmingExerciseId;
 
     @BeforeEach
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        var course = database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     @AfterEach
@@ -86,8 +102,8 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildStatusQueued() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        database.createProgrammingSubmission(participation, false, "hash");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.CREATED);
 
         var result = getBuildStatusForParticipation(participation);
@@ -99,8 +115,8 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildStatusBuilding() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        database.createProgrammingSubmission(participation, false, "hash");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.RUNNING);
 
         var result = getBuildStatusForParticipation(participation);
@@ -118,8 +134,8 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildStatusInactive() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        database.createProgrammingSubmission(participation, false, "hash");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.CANCELED);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
@@ -131,8 +147,8 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExtractAndPersistBuildLogStatistics() {
         final var exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        final var submission = database.createProgrammingSubmission(participation, false, "hash");
+        final var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "hash");
 
         var buildLogStatisticSizeBefore = buildLogStatisticsEntryRepository.count();
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
@@ -158,7 +174,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         exercise.setBranch("main");
         programmingExerciseRepository.save(exercise);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuild(null);
 
         continuousIntegrationTriggerService.triggerBuild(participation);
@@ -173,7 +189,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTriggerBuildFails() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuildFailed(null);
 
         assertThatThrownBy(() -> continuousIntegrationTriggerService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
@@ -187,7 +203,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testConfigureBuildPlanSuccess() throws Exception {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockConfigureBuildPlan(participation, defaultBranch);
         continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
         verifyMocks();
@@ -207,7 +223,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateBuildPlanForExercise() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
 

@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.domain.Authority.*;
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -28,16 +28,21 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.course.CourseFactory;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.tutorialgroups.TutorialGroupUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -70,6 +75,21 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private TutorialGroupUtilService tutorialGroupUtilService;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -94,10 +114,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = database.addCourseWithOneProgrammingExercise();
-        database.addOnlineCourseConfigurationToCourse(course);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        courseUtilService.addOnlineCourseConfigurationToCourse(course);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
@@ -135,7 +155,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void launchLtiRequest_authViaEmail_success() throws Exception {
         request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
-        final var user = database.getUserByLogin(USERNAME);
+        final var user = userUtilService.getUserByLogin(USERNAME);
         final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
 
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
@@ -163,11 +183,11 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @WithMockUser(username = "ab12cde")
     void registerForCourse_internalAuth_success() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        final var student = database.createAndSaveUser("ab12cde");
+        final var student = userUtilService.createAndSaveUser("ab12cde");
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
-        var course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        var course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
         course1 = courseRepository.save(course1);
 
@@ -181,7 +201,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         userRepository.findOneByLogin("user1").ifPresent(userRepository::delete);
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
-        database.addTutorialCourse();
+        tutorialGroupUtilService.addTutorialCourse();
 
         student.setId(null);
         student.setLogin("user1");

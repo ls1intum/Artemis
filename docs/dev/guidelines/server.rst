@@ -124,7 +124,7 @@ Additional notes on the controller methods:
 * POST should return the newly created entity.
 * POST should be used to trigger remote methods (e.g. ".../{participationId}/submit" should be triggered with a POST).
 * Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
-    * Always use ``@PreAuthorize`` to only allow certain roles to access the method.
+    * Always use the Authorization enforcement logic described down below to only allow certain roles to access the method.
     * Perform additional security checks using the ``AuthorizationCheckService``.
 * Check for other common weaknesses, e.g., weak configuration, malicious user input, missing log events, etc.
 * Never trust user input and check if the passed data exists in the database.
@@ -303,7 +303,7 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
 
 .. code-block:: java
 
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         var exercise = programmingExerciseRepository.findById(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -314,23 +314,23 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
 
-The table contains all annotations for the corresponding minimum role. Different annotations get used during migration.
+The table contains all annotations for the corresponding minimum role including the required path prefix for all their endpoints and the package they should reside in. Different annotations get used during migration.
 
-+------------------+----------------------------------------+
-| **Minimum Role** | **Endpoint Annotation**                |
-+------------------+----------------------------------------+
-| ADMIN            | @EnforceAdmin                          |
-+------------------+----------------------------------------+
-| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") |
-+------------------+----------------------------------------+
-| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     |
-+------------------+----------------------------------------+
-| TA               | @PreAuthorize("hasRole('TA')")         |
-+------------------+----------------------------------------+
-| USER             | @PreAuthorize("hasRole('USER')")       |
-+------------------+----------------------------------------+
-| ANONYMOUS        | @EnforceNothing                        |
-+------------------+----------------------------------------+
++------------------+----------------------------------------+-----------------+----------------+
+| **Minimum Role** | **Endpoint Annotation**                | **Path Prefix** | **Package**    |
++------------------+----------------------------------------+-----------------+----------------+
+| ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
++------------------+----------------------------------------+-----------------+----------------+
+| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| EDITOR           | @EnforceAtLeastEditor                  | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| TA               | @EnforceAtLeastTutor                   | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| USER             | @EnforceAtLeastStudent                 | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
++------------------+----------------------------------------+-----------------+----------------+
 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
@@ -348,7 +348,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 .. code-block:: java
 
     @GetMapping(Endpoints.GET_FOR_COURSE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);

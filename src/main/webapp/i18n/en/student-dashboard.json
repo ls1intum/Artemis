@@ -9,17 +9,17 @@
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
-            "register": {
-                "title": "Course Registration",
-                "registerSuccessful": "Registration successful",
-                "registerForCourse": "Register",
-                "notInCourseButCanRegister": "You are not registered for this course, but you can register yourself.",
+            "enroll": {
+                "title": "Course Enrollment",
+                "enrollSuccessful": "Enrollment successful",
+                "enrollInCourse": "Enroll",
+                "notInCourseButCanEnroll": "You are not enrolled in this course, but you can enroll yourself.",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
-                "noCourse": "No courses available for registration",
+                "noCourse": "No courses available for enrollment",
                 "courseLoading": "Course is loading...",
                 "coursesLoading": "Courses are loading...",
-                "courseSignupConfirmationTitle": "Confirm Course Registration"
+                "courseEnrollmentConfirmationTitle": "Confirm Course Enrollment"
             },
             "course": "Course"
         },
@@ -33,7 +33,7 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorial Groups",
-                "learningGoals": "Competencies",
+                "competencies": "Competencies",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
@@ -66,7 +66,7 @@
                 "exerciseSubmitted": "Submitted, you can still submit updates.",
                 "exerciseSubmittedWaitingForGrading": "Submitted, waiting for grading.",
                 "exerciseNotSubmitted": "No Submission",
-                "exerciseMissedDeadline": "You have missed the deadline.",
+                "exerciseMissedDueDate": "You have missed the due date.",
                 "exerciseLateSubmission": "Late submission, waiting for feedback.",
                 "exerciseLateFeedback": "Late submission with feedback.",
                 "quizNotStarted": "The quiz is not active.",
@@ -76,7 +76,7 @@
                 "userNotStartedExerciseShort": "Not yet started.",
                 "userNotAssignedToTeamShort": "No team yet.",
                 "exerciseNotSubmittedShort": "No Submission",
-                "exerciseMissedDeadlineShort": "Deadline missed.",
+                "exerciseMissedDueDateShort": "Due date missed.",
                 "quizNotStartedShort": "Not yet started.",
                 "userNotParticipatedShort": "Not participated.",
                 "userParticipatingShort": "Currently participating.",
@@ -90,9 +90,23 @@
                     "programmingTotal": "Total Programming Exercises:",
                     "textTotal": "Total Text Exercises:",
                     "file-uploadTotal": "Total File Upload Exercises:",
-                    "startDate": "Start Date:",
-                    "endDate": "End Date:",
-                    "upcomingDeadlines": "Upcoming Deadlines:",
+                    "startDate": "Start:",
+                    "endDate": "End:",
+                    "enrollmentStartDate": "Enrollment from:",
+                    "enrollmentEndDate": "Enrollment until:",
+                    "unenrollmentEndDate": "Unenrollment until:",
+                    "unenrollmentButton": "Unenroll",
+                    "unenrollmentModal": {
+                        "title": "Confirm Course Unenrollment",
+                        "confirmationQuestion": "Are you sure you want to unenroll from",
+                        "reenrollmentNotPossible": "The course does not allow you to enroll again. This is an irreversible action.",
+                        "reenrollmentPossible": "If you change your mind, the course will allow you to enroll again until:",
+                        "confirmationInput": "Enter the title of the course:",
+                        "cancelButton": "Cancel",
+                        "acceptButton": "Yes, I want to unenroll.",
+                        "unenrollmentSuccessful": "Unenrollment successful"
+                    },
+                    "upcomingDueDates": "Upcoming Due Dates:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }
             },
@@ -100,6 +114,8 @@
                 "totalScore": "Your overall points",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
+                "totalPresentationPoints": "Your presentation points: {{ number }}",
+                "achievablePresentationPoints": "Achievable presentation points: {{ number }}",
                 "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
@@ -125,6 +141,7 @@
                 "gradeInfo": "(based on attainable points)",
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
                 "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
+                "presentationHelp": "The reachable presentation points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
                 "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
                 "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
                 "programmingPointLabel": "Programming Points",
@@ -132,6 +149,7 @@
                 "modelingPointLabel": "Modeling Points",
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
+                "presentationPointsLabel": "Presentation Points",
                 "missingPointsLabel": "Missing Points",
                 "achievedPointsLabel": "Achieved Points",
                 "includeStandardCategories": "Hide Artemis standard categories:",
@@ -140,7 +158,7 @@
                 "exercisesWithNoCategories": "Exercises with no categories",
                 "pointsPerExercise": "Points per Exercise"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "No competencies available for this course."
             },
             "lectureList": {
@@ -164,7 +182,7 @@
             "exerciseDetails": {
                 "dueDate": "Due date:",
                 "runTestsAfterDueDate": "Tests run after due date:",
-                "complaintDeadline": "Complaint deadline:",
+                "complaintDueDate": "Complaint due date:",
                 "categories": "Categories:",
                 "type": "Type:",
                 "difficulty": "Difficulty:",
@@ -192,16 +210,22 @@
                 "rated": "Rated",
                 "practice": "Practice",
                 "assessmentType": "Assessment:",
+                "releaseDate": "Release date:",
+                "releaseDateTooltip": "Students can see this exercise from {{date}}.",
                 "startDate": "Start date:",
                 "startDateTooltip": "Students can work on this exercise from {{date}}.",
                 "submissionDue": "Submission due:",
                 "submissionDueTooltip": "The submission is due by {{date}}.",
+                "exampleSolutionPublicationDate": "Example solution publication date:",
+                "exampleSolutionPublicationDateTooltip": "The example solution is published at {{date}}.",
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",
                 "complaintDueTooltip": "You can write a complain until {{date}}.",
                 "complaintPossible": "Complaint possible:",
-                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint."
+                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
+                "presented": "Presented:",
+                "presentation": "Presentation:"
             }
         }
     }

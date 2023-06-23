@@ -1,3 +1,5 @@
+.. _Jenkins and GitLab Setup:
+
 Jenkins and GitLab Setup
 ------------------------
 

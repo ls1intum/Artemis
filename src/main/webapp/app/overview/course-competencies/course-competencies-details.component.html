@@ -1,0 +1,82 @@
+<jhi-fireworks [active]="showFireworks"></jhi-fireworks>
+
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+
+<div *ngIf="competency">
+    <!-- HEADER INFORMATION START -->
+    <div class="course-info-bar">
+        <div class="row align-items-center">
+            <div class="col-11 general-info">
+                <h3 class="mb-0">
+                    <fa-icon
+                        *ngIf="competency.taxonomy"
+                        [icon]="getIcon(competency.taxonomy)"
+                        [fixedWidth]="true"
+                        [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
+                        container="body"
+                    ></fa-icon>
+                    <span>{{ competency!.title }}</span>
+                    <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+                </h3>
+                <div *ngIf="competency.description">{{ competency.description }}</div>
+            </div>
+            <div class="col-1">
+                <a
+                    *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                    class="btn btn-sm btn-warning float-end"
+                    [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']"
+                >
+                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- HEADER INFORMATION END -->
+    <div class="row mt-2">
+        <div class="col-lg-9 col-md-8">
+            <div class="row">
+                <div class="col-12 col-lg-11" *ngFor="let lectureUnit of competency.lectureUnits" [ngSwitch]="lectureUnit.type">
+                    <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="competency!.course!"></jhi-exercise-unit>
+                    <jhi-attachment-unit
+                        *ngSwitchCase="LectureUnitType.ATTACHMENT"
+                        [attachmentUnit]="lectureUnit"
+                        (onCompletion)="completeLectureUnit($event)"
+                    ></jhi-attachment-unit>
+                    <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+                    <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+                    <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4">
+            <div class="w-50 mx-auto my-2">
+                <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings>
+            </div>
+            <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
+                <div class="row mb-1 g-0">
+                    <div class="col-7">
+                        {{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription"></jhi-help-icon>
+                    </div>
+                    <div class="col-5">{{ progress }} %</div>
+                </div>
+                <div class="row mb-1 g-0">
+                    <div class="col-7">
+                        {{ 'artemisApp.competency.confidence' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.confidenceDescription"></jhi-help-icon>
+                    </div>
+                    <div class="col-5">{{ confidence }} %</div>
+                </div>
+                <div class="row mb-1 g-0">
+                    <div class="col-7">
+                        {{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription"></jhi-help-icon>
+                    </div>
+                    <div class="col-5">{{ mastery }} %</div>
+                </div>
+            </jhi-side-panel>
+        </div>
+    </div>
+</div>
