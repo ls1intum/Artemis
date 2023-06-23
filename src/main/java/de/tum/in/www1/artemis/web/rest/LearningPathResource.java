@@ -72,12 +72,12 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /course/:courseId/learning-paths : gets all the learning paths of a course
+     * GET /courses/:courseId/learning-paths : gets all the learning paths of a course
      *
      * @param courseId the id of the course for which the learning paths should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
-    @GetMapping("/course/{courseId}/learning-paths")
+    @GetMapping("/courses/{courseId}/learning-paths")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<LearningPath>> getLearningPathsOnPage(@PathVariable Long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
