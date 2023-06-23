@@ -5,7 +5,14 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
-import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import {
+    CONVERSATION_CREATE_GROUP_CHAT_TITLE,
+    CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
+    DATA_EXPORT_CREATED_TITLE,
+    DATA_EXPORT_FAILED_TITLE,
+    NEW_MESSAGE_TITLE,
+    Notification,
+} from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -94,6 +101,18 @@ describe('Notification Service', () => {
     const generateConversationsNotification = () => {
         const generatedNotification = { title: NEW_MESSAGE_TITLE, text: 'This is a simple new message notification' } as Notification;
         generatedNotification.target = JSON.stringify({ message: 'new-message', entity: 'message', mainPage: 'courses', id: 10, course: course.id, conversation: conversation.id });
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+    const generateDataExportCreationSuccessNotification = () => {
+        const generatedNotification = { title: DATA_EXPORT_CREATED_TITLE, text: 'Data export successfully created' } as Notification;
+        generatedNotification.target = JSON.stringify({ entity: 'data-exports', mainPage: 'privacy', id: 1 });
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+    const generateDataExportCreationFailureNotification = () => {
+        const generatedNotification = { title: DATA_EXPORT_FAILED_TITLE, text: 'Data export creation failed' } as Notification;
+        generatedNotification.target = JSON.stringify({ entity: 'data-exports', mainPage: 'privacy' });
         generatedNotification.notificationDate = dayjs();
         return generatedNotification;
     };
@@ -216,6 +235,19 @@ describe('Notification Service', () => {
             notificationService.interpretNotification(conversationCreationNotification);
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(navigateToNotificationTarget).toHaveBeenCalledOnce();
+        });
+
+        it('should navigate to data export success notification target', () => {
+            const navigationSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+            notificationService.interpretNotification(generateDataExportCreationSuccessNotification());
+            expect(navigationSpy).toHaveBeenCalledOnce();
+            expect(navigationSpy).toHaveBeenCalledWith(['privacy', 'data-exports', 1]);
+        });
+        it('should navigate to data export creation failure notification target', () => {
+            const navigationSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+            notificationService.interpretNotification(generateDataExportCreationFailureNotification());
+            expect(navigationSpy).toHaveBeenCalledOnce();
+            expect(navigationSpy).toHaveBeenCalledWith(['privacy', 'data-exports']);
         });
 
         it('should convert date array from server', fakeAsync(() => {

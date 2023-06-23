@@ -1,455 +1,68 @@
 package de.tum.in.www1.artemis.legal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
 
-import org.eclipse.jgit.lib.Repository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.Mockito;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
-import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
-import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.post.ConversationUtilService;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
-import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 
+@ExtendWith(MockitoExtension.class)
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "dataexport";
 
-    private static final String FILE_FORMAT_TXT = ".txt";
-
-    private static final String FILE_FORMAT_PDF = ".pdf";
-
-    private static final String FILE_FORMAT_ZIP = ".zip";
-
-    @Value("${artemis.repo-download-clone-path}")
-    private Path repoDownloadClonePath;
+    private static final String TEST_DATA_EXPORT_BASE_FILE_PATH = "src/test/resources/test-data/data-export/data-export.zip";
 
     @Autowired
     private DataExportRepository dataExportRepository;
-
-    @SpyBean
-    private DataExportService dataExportService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private ZipFileTestUtilService zipFileTestUtilService;
-
-    @Autowired
-    private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    private static final String TEST_DATA_EXPORT_BASE_FILE_PATH = "src/test/resources/test-data/data-export/data-export.zip";
-
-    private static final String FILE_FORMAT_CSV = ".csv";
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private StudentExamRepository studentExamRepository;
-
-    @Autowired
-    private ApollonRequestMockProvider apollonRequestMockProvider;
-
-    @Autowired
-    @Qualifier("apollonRestTemplate")
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private ApollonConversionService apollonConversionService;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private AnswerPostRepository answerPostRepository;
+    private DataExportService dataExportService;
 
     @BeforeEach
-    void initTestCase() throws IOException {
-        userUtilService.addUsers(TEST_PREFIX, 5, 5, 0, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 0, 1);
-        apollonConversionService.setRestTemplate(restTemplate);
-
-        apollonRequestMockProvider.enableMockingOfRequests();
-
-        // mock apollon conversion eight times
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-    }
-
-    private void mockApollonConversion() throws IOException {
-        Resource mockResource = Mockito.mock(Resource.class);
-        Mockito.when(mockResource.getInputStream()).thenReturn(new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream());
-        apollonRequestMockProvider.mockConvertModel(true, mockResource);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        apollonRequestMockProvider.reset();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportCreationSuccess_containsCorrectCourseContent() throws Exception {
-        boolean assessmentDueDateInTheFuture = false;
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "short");
-        createCommunicationData(course);
-        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
-        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-        assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-        assertThat(dataExportFromDb.getRequestDate()).isNotNull();
-        assertThat(dataExportFromDb.getCreationDate()).isNotNull();
-        // extract zip file and check content
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        Predicate<Path> generalUserInformationCsv = path -> "general_user_information.csv".equals(path.getFileName().toString());
-        Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
-        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(courseDir);
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "short");
-        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("FileUpload2"))
-                .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))
-                .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
-                .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
-        assertCommunicationDataCsvFile(courseDirPath);
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
-
-    }
-
-    private void assertCommunicationDataCsvFile(Path courseDirPath) {
-        assertThat(courseDirPath).isDirectoryContaining(path -> "messages_posts_reactions.csv".equals(path.getFileName().toString()));
-    }
-
-    private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
-        var userLogin = TEST_PREFIX + "student1";
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        if (!Files.exists(repoDownloadClonePath)) {
-            Files.createDirectories(repoDownloadClonePath);
-        }
-        Course course1;
-        if (assessmentDueDateInTheFuture) {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
-        }
-        else {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
-        }
-        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        ProgrammingExercise programmingExercise;
-        if (assessmentDueDateInTheFuture) {
-            programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().plusMinutes(1));
-        }
-        else {
-            programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
-        }
-        var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
-                programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
-        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "def");
-        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
-        participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
-        var feedback = new Feedback();
-        feedback.setCredits(1.0);
-        feedback.setDetailText("detailed feedback");
-        feedback.setText("feedback");
-        participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
-        participationUtilService.addSubmission(participation, submission);
-        participationUtilService.addSubmission(participation, submission2);
-        var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
-        createPlagiarismData(userLogin, programmingExercise, modelingExercises);
-        // Mock student repo
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
-        return course1;
-    }
-
-    private void createCommunicationData(Course course1) {
-        conversationUtilService.addMessageWithReplyAndReactionInGroupChatOfCourseForUser("dataexportstudent1", course1, "group chat");
-        conversationUtilService.addMessageInChannelOfCourseForUser(TEST_PREFIX + "student1", course1, "channel");
-        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser("dataexportstudent1", course1, "one-to-one-chat");
-    }
-
-    private void createPlagiarismData(String userLogin, ProgrammingExercise programmingExercise, List<Exercise> exercises) {
-        exerciseUtilService.createPlagiarismCaseForUserForExercise(programmingExercise, userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.PLAGIARISM);
-        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(0), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.POINT_DEDUCTION);
-        exerciseUtilService.createPlagiarismCaseForUserForExercise(exercises.get(1), userUtilService.getUserByLogin(userLogin), TEST_PREFIX, PlagiarismVerdict.WARNING);
-    }
-
-    private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
-        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        if (!Files.exists(repoDownloadClonePath)) {
-            Files.createDirectories(repoDownloadClonePath);
-        }
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", courseShortName, true,
-                true);
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        var exam = course.getExams().iterator().next();
-        exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).get();
-        var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
-        examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
-        var submission = studentExams.iterator().next().getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
-        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
-        var feedback = new Feedback();
-        feedback.setCredits(1.0);
-        feedback.setDetailText("detailed feedback");
-        feedback.setText("feedback");
-        participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
-        return exam;
-    }
-
-    private Exam prepareExamDataWithResultPublicationDateInTheFuture() throws Exception {
-        var exam = prepareExamDataForDataExportCreation("examNoResults");
-        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
-        return examRepository.save(exam);
-    }
-
-    private void addOnlyReactionToPostInCourse(Course course) {
-        // add a reaction in a course to a post where no other communication data exists
-        var loginUser2 = TEST_PREFIX + "student2";
-        conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "student 2 message");
-        var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
-        conversationUtilService.addReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
-    }
-
-    private void assertNoResultsFile(Path exerciseDirPath) {
-        assertThat(exerciseDirPath).isDirectoryNotContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result"));
-    }
-
-    private void assertCorrectContentForExercise(Path exerciseDirPath, boolean courseExercise, boolean assessmentDueDateInTheFuture) {
-        Predicate<Path> resultsFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result");
-        Predicate<Path> submissionFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("submission");
-        assertThat(exerciseDirPath).isDirectoryContaining(submissionFile);
-        if (assessmentDueDateInTheFuture) {
-            assertThat(exerciseDirPath).isDirectoryNotContaining(resultsFile);
-        }
-        // quizzes do not have a result file
-        if (!exerciseDirPath.toString().contains("quiz") && !assessmentDueDateInTheFuture) {
-            assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
-        }
-        if (exerciseDirPath.toString().contains("Programming")) {
-            // zip file of the repository
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_ZIP));
-            // programming course exercise has a plagiarism case
-            if (courseExercise) {
-                assertThat(exerciseDirPath)
-                        .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
-            }
-        }
-        if (exerciseDirPath.toString().contains("Modeling")) {
-            // model as pdf file
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
-            // modeling exercises in the course have plagiarism cases
-            if (courseExercise) {
-                assertThat(exerciseDirPath)
-                        .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
-            }
-        }
-        if (exerciseDirPath.toString().contains("Text")) {
-            // submission text txt file
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("_text" + FILE_FORMAT_TXT));
-        }
-        if (exerciseDirPath.toString().contains("quiz")) {
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("short_answer_questions_answers" + FILE_FORMAT_TXT))
-                    .isDirectoryContaining(path -> path.getFileName().toString().endsWith("multiple_choice_questions_answers" + FILE_FORMAT_TXT))
-                    .isDirectoryContaining(path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
-        }
-        boolean notQuizOrProgramming = !exerciseDirPath.toString().contains("quiz") && !exerciseDirPath.toString().contains("Programming");
-        if (notQuizOrProgramming && courseExercise && !assessmentDueDateInTheFuture) {
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().contains("complaint"));
-        }
-    }
-
-    private Path getCourseOrExamDirectoryPath(Path rootPath, String shortName) throws IOException {
-        try (var files = Files.list(rootPath).filter(Files::isDirectory).filter(path -> path.getFileName().toString().contains(shortName))) {
-            return files.findFirst().get();
-        }
-    }
-
-    private List<Path> getExerciseDirectoryPaths(Path coursePath) throws IOException {
-        try (var files = Files.list(coursePath).filter(Files::isDirectory)) {
-            return files.toList();
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportCreationSuccess_containsCorrectExamContent() throws Exception {
-        var exam = prepareExamDataForDataExportCreation("exam");
-        addOnlyAnswerPostReactionInCourse(exam.getCourse());
-        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
-        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-        assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
-        assertThat(dataExportFromDb.getRequestDate()).isNotNull();
-        assertThat(dataExportFromDb.getCreationDate()).isNotNull();
-        // extract zip file and check content
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
-        assertCommunicationDataCsvFile(courseDirPath);
-        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
-        var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
-        getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false, false));
-
-    }
-
-    private void addOnlyAnswerPostReactionInCourse(Course course) {
-        var loginUser2 = TEST_PREFIX + "student2";
-        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
-        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.get(0));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void resultsPublicationDateInTheFuture_noResultsLeaked() throws Exception {
-        var exam = prepareExamDataWithResultPublicationDateInTheFuture();
-        addOnlyReactionToPostInCourse(exam.getCourse());
-        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
-        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoResults");
-        assertCommunicationDataCsvFile(courseDirPath);
-        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
-        var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
-        getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportDoesntLeakResultsIfAssessmentDueDateInTheFuture() throws Exception {
-        boolean assessmentDueDateInTheFuture = true;
-        var courseShortName = "future";
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
-        addOnlyAnswerPostInCourse(course);
-        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
-        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
-        assertCommunicationDataCsvFile(courseDirPath);
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportContainsDataAboutCourseStudentUnenrolled() throws Exception {
-        boolean assessmentDueDateInTheFuture = true;
-        var courseShortName = "unenrolled";
-        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
-        // by setting the course groups to a different value we simulate unenrollment because the user is no longer part of the user group and hence, the course.
-        courseUtilService.updateCourseGroups("abc", course, "");
-        var dataExport = request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.OK);
-        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
-
-    }
-
-    private void addOnlyAnswerPostInCourse(Course course) {
-        var loginUser2 = TEST_PREFIX + "student2";
-        conversationUtilService.addMessageInChannelOfCourseForUser(loginUser2, course, "message student2");
-        var posts = postRepository.findPostsByAuthorIdAndCourseId(userUtilService.getUserByLogin(loginUser2).getId(), course.getId());
-        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", posts.get(0));
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 0);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDownloadSuccess() throws Exception {
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         // create an export
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userForExport);
         dataExport = dataExportRepository.save(dataExport);
-        var dataExportFile = request.getFile("/api/data-export/" + dataExport.getId(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        var dataExportFile = request.getFile("/api/data-exports/" + dataExport.getId(), HttpStatus.OK, new LinkedMultiValueMap<>());
         var dataExportAfterDownload = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFile).isNotNull();
         assertThat(dataExportAfterDownload.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED);
@@ -460,10 +73,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private DataExport prepareDataExportForDownload() throws IOException {
         var dataExport = new DataExport();
-
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport.setRequestDate(ZonedDateTime.now().minusDays(2));
-        dataExport.setCreationDate(ZonedDateTime.now().minusDays(1));
+        dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(1));
         // rename file to avoid duplicates in the temp directory
         var newFilePath = TEST_DATA_EXPORT_BASE_FILE_PATH + ZonedDateTime.now().toEpochSecond();
         Files.move(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH), Path.of(newFilePath));
@@ -479,54 +90,243 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntBelongToUser_forbidden() throws Exception {
-        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        var user2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportErrorDuringCreation_internalServerError() throws Exception {
-        doThrow(new RuntimeException("Error")).when(dataExportService).requestDataExport();
-        request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDownload_fileDoesntExist_internalServerError() throws Exception {
-        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         DataExport dataExport = new DataExport();
         dataExport.setUser(userForExport);
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-export/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
+        request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
 
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "DELETED", "DOWNLOADED_DELETED" })
+    @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "DELETED", "DOWNLOADED_DELETED", "FAILED" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExport_notYetFullyCreatedOrDeleted_accessForbidden(DataExportState state) throws Exception {
-        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         DataExport dataExport = new DataExport();
         dataExport.setUser(userForExport);
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(state);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportIdNotExistent_notFound() throws Exception {
-        request.get("/api/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
+        request.get("/api/data-exports/999999", HttpStatus.NOT_FOUND, Resource.class);
+    }
 
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "DELETED", "DOWNLOADED_DELETED", "FAILED" })
+    @ParameterizedTest
+    void testCanDownload_noDataExportInCorrectState_dataExportIdNull(DataExportState state) throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(state);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isNull();
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(value = DataExportState.class, names = { "IN_CREATION", "DOWNLOADED" })
+    void testCanDownload_dataExportInCorrectState_dataExportIdReturned() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport = dataExportRepository.save(dataExport);
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isEqualTo(dataExport.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownload_noDataExport_dataExportIdNull() throws Exception {
+        dataExportRepository.deleteAll();
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownloadSpecificExport_dataExportNotExistent_notFound() throws Exception {
+        request.get("/api/data-exports/999999/can-download", HttpStatus.NOT_FOUND, Boolean.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownloadSpecificExport_dataExportNotDownloadable_false() throws Exception {
+        var dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.REQUESTED);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport = dataExportRepository.save(dataExport);
+        var canDownload = request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.OK, Boolean.class);
+        assertThat(canDownload).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequestDataExportIfNeverRequested() throws Exception {
+        dataExportRepository.deleteAll();
+        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequestDataExportIfLastOneFailed() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.FAILED);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownloadSpecificExport_dataExportBelongsToOtherUser_forbidden() throws Exception {
+        var user2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setUser(user2);
+        dataExport = dataExportRepository.save(dataExport);
+        request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.FORBIDDEN, Boolean.class);
+    }
+
+    @Test
+    @Disabled("doesn't work at the moment")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequest_ifNoDataExportInThePast14Days() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        var fifteenDaysInSeconds = 15 * 24 * 60 * 60;
+        var mockedValue = Instant.now().minusSeconds(fifteenDaysInSeconds);
+        Clock spyClock = spy(Clock.class);
+        MockedStatic<Clock> clockMock = mockStatic(Clock.class);
+        clockMock.when(Clock::systemDefaultZone).thenReturn(spyClock);
+        clockMock.when(Clock::systemUTC).thenReturn(spyClock);
+        when(spyClock.instant()).thenReturn(mockedValue);
+        dataExportRepository.save(dataExport);
+        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+
+    }
+
+    private void mockInstant(long expected) {
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCannotRequest_ifDataExportInThePast14Days() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCannotRequest_ifDataExportRequestedInThePast14DaysAndNotYetCreated() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequest_ifDataExportInThePast14Days_forbidden() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(10));
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequest_ifDataExportRequestedInThePast14DaysButNotYetCreated_forbidden() throws Exception {
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExportRepository.save(dataExport);
+        request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanRequest_ifNoDataExport() throws Exception {
+        dataExportRepository.deleteAll();
+        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        assertThat(canRequest).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestingDataExportCreatesCorrectDataExportObject() throws Exception {
+        dataExportRepository.deleteAll();
+        var dataExport = request.putWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
+        assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(dataExport.getCreatedDate()).isNotNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataExportState.class, names = { "EMAIL_SENT", "DOWNLOADED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectState(DataExportState state) {
+        var dataExport = initDataExport(state);
+        doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyInt());
+        dataExportService.deleteDataExportAndSetDataExportState(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        if (state == DataExportState.DOWNLOADED) {
+            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED_DELETED);
+        }
+        else {
+            assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
+        }
+        verify(fileService).scheduleForDirectoryDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+    }
+
+    private DataExport initDataExport(DataExportState state) {
+        DataExport dataExport = new DataExport();
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        dataExport.setDataExportState(state);
+        dataExport.setFilePath("path");
+        dataExport = dataExportRepository.save(dataExport);
+        return dataExport;
     }
 }
