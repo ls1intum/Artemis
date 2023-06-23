@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
@@ -213,6 +215,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
         participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
         assertThat(participations).isNotEmpty();
+
+        await().pollInterval(10, TimeUnit.MILLISECONDS).until(() -> participantScoreScheduleService.isIdle());
+
         for (StudentParticipation studentParticipation : participations) {
             request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
         }

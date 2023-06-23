@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.admin;
 
 import javax.ws.rs.BadRequestException;
 
