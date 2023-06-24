@@ -397,7 +397,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     /**
      * Test for notifyStudentGroupAboutAttachmentChange method with a non future release date
      */
-    @RepeatedTest(500)
+    @Test
     void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
         lecture = new Lecture();
         lecture.setCourse(course);
