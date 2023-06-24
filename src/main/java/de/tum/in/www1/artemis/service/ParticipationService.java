@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -236,12 +234,6 @@ public class ParticipationService {
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
-        // Step 1b) Lock the participation, if it is for an upcoming exam (the participation gets created during the prepare exercise start step)
-        // For course exercises, this is not necessary, as students can only create their participation after the start date.
-        // Also don't lock the participation if it's past the unlock date (the scheduled unlocking job already finished)
-        if (exercise.isExamExercise() && ZonedDateTime.now().isBefore(getExamProgrammingExerciseUnlockDate(exercise))) {
-            participation.setLocked(true);
-        }
         // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
