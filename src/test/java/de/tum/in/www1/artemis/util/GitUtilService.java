@@ -113,28 +113,31 @@ public class GitUtilService {
         if (remoteGit != null) {
             remoteGit.close();
         }
-        while (FileUtils.isDirectory(localPath.toFile())) {
-            try {
-                FileUtils.deleteDirectory(localPath.toFile());
-            }
-            catch (IOException ignored) {
-            }
-        }
-        localRepo = null;
 
-        for (int i = 0; i < 10 && FileUtils.isDirectory(remotePath.toFile()); i++) {
-            try {
-                FileUtils.deleteDirectory(remotePath.toFile());
-            }
-            catch (IOException ignored) {
-            }
+        try {
+            tryToDeleteDirectory(localPath);
+            localRepo = null;
+            tryToDeleteDirectory(remotePath);
+            remoteRepo = null;
         }
+        catch (Exception e) {
+            fail("Failed while deleting the repositories", e);
+        }
+    }
 
-        if (FileUtils.isDirectory(remotePath.toFile())) {
-            fail("Could not delete directory with path " + remotePath);
+    private void tryToDeleteDirectory(Path path) throws Exception {
+        if (FileUtils.isDirectory(path.toFile())) {
+            FileUtils.deleteDirectory(path.toFile());
         }
 
-        remoteRepo = null;
+        for (int i = 0; i < 10 && FileUtils.isDirectory(path.toFile()); i++) {
+            Thread.sleep(10);
+            FileUtils.deleteDirectory(path.toFile());
+        }
+
+        if (FileUtils.isDirectory(path.toFile())) {
+            fail("Could not delete directory with path " + path);
+        }
     }
 
     public void deleteRepo(REPOS repo) {
