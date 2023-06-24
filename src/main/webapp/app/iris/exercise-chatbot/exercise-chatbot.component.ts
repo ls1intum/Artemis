@@ -27,6 +27,8 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     hasNewMessages = false;
     private exerciseId: number;
     private stateSubscription: Subscription;
+    initialWidth = 330;
+    initialHeight = 430;
 
     // Icons
     faCircle = faCircle;
@@ -89,6 +91,9 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
                 position: { bottom: '0px', right: '0px' },
                 data: {
                     stateStore: this.stateStore,
+                    widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
+                    widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
+                    fullSize: localStorage.getItem('fullSize') === 'true',
                 },
             });
             this.dialogRef.afterClosed().subscribe(() => {

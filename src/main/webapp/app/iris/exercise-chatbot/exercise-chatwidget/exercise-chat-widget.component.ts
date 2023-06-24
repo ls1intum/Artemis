@@ -12,6 +12,7 @@ import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
+import { ResizeSensor } from 'css-element-queries';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -42,10 +43,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     userAccepted = false;
     isScrolledToBottom = true;
     rows = 1;
-    fullSize = false;
     showChatWidget = true;
-    widgetWidth = '330px';
-    widgetHeight = '430px';
+    initialWidth = 330;
+    initialHeight = 430;
+    fullWidth = '95vw';
+    fullHeight = '85vh';
+    fullSize = localStorage.getItem('fullSize') === 'true';
+    widgetWidth = localStorage.getItem('widgetWidth') || `${this.initialWidth}px`;
+    widgetHeight = localStorage.getItem('widgetHeight') || `${this.initialHeight}px`;
     public ButtonType = ButtonType;
 
     constructor(
@@ -96,12 +101,19 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngAfterViewInit() {
+        console.log('hey');
         this.unreadMessageIndex = this.messages.length === 0 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
         if (this.numNewMessages > 0) {
             this.scrollToUnread();
         } else {
             this.scrollToBottom('auto');
         }
+
+        const chatWidget: HTMLElement = this.chatWidget.nativeElement; // element you want to watch
+        new ResizeSensor(chatWidget, () => {
+            localStorage.setItem('widgetWidth', chatWidget.style.width);
+            localStorage.setItem('widgetHeight', chatWidget.style.height);
+        });
     }
 
     ngOnDestroy() {
@@ -161,8 +173,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     resetScreen(resetType: string) {
         setTimeout(() => {
             this.showChatWidget = false;
-            this.widgetWidth = resetType == 'maximize' ? '95vw' : '330px';
-            this.widgetHeight = resetType == 'maximize' ? '85vh' : '430px';
+            this.widgetWidth = resetType == 'maximize' ? this.fullWidth : `${this.initialWidth}px`;
+            this.widgetHeight = resetType == 'maximize' ? this.fullHeight : `${this.initialHeight}px`;
         }, 50);
         setTimeout(() => {
             this.scrollToBottom('auto');
@@ -174,11 +186,17 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     maximizeScreen() {
         this.resetScreen('maximize');
+        localStorage.setItem('widgetWidth', this.fullWidth);
+        localStorage.setItem('widgetHeight', this.fullHeight);
+        localStorage.setItem('fullSize', 'true');
         this.fullSize = true;
     }
 
     minimizeScreen() {
         this.resetScreen('minimize');
+        localStorage.setItem('widgetWidth', `${this.initialWidth}px`);
+        localStorage.setItem('widgetHeight', `${this.initialHeight}px`);
+        localStorage.setItem('fullSize', 'false');
         this.fullSize = false;
     }
 
