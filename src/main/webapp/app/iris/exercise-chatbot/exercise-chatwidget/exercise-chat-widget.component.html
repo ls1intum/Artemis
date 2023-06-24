@@ -75,6 +75,7 @@
         <!-- input field section -->
         <div class="chat-input">
             <textarea
+                [disabled]="!userAccepted || isLoading"
                 [(ngModel)]="newMessageTextContent"
                 (ngModelChange)="onRowChange()"
                 type="text"
