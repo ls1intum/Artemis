@@ -241,7 +241,7 @@ describe('CoursesComponent', () => {
             expect(component.findNextRelevantExercise()).toBe(visibleQuiz);
         });
 
-        it('should show exercise with next deadline if no quiz is present', () => {
+        it('should show exercise with next due date if no quiz is present', () => {
             course3.exercises = [exercise1, exercise2];
             course4.exercises = [exercise3];
             exercise1.course = course3;

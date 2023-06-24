@@ -21,7 +21,7 @@
                 "submitChanges": {
                     "headline": "Submit changes",
                     "content": "If you are satisfied with your implementation, then you can submit your current code by clicking <tt>Submit</tt>.",
-                    "hint": "Here is a quick note: You can submit as many times as you want before the deadline passes, so feel free to solve and submit each task one by one."
+                    "hint": "Here is a quick note: You can submit as many times as you want before the due date passes, so feel free to solve and submit each task one by one."
                 }
             },
             "buildLoading": {
