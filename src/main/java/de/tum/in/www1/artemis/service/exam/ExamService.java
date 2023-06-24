@@ -292,7 +292,7 @@ public class ExamService {
             Double achievedPointsOfSource = 0.0;
             PlagiarismVerdict verdict = null;
             Integer presentationScoreThreshold = null;
-            Integer achievedPresentationScore = null;
+            Double achievedPresentationScore = null;
             if (result != null) {
                 achievedPointsOfSource = result.achievedPoints();
                 verdict = result.mostSeverePlagiarismVerdict();
@@ -320,7 +320,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
         try {
             if (sourceGradingScale.getCourse() != null) {
-                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse().getId(), studentIds);
+                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
             }
             else {
                 return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
@@ -1016,7 +1016,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+            instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -1048,7 +1048,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            instanceMessageSendService.sendLockAllRepositories(programmingExercise.getId());
+            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
         }
 
         return programmingExercises.size();

@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.learningGoal.prerequisite.title">Import Lecture</h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.competency.prerequisite.title">Import Lecture</h4>
     <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
 </div>
 <div class="modal-body">
@@ -11,12 +11,12 @@
         </div>
 
         <div *ngIf="!isLoading" class="row justify-content-center gx-5 gy-2">
-            <jhi-learning-goal-card
+            <jhi-competency-card
                 class="col-12 col-lg-6"
                 *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
-                [learningGoal]="prerequisite"
+                [competency]="prerequisite"
                 [isPrerequisite]="true"
-            ></jhi-learning-goal-card>
+            ></jhi-competency-card>
         </div>
     </div>
 </div>

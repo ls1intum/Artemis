@@ -167,23 +167,45 @@
         <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
             <div class="row mb-1">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | artemisTranslate }}</div>
-                <div class="col-4" style="text-align: end">{{ numberOfExercises }}</div>
+                <div class="col-4 text-end">{{ numberOfExercises }}</div>
             </div>
             <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | artemisTranslate }}</div>
-                <div class="col-4" style="text-align: end">{{ exerciseCount.value }}</div>
+                <div class="col-4 text-end">{{ exerciseCount.value }}</div>
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
-                <div class="col-4" style="text-align: end">{{ course?.startDate | artemisDate }}</div>
+                <div class="col-4 text-end">{{ course?.startDate | artemisDate }}</div>
             </div>
-            <div class="row" *ngIf="course?.endDate">
+            <div class="row mb-1" *ngIf="course?.endDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
-                <div class="col-4" style="text-align: end">{{ course?.endDate | artemisDate }}</div>
+                <div class="col-4 text-end">{{ course?.endDate | artemisDate }}</div>
+            </div>
+            <div class="row mb-1" *ngIf="course?.enrollmentEnabled && course?.enrollmentStartDate">
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentStartDate' | artemisTranslate }}</div>
+                <div class="col-4 text-end">{{ course?.enrollmentStartDate | artemisDate }}</div>
+            </div>
+            <div class="row mb-1" *ngIf="course?.enrollmentEnabled && course?.enrollmentEndDate">
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentEndDate' | artemisTranslate }}</div>
+                <div class="col-4 text-end">{{ course?.enrollmentEndDate | artemisDate }}</div>
+            </div>
+            <div class="row mb-1" *ngIf="course?.unenrollmentEnabled && course?.unenrollmentEndDate">
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentEndDate' | artemisTranslate }}</div>
+                <div class="col-4 text-end">{{ course?.unenrollmentEndDate | artemisDate }}</div>
+            </div>
+            <div class="row" *ngIf="canUnenroll">
+                <div class="col text-end">
+                    <button class="btn btn-danger" id="course-unenrollment-button" (click)="onUnenroll()">
+                        <fa-icon [icon]="faXmark"></fa-icon>
+                        <span class="d-sm-inline">
+                            {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton' | artemisTranslate }}
+                        </span>
+                    </button>
+                </div>
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
-            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | artemisTranslate">
+            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDueDate' | artemisTranslate">
                 <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.exercise.id]">
                     <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
                     <div class="col-5">{{ exercise.exercise.title }}</div>

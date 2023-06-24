@@ -9,17 +9,17 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
-            "register": {
-                "title": "Kursanmeldung",
-                "registerSuccessful": "Anmeldung erfolgreich",
-                "registerForCourse": "Anmelden",
-                "notInCourseButCanRegister": "Du bist nicht in diesem Kurs, kannst dich aber anmelden.",
+            "enroll": {
+                "title": "Kurseinschreibung",
+                "enrollSuccessful": "Einschreibung erfolgreich",
+                "enrollInCourse": "Einschreiben",
+                "notInCourseButCanEnroll": "Du bist nicht in diesem Kurs, kannst dich aber einschreiben.",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
-                "noCourse": "Keine Kurse für eine Anmeldung verfügbar",
+                "noCourse": "Keine Kurse zur Einschreibung verfügbar",
                 "courseLoading": "Kurs wird geladen...",
                 "coursesLoading": "Kurse werden geladen...",
-                "courseSignupConfirmationTitle": "Bestätigung der Kursanmeldung"
+                "courseSignupConfirmationTitle": "Bestätigung der Kurseinschreibung"
             },
             "course": "Kurs"
         },
@@ -32,7 +32,7 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
-                "learningGoals": "Kompetenzen",
+                "competencies": "Kompetenzen",
                 "tutorialGroups": "Übungsgruppen",
                 "exams": "Klausuren",
                 "testExam": "Testklausur",
@@ -60,12 +60,12 @@
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
                 "shortDueDate": "Bis",
-                "noDueDate": "Keine Deadline",
+                "noDueDate": "Keine Einreichungsfrist",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
                 "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, noch keine Bewertung.",
                 "exerciseNotSubmitted": "Noch nicht abgegeben",
-                "exerciseMissedDeadline": "Abgabefrist abgelaufen",
+                "exerciseMissedDueDate": "Einreichungsfrist abgelaufen",
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
                 "exerciseLateFeedback": "Verspätete Abgabe, mit Feedback.",
                 "quizNotStarted": "Das Quiz ist nicht aktiv.",
@@ -74,7 +74,7 @@
                 "userSubmitted": "Du hast bereits abgegeben.",
                 "userNotStartedExerciseShort": "Noch nicht angefangen.",
                 "exerciseNotSubmittedShort": "Noch nicht abgegeben",
-                "exerciseMissedDeadlineShort": "Abgabefrist abgelaufen",
+                "exerciseMissedDueDateShort": "Einreichungsfrist abgelaufen",
                 "quizNotStartedShort": "Noch nicht begonnen.",
                 "userNotParticipatedShort": "Nicht teilgenommen.",
                 "userParticipatingShort": "Aktuelle Teilnahme",
@@ -90,7 +90,21 @@
                     "file-uploadTotal": "Aufgaben mit Datei-Upload insgesamt:",
                     "startDate": "Start:",
                     "endDate": "Ende:",
-                    "upcomingDeadlines": "Bevorstehende Termine:",
+                    "enrollmentStartDate": "Einschreibung von:",
+                    "enrollmentEndDate": "Einschreibung bis:",
+                    "unenrollmentEndDate": "Austragen bis:",
+                    "unenrollmentButton": "Austragen",
+                    "unenrollmentModal": {
+                        "title": "Bestätigung für das Austragen aus dem Kurs",
+                        "confirmationQuestion": "Bist du dir sicher, dass du dich von folgendem Kurs austragen möchtest:",
+                        "reenrollmentNotPossible": "Der Kurs erlaubt dir nicht, dich erneut einzuschreiben. Dies ist eine endgültige Entscheidung.",
+                        "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut einzuschreiben:",
+                        "confirmationInput": "Gib den Titel des Kurses ein:",
+                        "cancelButton": "Abbruch",
+                        "acceptButton": "Ja, ich möchte mich austragen.",
+                        "unenrollmentSuccessful": "Austragung erfolgreich"
+                    },
+                    "upcomingDueDate": "Bevorstehende Einreichungsfristen:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }
             },
@@ -98,6 +112,8 @@
                 "totalScore": "Gesamtpunktzahl",
                 "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
                 "presentationScoreBonus": "Benötigtes Präsentationsergebnis für den Bonus: {{ number }}",
+                "totalPresentationPoints": "Deine Präsentationspunkte: {{ number }}",
+                "achievablePresentationPoints": "Erreichbare Präsentationspunkte: {{ number }}",
                 "hideNotIncludedInScoreExercises": "Keine Optionalen",
                 "exerciseCount": "{{ number }} {{ type }}",
                 "yourPoints": "Deine Punktzahl: {{ number }}",
@@ -123,6 +139,7 @@
                 "gradeInfo": "(basierend auf der erreichbaren Punktzahl)",
                 "gradeHelp": "Die Note basiert auf der von dir erreichbaren Punktzahl. Sie kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
                 "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
+                "presentationHelp": "Die Präsentationspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
                 "programmingExerciseFailedTests": "{{ tests }} Tests fehlgeschlagen ({{ percentage }}%)",
                 "programmingExercisePassedTests": "{{ tests }} Tests erfolgreich ({{ percentage }}%)",
                 "programmingPointLabel": "Programmieraufgaben Punkte",
@@ -130,6 +147,7 @@
                 "modelingPointLabel": "Modellierungsaufgaben Punkte",
                 "textPointLabel": "Textaufgaben Punkte",
                 "fileUploadPointLabel": "Dateiupload-Aufgaben Punkte",
+                "presentationPointsLabel": "Präsentationspunkte",
                 "missingPointsLabel": "Fehlende Punkte",
                 "achievedPointsLabel": "Erreichte Punkte",
                 "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
@@ -138,7 +156,7 @@
                 "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
                 "pointsPerExercise": "Punkte pro Aufgabe"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "Es sind keine Kompetenzen für diesen Kurs vorhanden."
             },
             "lectureList": {
@@ -162,7 +180,7 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
-                "complaintDeadline": "Beschwerdefrist:",
+                "complaintDueDate": "Beschwerdefrist:",
                 "categories": "Kategorien:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
@@ -190,16 +208,22 @@
                 "rated": "Bewertet",
                 "practice": "Übung",
                 "assessmentType": "Bewertung:",
+                "releaseDate": "Veröffentlichungsdatum:",
+                "releaseDateTooltip": "Studierende können diese Aufgabe ab {{date}} sehen.",
                 "startDate": "Startdatum:",
                 "startDateTooltip": "Studierende können diese Aufgabe ab {{date}} bearbeiten.",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
+                "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung:",
+                "exampleSolutionPublicationDateTooltip": "Die Beispiellösung wird am {{date}} veröffentlicht.",
                 "assessmentDue": "Bewertung bis:",
                 "assessmentDueTooltip": "Die Frist für die Bewertung ist am {{date}}.",
                 "complaintDue": "Beschwerde bis:",
                 "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
                 "complaintPossible": "Beschwerde möglich:",
-                "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben."
+                "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
+                "presented": "Präsentiert:",
+                "presentation": "Präsentation:"
             }
         }
     }

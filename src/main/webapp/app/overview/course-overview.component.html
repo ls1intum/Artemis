@@ -21,8 +21,8 @@
                     <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
                         <div jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</div>
                     </div>
-                    <div *ngIf="hasLearningGoals()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item learning-goals" routerLink="competencies" routerLinkActive="active">
-                        <div jhiTranslate="artemisApp.courseOverview.menu.learningGoals">Competencies</div>
+                    <div *ngIf="hasCompetencies()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item competencies" routerLink="competencies" routerLinkActive="active">
+                        <div jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</div>
                     </div>
                     <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
                         <div jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</div>

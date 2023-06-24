@@ -1,5 +1,5 @@
-<div class="card mb-4" id="course-card-{{ course.shortName }}">
-    <div id="course-card-header" class="text-white card-heading" [ngStyle]="hoverEffectForBackground">
+<div class="card mb-4 hover-effect" id="course-card-{{ course.shortName }}">
+    <div id="course-card-header" class="text-white card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
             <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
@@ -231,11 +231,11 @@
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'competency-management']"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
-            [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
-            id="course-card-open-learning-goals"
+            [ngbTooltip]="'artemisApp.competency.competencyButton' | artemisTranslate"
+            id="course-card-open-competencies"
         >
             <fa-icon [icon]="faFlag"></fa-icon>
-            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
+            <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"

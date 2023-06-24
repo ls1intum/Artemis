@@ -11,13 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -32,18 +35,27 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private Lecture lecture1;
 
     private Course course2;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().get().getId();
         this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1Id);
-        this.course2 = this.database.createCourse();
+        this.course2 = courseUtilService.createCourse();
 
         assertThat(this.lecture1.getLectureUnits()).isNotEmpty();
         assertThat(this.lecture1.getAttachments()).isNotEmpty();

@@ -96,7 +96,10 @@
                 "saveFailedInternetDisconnected": "Saving failed. Please make sure you have a stable internet connection and try again.",
                 "submitFailedInternetDisconnected": "Submit failed. Please make sure you have a stable internet connection and try again.",
                 "refreshFailedInternetDisconnected": "Refresh failed. Please make sure you have a stable internet connection and try again.",
-                "resetFailed": "Your repository could not be reset."
+                "resetFailed": "Your repository could not be reset.",
+                "submitBeforeStartDate": "You cannot submit before the start date of the exercise.",
+                "submitAfterDueDate": "You cannot submit after the due date of the exercise.",
+                "submitAfterReachingSubmissionLimit": "You reached the submission limit and cannot participate anymore."
             },
             "testStatusLabels": {
                 "noResult": "No results",

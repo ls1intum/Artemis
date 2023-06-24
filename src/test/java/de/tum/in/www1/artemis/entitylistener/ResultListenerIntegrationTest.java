@@ -18,16 +18,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
+import de.tum.in.www1.artemis.team.TeamUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -65,6 +70,21 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private ResultService resultService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     @AfterEach
     void cleanup() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
@@ -78,18 +98,18 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
 
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
         // creating course
-        Course course = this.database.createCourse();
+        Course course = courseUtilService.createCourse();
         Long idOfCourse = course.getId();
-        TextExercise textExercise = database.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfIndividualTextExercise = textExercise.getId();
-        Exercise teamExercise = database.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
+        Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfTeamTextExercise = teamExercise.getId();
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
+        idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -106,7 +126,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
         List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
@@ -381,7 +401,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         else {
             studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).get(0);
         }
-        return database.createSubmissionAndResult(studentParticipation, 100, isRated);
+        return participationUtilService.createSubmissionAndResult(studentParticipation, 100, isRated);
     }
 
     private ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
@@ -398,7 +418,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         var exercise = exerciseRepository.findById(idOfExercise).get();
 
-        Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
+        Result persistedResult = participationUtilService.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();

@@ -22,7 +22,9 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -31,12 +33,18 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -83,14 +91,14 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @Test
     void testGetOrRetrieveDefaultBranch() throws IOException {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         programmingExercise.setBranch(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey(), 1);
         versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
         // If we have to retrieve the default branch again, the mockProvider would fail

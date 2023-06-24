@@ -3,7 +3,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
     '@angular/service-worker', '@danielmoncada/angular-datetime-picker', '@flaviosantoro92/ngx-datatable', 'd3-color', 'd3-interpolate', 'd3-transition', 'd3-brush',
-    'd3-drag', 'd3-selection', 'ngx-infinite-scroll'].join('|');
+    'd3-drag', 'd3-selection', 'd3-scale', 'd3-array', 'd3-format', 'd3-shape', 'd3-path', 'd3-ease', 'd3-hierarchy', 'ngx-infinite-scroll'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -57,9 +57,9 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 85.8,
+            statements: 85.7,
             branches: 72.8,
-            functions: 79.4,
+            functions: 79.5,
             lines: 85.8,
         },
     },

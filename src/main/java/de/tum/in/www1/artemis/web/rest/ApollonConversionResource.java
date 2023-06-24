@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
@@ -40,7 +40,7 @@ public class ApollonConversionResource {
      * @return input stream for conversion
      */
     @PostMapping("/apollon/convert-to-pdf")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) {
         log.debug("REST call to convert apollon model to pdf");
 

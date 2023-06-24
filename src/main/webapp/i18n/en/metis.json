@@ -5,6 +5,8 @@
             "noPosts": "No posts found.",
             "postNumberInformation": "{{ number }} match(es)",
             "addNewPost": "New post",
+            "newMessage": "New message",
+            "collapseNewMessage": "Hide",
             "reply": "Reply",
             "showMultipleAnswers": "Show {{ number }} replies",
             "showSingleAnswer": "Show 1 reply",
@@ -42,21 +44,29 @@
                 "exercise": "Exercise",
                 "lecture": "Lecture"
             },
+            "channel": {
+                "notAMember": "You are not a member of the channel.",
+                "noChannel": "There is no channel available."
+            },
             "communication": {
                 "label": "Communication",
                 "show": "Show communication",
                 "hide": "Hide communication"
             },
             "discussionSection": {
-                "searchBarDefault": "Search for a post",
+                "searchBarDefault": "Search for a message",
                 "sortByDate": "Date:",
-                "defaultSortCriterion": "Default sorting"
+                "defaultSortCriterion": "Default sorting",
+                "noMessages": "No messages found",
+                "loadingMessages": "Loading messages..."
             },
             "overview": {
                 "title": "Posts",
                 "searchBarDefault": "Search for a post, use # to find a specific post (e.g. #1)",
                 "postContextFilter": "Show posts for:",
-                "courseFilterExplanation": "(All posts)",
+                "one_extra_context": "other",
+                "multiple_extra_contexts": "others",
+                "courseFilterExplanation": "{{ title }} (All posts)",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",

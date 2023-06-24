@@ -14,9 +14,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.service.RatingService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -28,6 +32,18 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private RatingRepository ratingRepo;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Result result;
 
     private Rating rating;
@@ -36,22 +52,22 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise exercise = database.getFirstExerciseWithType(course, TextExercise.class);
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        TextExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
-        TextSubmission submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
-        submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0D, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmission(exercise, submission, student1.getLogin());
+        submission = (TextSubmission) participationUtilService.addResultToSubmission(submission, null, null, 0D, true);
         result = submission.getLatestResult();
         rating = new Rating();
         rating.setResult(submission.getLatestResult());
         rating.setRating(2);
 
         // add instructor of other course
-        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @AfterEach

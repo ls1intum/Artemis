@@ -89,7 +89,7 @@ describe('Course Management Service', () => {
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
-        courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
         courseForDashboard.programmingScores = courseScores;
         courseForDashboard.modelingScores = courseScores;
@@ -320,6 +320,18 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(user));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
+        req.flush(user);
+        expect(syncGroupsSpy).toHaveBeenCalledWith(user);
+        tick();
+    }));
+
+    it('should unenroll from the course', fakeAsync(() => {
+        const user = new User(1, 'name');
+        courseManagementService
+            .unenrollFromCourse(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(user));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
         req.flush(user);
         expect(syncGroupsSpy).toHaveBeenCalledWith(user);
         tick();

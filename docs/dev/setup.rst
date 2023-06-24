@@ -1,7 +1,7 @@
 Setup Guide
 ===========
 
-In this guide you learn how to setup the development environment of
+In this guide, you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
 development on the application server using Java 17, and TypeScript
@@ -22,7 +22,7 @@ following dependencies/tools on your machine:
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
    We use Java (JDK 17) to develop and run the Artemis application
-   server which is based on `Spring
+   server, which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
@@ -42,7 +42,8 @@ following dependencies/tools on your machine:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
-   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
+   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -52,6 +53,8 @@ following dependencies/tools on your machine:
 
 ------------------------------------------------------------------------------------------------------------------------
 
+
+.. _Database Setup:
 
 Database Setup
 --------------
@@ -67,7 +70,7 @@ MySQL Setup
 
 You have to run a database on your local machine to be able to start Artemis.
 
-We recommend to start the database in a docker container. You can run the MySQL Database Server
+We recommend starting the database in a docker container. You can run the MySQL Database Server
 using e.g. ``docker compose -f docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
@@ -92,7 +95,7 @@ You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/optio
 Users for MySQL
 """""""""""""""
 
-| For the development environment the default MySQL user is ‘root’ with an empty password.
+| For the development environment, the default MySQL user is ‘root’ with an empty password.
 | (In case you want to use a different password, make sure to change the value in
   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``
   *(within the 'liquibaseCommand' as argument password)*).
@@ -253,7 +256,7 @@ Run the server via a service configuration
 
 This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting
 of Artemis after the VM running Artemis has been restarted.
-As alternative you could take a look at the section below about
+Alternatively, you could look at the section below about
 `deploying artemis as docker container <#run-the-server-via-docker>`__.
 For development setups, see the other guides below.
 
@@ -329,8 +332,8 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
 
     * **/opt/artemis/config:**
 
-      This can be used to store additional configuration of Artemis in YAML files.
-      The usage is optional and we recommend using the environment files for overriding your custom configurations
+      This can be used to store additional configurations of Artemis in YAML files.
+      The usage is optional, and we recommend using the environment files for overriding your custom configurations
       instead of using ``src/main/resources/application-local.yml`` as such an additional configuration file.
       The other configurations like ``src/main/resources/application.yml``, ... are built into the ``.war`` file and
       therefore are not needed in this directory.
@@ -358,7 +361,7 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
     * **/opt/artemis/public/content:**
 
       This directory will be used for branding.
-      You can specify a favicon and ``imprint.html`` here.
+      You can specify a favicon here.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
@@ -373,17 +376,17 @@ Debugging with Docker
 """""""""""""""""""""
 
 | The Docker containers have the possibility to enable Java Remote Debugging via Java environment variables.
-| Java Remote Debugging allows you to use your preferred debugger connected to port 5005.
-  For IntelliJ you can use the `Remote Java Debugging for Docker` profile being shipped in the git repository.
+| Java Remote Debugging lets you use your preferred debugger connected to port 5005.
+  For IntelliJ, you can use the `Remote Java Debugging for Docker` profile shipped in the git repository.
 
-With the following Java environment variable you can configure the Remote Java Debugging inside a container:
+With the following Java environment variable, you can configure the Remote Java Debugging inside a container:
 
 ::
 
    _JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
-| This is already preset in the Docker Compose **Artemis-Dev-MySQL** Setup.
-| For issues at the startup you might have to suspend the java command until a Debugger connected.
+| This is already pre-set in the Docker Compose **Artemis-Dev-MySQL** Setup.
+| For issues at the startup, you might have to suspend the java command until a Debugger is connected.
   This is possible by setting ``suspend=y``.
 
 
@@ -393,7 +396,7 @@ Run the server via a run configuration in IntelliJ
 The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
 When you import the project into IntelliJ the run configurations will also be imported.
 
-The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot
+The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot
 module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
@@ -408,6 +411,7 @@ Other run / debug configurations
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
   (see `Athene Service <#athene-service>`__).
 
@@ -566,15 +570,13 @@ instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/logo/favicon.svg``
-* The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/privacy-statement.rst
+.. include:: setup/legal-documents.rst
 
-
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/programming-exercises.rst
 
@@ -589,6 +591,10 @@ instead of the TUM defaults:
 ------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/localci-localvc.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -691,10 +697,10 @@ Getting Started with Docker Compose
 5. Run ``docker compose down`` in the directory ``docker/`` to stop and remove the docker containers
 
 .. tip::
-  | The first ``docker compose pull`` command is just necessary the first time as an extra step,
-    as otherwise Artemis will be built from source as you don't already have an Artemis Image locally.
+  | The first ``docker compose pull`` command is just necessary the first time as an extra step;
+    otherwise, Artemis will be built from source as you don't already have an Artemis Image locally.
   |
-  | For Arm-based Macs, Dev boards, etc. you will have to build the Artemis Docker Image first as we currently do not
+  | For Arm-based Macs, Dev boards, etc., you will have to build the Artemis Docker Image first, as we currently do not
     distribute Docker Images for these architectures.
 
 Other Docker Compose Setups
@@ -733,9 +739,9 @@ Two example commands to run such setups:
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
   This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
   If the documentation just mentions to run ``docker compose`` without a ``-f <file.yml>`` argument, it's
-  assumed you are running the command from the ``docker/`` directory.F
+  assumed you are running the command from the ``docker/`` directory.
 
-For each service being used in these *docker compose* files a **base service** (containing similar settings)
+For each service being used in these *docker compose* files, a **base service** (containing similar settings)
 is defined in the following files:
 
 * ``artemis.yml``: **Artemis Service**
@@ -745,7 +751,7 @@ is defined in the following files:
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 
-For testing mails or SAML logins you can append the following services to any setup with an artemis container:
+For testing mails or SAML logins, you can append the following services to any setup with an artemis container:
 
 * ``mailhog.yml``: **Mailhog Service** (email testing tool)
 * ``saml-test.yml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
@@ -757,8 +763,8 @@ An example command to run such an extended setup:
   docker compose -f docker/artemis-dev-mysql.yml -f docker/mailhog.yml up
 
 .. warning::
-  If you want to run multiple *docker compose* setups in parallel on one host you might have to modify
-  volume, container and network names!
+  If you want to run multiple *docker compose* setups in parallel on one host, you might have to modify
+  volume, container, and network names!
 
 Folder structure
 """"""""""""""""
@@ -773,11 +779,11 @@ Artemis Base Service
 
 Everything related to the Docker Image of Artemis (built by the Dockerfile) can be found
 `in the Server Setup section <#run-the-server-via-docker>`__.
-All Artemis related settings changed in Docker compose files are described here.
+All Artemis-related settings changed in Docker Compose files are described here.
 
 | The ``artemis.yml`` **base service** (e.g. in the ``artemis-prod-mysql.yml`` setup) defaults to the latest
   Artemis Docker Image tag in your local docker registry.
-| If you want to build the checked out version run ``docker compose build artemis-app`` before starting Artemis.
+| If you want to build the checked-out version run ``docker compose build artemis-app`` before starting Artemis.
 | If you want a specific version from the GitHub container registry change the ``image:`` value to the desired image
   for the ``artemis-app`` service and run ``docker compose pull artemis-app``.
 
@@ -818,7 +824,7 @@ Other useful commands
 - Start a setup in the background: ``docker compose up -d``
 - Stop and remove containers of a setup: ``docker compose down``
 - Stop, remove containers and volumes: ``docker compose down -v``
-- Remove artemis related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
+- Remove Artemis-related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
 
   This is helpful in setups where you just want to delete the state of artemis
   but not of Jenkins and GitLab for instance.

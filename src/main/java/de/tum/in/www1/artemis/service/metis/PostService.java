@@ -249,109 +249,22 @@ public class PostService extends PostingService {
         }
 
         Page<Post> postsInCourse;
-        // get all posts in course or filter by course-wide context
-        if (postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getCoursePosts(postContextFilter, pagingEnabled, pageable);
-        }
-        // filter by exercise
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
-                && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllExercisePosts(postContextFilter, pagingEnabled, pageable);
-        }
-        // filter by lecture
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null
-                && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllLecturePosts(postContextFilter, pagingEnabled, pageable);
-        }
         // filter by plagiarism case
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+        if (postContextFilter.getCourseWideContexts() == null && postContextFilter.getExerciseIds() == null && postContextFilter.getLectureIds() == null
                 && postContextFilter.getPlagiarismCaseId() != null) {
             postsInCourse = new PageImpl<>(this.getAllPlagiarismCasePosts(postContextFilter));
         }
+        // filter by all other contexts
+        else if (postContextFilter.getPlagiarismCaseId() == null) {
+            postsInCourse = this.getCoursePosts(postContextFilter, pagingEnabled, pageable);
+        }
         else {
-            throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+            throw new BadRequestAlertException("A post cannot be associated with more than one context if plagiarismCaseId is set", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
         setAuthorRoleOfPostings(postsInCourse.getContent());
 
         return postsInCourse;
-    }
-
-    /**
-     * Checks course, user and post validity,
-     * retrieves and filters posts for a course by its id and optionally by its course-wide context
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled     whether to return a page or all records
-     * @param pageable          page object describing page number and row count per page to be fetched
-     * @return page of posts that belong to the course
-     */
-    public Page<Post> getCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-
-        // retrieve posts
-        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
-    }
-
-    /**
-     * Checks course, user, exercise and post validity,
-     * retrieves and filters posts for an exercise by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled
-     * @param pageable
-     * @return page of posts that belong to the exercise
-     */
-    public Page<Post> getAllExercisePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-        preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
-
-        // retrieve posts
-        Page<Post> exercisePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
-
-        return exercisePosts;
-    }
-
-    /**
-     * Checks course, user, lecture and post validity,
-     * retrieves and filters posts for a lecture by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled
-     * @param pageable
-     * @return page of posts that belong to the lecture
-     */
-    public Page<Post> getAllLecturePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-        preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
-
-        // retrieve posts
-        Page<Post> lecturePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return lecturePosts;
     }
 
     /**
@@ -423,6 +336,100 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Retrieve the entity name used in ResponseEntity
+     */
+    @Override
+    public String getEntityName() {
+        return METIS_POST_ENTITY_NAME;
+    }
+
+    /**
+     * Retrieve post from database by id
+     *
+     * @param postId id of requested post
+     * @return retrieved post
+     */
+    public Post findById(Long postId) {
+        return postRepository.findPostByIdElseThrow(postId);
+    }
+
+    /**
+     * Retrieve post or message post from database by id
+     *
+     * @param postOrMessageId ID of requested post or message
+     * @return retrieved post
+     */
+    public Post findPostOrMessagePostById(Long postOrMessageId) {
+        return postRepository.findPostOrMessagePostByIdElseThrow(postOrMessageId);
+    }
+
+    /**
+     * Calculates k similar posts based on the underlying content comparison strategy
+     *
+     * @param courseId id of the course in which similar posts are searched for
+     * @param post     post that is to be created and check for similar posts beforehand
+     * @return list of similar posts
+     */
+    public List<Post> getSimilarPosts(Long courseId, Post post) {
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
+        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toCollection(ArrayList::new));
+
+        // sort course posts by calculated similarity scores
+        coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        setAuthorRoleOfPostings(coursePosts);
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
+    }
+
+    /**
+     * Checks if the requesting user is authorized in the course context,
+     * i.e., if the user is allowed to interact with a certain post
+     *
+     * @param post   post to interact with, i.e., create, update or delete
+     * @param user   requesting user
+     * @param course course the posting belongs to
+     */
+    private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        }
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves and filters posts for a course by its id and optionally by its course-wide context
+     * and ensures that sensitive information is filtered out
+     *
+     * @param postContextFilter filter object
+     * @param pagingEnabled     whether to return a page or all records
+     * @param pageable          page object describing page number and row count per page to be fetched
+     * @return page of posts that belong to the course
+     */
+    private Page<Post> getCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
+        if (postContextFilter.getLectureIds() != null) {
+            for (Long lectureId : postContextFilter.getLectureIds()) {
+                preCheckLecture(user, postContextFilter.getCourseId(), lectureId);
+            }
+        }
+        if (postContextFilter.getExerciseIds() != null) {
+            for (Long exerciseId : postContextFilter.getExerciseIds()) {
+                preCheckExercise(user, postContextFilter.getCourseId(), exerciseId);
+            }
+        }
+
+        // retrieve posts
+        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
      * Method to (i) check if the exercise exists, (ii) check if requesting user is authorized in the exercise context,
      * and (iii) compare the id of the course belonging to the exercise with the path variable courseId,
      *
@@ -459,7 +466,7 @@ public class PostService extends PostingService {
      *
      * @param post post that triggered the notification
      */
-    void sendNotification(Post post, Course course) {
+    private void sendNotification(Post post, Course course) {
         // create post for notification
         Post postForNotification = new Post();
         postForNotification.setId(post.getId());
@@ -506,63 +513,4 @@ public class PostService extends PostingService {
         }
     }
 
-    /**
-     * Retrieve the entity name used in ResponseEntity
-     */
-    @Override
-    public String getEntityName() {
-        return METIS_POST_ENTITY_NAME;
-    }
-
-    /**
-     * Retrieve post from database by id
-     *
-     * @param postId id of requested post
-     * @return retrieved post
-     */
-    public Post findById(Long postId) {
-        return postRepository.findPostByIdElseThrow(postId);
-    }
-
-    /**
-     * Retrieve post or message post from database by id
-     *
-     * @param postOrMessageId ID of requested post or message
-     * @return retrieved post
-     */
-    public Post findPostOrMessagePostById(Long postOrMessageId) {
-        return postRepository.findPostOrMessagePostByIdElseThrow(postOrMessageId);
-    }
-
-    /**
-     * Calculates k similar posts based on the underlying content comparison strategy
-     *
-     * @param courseId id of the course in which similar posts are searched for
-     * @param post     post that is to be created and check for similar posts beforehand
-     * @return list of similar posts
-     */
-    public List<Post> getSimilarPosts(Long courseId, Post post) {
-        PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setCourseId(courseId);
-        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toCollection(ArrayList::new));
-
-        // sort course posts by calculated similarity scores
-        coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
-        setAuthorRoleOfPostings(coursePosts);
-        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
-    }
-
-    /**
-     * Checks if the requesting user is authorized in the course context,
-     * i.e., if the user is allowed to interact with a certain post
-     *
-     * @param post   post to interact with, i.e., create, update or delete
-     * @param user   requesting user
-     * @param course course the posting belongs to
-     */
-    private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
-        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        }
-    }
 }

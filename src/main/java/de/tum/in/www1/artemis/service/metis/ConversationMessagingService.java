@@ -129,7 +129,7 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
-        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
 
         // protect sample solution, grading instructions, etc.
         conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);

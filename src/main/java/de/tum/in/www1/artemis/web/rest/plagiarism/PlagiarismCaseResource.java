@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -17,6 +16,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
@@ -61,7 +62,7 @@ public class PlagiarismCaseResource {
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/for-instructor")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForCourseForInstructor(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases for instructor in course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -80,7 +81,7 @@ public class PlagiarismCaseResource {
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -105,7 +106,7 @@ public class PlagiarismCaseResource {
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-instructor")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<PlagiarismCase> getPlagiarismCaseForInstructor(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for instructor with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -134,7 +135,7 @@ public class PlagiarismCaseResource {
      * @return the updated plagiarism case
      */
     @PutMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/verdict")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<PlagiarismCase> savePlagiarismCaseVerdict(@PathVariable long courseId, @PathVariable long plagiarismCaseId,
             @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
         log.debug("REST request to save plagiarism verdict for plagiarism case with id: {}", plagiarismCaseId);
@@ -154,7 +155,7 @@ public class PlagiarismCaseResource {
      * @return the plagiarism case id for the exercise and student if and only if the comparison was confirmed and the student was notified
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<PlagiarismCaseInfoDTO> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -186,7 +187,7 @@ public class PlagiarismCaseResource {
      * @return a list of plagiarism case id and verdict values for the exercises only for the exercises where the comparison was confirmed and the student was notified
      */
     @GetMapping("courses/{courseId}/plagiarism-cases")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Map<Long, PlagiarismCaseInfoDTO>> getPlagiarismCasesForExercisesForStudent(@PathVariable long courseId,
             @RequestParam(name = "exerciseId") Set<Long> exerciseIds) {
         log.debug("REST request to all plagiarism cases for student and exercises with ids: {}", exerciseIds);
@@ -232,7 +233,7 @@ public class PlagiarismCaseResource {
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-student")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<PlagiarismCase> getPlagiarismCaseForStudent(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);

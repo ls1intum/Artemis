@@ -219,7 +219,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (!this.exercise.course) {
             return false;
         }
-        return this.exercise.isAtLeastTutor === true && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled === true;
+        return this.exercise.isAtLeastTutor === true && (this.exercise.course.presentationScore ?? 0) > 0 && this.exercise.presentationScoreEnabled === true;
     }
 
     checkGradedPresentationConfig(): boolean {
@@ -241,7 +241,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         this.participationService.update(this.exercise, participation).subscribe({
-            error: () => this.alertService.error('artemisApp.participation.savePresentation.error'),
+            error: (res: HttpErrorResponse) => {
+                const error = res.error;
+                if (error && error.errorKey && error.errorKey === 'invalid.presentations.maxNumberOfPresentationsExceeded') {
+                    participation.presentationScore = undefined;
+                } else {
+                    this.alertService.error('artemisApp.participation.savePresentation.error');
+                }
+            },
+
             complete: () => {
                 this.participationsChangedPresentation.delete(participation.id!);
             },

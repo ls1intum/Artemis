@@ -3,6 +3,7 @@
     [readOnlyMode]="readOnlyMode"
     [posting]="posting"
     [isCourseMessagesPage]="isCourseMessagesPage"
+    [isCommunicationPage]="isCommunicationPage"
     [hasChannelModerationRights]="hasChannelModerationRights"
     (isModalOpen)="displayInlineInput = true"
     [lastReadDate]="lastReadDate"
@@ -39,7 +40,10 @@
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
             <!-- post title not shown in course messages page -->
-            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCourseMessagesPage" class="col-auto">
+            <span
+                *ngIf="pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCourseMessagesPage && isCommunicationPage"
+                class="col-auto"
+            >
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"

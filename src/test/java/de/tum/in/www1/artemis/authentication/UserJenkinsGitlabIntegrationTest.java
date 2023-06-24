@@ -18,15 +18,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.UserTestService;
+import de.tum.in.www1.artemis.user.UserFactory;
+import de.tum.in.www1.artemis.user.UserTestService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -56,6 +59,15 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Autowired
     private GitLabUserManagementService gitLabUserManagementService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -137,6 +149,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteAdminUserSkippedInJenkins() throws Exception {
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", TEST_PREFIX + "student1");
+        jenkinsRequestMockProvider.mockGetAnyUser(false, 1);
         userTestService.deleteUser_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
@@ -218,48 +231,34 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
 
+    /**
+     * Tests if the deletion of a user by admin succeeds
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_isSuccessful() throws Exception {
+        jenkinsRequestMockProvider.mockGetAnyUser(false, 1);
         userTestService.deleteUser_isSuccessful();
     }
 
+    /**
+     * Tests if the deletion of the current user by themselves fails.
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_failToGetUserIdInGitlab() throws Exception {
-        User student = userTestService.student;
-        gitlabRequestMockProvider.mockDeleteVcsUserFailToGetUserId(student.getLogin());
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+    void deleteSelf_isNotSuccessful() throws Exception {
+        userTestService.deleteSelf_isNotSuccessful("admin");
     }
 
+    /**
+     * Tests if attempting to delete a number of users, including the current user works as expected.
+     * The expected behavior is the deletion of all users except the current user.
+     */
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
-        userTestService.deleteUser_FailsInExternalCiUserManagement_isNotSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
-        userTestService.deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUsers() throws Exception {
-        userTestService.deleteUsers();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUsersException() throws Exception {
-        userTestService.deleteUsersException();
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "ADMIN")
+    void deleteUsers_isSuccessfulForAllUsersExceptSelf() throws Exception {
+        jenkinsRequestMockProvider.mockGetAnyUser(true, 4);
+        userTestService.deleteUsers(TEST_PREFIX + "tutor1");
     }
 
     @Test
@@ -349,8 +348,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
-        Course course = database.addEmptyCourse();
-        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        Course course = courseUtilService.addEmptyCourse();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -366,8 +365,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
-        Course course = database.addEmptyCourse();
-        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        Course course = courseUtilService.addEmptyCourse();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -409,7 +408,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldFailIfCannotUpdateDeactivatedUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = UserFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -472,7 +471,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(user.getLogin(), user, Collections.emptySet(), Collections.emptySet(), true);
         userTestService.initializeUserNonLTI();
     }
