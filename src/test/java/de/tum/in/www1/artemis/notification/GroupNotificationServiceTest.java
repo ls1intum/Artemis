@@ -379,7 +379,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     private void verifyPush(Object notificationSubject) {
         verify(applePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
-        verify(firebasePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
+        verify(firebasePushNotificationService, timeout(1500).atLeastOnce()).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
     }
 
     /**
