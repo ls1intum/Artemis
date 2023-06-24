@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet id="20230510004600" author="frederik_kutsch" >
+    <changeSet id="20230624090900" author="frederik_kutsch">
         <comment>Lock all programming exercise student participations with a start date in the future, a due date in the past, or too many submissions</comment>
         <!-- Lock all participations with start date in the future:
             Update the "locked" column in the "participation" table by setting its value to 1 for all rows that meet the following conditions:
@@ -11,7 +11,7 @@
         -->
         <sql>
             UPDATE participation
-            SET participation.locked = TRUE
+            SET locked = TRUE
             WHERE participation.discriminator = 'PESP'
                 AND participation.test_run = FALSE
                 AND EXISTS (
@@ -32,7 +32,7 @@
         -->
         <sql>
             UPDATE participation
-            SET participation.locked = TRUE
+            SET locked = TRUE
             WHERE participation.discriminator = 'PESP'
               AND participation.test_run = FALSE
               AND EXISTS(
@@ -74,7 +74,7 @@
                 GROUP BY participation_id
             )
             UPDATE participation
-            SET participation.locked = TRUE
+            SET locked = TRUE
             WHERE participation.discriminator = 'PESP'
               AND participation.test_run = FALSE
               AND EXISTS (
@@ -88,11 +88,18 @@
                       AND sp.submission_limit &lt;= cvs.submission_count
                 );
         </sql>
+    </changeSet>
+    <changeSet id="20230624091800m" author="krusche">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+
         <!-- Lock all participations for exam exercises where the exam start date is in the future or the individual exam end date is in the past.
         -->
         <sql>
             UPDATE participation
-            SET participation.locked = TRUE
+            SET locked = TRUE
             WHERE participation.discriminator = 'PESP'
               AND participation.test_run = FALSE
               AND EXISTS (
@@ -107,6 +114,33 @@
                         OR TIMESTAMPADD(SQL_TSI_SECOND, student_exam.working_time, exam.start_date) &lt; NOW()
                       )
                 );
+        </sql>
+    </changeSet>
+    <changeSet id="20230624091800p" author="krusche">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgres"/>
+        </preConditions>
+
+        <!-- Lock all participations for exam exercises where the exam start date is in the future or the individual exam end date is in the past.
+        -->
+        <sql>
+            UPDATE participation
+            SET locked = TRUE
+            WHERE participation.discriminator = 'PESP'
+              AND participation.test_run = FALSE
+              AND EXISTS (
+                SELECT 1
+                FROM exercise, exercise_group, exam, student_exam
+                WHERE participation.exercise_id = exercise.id
+                  AND exercise.exercise_group_id = exercise_group.id
+                  AND exercise_group.exam_id = exam.id
+                  AND exam.id = student_exam.exam_id
+                  AND (
+                        exam.start_date &gt; NOW()
+                        OR exam.start_date + student_exam.working_time * interval '1 second' &lt; NOW()
+                    )
+            );
         </sql>
     </changeSet>
 </databaseChangeLog>
