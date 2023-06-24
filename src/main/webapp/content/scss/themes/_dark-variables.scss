@@ -36,7 +36,8 @@ $dark: $gray-800;
 $min-contrast-ratio: 1.9;
 
 $body-color: $gray-100;
-$text-muted: $gray-600;
+$body-secondary-color: $secondary;
+$text-body-secondary: $secondary;
 $body-bg: $gray-800;
 
 $input-color: $gray-800;
@@ -82,7 +83,6 @@ $pagination-disabled-border-color: transparent;
 $toast-background-color: $gray-700;
 $toast-header-background-color: $gray-800;
 
-$modal-content-bg: $gray-800;
 $modal-content-border-color: $gray-700;
 $modal-header-border-color: $gray-700;
 
@@ -130,11 +130,22 @@ $card-cap-bg: $neutral-dark-l-5;
 $card-border-color: $border-color;
 
 // Navbar
-$navbar-foreground: $body-color;
+$navbar-foreground: $gray-400;
 $navbar-bg: $artemis-dark;
-$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-light-item-active-hover-bg: $artemis-dark;
 $navbar-breadcrumb-background: $body-bg;
 $navbar-breadcrumb-color: $primary;
+$navbar-light-color: rgba($white, 0.6);
+$navbar-light-hover-color: $white;
+$navbar-light-disabled-color: rgba($white, 0.25);
+$navbar-light-active-color: $white;
+$navbar-light-brand-color: $white;
+$navbar-light-brand-hover-color: $white;
+$navbar-light-toggler-border-color: rgba($white, 0.1);
+$navbar-light-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.6%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+
+// Tooltip
+$tooltip-color: $white;
 
 // === END BOOTSTRAP ===
 
@@ -142,6 +153,7 @@ $navbar-breadcrumb-color: $primary;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 10);
+$hover-slightly-darker-body-bg: transparentize(#fff, 0.9);
 
 $dropdown-bg: $neutral-dark;
 $popover-bg: $neutral-dark-l-5;
@@ -257,8 +269,8 @@ $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-accent-color: $metis-blue;
 $reaction-button-emoji-count-color: $gray-200;
 
-$metis-post-tag-selector-tag-option-background: $neutral-dark;
-$metis-post-tag-selector-tag-option-hover-background: $neutral-dark-l-5;
+$metis-selection-option-background: $neutral-dark;
+$metis-selection-option-hover-background: $neutral-dark-l-5;
 
 // Component: plagiarism-case-instructor-detail-view.component.scss
 $plagiarism-verdict-disabled-overlay-color: rgba(0, 0, 0, 0.9);
@@ -590,9 +602,9 @@ $user-management-background-color: rgba($white, 0.02);
 $user-management-border-color: rgba($white, 0.15);
 
 // Competency Rings
-$learning-goal-rings-red: $red;
-$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
-$learning-goal-rings-green: $green;
-$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
-$learning-goal-rings-blue: $blue;
-$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);
+$competency-rings-red: $red;
+$competency-rings-red-bg: transparentize($competency-rings-red, 0.8);
+$competency-rings-green: $green;
+$competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
+$competency-rings-blue: $blue;
+$competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);

@@ -14,6 +14,9 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
+import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 @SuppressWarnings("unchecked")
 class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -23,15 +26,24 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private WebsocketConfiguration websocketConfiguration;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     @Test
     void testAllowSubscription() {
-        database.addUsers(TEST_PREFIX, 1, 0, 1, 1);
-        var course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         var exercise = course.getExercises().stream().findFirst().orElseThrow();
         var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
 
-        var exam = database.addExam(course);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
+        var exam = examUtilService.addExam(course);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, false);
         var examExercise = exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
 
         var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();

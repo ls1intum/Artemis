@@ -77,7 +77,7 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup), [`GitLab and GitLab CI (experimental)`](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
+You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup), [`GitLab and GitLab CI (experimental)`](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup), [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup), or with [`local CI and local VC`](https://docs.artemis.cit.tum.de/dev/setup/#local-ci-and-local-vc-setup).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
@@ -186,10 +186,8 @@ Please note that the actual database model is more complex. The UML class diagra
 There is a growing community of university instructors who are using Artemis.
 
 #### Communication
-    
-[![Matrix Chat](https://img.shields.io/matrix/artemis-platform:matrix.org?label=matrix:%20%23artemis:in.tum.de)](https://matrix.to/#/#artemis:in.tum.de)
 
-We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
+We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@tum.de).
 
 #### Universities / Schools with Artemis in Use
 
@@ -197,7 +195,7 @@ The following universities are actively using Artemis or are currently evaluatin
 
 * **Technical University of Munich**  
   https://artemis.cit.tum.de  
-  Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)  
+  Main contact person: [Stephan Krusche](mailto:krusche@tum.de)  
   
 * **LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien**  
   https://artemis.codeability.uibk.ac.at  
@@ -227,11 +225,20 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)  
   
 * **Maria-Theresia-Gymnasium München**  
-  
+  Main contact person: [Valentin Herrmann](mailto:valentin.herrmann@tum.de)
 
 ##### Interested universities
 
-* HU Berlin
-* Westsächsische Hochschule Zwickau  
-  Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum/)
-* Technische Universität Chemnitz
+* **HU Berlin**  
+   Main contact person: [Lars Grunske](https://www.informatik.hu-berlin.de/de/Members/lars-grunske)
+* **Westsächsische Hochschule Zwickau**  
+   Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum)
+* **Technische Universität Chemnitz**  
+* **Universität zu Köln**  
+   Main contact person: [Andreas Vogelsang](https://cs.uni-koeln.de/sse/team/prof-dr-andreas-vogelsang)
+* **Universität Ulm**  
+   Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
+* **Imperial College London**  
+   Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
+* **University of South Australia**  
+   Main contact person: [Srecko Joksimovic](https://people.unisa.edu.au/srecko.joksimovic)

@@ -29,8 +29,8 @@
                 "description": "Set the maximum number of complaints allowed per team. Accepted complaints do not count toward this quota. This limit applies only to team exercises."
             },
             "maxComplaintTimeDays": {
-                "title": "Complaint deadline in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this deadline."
+                "title": "Complaint due date in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this due date."
             },
             "maxComplaintTextLimit": {
                 "title": "Maximum number of characters per complaint",
@@ -49,8 +49,8 @@
                 "description": "This option allows students to request more feedback without complaining. Asking for further feedback will not count towards the number of complaints, but it will also not allow modification of the assessment. By default, this option is enabled, but it can be disabled if assessment corrections must always be possible."
             },
             "maxRequestMoreFeedbackTimeDays": {
-                "title": "More feedback request deadline in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this deadline."
+                "title": "More feedback request due date in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this due date."
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
@@ -96,7 +96,14 @@
                 "title": "Student Course Registration Enabled",
                 "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
             },
+            "enrollmentStartDate": "Enrollment Start",
+            "enrollmentEndDate": "Enrollment End",
             "registrationConfirmationMessage": "Registration Confirmation Message",
+            "unenrollmentEnabled": {
+                "title": "Student Course Unenrollment Enabled",
+                "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
+            },
+            "unenrollmentEndDate": "Latest date to unenroll",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -151,15 +158,19 @@
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
                 },
+                "enrollmentStartDate": {
+                    "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
+                },
+                "enrollmentEndDate": {
+                    "invalid": "Can't be after the end date of the course and must be after the enrollment start date"
+                },
+                "unenrollmentEndDate": {
+                    "invalid": "Must be after enrollment end date and can not be after the end date of the course"
+                },
                 "invalidForm": "Please fill in all required fields."
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
-            "presentationScoreEnabled": {
-                "title": "Presentations",
-                "description": "Activate this checkbox to define the number of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise whether this feature should be activated."
-            },
-            "presentationScore": "Required Presentations",
             "courseGroup": {
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",

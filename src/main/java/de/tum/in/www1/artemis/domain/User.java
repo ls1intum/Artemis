@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -79,6 +80,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @NotNull
     @Column(nullable = false)
     private boolean activated = false;
+
+    @NotNull
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false; // default value
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -170,6 +175,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<DataExport> dataExports = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -411,6 +420,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         isInternal = internal;
     }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
     @Nullable
     public String getVcsAccessToken() {
         return vcsAccessToken;
@@ -434,5 +451,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
+    }
+
+    public Set<DataExport> getDataExports() {
+        return dataExports;
+    }
+
+    public void setDataExports(Set<DataExport> dataExports) {
+        this.dataExports = dataExports;
     }
 }

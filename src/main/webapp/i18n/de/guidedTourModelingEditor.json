@@ -25,7 +25,7 @@
             "submit": {
                 "headline": "Reiche deine Lösung ein",
                 "content": "Du kannst deine Lösung hier einreichen und dann auf deine Bewertung warten.",
-                "hint": "Du kannst mehrmals bis zur Deadline abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe."
+                "hint": "Du kannst mehrmals bis zur Einreichungsfrist abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe."
             }
         }
     }

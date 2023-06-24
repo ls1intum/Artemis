@@ -79,7 +79,7 @@
             sh 'rm -rf results'
             sh 'mkdir results'
             sh 'cp target/surefire-reports/*.xml $WORKSPACE/results/ || true'
-            sendTestResults credentialsId: '035eb96a-406a-4719-9b54-3ebab386d54a', notificationUrl: 'http://172.17.0.1:8081/api/programming-exercises/new-result'
+            sendTestResults credentialsId: '035eb96a-406a-4719-9b54-3ebab386d54a', notificationUrl: 'http://172.17.0.1:8081/api/public/programming-exercises/new-result'
             cleanWs()
             }
             }

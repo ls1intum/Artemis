@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -20,25 +21,16 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -91,10 +83,6 @@ public class UserService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final StudentScoreRepository studentScoreRepository;
-
-    private final CompetencyProgressRepository competencyProgressRepository;
-
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -103,32 +91,10 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final ExerciseHintActivationRepository exerciseHintActivationRepository;
-
-    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
-
-    private final TutorialGroupRepository tutorialGroupRepository;
-
-    private final SingleUserNotificationRepository singleUserNotificationRepository;
-
-    private final NotificationRepository notificationRepository;
-
-    private final PostRepository postRepository;
-
-    private final ConversationRepository conversationRepository;
-
-    private final ConversationParticipantRepository conversationParticipantRepository;
-
-    private final OneToOneChatRepository oneToOneChatRepository;
-
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, CompetencyProgressRepository competencyProgressRepository,
-            InstanceMessageSendService instanceMessageSendService, ExerciseHintActivationRepository exerciseHintActivationRepository,
-            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
-            SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository, PostRepository postRepository,
-            ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository, OneToOneChatRepository oneToOneChatRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -140,18 +106,7 @@ public class UserService {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.studentScoreRepository = studentScoreRepository;
-        this.competencyProgressRepository = competencyProgressRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.exerciseHintActivationRepository = exerciseHintActivationRepository;
-        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
-        this.tutorialGroupRepository = tutorialGroupRepository;
-        this.singleUserNotificationRepository = singleUserNotificationRepository;
-        this.notificationRepository = notificationRepository;
-        this.postRepository = postRepository;
-        this.conversationRepository = conversationRepository;
-        this.conversationParticipantRepository = conversationParticipantRepository;
-        this.oneToOneChatRepository = oneToOneChatRepository;
     }
 
     /**
@@ -335,7 +290,9 @@ public class UserService {
             }
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
-                deleteUser(savedNonActivatedUser);
+                userRepository.delete(savedNonActivatedUser);
+                clearUserCaches(savedNonActivatedUser);
+                userRepository.flush();
                 throw e;
             }
         });
@@ -454,84 +411,44 @@ public class UserService {
     }
 
     /**
-     * Delete user based on login string
+     * Performs soft-delete on the user based on login string
      *
      * @param login user login string
      */
-    @Transactional // ok because of delete
-    public void deleteUser(String login) {
-        // Delete the user in the connected VCS if necessary (e.g. for GitLab)
-        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
-        // Delete the user in the local Artemis database
-        userRepository.findOneByLogin(login).ifPresent(user -> {
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(user));
-            deleteUser(user);
-            log.warn("Deleted User: {}", user);
+    public void softDeleteUser(String login) {
+        userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+            user.setDeleted(true);
+            anonymizeUser(user);
+            log.warn("Soft Deleted User: {}", user);
         });
     }
 
-    @Transactional // ok because of delete
-    protected void deleteUser(User user) {
-        // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
-        // 1) All participation connected to the user (as student)
-        // 2) All notifications connected to the user (as author)
-        // 3) All results connected to the user (as assessor)
-        // 4) All complaints and complaints responses associated to the user
-        // 5) All student exams associated to the user
-        // 6) All LTIid and LTIOutcomeUrls associated to the user
-        // 7) All Post and AnswerPost
-        // 8) Remove the user from its teams
-        // 9) Delete the submissionVersion / remove the user from the submissionVersion
-        // 10) Delete the tutor participation
-        // 11) All tutorial group registrations of the student
-        // 12) Set teaching assistant to null for all tutorial groups taught by the user
+    /**
+     * Sets the properties of the user to random or dummy values, making it impossible to identify the user.
+     * Also updates the user in connectors and auth provider.
+     *
+     * @param user the user that should be anonymized
+     */
+    protected void anonymizeUser(User user) {
+        final String originalLogin = user.getLogin();
+        final Set<String> originalGroups = user.getGroups();
+        final String randomPassword = RandomUtil.generatePassword();
 
-        singleUserNotificationRepository.deleteByRecipientId(user.getId());
-        notificationRepository.removeAuthor(user.getId());
-        studentScoreRepository.deleteAllByUserId(user.getId());
-        competencyProgressRepository.deleteAllByUserId(user.getId());
-        exerciseHintActivationRepository.deleteAllByUser(user);
+        user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
+        user.setLogin(RandomUtil.generateRandomAlphanumericString());
+        user.setPassword(randomPassword);
+        user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
+        user.setRegistrationNumber(null);
+        user.setImageUrl(null);
+        user.setActivated(false);
+        user.setGroups(Collections.emptySet());
 
-        deletePostsAndConversationRelatedObjects(user);
-
-        // deleting tutorial group registrations
-        tutorialGroupRegistrationRepository.deleteAllByStudent(user);
-        var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);
-        for (var tutorialGroup : taughtTutorialGroups) {
-            tutorialGroup.setTeachingAssistant(null);
-        }
-        tutorialGroupRepository.saveAll(taughtTutorialGroups);
-
-        userRepository.delete(user);
+        userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
-    }
 
-    /**
-     * Deletes the following objects:
-     * <ul>
-     * <li>Posts - belonging to the user, to Conversations created by the user, to OneToOneChats where the user
-     * is a participant</li>
-     * <li>OneToOneChats - where the user is a participant</li>
-     * <li>Conversations - created by the user</li>
-     * <li>ConversationParticipants - created by the user</li>
-     * </ul>
-     *
-     * @param user the User instance for which the relevant objects should be deleted
-     */
-    private void deletePostsAndConversationRelatedObjects(User user) {
-        // deleting Posts belonging to the conversations created by the user and belonging to the user
-        postRepository.deleteAllByConversationCreator(user);
-        postRepository.deleteAllByAuthor(user);
-
-        // deleting OneToOneChats where the user is a participant and Posts belonging to them
-        final Set<OneToOneChat> oneToOneChats = oneToOneChatRepository.findAllByParticipatingUser(user);
-        postRepository.deleteAllByConversationIn(oneToOneChats);
-        oneToOneChatRepository.deleteAll(oneToOneChats);
-
-        // deleting Conversations and ConversationParticipants created by the user
-        conversationRepository.deleteAllByCreator(user);
-        conversationParticipantRepository.deleteAllByUser(user);
+        updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
 
     /**
@@ -664,7 +581,7 @@ public class UserService {
     }
 
     /**
-     * add the user to the specified group and update in VCS (like GitLab) if used
+     * add the user to the specified group and update in VCS (like GitLab) if used, and registers the user to necessary channels
      *
      * @param user  the user
      * @param group the group

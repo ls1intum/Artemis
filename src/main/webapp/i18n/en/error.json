@@ -10,8 +10,6 @@
             "409": "There was a conflict while processing your request.",
             "500": "Internal server error."
         },
-        "exerciseJsonNotValidOrFound": "The JSON file for the exercise details could not be found or is not valid.",
-        "repositoriesInZipNotValid": "The zip file doesn't contain the template, solution or tests repository or they do not follow the naming scheme.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
@@ -31,8 +29,8 @@
         "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found.",
         "studentNotFound": "That student could not be found in this course.",
-        "noPrivacyStatementFile": "No privacy statement file could be found.",
-        "emptyPrivacyStatement": "The privacy statement file must not be empty.",
+        "noLegalDocumentFile": "The requested document was not found.",
+        "emptyLegalDocument": "The privacy statement or the imprint must not be empty.",
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
@@ -78,7 +76,10 @@
                 "description": "The description of at least one Auxiliary Repository is longer than {{maxLength}} allowed characters!"
             },
             "testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
-            "page.request": "The page request seems to be invalid. Please make sure that enough {{entityName}} entities exist, so that the request page can be created."
+            "page.request": "The page request seems to be invalid. Please make sure that enough {{entityName}} entities exist, so that the request page can be created.",
+            "presentations": {
+                "maxNumberOfPresentationsExceeded": "{{name}} already gave the maximum number of {{presentationsNumber}} presentation/s."
+            }
         },
         "idNull": "Invalid ID",
         "unexpectedError": "An unexpected error occurred: {{error}}",

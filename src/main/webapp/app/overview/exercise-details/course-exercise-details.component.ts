@@ -43,7 +43,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
@@ -66,6 +66,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     private currentUser: User;
     private exerciseId: number;
@@ -90,7 +91,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -209,10 +209,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
-                this.hasSubmissionPolicy = true;
             });
         }
 
@@ -437,6 +435,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
+            instance.isCommunicationPage = false;
         }
     }
 
