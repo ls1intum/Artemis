@@ -37,7 +37,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         var students = userRepository.getStudents(course);
-        students.stream().parallel().forEach((student) -> {
+        students.forEach((student) -> {
             generateLearningPathForUser(course, student);
         });
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
