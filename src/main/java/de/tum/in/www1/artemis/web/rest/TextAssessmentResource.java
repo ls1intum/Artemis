@@ -393,7 +393,7 @@ public class TextAssessmentResource extends AssessmentResource {
             textSubmission.setResults(Collections.singletonList(result));
         }
         else {
-            result = textSubmission.getResultForCorrectionRound(correctionRound);
+            textSubmission.getResultForCorrectionRound(correctionRound);
         }
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
