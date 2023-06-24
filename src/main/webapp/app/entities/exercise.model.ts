@@ -12,7 +12,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -93,7 +93,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
-    public competencies?: LearningGoal[];
+    public competencies?: Competency[];
 
     public continuousPlagiarismControlEnabled? = false; // default value
     public plagiarismChecksConfig?: PlagiarismChecksConfig = {
@@ -116,6 +116,7 @@ export abstract class Exercise implements BaseEntity {
     public testRunParticipationsExist?: boolean;
     public averageRating?: number;
     public numberOfRatings?: number;
+    public channelName?: string;
 
     // helper attributes
     public secondCorrectionEnabled = false;

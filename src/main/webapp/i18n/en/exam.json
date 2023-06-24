@@ -256,6 +256,7 @@
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
+            "submittedSubmissionLimitReached": "You have submitted a solution for this exercise. You cannot submit again as you have reached the submission limit.",
             "notSubmitted": "Exercise not submitted",
             "notSavedOrSubmitted": "You have unsubmitted changes",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",

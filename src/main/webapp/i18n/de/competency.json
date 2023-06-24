@@ -1,0 +1,147 @@
+{
+    "artemisApp": {
+        "competency": {
+            "created": "Kompetenz erstellt",
+            "deleted": "Kompetenz gelöscht",
+            "updated": "Kompetenz bearbeitet",
+            "competencyButton": "Kompetenzen",
+            "title": "Kompetenzen",
+            "description": "Beschreibung",
+            "taxonomy": "Taxonomie",
+            "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
+            "course": "Kurs",
+            "progress": "Fortschritt",
+            "progressDescription": "Der Prozentsatz an abgeschlossenen Vorlesungseinheiten und Übungen, die mit dieser Kompetenz verknüpft sind.",
+            "confidence": "Konfidenz",
+            "confidenceDescription": "Die durchschnittliche Bewertung in allen verknüpften Übungen im Verhältnis zu dem vom Lehrenden festgelegten Schwellenwert für die Beherrschung der Kompetenz.",
+            "mastery": "Kompetenzbeherrschung",
+            "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
+            "masteredStudents": "Studierende mit Kompetenz",
+            "mastered": "Abgeschlossen",
+            "taxonomies": {
+                "remember": "Erinnern",
+                "understand": "Verstehen",
+                "apply": "Anwenden",
+                "analyze": "Analysieren",
+                "evaluate": "Evaluieren",
+                "create": "Erstellen"
+            },
+            "keywords": {
+                "remember": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
+                "understand": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
+                "apply": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
+                "analyze": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
+                "evaluate": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
+                "create": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
+            },
+            "table": {
+                "panelHeader": "Deine Fortentwicklung",
+                "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
+            },
+            "manageCompetencies": {
+                "title": "Kompetenzmanagement",
+                "import": "Kompetenz importieren",
+                "create": "Kompetenz erstellen"
+            },
+            "importCompetency": {
+                "title": "Kompetenz importieren",
+                "search": "Suche nach einer Kompetenz:",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "course": "Kurs",
+                    "semester": "Semester",
+                    "doSelect": "Auswählen"
+                }
+            },
+            "createCompetency": {
+                "title": "Erstelle eine neue Kompetenz",
+                "titlePlaceholder": "Gib der Kompetenz einen Titel",
+                "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
+                "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal 255 Symbole beschränkt",
+                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
+                "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
+                "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal 10 000 Symbole beschränkt",
+                "suggestedTaxonomy": "Vorschlag",
+                "averageStudentScore": "Aktuelle durchschnittliche Konfidenz",
+                "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten",
+                "selectLecture": "Wähle eine Vorlesung aus",
+                "noLectures": "Dieser Kurs hat keine Vorlesungen",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
+                "lectureUnitTable": {
+                    "type": "Typ",
+                    "name": "Vorlesungseinheit",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "lecture": "Vorlesung",
+                    "scoreAchievedByStudent": "Deine Bewertung",
+                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung für Teilnehmende",
+                    "totalPointsAchievable": "Erreichbare Punkte",
+                    "noOfParticipants": "Anzahl der Teilnehmenden",
+                    "participationRate": "Teilnahmerate"
+                }
+            },
+            "editCompetency": {
+                "title": "Bearbeite eine Kompetenz"
+            },
+            "link": {
+                "title": "Verbundene Kompetenzen",
+                "lectureUnit": "Verbinde diese Vorlesungseinheit wahlweise mit einer oder mehreren Kompetenzen.",
+                "exercise": "Verbinde diese Übung wahlweise mit einer oder mehreren Kompetenzen."
+            },
+            "competencyCard": {
+                "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
+                "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit der Kompetenz verbunden:",
+                "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Selbstsicherheit, Blau = Fortschritt)",
+                "exerciseNote": "Bitte beachte, dass bei Aufgabeneinheiten immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
+                "delete": {
+                    "question": "Willst du wirklich die Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Kompetenz ein.",
+                    "buttonText": "Löschen"
+                },
+                "remove": "Entfernen",
+                "achieved": "erreicht",
+                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Kompetenzen verfügbar, welche mit Lerneinheiten verbunden wurden.",
+                "noUnitsConnected": "Die Kompetenz ist mit keinen Vorlesungseinheiten verbunden",
+                "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
+                "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
+            },
+            "competencyPopover": {
+                "connectedCompetencies": "Verbundene Kompetenzen",
+                "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen:",
+                "noCompetencies": "Keine Kompetenzen mit dieser Vorlesungseinheit verbunden!"
+            },
+            "prerequisite": {
+                "title": "Voraussetzungen",
+                "managePrerequisites": {
+                    "title": "Voraussetzungen verwalten",
+                    "select": "Voraussetzung auswählen"
+                },
+                "import": {
+                    "title": "Voraussetzungen hinzufügen",
+                    "table": {
+                        "title": "Titel",
+                        "course": "Kurs",
+
+                        "doSelect": "Auswählen"
+                    },
+                    "searchCompetency": "Nach Kompetenz suchen:",
+                    "loading": "Lade..."
+                }
+            },
+            "relation": {
+                "competencyRelations": "Beziehungen zwischen Kompetenzen",
+                "tailCompetency": "Kompetenz Schluss",
+                "relationType": "Beziehungstyp",
+                "headCompetency": "Kompetenz Start",
+                "relates": "Bezieht sich auf",
+                "assumes": "Setzt voraus",
+                "extends": "Erweitert",
+                "matches": "Stimmt überein mit",
+                "createRelation": "Beziehung erstellen",
+                "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
+                "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
+                "relationAlreadyExists": "Diese Beziehung existiert bereits."
+            }
+        }
+    }
+}

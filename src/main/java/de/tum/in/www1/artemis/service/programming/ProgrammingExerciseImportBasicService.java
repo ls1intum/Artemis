@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class ProgrammingExerciseImportBasicService {
@@ -50,12 +52,15 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    private final ChannelService channelService;
+
     public ProgrammingExerciseImportBasicService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
             Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
+            ChannelService channelService) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -69,6 +74,7 @@ public class ProgrammingExerciseImportBasicService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.solutionEntryRepository = solutionEntryRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -137,7 +143,14 @@ public class ProgrammingExerciseImportBasicService {
             importedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        return programmingExerciseRepository.save(importedExercise);
+        ProgrammingExercise savedImportedExercise = programmingExerciseRepository.save(importedExercise);
+
+        if (newExercise.getChannelName() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(savedImportedExercise, newExercise.getChannelName());
+            channelService.registerUsersToChannelAsynchronously(true, newExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        }
+
+        return savedImportedExercise;
     }
 
     /**

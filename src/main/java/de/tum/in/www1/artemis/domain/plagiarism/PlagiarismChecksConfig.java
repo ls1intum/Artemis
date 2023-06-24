@@ -67,6 +67,8 @@ public class PlagiarismChecksConfig extends DomainObject {
 
     /**
      * Creates PlagiarismChecksConfig with default data
+     *
+     * @return PlagiarismChecksConfig with default values
      */
     public static PlagiarismChecksConfig createDefault() {
         var config = new PlagiarismChecksConfig();
