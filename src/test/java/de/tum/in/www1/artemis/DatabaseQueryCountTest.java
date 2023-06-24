@@ -10,6 +10,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -23,6 +25,9 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     private static final int NUMBER_OF_TUTORS = 1;
 
@@ -75,5 +80,48 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to get all team student participations with submissions and results
         // 2 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all plagiarism cases
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamQueryCount() throws Exception {
+        StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(TEST_PREFIX + "student1");
+
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(getStartWorkingOnExamExpectedTotalQueryCount());
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(getSubmitExamExpectedTotalQueryCount());
+    }
+
+    private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
+        return request.get(
+                "/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+    }
+
+    private Void submitExam(StudentExam studentExam) throws Exception {
+        request.postWithoutLocation("/api/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit", studentExam,
+                HttpStatus.OK, null);
+        return null;
+    }
+
+    private long getStartWorkingOnExamExpectedTotalQueryCount() {
+        final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
+        final int findStudentExamByIdWithExercisesQueryCount = 1;
+        final int findExamByIdWithCourseQueryCount = 1;
+        final int updateStudentExamQueryCount = 1;
+        final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
+        final int createExamSessionQueryCount = 1;
+        final int findExamSessionCountByStudentExamIdQueryCount = 1;
+        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamByIdWithCourseQueryCount + updateStudentExamQueryCount
+                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount + createExamSessionQueryCount + findExamSessionCountByStudentExamIdQueryCount;
+    }
+
+    private long getSubmitExamExpectedTotalQueryCount() {
+        final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
+        final int findStudentExamByIdWithExercisesQueryCount = 1;
+        final int findExamSessionByStudentExamIdQueryCount = 1;
+        final int updateStudentExamQueryCount = 1;
+        final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
+        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamSessionByStudentExamIdQueryCount + updateStudentExamQueryCount
+                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount;
     }
 }
