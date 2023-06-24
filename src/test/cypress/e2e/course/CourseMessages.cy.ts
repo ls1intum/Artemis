@@ -227,7 +227,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
@@ -402,7 +402,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
