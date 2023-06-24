@@ -17,7 +17,7 @@
         </createTable>
         <createTable tableName="competency_learning_path">
             <column name="competency_id" type="bigint">
-                <constraints nullable="false"/>
+                <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="learning_path_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
