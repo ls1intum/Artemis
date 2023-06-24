@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-link-preview-container',
@@ -12,6 +13,7 @@ export class LinkPreviewContainerComponent implements OnInit {
     @Input() color = 'primary'; // accent | warn
     @Input() multiple: boolean;
     @Input() data: string | undefined;
+    @Input() author?: User;
 
     linkPreviews: LinkPreview[] = [];
     hasError: boolean;

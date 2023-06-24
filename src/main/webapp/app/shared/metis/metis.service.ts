@@ -294,6 +294,19 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * determines if the current user is the author of post
+     * @param {User} author of the post
+     * @return {boolean} author flag
+     */
+    metisUserIsAuthor(author: User): boolean {
+        if (author?.id && this.getUser()?.id) {
+            return author.id === this.getUser().id;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * determines if the current user is the author of a given posting
      * @param {Posting} posting for which the author is determined
      * @return {boolean} author flag

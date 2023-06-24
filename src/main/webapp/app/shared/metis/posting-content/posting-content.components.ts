@@ -5,6 +5,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-posting-content',
@@ -15,6 +16,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() isAnnouncement = false;
+    @Input() author?: User;
     showContent = false;
     currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];
