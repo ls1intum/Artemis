@@ -205,7 +205,7 @@
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
-            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | artemisTranslate">
+            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDueDate' | artemisTranslate">
                 <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.exercise.id]">
                     <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
                     <div class="col-5">{{ exercise.exercise.title }}</div>

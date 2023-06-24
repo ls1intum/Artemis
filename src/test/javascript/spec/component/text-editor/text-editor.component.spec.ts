@@ -113,7 +113,7 @@ describe('TextEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should not allow to submit after the deadline if there is no due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if there is no due date', fakeAsync(() => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
@@ -121,7 +121,7 @@ describe('TextEditorComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAllowedToSubmitAfterDeadline).toBeFalsy();
+        expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
         expect(comp.isAlwaysActive).toBeTruthy();
 
         tick();
@@ -129,7 +129,7 @@ describe('TextEditorComponent', () => {
         flush();
     }));
 
-    it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', fakeAsync(() => {
         participation.initializationDate = dayjs();
         textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
@@ -139,14 +139,14 @@ describe('TextEditorComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAllowedToSubmitAfterDeadline).toBeFalsy();
+        expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
 
         tick();
         fixture.destroy();
         flush();
     }));
 
-    it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
+    it('should allow to submit after the due date if the initialization date is after the due date', fakeAsync(() => {
         participation.initializationDate = dayjs().add(1, 'days');
         textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
@@ -156,7 +156,7 @@ describe('TextEditorComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isAllowedToSubmitAfterDeadline).toBeTruthy();
+        expect(comp.isAllowedToSubmitAfterDueDate).toBeTruthy();
 
         tick();
         fixture.destroy();

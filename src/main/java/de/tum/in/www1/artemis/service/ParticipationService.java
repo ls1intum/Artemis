@@ -234,7 +234,7 @@ public class ParticipationService {
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
-        // Step 1b) configure the student repository (e.g. access right, etc.)
+        // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
         participation = copyBuildPlan(participation);
@@ -263,7 +263,7 @@ public class ParticipationService {
      *
      * @param exercise                           the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant                        the user or team who starts the exercise
-     * @param optionalGradedStudentParticipation the optional graded participation before the deadline
+     * @param optionalGradedStudentParticipation the optional graded participation before the due date
      * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
      * @return the participation connecting the given exercise and user
      */
@@ -340,7 +340,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
-            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
+            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
@@ -392,7 +392,7 @@ public class ParticipationService {
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
 
-        // If a graded participation gets reset after the deadline set the state back to finished. Otherwise, the participation is initialized
+        // If a graded participation gets reset after the due date set the state back to finished. Otherwise, the participation is initialized
         var dueDate = ExerciseDateService.getDueDate(participation);
         if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(InitializationState.FINISHED);
@@ -643,7 +643,7 @@ public class ParticipationService {
             final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
             continuousIntegrationService.get().deleteBuildPlan(projectKey, participation.getBuildPlanId());
 
-            // If a graded participation gets cleaned up after the deadline set the state back to finished. Otherwise, the participation is initialized
+            // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
             var dueDate = ExerciseDateService.getDueDate(participation);
             if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
                 participation.setInitializationState(InitializationState.FINISHED);
