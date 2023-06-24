@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 
 @Repository
 public interface CompetencyProgressRepository extends JpaRepository<CompetencyProgress, Long> {

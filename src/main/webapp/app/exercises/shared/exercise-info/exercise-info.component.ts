@@ -16,13 +16,13 @@ export class ExerciseInfoComponent implements OnInit {
     @Input() studentParticipation?: StudentParticipation;
 
     dueDate?: dayjs.Dayjs;
-    individualComplaintDeadline?: dayjs.Dayjs;
+    individualComplaintDueDate?: dayjs.Dayjs;
     canComplainLaterOn: boolean;
 
     ngOnInit(): void {
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
         if (this.exercise.course?.maxComplaintTimeDays) {
-            this.individualComplaintDeadline = ComplaintService.getIndividualComplaintDueDate(
+            this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
                 this.exercise.course.maxComplaintTimeDays,
                 this.studentParticipation?.results?.last(),
@@ -31,7 +31,7 @@ export class ExerciseInfoComponent implements OnInit {
         }
         // The student can either still submit or there is a submission where the student did not have the chance to complain yet
         this.canComplainLaterOn =
-            ((this.dueDate && dayjs().isBefore(this.dueDate)) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
+            ((this.dueDate && dayjs().isBefore(this.dueDate)) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDueDate)) &&
             (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
     }
 }
