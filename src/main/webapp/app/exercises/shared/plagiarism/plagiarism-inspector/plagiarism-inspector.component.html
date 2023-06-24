@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
-                <div *ngIf="isProgrammingExercise() || true" class="plagiarism-checkbox form-check" for="generateJPlagReport">
+                <div *ngIf="isProgrammingExercise()" class="plagiarism-checkbox form-check" for="generateJPlagReport">
                     <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
                     <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
                 </div>
