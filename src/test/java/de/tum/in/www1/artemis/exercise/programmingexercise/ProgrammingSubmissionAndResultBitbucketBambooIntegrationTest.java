@@ -1027,7 +1027,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         JSONParser jsonParser = new JSONParser();
         // replace plan.key in BAMBOO_BUILD_RESULT_REQUEST with buildPlanKey as well as the
         var buildResult = BAMBOO_BUILD_RESULT_REQUEST.replace("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1", buildPlanKey).replace("2019-07-27T17:07:46.642Z[Zulu]",
-                ZonedDateTime.now() + "");
+                ZonedDateTime.now().toString());
         Object obj = jsonParser.parse(buildResult);
 
         ObjectMapper mapper = new ObjectMapper();
