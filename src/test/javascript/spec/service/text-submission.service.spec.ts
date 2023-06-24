@@ -11,32 +11,6 @@ describe('TextSubmission Service', () => {
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;
 
-    const mockResponse = {
-        submissionExerciseType: 'text',
-        id: 1,
-        submitted: true,
-        type: 'MANUAL',
-        participation: {
-            type: 'student',
-            id: 1,
-            initializationState: 'FINISHED',
-            initializationDate: '2020-07-07T14:34:18.067248+02:00',
-            exercise: {
-                type: 'text',
-                id: 1,
-            },
-            participantIdentifier: 'ga27der',
-            participantName: 'Jonas Petry',
-        },
-        result: {
-            id: 5,
-            assessmentType: 'MANUAL',
-        },
-        submissionDate: '2020-07-07T14:34:25.194518+02:00',
-        durationInMinutes: 0,
-        text: 'Test\n\nTest\n\nTest',
-    };
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -86,26 +60,6 @@ describe('TextSubmission Service', () => {
             .subscribe((resp: any) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should not parse jwt from header', fakeAsync(() => {
-        service.getSubmissionWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toBeUndefined();
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse);
-        tick();
-    }));
-
-    it('should parse jwt from header', fakeAsync(() => {
-        service.getSubmissionWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toBe('12345');
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
         tick();
     }));
 
