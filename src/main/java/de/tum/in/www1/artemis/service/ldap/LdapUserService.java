@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 
 @Service
-@Profile("ldap")
+@Profile("ldap | ldap-only")
 public class LdapUserService {
 
     private final Logger log = LoggerFactory.getLogger(LdapUserService.class);

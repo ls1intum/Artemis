@@ -9,7 +9,7 @@ import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
 @Configuration
-@Profile("ldap")
+@Profile("ldap | ldap-only")
 @EnableLdapRepositories
 public class LdapConfig {
 

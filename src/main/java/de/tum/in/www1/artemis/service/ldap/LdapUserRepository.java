@@ -5,7 +5,7 @@ import org.springframework.data.ldap.repository.LdapRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-@Profile("ldap")
+@Profile("ldap | ldap-only")
 public interface LdapUserRepository extends LdapRepository<LdapUserDto> {
 
 }

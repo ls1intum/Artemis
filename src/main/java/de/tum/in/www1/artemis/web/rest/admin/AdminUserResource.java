@@ -181,7 +181,7 @@ public class AdminUserResource {
      */
     @PutMapping("users/{userId}/sync-ldap")
     @EnforceAdmin
-    @Profile("ldap")
+    @Profile("ldap | ldap-only")
     public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
         log.debug("REST request to update ldap information User : {}", userId);
 
