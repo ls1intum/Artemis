@@ -618,8 +618,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             ProgrammingExercise programmingExercise = createProgrammingExercise();
 
             participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
-            mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
-            mockConnectorRequestsForStartParticipation(programmingExercise, student2.getLogin(), Set.of(student2), true);
 
             createStudentExams(programmingExercise);
 
@@ -660,8 +658,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             ProgrammingExercise programmingExercise = createProgrammingExercise();
 
             participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
-            mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
-            mockConnectorRequestsForStartParticipation(programmingExercise, student2.getLogin(), Set.of(student2), true);
 
             createStudentExams(programmingExercise);
 
@@ -675,7 +671,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 assertThat(participation.getSubmissions()).isEmpty();
                 // The participation should not get locked if it gets created after the exam already started
                 assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isFalse();
-                // TODO this currently gets invoked two times
                 verify(versionControlService, atLeast(1)).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
             }
         }
