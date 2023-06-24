@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.assertj.core.api.Fail.fail;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -120,13 +122,18 @@ public class GitUtilService {
         }
         localRepo = null;
 
-        while (FileUtils.isDirectory(remotePath.toFile())) {
+        for (int i = 0; i < 10 && FileUtils.isDirectory(remotePath.toFile()); i++) {
             try {
                 FileUtils.deleteDirectory(remotePath.toFile());
             }
             catch (IOException ignored) {
             }
         }
+
+        if (FileUtils.isDirectory(remotePath.toFile())) {
+            fail("Could not delete directory with path " + remotePath);
+        }
+
         remoteRepo = null;
     }
 
