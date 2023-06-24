@@ -79,7 +79,6 @@ export class LectureUpdateComponent implements OnInit {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
             this.lecture = lecture ?? new Lecture();
-
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
@@ -112,6 +111,7 @@ export class LectureUpdateComponent implements OnInit {
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {
+            // Newly created lectures must have a channel name, which cannot be undefined
             this.subscribeToSaveResponse(this.lectureService.create(this.lecture));
         }
     }
@@ -136,14 +136,14 @@ export class LectureUpdateComponent implements OnInit {
         this.processUnitMode = !this.processUnitMode;
     }
 
-    onFileChange(event: any): void {
-        if (event.target.files.length) {
-            const fileList = event.target.files;
-            this.file = fileList[0];
-            this.fileName = this.file.name;
-        } else {
+    onFileChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
             this.fileName = '';
+            return;
         }
+        this.file = input.files[0];
+        this.fileName = this.file.name;
     }
 
     /**
@@ -185,11 +185,15 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Action on unsuccessful lecture creation or edit
-     * @param error the error handed to the alert service
+     * @param errorRes the errorRes handed to the alert service
      */
-    protected onSaveError(error: HttpErrorResponse) {
+    protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
-        onError(this.alertService, error);
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
     }
 
     onDatesValuesChanged() {

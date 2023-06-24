@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.authorization;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -13,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
-import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+import de.tum.in.www1.artemis.security.annotations.*;
 
 /**
  * This service is used to check if the authorization annotations are used correctly.
@@ -23,26 +20,27 @@ import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 @Service
 public class AuthorizationTestService {
 
-    private static final Set<Class<? extends Annotation>> ALLOWED_AUTH_METHOD_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceNothing.class, PreAuthorize.class);
+    private static final Set<Class<? extends Annotation>> AUTHORIZATION_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,
+            EnforceAtLeastTutor.class, EnforceAtLeastStudent.class, EnforceNothing.class, PreAuthorize.class);
 
-    private final Method preAuthorizeValueAnnotation = PreAuthorize.class.getDeclaredMethod("value");
+    private static final String REST_BASE_PATH = "/api";
 
-    public AuthorizationTestService() throws NoSuchMethodException {
-        // Empty constructor to add exception
-    }
+    private static final String REST_ADMIN_PATH = REST_BASE_PATH + "/admin";
+
+    private static final String REST_PUBLIC_PATH = REST_BASE_PATH + "/public";
 
     /**
      * Tests all endpoints and prints the reports
      *
      * @param endpointMap The map of all endpoints
      */
-    public void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) throws InvocationTargetException, IllegalAccessException {
+    public void testEndpoints(Map<RequestMappingInfo, HandlerMethod> endpointMap) {
         Map<Class<?>, Set<String>> classReports = new HashMap<>();
         Map<Method, Set<String>> methodReports = new HashMap<>();
 
         // Test each endpoint and collect the reports
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : endpointMap.entrySet()) {
-            testEndpoint(entry.getValue(), classReports, methodReports);
+            testEndpoint(entry.getKey(), entry.getValue(), classReports, methodReports);
         }
 
         printReports(classReports, methodReports);
@@ -76,56 +74,73 @@ public class AuthorizationTestService {
      * Tests a single endpoint and collects the reports
      * Additional tests should be added here.
      *
+     * @param info          The request mapping info of the endpoint
      * @param method        The handler method of the endpoint
      * @param classReports  The current class reports
      * @param methodReports The current method reports
      */
-    private void testEndpoint(HandlerMethod method, Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports)
-            throws InvocationTargetException, IllegalAccessException {
-        checkForAnnotation(method, classReports, methodReports);
+    private void testEndpoint(RequestMappingInfo info, HandlerMethod method, Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports) {
+        checkForPath(info, method, methodReports);
     }
 
     /**
-     * Checks if the endpoint (including the class itself) has a valid endpoint. Has to be adapted during migration.
+     * Checks if the path of the endpoint has the correct prefix. If the method has no single authorization annotation, the method returns.
      *
+     * @param info          The request mapping info of the endpoint
      * @param method        The handler method of the endpoint
-     * @param classReports  The current class reports
      * @param methodReports The current method reports
      */
-    private void checkForAnnotation(HandlerMethod method, Map<Class<?>, Set<String>> classReports, Map<Method, Set<String>> methodReports)
-            throws InvocationTargetException, IllegalAccessException {
+    private void checkForPath(RequestMappingInfo info, HandlerMethod method, Map<Method, Set<String>> methodReports) {
         Method javaMethod = method.getMethod();
-        Class<?> javaClass = javaMethod.getDeclaringClass();
-        List<Annotation> methodAnnotations = getAuthAnnotations(javaMethod);
-        List<Annotation> classAnnotations = getAuthAnnotations(javaClass);
+        Set<String> patterns = Objects.requireNonNull(info.getPatternsCondition()).getPatterns();
+        Annotation annotation = getSingleAuthAnnotation(javaMethod);
+        if (annotation == null) {
+            // We already logged an error in this case
+            return;
+        }
+        String annotationType = annotation.annotationType().getSimpleName();
 
-        // Cover edge cases: No annotation, Multiple method annotations, Multiple class annotations
-        if (methodAnnotations.isEmpty() && classAnnotations.isEmpty()) {
-            addElement(methodReports, javaMethod, "No authorization annotation found for " + javaMethod.getName() + "().");
-        }
-        if (methodAnnotations.size() > 1) {
-            addElement(methodReports, javaMethod, "Multiple method authorization annotations found for " + javaMethod.getName() + "().");
-        }
-        if (classAnnotations.size() > 1) {
-            addElement(classReports, javaClass, "Multiple class authorization annotations found.");
-        }
-
-        // Cover default cases: One class annotation, one method annotation, mixture of class and method annotations
-        // The mixture case gets executed in addition to the edge cases to give the developer all information at once
-        if (classAnnotations.size() == 1 && methodAnnotations.isEmpty()) {
-            checkClassAnnotation(classAnnotations.get(0), javaClass, javaMethod, classReports);
-        }
-        else if (methodAnnotations.size() == 1 && classAnnotations.isEmpty()) {
-            Annotation annotation = methodAnnotations.get(0);
-            if (annotation.annotationType().equals(PreAuthorize.class)) {
-                checkMethodAnnotation(annotation, javaMethod, methodReports);
+        switch (annotationType) {
+            case "EnforceAdmin" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.startsWith(REST_ADMIN_PATH)) {
+                        addElement(methodReports, javaMethod,
+                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceAdmin to start with " + REST_ADMIN_PATH + " but is " + pattern + ".");
+                    }
+                }
             }
+            case "EnforceAtLeastInstructor", "EnforceAtLeastEditor", "EnforceAtLeastTutor", "EnforceAtLeastStudent" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.startsWith(REST_BASE_PATH)) {
+                        addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @" + annotationType + " to start with "
+                                + REST_BASE_PATH + " but is " + pattern + ".");
+                    }
+                }
+            }
+            case "EnforceNothing" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.startsWith(REST_PUBLIC_PATH)) {
+                        addElement(methodReports, javaMethod,
+                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceNothing to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
+                    }
+                }
+            }
+            default -> addElement(methodReports, javaMethod, "Unsupported annotation type " + annotationType + " for method " + javaMethod.getName() + "().");
         }
-        else if (!methodAnnotations.isEmpty() && !classAnnotations.isEmpty()) {
-            // Collision between class and method annotations
-            addElement(methodReports, javaMethod,
-                    "Collision between class and method authorization annotations found for " + javaMethod.getName() + "(). Collisions should be " + "avoided" + ".");
+    }
+
+    /**
+     * Returns the authorization annotation of the given method if it exists, null otherwise or if multiple annotations exist.
+     *
+     * @param method The method to check
+     * @return The authorization annotation or null
+     */
+    private Annotation getSingleAuthAnnotation(Method method) {
+        List<Annotation> annotations = getAuthAnnotations(method);
+        if (annotations.size() == 1) {
+            return annotations.get(0);
         }
+        return null;
     }
 
     /**
@@ -136,18 +151,7 @@ public class AuthorizationTestService {
      */
     private List<Annotation> getAuthAnnotations(Method method) {
         var annotations = Arrays.asList(method.getAnnotations());
-        return annotations.stream().filter(annotation -> ALLOWED_AUTH_METHOD_ANNOTATIONS.contains(annotation.annotationType())).toList();
-    }
-
-    /**
-     * Returns all annotations on the given class that are relevant to authorization.
-     *
-     * @param clazz the class to check
-     * @return List of relevant annotations
-     */
-    private List<Annotation> getAuthAnnotations(Class<?> clazz) {
-        var annotations = Arrays.asList(clazz.getAnnotations());
-        return annotations.stream().filter(annotation -> annotation.annotationType().equals(PreAuthorize.class)).toList();
+        return annotations.stream().filter(annotation -> AUTHORIZATION_ANNOTATIONS.contains(annotation.annotationType())).toList();
     }
 
     /**
@@ -179,80 +183,10 @@ public class AuthorizationTestService {
         stringBuilder.append("Some endpoints contain illegal authorization configurations:").append(System.lineSeparator());
         reportsMap.forEach((clazz, reportList) -> {
             stringBuilder.append("Class ").append(clazz.getSimpleName()).append(" has the following illegal configurations:").append(System.lineSeparator());
-            reportList.forEach(report -> {
-                stringBuilder.append(" - ").append(report).append(System.lineSeparator());
-            });
+            reportList.forEach(report -> stringBuilder.append(" - ").append(report).append(System.lineSeparator()));
             stringBuilder.append(System.lineSeparator());
         });
         return stringBuilder.toString();
-    }
-
-    /**
-     * Checks if the given pre-authorization annotation on a class element is valid
-     *
-     * @param classAnnotation The annotation to check
-     * @param javaClass       The class the annotation is on
-     * @param javaMethod      The method of the endpoint currently in scope
-     * @param classReports    The current collection of reports
-     */
-    private void checkClassAnnotation(Annotation classAnnotation, Class<?> javaClass, Method javaMethod, Map<Class<?>, Set<String>> classReports)
-            throws InvocationTargetException, IllegalAccessException {
-        // check class
-        switch (getValueOfAnnotation(classAnnotation)) {
-            case "hasRole('ADMIN')":
-                addElement(classReports, javaClass,
-                        "PreAuthorize(\"hasRole('Admin')\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAdmin for methods instead.");
-                break;
-            case "hasRole('INSTRUCTOR')":
-            case "hasRole('EDITOR')":
-            case "hasRole('TA')":
-            case "hasRole('USER')":
-                break;
-            case "permitAll()":
-                addElement(classReports, javaClass,
-                        "PreAuthorize(\"permitAll\") class annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceNothing for methods instead.");
-                break;
-            default:
-                addElement(classReports, javaClass, "PreAuthorize class annotation with unknown content found for " + javaMethod.getName() + "().");
-        }
-    }
-
-    /**
-     * Checks if the given pre-authorization annotation on a method element is valid
-     *
-     * @param annotation    The annotation to check
-     * @param javaMethod    The method the annotation is on
-     * @param methodReports The current collection of reports
-     */
-    private void checkMethodAnnotation(Annotation annotation, Method javaMethod, Map<Method, Set<String>> methodReports) throws InvocationTargetException, IllegalAccessException {
-        switch (getValueOfAnnotation(annotation)) {
-            case "hasRole('ADMIN')":
-                addElement(methodReports, javaMethod,
-                        "PreAuthorize(\"hasRole('Admin')\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceAdmin instead.");
-                break;
-            case "hasRole('INSTRUCTOR')":
-            case "hasRole('EDITOR')":
-            case "hasRole('TA')":
-            case "hasRole('USER')":
-                break;
-            case "permitAll()":
-                addElement(methodReports, javaMethod,
-                        "PreAuthorize(\"permitAll\") method annotation found for " + javaMethod.getName() + "() but not allowed. Use @EnforceNothing instead.");
-                break;
-            default:
-                addElement(methodReports, javaMethod, "PreAuthorize method annotation with unknown content found for " + javaMethod.getName() + "().");
-        }
-    }
-
-    /**
-     * Access a given annotation object and return the value of the annotation.
-     *
-     * @param annotation the annotation to access
-     * @return The value of the annotation
-     * @throws InvocationTargetException if the annotation does not have a value method
-     */
-    private String getValueOfAnnotation(Annotation annotation) throws InvocationTargetException, IllegalAccessException {
-        return (String) preAuthorizeValueAnnotation.invoke(annotation);
     }
 
     /**

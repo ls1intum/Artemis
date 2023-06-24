@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +20,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -72,7 +74,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Attachment> createAttachment(@RequestPart Attachment attachment, @RequestPart MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         attachment.setId(null);
@@ -96,7 +98,7 @@ public class AttachmentResource {
      *         (Internal Server Error) if the attachment couldn't be updated
      */
     @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
@@ -126,7 +128,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
      */
     @GetMapping("attachments/{id}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
@@ -140,7 +142,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
      */
     @GetMapping("lectures/{lectureId}/attachments")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
         return attachmentRepository.findAllByLectureId(lectureId);
@@ -153,7 +155,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("attachments/{attachmentId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(attachmentId);

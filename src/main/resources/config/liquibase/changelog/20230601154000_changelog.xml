@@ -1,0 +1,130 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet author="baboci" id="20230601154000">
+        <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
+        <comment>Step 1: Create channels for lectures that do not have a channel and update posts</comment>
+        <sql>
+            INSERT INTO conversation (course_id, lecture_id, name, discriminator, is_public, is_announcement, creation_date)
+            SELECT l.course_id, l.id, CONCAT('lecture-',LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id), 'C', true, false, NOW()
+            FROM lecture l
+                     LEFT JOIN conversation c ON l.id = c.lecture_id
+                     LEFT JOIN course c2 on l.course_id = c2.id
+            WHERE c.lecture_id IS NULL
+              AND c2.info_sharing_config = 1
+              AND (c2.end_date IS NULL OR c2.end_date > now())
+              AND NOT EXISTS (
+                SELECT 1
+                FROM conversation con
+                WHERE name = CONCAT('lecture-', LOWER(REPLACE(LEFT(l.title, 10), ' ', '-')), '-', l.id)
+                  AND con.course_id = c2.id
+                );
+        </sql>
+        <sql>
+            UPDATE post p
+            SET conversation_id = (
+                SELECT DISTINCT c.id as conversation_id
+                FROM conversation c
+                         LEFT JOIN lecture l ON l.id = c.lecture_id
+                WHERE p.lecture_id = l.id
+            )
+            WHERE p.lecture_id IS NOT NULL
+              AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post
+            SET lecture_id = NULL
+            WHERE conversation_id IS NOT NULL
+              AND lecture_id IS NOT NULL;
+        </sql>
+        <comment>Step 2: Create channels for exercises that do not have a channel and update posts</comment>
+        <sql>
+            INSERT INTO conversation (course_id, exercise_id, name, discriminator, is_public, is_announcement, creation_date)
+            SELECT e.course_id, e.id, CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id), 'C', true, false, NOW()
+            FROM exercise e
+                     LEFT JOIN conversation c ON e.id = c.exercise_id
+                     LEFT JOIN course c2 on e.course_id = c2.id
+            WHERE c.exercise_id IS NULL
+              AND c2.info_sharing_config = 1
+              AND (c2.end_date IS NULL OR c2.end_date > now())
+              AND NOT EXISTS (
+                SELECT 1
+                FROM conversation con
+                WHERE name = CONCAT('exercise-', LOWER(REPLACE(LEFT(e.title, 10), ' ', '-')), '-', e.id)
+                  AND con.course_id = c2.id
+                );
+        </sql>
+        <sql>
+            UPDATE post p
+            SET conversation_id = (
+                SELECT DISTINCT c.id as conversation_id
+                FROM conversation c
+                         LEFT JOIN exercise e ON e.id = c.exercise_id
+                WHERE p.exercise_id = e.id
+            )
+            WHERE p.exercise_id IS NOT NULL
+              AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post
+            SET exercise_id = NULL
+            WHERE conversation_id IS NOT NULL
+              AND exercise_id IS NOT NULL;
+        </sql>
+        <comment>
+            For the next step, we need the user_groups table, which contains a column called "groups".
+            However, the word "groups" is being added as a restricted word starting in MySQL 8.0.2.
+            As a workaround, you can use `groups` to escape this word using backticks.
+            However, this isn't compatible with Postgres. Therefore, we need to temporarily rename the column as an alternative workaround.
+        </comment>
+        <renameColumn tableName="user_groups" oldColumnName="groups" newColumnName="user_groups" columnDataType="varchar(255)"/>
+        <comment>Step 3: Create conversation participants for channels of lectures or exercises that do not have participants at all</comment>
+        <sql>
+            INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
+            SELECT uid, convid, CASE WHEN MAX(CASE WHEN is_moderator THEN 1 ELSE 0 END) = 1 THEN true ELSE false END, false, false, NOW(), 0
+            FROM (
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.user_groups THEN true ELSE false END as is_moderator
+                     FROM conversation conv
+                              LEFT JOIN lecture l ON conv.lecture_id = l.id
+                              JOIN course c ON l.course_id = c.id
+                              JOIN user_groups ug ON c.student_group_name = ug.user_groups OR c.instructor_group_name = ug.user_groups OR c.teaching_assistant_group_name = ug.user_groups
+                              JOIN jhi_user u ON ug.user_id = u.id
+                              JOIN jhi_user_authority jua ON u.id = jua.user_id
+                              JOIN jhi_authority r ON jua.authority_name = r.name
+                              LEFT JOIN conversation_participant cp ON conv.id = cp.conversation_id AND u.id = cp.user_id
+                     WHERE (
+                               SELECT COUNT(*)
+                               FROM conversation_participant cp
+                                        JOIN conversation c2 ON c2.id = cp.conversation_id
+                               WHERE c2.lecture_id = l.id
+                           ) = 0
+                 ) AS subquery
+            GROUP BY uid, convid;
+        </sql>
+        <sql>
+            INSERT INTO conversation_participant (user_id, conversation_id, is_moderator, is_hidden, is_favorite, last_read, unread_messages_count)
+            SELECT uid, convid, CASE WHEN MAX(CASE WHEN is_moderator THEN 1 ELSE 0 END) = 1 THEN true ELSE false END, false, false, NOW(), 0
+            FROM (
+                     SELECT u.id as uid, conv.id as convid, CASE WHEN c.instructor_group_name = ug.user_groups THEN true ELSE false END as is_moderator
+                     FROM conversation conv
+                              LEFT JOIN exercise e ON conv.exercise_id = e.id
+                              JOIN course c ON e.course_id = c.id
+                              JOIN user_groups ug ON c.student_group_name = ug.user_groups OR c.instructor_group_name = ug.user_groups OR c.teaching_assistant_group_name = ug.user_groups
+                              JOIN jhi_user u ON ug.user_id = u.id
+                              JOIN jhi_user_authority jua ON u.id = jua.user_id
+                              JOIN jhi_authority r ON jua.authority_name = r.name
+                              LEFT JOIN conversation_participant cp ON conv.id = cp.conversation_id AND u.id = cp.user_id
+                     WHERE (
+                               SELECT COUNT(*)
+                               FROM conversation_participant cp
+                                        JOIN conversation c2 ON c2.id = cp.conversation_id
+                               WHERE c2.exercise_id = e.id
+                           ) = 0
+                 ) AS subquery
+            GROUP BY uid, convid;
+        </sql>
+        <comment>Undo renaming the "groups" column in the user_groups table</comment>
+        <renameColumn tableName="user_groups" oldColumnName="user_groups" newColumnName="groups" columnDataType="varchar(255)" />
+    </changeSet>
+</databaseChangeLog>

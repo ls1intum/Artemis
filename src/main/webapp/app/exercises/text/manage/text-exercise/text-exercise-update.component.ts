@@ -92,6 +92,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
+
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
             this.plagiarismChecksSimilarityThresholdPercentage = this.textExercise.plagiarismChecksConfig!.similarityThreshold! * 100;
@@ -106,6 +107,10 @@ export class TextExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
+                        if (this.textExercise.id == undefined && this.textExercise.channelName == undefined) {
+                            this.textExercise.channelName = '';
+                        }
+
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
                             this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
@@ -208,8 +213,12 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    private onSaveError(error: HttpErrorResponse) {
-        onError(this.alertService, error);
+    private onSaveError(errorRes: HttpErrorResponse) {
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
         this.isSaving = false;
     }
 }

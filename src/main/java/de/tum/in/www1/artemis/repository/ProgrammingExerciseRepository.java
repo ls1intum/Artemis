@@ -160,7 +160,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
      * <li>The release date is in the future → Schedule combine template commits</li>
-     * <li>The build and test student submissions after deadline date is in the future</li>
+     * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
      * </ul>
@@ -330,7 +330,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseId the exercise id we are interested in
@@ -348,7 +348,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseIds the exercise ids we are interested in
@@ -371,7 +371,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseId the exercise id we are interested in
@@ -391,7 +391,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     * We therefore have to check here if any submission of the student was submitted before the due date.
      *
      * @param examId the exam id we are interested in
      * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
@@ -409,7 +409,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     * We therefore have to check here if any submission of the student was submitted before the due date.
      *
      * @param exerciseIds the exercise ids of the course we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are

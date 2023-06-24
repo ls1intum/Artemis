@@ -24,7 +24,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
@@ -33,14 +33,14 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 
-@Component({ selector: 'jhi-learning-goals-popover', template: '' })
-class LearningGoalsPopoverStubComponent {
+@Component({ selector: 'jhi-competencies-popover', template: '' })
+class CompetenciesPopoverStubComponent {
     @Input()
     courseId: number;
     @Input()
-    learningGoals: LearningGoal[] = [];
+    competencies: Competency[] = [];
     @Input()
-    navigateTo: 'learningGoalManagement' | 'courseStatistics' = 'courseStatistics';
+    navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -65,7 +65,7 @@ describe('LectureUnitManagementComponent', () => {
             declarations: [
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
-                LearningGoalsPopoverStubComponent,
+                CompetenciesPopoverStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),

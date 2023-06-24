@@ -24,7 +24,8 @@
                 "question": "Soll die Vorlesung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Vorlesung zur Bestätigung ein."
             },
-            "title": "Title",
+            "title": "Titel",
+            "channelName": "Kanalname",
             "description": "Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
@@ -50,8 +51,8 @@
                 "notificationText": "Mitteilungstext",
                 "notificationPlaceholder": "Optional: Mitteilung über die Änderung",
                 "chooseFile": "Datei auswählen",
-                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB.",
-                "fileLimitation": "Max. Dateigröße 20 MB",
+                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20MB.",
+                "fileLimitation": "(max. Größe 20 MB)",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
             "import": {
@@ -75,15 +76,15 @@
                     "unitsStepTitle": "Vorlesungseinheiten",
                     "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten.",
                     "competenciesStepTitle": "Kompetenzen",
-                    "learningGoalsStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Kompetenzen, um zu zeigen, welche Kompetenzen Studierende erreichen werden, wenn sie die Einheit abschließen."
+                    "competenciesStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Kompetenzen, um zu zeigen, welche Kompetenzen Studierende erreichen werden, wenn sie die Einheit abschließen."
                 },
                 "newLectureUnit": "Neue Vorlesungseinheit",
                 "editLectureUnit": "Vorlesungseinheit bearbeiten",
                 "newExercise": "Neue Übung erstellen",
                 "backToWizard": "Zurück zur Vorlesung",
-                "learningGoalTitle": "Titel",
-                "learningGoalConnectedUnits": "Verknüpfte Einheiten",
-                "learningGoalNoConnectedUnits": "Keine verknüpften Einheiten"
+                "competencyTitle": "Titel",
+                "competencyConnectedUnits": "Verknüpfte Einheiten",
+                "competencyNoConnectedUnits": "Keine verknüpften Einheiten"
             }
         },
         "attachment": {

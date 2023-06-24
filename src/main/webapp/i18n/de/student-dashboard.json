@@ -32,7 +32,7 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
-                "learningGoals": "Kompetenzen",
+                "competencies": "Kompetenzen",
                 "tutorialGroups": "Übungsgruppen",
                 "exams": "Klausuren",
                 "testExam": "Testklausur",
@@ -60,12 +60,12 @@
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
                 "shortDueDate": "Bis",
-                "noDueDate": "Keine Deadline",
+                "noDueDate": "Keine Einreichungsfrist",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
                 "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, noch keine Bewertung.",
                 "exerciseNotSubmitted": "Noch nicht abgegeben",
-                "exerciseMissedDeadline": "Abgabefrist abgelaufen",
+                "exerciseMissedDueDate": "Einreichungsfrist abgelaufen",
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
                 "exerciseLateFeedback": "Verspätete Abgabe, mit Feedback.",
                 "quizNotStarted": "Das Quiz ist nicht aktiv.",
@@ -74,7 +74,7 @@
                 "userSubmitted": "Du hast bereits abgegeben.",
                 "userNotStartedExerciseShort": "Noch nicht angefangen.",
                 "exerciseNotSubmittedShort": "Noch nicht abgegeben",
-                "exerciseMissedDeadlineShort": "Abgabefrist abgelaufen",
+                "exerciseMissedDueDateShort": "Einreichungsfrist abgelaufen",
                 "quizNotStartedShort": "Noch nicht begonnen.",
                 "userNotParticipatedShort": "Nicht teilgenommen.",
                 "userParticipatingShort": "Aktuelle Teilnahme",
@@ -104,7 +104,7 @@
                         "acceptButton": "Ja, ich möchte mich austragen.",
                         "unenrollmentSuccessful": "Austragung erfolgreich"
                     },
-                    "upcomingDeadlines": "Bevorstehende Termine:",
+                    "upcomingDueDate": "Bevorstehende Einreichungsfristen:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }
             },
@@ -156,7 +156,7 @@
                 "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
                 "pointsPerExercise": "Punkte pro Aufgabe"
             },
-            "learningGoals": {
+            "competencies": {
                 "noData": "Es sind keine Kompetenzen für diesen Kurs vorhanden."
             },
             "lectureList": {
@@ -180,7 +180,7 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
-                "complaintDeadline": "Beschwerdefrist:",
+                "complaintDueDate": "Beschwerdefrist:",
                 "categories": "Kategorien:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
@@ -208,10 +208,14 @@
                 "rated": "Bewertet",
                 "practice": "Übung",
                 "assessmentType": "Bewertung:",
+                "releaseDate": "Veröffentlichungsdatum:",
+                "releaseDateTooltip": "Studierende können diese Aufgabe ab {{date}} sehen.",
                 "startDate": "Startdatum:",
                 "startDateTooltip": "Studierende können diese Aufgabe ab {{date}} bearbeiten.",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
+                "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung:",
+                "exampleSolutionPublicationDateTooltip": "Die Beispiellösung wird am {{date}} veröffentlicht.",
                 "assessmentDue": "Bewertung bis:",
                 "assessmentDueTooltip": "Die Frist für die Bewertung ist am {{date}}.",
                 "complaintDue": "Beschwerde bis:",

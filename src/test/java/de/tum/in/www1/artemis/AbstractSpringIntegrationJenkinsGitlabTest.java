@@ -193,7 +193,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1b)
+        // Step 1c)
         gitlabRequestMockProvider.mockConfigureRepository(exercise, users, ltiUserExists);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);

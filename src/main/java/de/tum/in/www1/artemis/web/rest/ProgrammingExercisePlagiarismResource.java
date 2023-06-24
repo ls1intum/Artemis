@@ -12,7 +12,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.jplag.exceptions.ExitException;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -67,7 +67,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @GetMapping(PLAGIARISM_RESULT)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
@@ -87,7 +87,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @throws IOException   is thrown for file handling errors
      */
     @GetMapping(CHECK_PLAGIARISM)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) throws ExitException, IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismChecksConfigElseThrow(exerciseId);
@@ -116,7 +116,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @throws IOException is thrown for file handling errors
      */
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId) throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
