@@ -10,12 +10,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @Table(name = "learning_path")
@@ -35,7 +33,6 @@ public class LearningPath extends DomainObject {
     @ManyToMany
     @JoinTable(name = "competency_learning_path", joinColumns = @JoinColumn(name = "learning_path_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course", "learningPaths" })
-    @JsonView(QuizView.Before.class)
     private Set<Competency> competencies = new HashSet<>();
 
     public User getUser() {
