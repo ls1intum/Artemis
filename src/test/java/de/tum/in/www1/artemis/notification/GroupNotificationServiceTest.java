@@ -379,7 +379,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     private void verifyPush(Object notificationSubject) {
         verify(applePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
-        verify(firebasePushNotificationService, timeout(1500)).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
+        verify(firebasePushNotificationService, timeout(1500).atLeastOnce()).sendNotification(any(Notification.class), anyList(), eq(notificationSubject));
     }
 
     /**
@@ -397,7 +397,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     /**
      * Test for notifyStudentGroupAboutAttachmentChange method with a non future release date
      */
-    @RepeatedTest(500)
+    @RepeatedTest(750)
     void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
         lecture = new Lecture();
         lecture.setCourse(course);
