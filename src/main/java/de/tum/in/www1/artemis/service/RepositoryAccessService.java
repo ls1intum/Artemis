@@ -24,19 +24,23 @@ public class RepositoryAccessService {
 
     private final PlagiarismService plagiarismService;
 
-    private final SubmissionPolicyService submissionPolicyService;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final ExerciseDateService exerciseDateService;
+
+    private final SubmissionPolicyService submissionPolicyService;
+
     public RepositoryAccessService(ParticipationAuthorizationCheckService participationAuthCheckService, PlagiarismService plagiarismService,
-            SubmissionPolicyService submissionPolicyService, AuthorizationCheckService authorizationCheckService, ExamSubmissionService examSubmissionService) {
+            AuthorizationCheckService authorizationCheckService, ExamSubmissionService examSubmissionService, ExerciseDateService exerciseDateService,
+            SubmissionPolicyService submissionPolicyService) {
         this.participationAuthCheckService = participationAuthCheckService;
         this.plagiarismService = plagiarismService;
-        this.submissionPolicyService = submissionPolicyService;
         this.authorizationCheckService = authorizationCheckService;
         this.examSubmissionService = examSubmissionService;
+        this.exerciseDateService = exerciseDateService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -45,7 +49,7 @@ public class RepositoryAccessService {
      *
      * @param programmingParticipation The participation for which the repository should be accessed.
      * @param user                     The user who wants to access the repository.
-     * @param programmingExercise      The programming exercise of the participation.
+     * @param programmingExercise      The programming exercise of the participation with the submission policy set.
      * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE or READ).
      */
     public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
@@ -62,15 +66,27 @@ public class RepositoryAccessService {
         boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
 
-        // Error case 2: The user's participation repository is locked.
-        boolean lockRepositoryPolicyEnforced = false;
-        if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
-            lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, (Participation) programmingParticipation);
-        }
+        // Error case 2: The user's participation is locked.
         // Editors and up are able to push to any repository even if the participation is locked for the student.
         // Teaching assistants trying to push to a student assignment repository will be blocked by the next check.
-        if (repositoryActionType == RepositoryActionType.WRITE && isStudent && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
-            throw new AccessForbiddenException();
+        if (repositoryActionType == RepositoryActionType.WRITE && isStudent && programmingParticipation.isLocked()) {
+            // Return a message to the client.
+            String errorMessage;
+            if (!programmingExercise.isReleased()) {
+                errorMessage = "submitBeforeStartDate";
+            }
+            else if (exerciseDateService.isAfterDueDate(programmingParticipation)) {
+                errorMessage = "submitAfterDueDate";
+            }
+            else if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy lockRepositoryPolicy
+                    && lockRepositoryPolicy.getSubmissionLimit() <= submissionPolicyService.getParticipationSubmissionCount((Participation) programmingParticipation)) {
+                errorMessage = "submitAfterReachingSubmissionLimit";
+            }
+            else {
+                throw new IllegalStateException("The participation is locked but the reason is unknown.");
+            }
+
+            throw new AccessForbiddenException(errorMessage);
         }
 
         // Error case 3: A teaching assistant tries to push into a base repository (in that case the participation is not a StudentParticipation) or into a student assignment

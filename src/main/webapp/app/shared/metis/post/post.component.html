@@ -59,6 +59,7 @@
             *ngIf="!displayInlineInput"
             [previewMode]="previewMode"
             [content]="posting.content"
+            [isEdited]="!!posting.updatedDate"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
         ></jhi-posting-content>
     </div>

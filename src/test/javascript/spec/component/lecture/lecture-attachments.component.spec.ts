@@ -364,8 +364,8 @@ describe('LectureAttachmentsComponent', () => {
         const object = {
             target: {
                 files: [myBlob1, myBlob2],
-            },
-        };
+            } as unknown as EventTarget,
+        } as Event;
         comp.attachmentToBeCreated = newAttachment;
         comp.setLectureAttachment(object);
         expect(comp.attachmentFile).toBe(myBlob1);
