@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -52,7 +51,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @return The newly created exercise
      */
     @NotNull
-    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nonnull List<MultipartFile> providedFiles) throws IOException {
+    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @NotNull List<MultipartFile> providedFiles) throws IOException {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise, providedFiles);
@@ -94,7 +93,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param newExercise      The exercise to which the questions are copied
      * @param providedFiles    The files that were provided by the user
      */
-    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise, @Nonnull List<MultipartFile> providedFiles) throws IOException {
+    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise, @NotNull List<MultipartFile> providedFiles) throws IOException {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
 
         // Setup file map

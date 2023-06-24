@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -215,7 +214,7 @@ public class QuizExerciseResource {
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsById(exerciseId).orElseThrow();
+        final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exerciseId);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalQuiz);
@@ -569,7 +568,7 @@ public class QuizExerciseResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
-        var quizExercise = quizExerciseRepository.findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
+        var quizExercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
 
