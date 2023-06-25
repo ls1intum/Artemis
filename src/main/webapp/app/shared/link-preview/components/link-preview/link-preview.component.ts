@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,7 +12,6 @@ import { Post } from 'app/entities/metis/post.model';
 })
 export class LinkPreviewComponent implements OnInit {
     @Input() linkPreview: LinkPreview;
-    @Output() linkPreviewRemoved: EventEmitter<LinkPreview> = new EventEmitter<LinkPreview>();
 
     // forwarded from the container
     @Input() color = 'primary'; // accent | warn
@@ -71,9 +70,8 @@ export class LinkPreviewComponent implements OnInit {
                     // Update any necessary UI states or variables
                     // ...
                     console.log('Link preview removed successfully');
-                    this.linkPreviewRemoved.emit(linkPreview);
                     this.linkPreview.shouldPreviewBeShown = false;
-                    //todo: fix the websocket.... it does not update the post content in every client
+                    //todo: somehow reload the link preview container component or communicate througth websocket
                 },
             });
         }
