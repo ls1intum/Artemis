@@ -15,13 +15,14 @@
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
             <div class="d-flex flex flex-row align-items-center">
-                <h4
+                <h3
+                    class="fw-medium"
                     *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id"
                     id="jhi-programming-exercise-heading-create"
                     jhiTranslate="artemisApp.programmingExercise.home.createLabel"
                 >
                     Create Programming Exercise
-                </h4>
+                </h3>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
