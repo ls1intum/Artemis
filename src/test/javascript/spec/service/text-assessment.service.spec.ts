@@ -4,9 +4,6 @@ import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -16,7 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { FeedbackConflictResolver, NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment.route';
+import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { of } from 'rxjs';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
@@ -267,45 +264,6 @@ describe('TextAssessment Service', () => {
         tick();
     }));
 
-    it('should get conflicting text submissions', fakeAsync(() => {
-        const submissionId = 42;
-        const feedbackId = 42;
-        const participationId = 42;
-        const submission = {
-            id: 1,
-            submitted: true,
-            type: 'AUTOMATIC',
-            text: 'Test\n\nTest\n\nTest',
-        } as unknown as TextSubmission;
-        submission.results = [
-            {
-                id: 2374,
-                score: 8,
-                rated: true,
-                hasComplaint: false,
-            } as unknown as Result,
-        ];
-        getLatestSubmissionResult(submission)!.feedbacks = [
-            {
-                id: 2,
-                detailText: 'Feedback',
-                credits: 1,
-            } as Feedback,
-        ];
-        const returnedFromService = [...[submission]];
-        service
-            .getConflictingTextSubmissions(participationId, submissionId, feedbackId)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual([submission]));
-
-        const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`,
-            method: 'GET',
-        });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
     it('should get example result for defined exercise and submission', () => {
         service
             .getExampleResult(exercise.id!, mockResponse.submissions[0].id)
@@ -318,28 +276,6 @@ describe('TextAssessment Service', () => {
         req.flush(mockResponse);
         expect(actualResponse).toEqual(mockResponse);
     });
-
-    it('should solve feedback conflicts', fakeAsync(() => {
-        const exerciseId = 1;
-        const feedbackConflict = {
-            id: 1,
-            conflict: false,
-            type: 'INCONSISTENT_COMMENT',
-            firstFeedback: new Feedback(),
-            secondFeedback: new Feedback(),
-        } as unknown as FeedbackConflict;
-        service
-            .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(feedbackConflict));
-
-        const req = httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/feedback-conflicts/${feedbackConflict.id}/solve`,
-            method: 'POST',
-        });
-        req.flush(feedbackConflict);
-        tick();
-    }));
 
     it('should get number of tutors involved in assessment', fakeAsync(() => {
         const responseNumberOfTutors = 5;
@@ -394,21 +330,6 @@ describe('TextAssessment Service', () => {
 
         expect(studentParticipationSpy).toHaveBeenCalledOnce();
         expect(studentParticipationSpy).toHaveBeenCalledWith(1, 2, undefined, 1);
-    });
-
-    it('should resolve the needed textSubmissions for TextFeedbackConflictsComponent', () => {
-        const resolver = TestBed.inject(FeedbackConflictResolver);
-        const feedbackConflictSpy = jest.spyOn(service, 'getConflictingTextSubmissions');
-
-        const snapshot = {
-            paramMap: convertToParamMap({ participationId: 1, submissionId: 2, feedbackId: 3 }),
-            queryParamMap: convertToParamMap({ correctionRound: 0 }),
-        } as unknown as ActivatedRouteSnapshot;
-
-        resolver.resolve(snapshot);
-
-        expect(feedbackConflictSpy).toHaveBeenCalledOnce();
-        expect(feedbackConflictSpy).toHaveBeenCalledWith(1, 2, 3);
     });
 
     afterEach(() => {

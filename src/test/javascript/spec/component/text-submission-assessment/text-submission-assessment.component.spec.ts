@@ -401,32 +401,4 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
-
-    it('should navigate to conflicting submission', () => {
-        const routerSpy = jest.spyOn(router, 'navigate');
-        component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
-        const feedback = getLatestSubmissionResult(submission)!.feedbacks!;
-        const url = [
-            '/course-management',
-            component.courseId,
-            'exams',
-            component.examId,
-            'exercise-groups',
-            component.exerciseGroupId,
-            'text-exercises',
-            component.exerciseId,
-            'participations',
-            submission.participation!.id,
-            'submissions',
-            component.submission!.id,
-            'text-feedback-conflict',
-            feedback[0].id,
-        ];
-
-        component.navigateToConflictingSubmissions(1);
-
-        expect(routerSpy).toHaveBeenCalledOnce();
-        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
-    });
 });

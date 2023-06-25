@@ -3,7 +3,6 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -40,15 +39,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() close = new EventEmitter<void>();
     @Output() onFocus = new EventEmitter<void>();
-    @Output() onConflictsClicked = new EventEmitter<number>();
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
     @Input() readOnly: boolean;
-    @Input() isConflictingFeedback: boolean;
-    @Input() conflictMode: boolean;
-    @Input() conflictType?: FeedbackConflictType;
-    @Input() isLeftConflictingFeedback: boolean;
-    @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     @Input() criteria?: GradingCriterion[];
     private textareaElement: HTMLTextAreaElement;
@@ -57,23 +50,15 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
     @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
-        return !this.conflictMode ? this.feedback.credits === 0 : !this.isConflictingFeedback;
+        return this.feedback.credits === 0;
     }
 
     @HostBinding('class.alert-success') get positiveFeedbackClass(): boolean {
-        return this.feedback.credits! > 0 && !this.conflictMode;
+        return this.feedback.credits! > 0;
     }
 
     @HostBinding('class.alert-danger') get negativeFeedbackClass(): boolean {
-        return this.feedback.credits! < 0 && !this.conflictMode;
-    }
-
-    @HostBinding('class.alert-warning') get conflictingFeedbackClass(): boolean {
-        return this.isConflictingFeedback && this.conflictMode && !this.isSelectedConflict;
-    }
-
-    @HostBinding('class.alert-info') get selectedConflictingFeedbackClass(): boolean {
-        return this.isSelectedConflict;
+        return this.feedback.credits! < 0;
     }
 
     // Icons
@@ -119,10 +104,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.feedback.credits === 0 && (this.feedback.detailText || '').length === 0;
     }
 
-    get isConflictingFeedbackEditable(): boolean {
-        return this.conflictMode && this.isLeftConflictingFeedback && this.isConflictingFeedback;
-    }
-
     /**
      * Set focus to feedback editor
      */
@@ -153,9 +134,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Set focus to the text area
      */
     focus(): void {
-        if (this.conflictMode && !this.isLeftConflictingFeedback && this.isConflictingFeedback) {
-            return;
-        }
         this.textareaElement.focus();
     }
 
@@ -189,17 +167,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.feedback.correctionStatus = undefined;
 
         this.didChange();
-    }
-
-    /**
-     * Handles click event on the conflict label and sends an assessment event to save the click.
-     * @param feedbackId the id of the feedback
-     */
-    onConflictClicked(feedbackId: number | undefined) {
-        if (feedbackId) {
-            this.onConflictsClicked.emit(feedbackId);
-        }
-        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, this.feedback.type, this.textBlock.type);
     }
 
     // this method fires the modal service and shows a modal after connecting feedback with its respective blocks

@@ -13,20 +13,6 @@
         <fa-icon [icon]="faSearch"></fa-icon>
     </span>
 
-    <span
-        class="badge bg-warning"
-        *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
-        (click)="onConflictClicked(feedback.id)"
-    >
-        <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
-        <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
-    </span>
-
-    <span class="badge bg-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">
-        <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
-        <span [jhiTranslate]="'artemisApp.textAssessment.conflict.type.' + conflictType"></span>
-    </span>
-
     <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
         <ng-template #closeButton>
@@ -100,10 +86,10 @@
                     (keyup)="textareaAutogrow()"
                     (keydown.escape)="escKeyup()"
                     (focus)="inFocus()"
-                    [readOnly]="readOnly && !isConflictingFeedbackEditable"
+                    [readOnly]="readOnly"
                     (ngModelChange)="didChange()"
                 ></textarea>
-                <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
+                <div class="card-header" *ngIf="feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
                     <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left auto"></fa-icon>
                     <span
                         jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
@@ -127,7 +113,7 @@
                     (click)="onScoreClick($event)"
                     (focus)="inFocus()"
                     (ngModelChange)="didChange()"
-                    [readOnly]="feedback.gradingInstruction || (readOnly && !isConflictingFeedbackEditable)"
+                    [readOnly]="feedback.gradingInstruction || readOnly"
                 />
             </div>
         </div>

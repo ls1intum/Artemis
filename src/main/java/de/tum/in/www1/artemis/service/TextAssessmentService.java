@@ -22,18 +22,14 @@ public class TextAssessmentService extends AssessmentService {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
-    private final FeedbackConflictRepository feedbackConflictRepository;
-
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
-            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
+            ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
-        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**

@@ -10,7 +10,6 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash-es';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
@@ -182,32 +181,10 @@ export class TextAssessmentService {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment/feedback`);
     }
 
-    /**
-     * Gets an array of text submissions that contains conflicting feedback with the given feedback id.
-     *
-     * @param participationId the feedback belongs to
-     * @param submissionId the feedback belongs to of type {number}
-     * @param feedbackId to search for conflicts of type {number}
-     */
-    public getConflictingTextSubmissions(participationId: number, submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
-        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
-    }
-
-    /**
-     * Set feedback conflict as solved. (Tutor decides it is not a conflict)
-     *
-     * @param exerciseId id of the exercise feedback conflict belongs to
-     * @param feedbackConflictId id of the feedback conflict to be solved
-     */
-    public solveFeedbackConflict(exerciseId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
-        return this.http.post<FeedbackConflict>(`${this.resourceUrl}/exercises/${exerciseId}/feedback-conflicts/${feedbackConflictId}/solve`, undefined);
-    }
-
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
         feedbacks = feedbacks.map((feedback) => {
             feedback = Object.assign({}, feedback);
             delete feedback.result;
-            delete feedback.conflictingTextAssessments;
             return feedback;
         });
         textBlocks = textBlocks.map((textBlock) => {
@@ -239,24 +216,6 @@ export class TextAssessmentService {
 
     private static convertItemFromServer(result: Result): Result {
         return Object.assign({}, result);
-    }
-
-    /**
-     * Convert Feedback elements to use single array of FeedbackConflicts in the Feedback class.
-     * It is stored with two references on the server side.
-     *
-     * @param feedbacks list of Feedback elements to convert.
-     */
-    private static convertFeedbackConflictsFromServer(feedbacks: Feedback[]): void {
-        feedbacks.forEach((feedback) => {
-            feedback.conflictingTextAssessments = [...(feedback['firstConflicts'] || []), ...(feedback['secondConflicts'] || [])];
-            delete feedback['firstConflicts'];
-            delete feedback['secondConflicts'];
-            feedback.conflictingTextAssessments.forEach((textAssessmentConflict) => {
-                textAssessmentConflict.conflictingFeedbackId =
-                    textAssessmentConflict['firstFeedback'].id === feedback.id ? textAssessmentConflict['secondFeedback'].id : textAssessmentConflict['firstFeedback'].id;
-            });
-        });
     }
 
     /**
@@ -330,6 +289,5 @@ export class TextAssessmentService {
         result.participation = participation;
         // Make sure Feedbacks Array is initialized
         result.feedbacks = result.feedbacks || [];
-        TextAssessmentService.convertFeedbackConflictsFromServer(result.feedbacks);
     }
 }

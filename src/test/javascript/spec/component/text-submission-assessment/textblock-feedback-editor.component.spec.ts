@@ -9,7 +9,6 @@ import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ChangeDetectorRef } from '@angular/core';
@@ -119,43 +118,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         expect(confirm).toBeFalsy();
     });
 
-    it('should put the badge and the text correctly for feedback conflicts', () => {
-        component.feedback.conflictingTextAssessments = [new FeedbackConflict()];
-        fixture.detectChanges();
-        const badge = compiled.querySelector('.bg-warning fa-icon[ng-reflect-icon="[object Object]"]');
-        expect(badge).toBeTruthy();
-        const text = compiled.querySelector('[jhiTranslate$=conflictingAssessments]');
-        expect(text).toBeTruthy();
-    });
-
-    it('should focus to the text area if it is left conflicting feedback', () => {
-        component.feedback.credits = 0;
-        component.feedback.detailText = 'Lorem Ipsum';
-        component.conflictMode = true;
-        component.isConflictingFeedback = true;
-        component.isLeftConflictingFeedback = true;
-        fixture.detectChanges();
-
-        jest.spyOn(component['textareaElement'], 'focus');
-        component.focus();
-
-        expect(component['textareaElement'].focus).toHaveBeenCalledOnce();
-    });
-
-    it('should not focus to the text area if it is right conflicting feedback', () => {
-        component.feedback.credits = 0;
-        component.feedback.detailText = 'Lorem Ipsum';
-        component.conflictMode = true;
-        component.isConflictingFeedback = true;
-        component.isLeftConflictingFeedback = false;
-        fixture.detectChanges();
-
-        jest.spyOn(component['textareaElement'], 'focus');
-        component.focus();
-
-        expect(component['textareaElement'].focus).not.toHaveBeenCalled();
-    });
-
     it('should call escKeyup when keyEvent', () => {
         component.feedback.credits = 0;
         component.feedback.detailText = '';
@@ -181,9 +143,8 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show feedback impact warning when numberOfAffectedSubmissions > 0', () => {
-        // additionally component needs to have some credits, have no conflicts and be a Manual type feedback
+        // additionally component needs to have some credits and be a Manual type feedback
         component.feedback.credits = 1;
-        component.conflictMode = false;
         textBlock.numberOfAffectedSubmissions = 5;
         component.feedback.type = FeedbackType.MANUAL;
         fixture.detectChanges();
@@ -293,15 +254,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         fixture.detectChanges();
         const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeFalsy();
-    });
-
-    it('should send assessment event on conflict button click', () => {
-        component.feedback.type = FeedbackType.AUTOMATIC;
-        component.textBlock.type = TextBlockType.AUTOMATIC;
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.onConflictClicked(1);
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
     });
 
     it('should send assessment event on dismiss button click', () => {
