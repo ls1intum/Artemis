@@ -166,8 +166,8 @@
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
-                "fileTooBig": "Die Datei ist zu groß!",
-                "fileLimitation": "Max. Dateigröße 20 MB",
+                "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
+                "fileLimitation": "(max. Größe 20 MB)",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
             "editAttachmentUnit": {
