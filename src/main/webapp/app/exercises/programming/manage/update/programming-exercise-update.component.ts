@@ -783,14 +783,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         if (forStep >= 4) {
+            this.validateExerciseIdeSelection(validationErrorReasons);
+        }
+
+        if (forStep >= 5) {
             this.validateExercisePoints(validationErrorReasons);
             this.validateExerciseBonusPoints(validationErrorReasons);
             this.validateExerciseSCAMaxPenalty(validationErrorReasons);
             this.validateExerciseSubmissionLimit(validationErrorReasons);
-        }
-
-        if (forStep >= 5) {
-            this.validateExerciseIdeSelection(validationErrorReasons);
         }
 
         return validationErrorReasons;
