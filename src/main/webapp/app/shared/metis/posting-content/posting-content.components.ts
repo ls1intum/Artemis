@@ -17,6 +17,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() previewMode?: boolean;
     @Input() isAnnouncement = false;
     @Input() author?: User;
+    @Input() isEdited = false;
     showContent = false;
     currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];

@@ -23,6 +23,7 @@
             "createModalTitlePost": "Create post",
             "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
+            "edited": "(edited)",
             "markAsResolvingAnswerTooltip": "Confirm that this reply resolves the original post",
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original post",
             "resolvingAnswerTooltip": "This reply resolves the original post",

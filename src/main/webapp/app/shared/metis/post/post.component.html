@@ -60,6 +60,7 @@
             [previewMode]="previewMode"
             [content]="posting.content"
             [author]="posting.author"
+            [isEdited]="!!posting.updatedDate"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
         ></jhi-posting-content>
     </div>

@@ -8,7 +8,7 @@
         [lastReadDate]="lastReadDate"
     >
     </jhi-answer-post-header>
-    <jhi-posting-content *ngIf="!createAnswerPostModal.isInputOpen" [content]="posting.content" [author]="posting.author"> </jhi-posting-content>
+    <jhi-posting-content *ngIf="!createAnswerPostModal.isInputOpen" [content]="posting.content" [isEdited]="!!posting.updatedDate" [author]="posting.author"> </jhi-posting-content>
     <ng-container #createEditAnswerPostContainer></ng-container>
     <jhi-answer-post-footer
         [isReadOnlyMode]="isReadOnlyMode"
