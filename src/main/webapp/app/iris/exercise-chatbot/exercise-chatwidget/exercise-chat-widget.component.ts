@@ -13,6 +13,7 @@ import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/ir
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { ResizeSensor } from 'css-element-queries';
+import { Overlay } from '@angular/cdk/overlay';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -60,6 +61,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         private accountService: AccountService,
         @Inject(MAT_DIALOG_DATA) public data: any,
         private httpMessageService: IrisHttpMessageService,
+        private overlay: Overlay,
     ) {
         this.stateStore = data.stateStore;
     }
@@ -170,34 +172,37 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.isScrolledToBottom = scrollHeight - scrollTop === clientHeight;
     }
 
-    resetScreen(resetType: string) {
+    resetScreen() {
         setTimeout(() => {
-            this.showChatWidget = false;
-            this.widgetWidth = resetType == 'maximize' ? this.fullWidth : `${this.initialWidth}px`;
-            this.widgetHeight = resetType == 'maximize' ? this.fullHeight : `${this.initialHeight}px`;
+            this.dialog.closeAll();
         }, 50);
         setTimeout(() => {
-            this.scrollToBottom('auto');
-        }, 100);
-        setTimeout(() => {
-            this.showChatWidget = true;
-        }, 100);
+            this.dialog.open(ExerciseChatWidgetComponent, {
+                hasBackdrop: false,
+                scrollStrategy: this.overlay.scrollStrategies.noop(),
+                position: { bottom: '0px', right: '0px' },
+                data: {
+                    stateStore: this.stateStore,
+                    widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
+                    widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
+                    fullSize: localStorage.getItem('fullSize') === 'true',
+                },
+            });
+        }, 50);
     }
 
     maximizeScreen() {
-        this.resetScreen('maximize');
+        this.resetScreen();
         localStorage.setItem('widgetWidth', this.fullWidth);
         localStorage.setItem('widgetHeight', this.fullHeight);
         localStorage.setItem('fullSize', 'true');
-        this.fullSize = true;
     }
 
     minimizeScreen() {
-        this.resetScreen('minimize');
+        this.resetScreen();
         localStorage.setItem('widgetWidth', `${this.initialWidth}px`);
         localStorage.setItem('widgetHeight', `${this.initialHeight}px`);
         localStorage.setItem('fullSize', 'false');
-        this.fullSize = false;
     }
 
     handleKey(event: KeyboardEvent): void {
