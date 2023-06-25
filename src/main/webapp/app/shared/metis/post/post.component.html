@@ -61,6 +61,7 @@
             [content]="posting.content"
             [author]="posting.author"
             [isEdited]="!!posting.updatedDate"
+            [posting]="posting"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
         ></jhi-posting-content>
     </div>

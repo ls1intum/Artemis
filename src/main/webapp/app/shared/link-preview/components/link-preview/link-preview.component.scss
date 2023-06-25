@@ -29,7 +29,6 @@
 
 .loading-container,
 .preview-content {
-    margin-left: 10px; /* Adjust the margin as needed */
     max-width: 600px;
 
     /* Add responsive styles */
@@ -63,7 +62,7 @@
 
 .preview-card {
     flex-direction: row;
-    padding: 10px;
+    padding-left: 20px;
     position: relative;
 }
 
@@ -74,6 +73,7 @@
     top: 0;
     width: 4px;
     height: 100%;
+    background-color: #ccc;
     border-radius: 4px;
 }
 
@@ -82,6 +82,7 @@
     max-height: 150px;
     margin-right: 10px;
     margin-top: 10px;
+    border-radius: 4px;
 }
 
 .close-button {
