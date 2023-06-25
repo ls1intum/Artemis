@@ -61,13 +61,7 @@ public abstract class CacheHandler<K> {
      * @return a {@link Cache} object, never null but potentially empty
      */
     public Cache getReadCacheFor(K key) {
-        cache.lock(key);
-        try {
-            return cache.getOrDefault(key, emptyCacheValue());
-        }
-        finally {
-            cache.unlock(key);
-        }
+        return cache.getOrDefault(key, emptyCacheValue());
     }
 
     /**
