@@ -1,6 +1,6 @@
 services:
     artemis-android-e2e:
-        image: artemis-android:test
+        image: artemis-android:latest
         depends_on:
             - nginx
         environment:
