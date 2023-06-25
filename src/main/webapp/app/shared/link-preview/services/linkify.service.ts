@@ -29,7 +29,6 @@ export class LinkifyService {
             const start = match.index;
             const end = start + url.length;
 
-            // Create a linkable item object
             const linkableItem = {
                 type: 'url',
                 value: url,

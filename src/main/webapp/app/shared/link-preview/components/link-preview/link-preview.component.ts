@@ -8,11 +8,7 @@ import { LinkPreview } from 'app/shared/link-preview/services/link-preview.servi
 })
 export class LinkPreviewComponent {
     @Input() linkPreview: LinkPreview;
-
-    // forwarded from the container
-    @Input() color = 'primary'; // accent | warn
     @Input() showLoadingsProgress: boolean;
-
     @Input() loaded: boolean;
     @Input() hasError: boolean;
 }

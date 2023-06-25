@@ -8,8 +8,6 @@ import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.s
     styleUrls: ['./link-preview-container.component.scss'],
 })
 export class LinkPreviewContainerComponent implements OnInit {
-    // to forward
-    @Input() color = 'primary'; // accent | warn
     @Input() multiple: boolean;
     @Input() data: string | undefined;
 
@@ -50,6 +48,6 @@ export class LinkPreviewContainerComponent implements OnInit {
     }
 
     trackLinks(index: number, preview: LinkPreview) {
-        return preview ? preview.url : undefined;
+        return preview?.url;
     }
 }
