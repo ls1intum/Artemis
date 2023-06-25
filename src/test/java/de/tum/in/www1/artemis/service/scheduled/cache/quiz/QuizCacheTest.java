@@ -8,7 +8,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,12 +60,6 @@ class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-    }
-
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @RepeatedTest(3000)
-    void testQuizSubmitNoDatabaseRequests() throws Exception {
-        testQuizSubmitNoDatabaseRequests(QuizMode.INDIVIDUAL);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
