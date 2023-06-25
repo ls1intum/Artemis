@@ -338,8 +338,8 @@ public class MetricsBean {
 
         var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
         activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
-                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.getActiveUsers(now.minusDays(periodInDays), now).size()))
-                .collect(Collectors.toList()));
+                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
+                .collect(Collectors.toList()), true);
 
         var courses = courseRepository.findAll();
         // We set the number of students once to prevent multiple queries for the same date

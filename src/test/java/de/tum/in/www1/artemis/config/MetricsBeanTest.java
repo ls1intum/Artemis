@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
@@ -19,10 +21,8 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -40,6 +40,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -60,6 +63,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     CourseService courseService;
 
     @Autowired
+    UserRepository userRepository;
+
+    @Autowired
     ExerciseRepository exerciseRepository;
 
     @Autowired
@@ -70,6 +76,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseRepository courseRepository;
+
+    @Autowired
+    SubmissionRepository submissionRepository;
 
     @BeforeEach
     void resetDatabase() {
@@ -92,10 +101,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void testPublicMetrics() {
-        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+    void testPublicMetricsUpdatedWhenTriggered() {
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = courseUtilService.createCourse();
-        course1.setStudentGroupName(TEST_PREFIX + "students");
 
         // This is still zero because the update function has not been called yet
         assertMetricEquals(0, "artemis.statistics.public.courses");
@@ -104,6 +112,58 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         // After the update: the course is returned
         assertMetricEquals(1, "artemis.statistics.public.courses");
+    }
+
+    @Test
+    void testPublicMetricsActiveUsers() {
+        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+        course1.setStudentGroupName(TEST_PREFIX + "students");
+        courseRepository.save(course1);
+
+        var textExercise = exerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
+        textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
+
+        var result1 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.get(0), 10.0, 0.0, 50, true);
+        result1.getSubmission().setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        submissionRepository.save(result1.getSubmission());
+
+        var result2 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.get(1), 10.0, 0.0, 50, true);
+        result2.getSubmission().setSubmissionDate(ZonedDateTime.now().minusDays(5));
+        submissionRepository.save(result2.getSubmission());
+
+        var result3 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.get(2), 10.0, 0.0, 50, true);
+        result3.getSubmission().setSubmissionDate(ZonedDateTime.now().minusDays(20));
+        submissionRepository.save(result3.getSubmission());
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        assertMetricEquals(1, "artemis.statistics.public.active_users", "period", "1");
+        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "7");
+        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "14");
+        assertMetricEquals(3, "artemis.statistics.public.active_users", "period", "30");
+    }
+
+    @Test
+    void testPublicMetricsActiveCourses() {
+        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        var course1 = courseUtilService.createCourse();
+        course1.setSemester(null);
+        course1.setStudentGroupName("course1Students");
+        courseRepository.save(course1);
+
+        var course2 = courseUtilService.createCourse();
+        course2.setSemester("WS 2023/24");
+        course1.setStudentGroupName("course2Students");
+        courseRepository.save(course2);
+
+        users.get(0).setGroups(new HashSet<>());
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        assertMetricEquals(2, "artemis.statistics.public.courses");
+
+        // meterRegistry.get(metricName).tags(tags).gauge();
     }
 
     @Test
