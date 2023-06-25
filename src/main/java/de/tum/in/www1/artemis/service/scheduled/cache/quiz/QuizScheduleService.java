@@ -696,7 +696,7 @@ public class QuizScheduleService {
         return count;
     }
 
-    private QuizExerciseCache getWriteCache(long exerciseId) {
+    QuizExerciseCache getWriteCache(long exerciseId) {
         return (QuizExerciseCache) quizCache.getTransientWriteCacheFor(exerciseId);
     }
 

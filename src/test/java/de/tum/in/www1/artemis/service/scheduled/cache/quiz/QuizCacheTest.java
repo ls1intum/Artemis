@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -51,6 +52,9 @@ class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
 
     @BeforeEach
     void init() {
@@ -78,8 +82,12 @@ class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExercise = quizExerciseService.save(quizExercise); // <- responsible for saving the exercise into the distributed exercise cache
+        quizExercise = quizExerciseRepository.save(quizExercise);
         final long exerciseId = quizExercise.getId();
+
+        // create a local cache exists to save the exercise in
+        quizScheduleService.getWriteCache(exerciseId);
+        quizExercise = quizExerciseService.save(quizExercise); // <- responsible for saving the exercise into the distributed exercise cache
 
         // Wait until the exercise update got processed
         if (!lock.await(2000, TimeUnit.MILLISECONDS)) {
