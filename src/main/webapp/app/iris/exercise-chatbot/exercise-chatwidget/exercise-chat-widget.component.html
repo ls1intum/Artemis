@@ -7,7 +7,7 @@
         class="chat-widget"
         #chatWidget
         ngDraggable
-        [handle]="chatBody"
+        [handle]="chatWidget"
         ngResizable
         rzHandles="all"
         [rzMinWidth]="250"
@@ -86,13 +86,7 @@
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button
-                [disabled]="!userAccepted || isLoading"
-                [btnType]="ButtonType.SECONDARY"
-                [icon]="faPaperPlane"
-                (onClick)="onSend()"
-                style="margin-bottom: auto"
-            ></jhi-button>
+            <jhi-button [disabled]="!userAccepted || isLoading" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" (onClick)="onSend()" style="margin-bottom: auto"></jhi-button>
         </div>
     </div>
 </div>

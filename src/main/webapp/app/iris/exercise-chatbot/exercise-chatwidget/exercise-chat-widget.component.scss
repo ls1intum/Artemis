@@ -136,19 +136,6 @@ pre {
     resize: none;
 }
 
-.btn-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--iris-btn-circle);
-    border: none;
-}
-
-.btn-circle:hover,
-.btn-circle:active {
-    background-color: var(--iris-btn-circle-hover);
-}
-
 @keyframes blink {
     0% {
         opacity: 1;
