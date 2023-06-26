@@ -76,7 +76,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faPersonChalkboard = faPersonChalkboard;
     faSpinner = faSpinner;
 
-    courseColor: string = ARTEMIS_DEFAULT_COLOR;
+    courseColor: string;
 
     readonly FeatureToggle = FeatureToggle;
 
