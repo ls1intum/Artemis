@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
 import javax.ws.rs.BadRequestException;
@@ -50,6 +51,7 @@ public class IrisMessageService {
 
         message.setSession(null);
         message.setSender(sender);
+        message.setSentAt(ZonedDateTime.now());
         var contents = message.getContent();
         message.setContent(new ArrayList<>());
         var savedMessage = irisMessageRepository.saveAndFlush(message);
