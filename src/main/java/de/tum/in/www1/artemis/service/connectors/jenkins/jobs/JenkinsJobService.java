@@ -76,10 +76,7 @@ public class JenkinsJobService {
             }
 
             final var folderJob = jenkinsServer.getFolderJob(job);
-            if (!folderJob.isPresent()) {
-                return null;
-            }
-            return folderJob.get();
+            return folderJob.orElse(null);
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
