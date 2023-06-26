@@ -387,7 +387,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var latestSubmission = latestSubmissionOrEmpty.get();
         var latestResult = latestSubmission.getLatestResult();
         assertThat(latestResult).isNotNull();
-        assertThat(latestResult.getId()).isEqualTo(results.get(1).getId());
+        assertThat(latestResult.getId()).isEqualTo(results.get(0).getId());
     }
 
     /**
@@ -1025,8 +1025,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws Exception {
         JSONParser jsonParser = new JSONParser();
-        // replace plan.key in BAMBOO_BUILD_RESULT_REQUEST with buildPlanKey
-        var buildResult = BAMBOO_BUILD_RESULT_REQUEST.replace("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1", buildPlanKey);
+        // replace plan.key in BAMBOO_BUILD_RESULT_REQUEST with buildPlanKey as well as the
+        var buildResult = BAMBOO_BUILD_RESULT_REQUEST.replace("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1", buildPlanKey).replace("2019-07-27T17:07:46.642Z[Zulu]",
+                ZonedDateTime.now().toString());
         Object obj = jsonParser.parse(buildResult);
 
         ObjectMapper mapper = new ObjectMapper();
