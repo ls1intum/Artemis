@@ -32,6 +32,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     unreadMessageIndex: number;
     error = '';
     dots = 1;
+    isFirstMessage = false;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
@@ -75,6 +76,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     loadFirstMessage(): void {
         if (this.messages.length === 0) {
+            this.isFirstMessage = true;
             const firstMessageContent = {
                 textContent: 'artemisApp.exerciseChatbot.firstMessage',
                 type: IrisMessageContentType.TEXT,

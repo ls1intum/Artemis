@@ -20,7 +20,8 @@
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</span>
                 <div *ngFor="let content of message.content">
                     <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
-                        <span [innerHTML]="content.textContent! | artemisTranslate | htmlForMarkdown"></span>
+                        <span *ngIf="isFirstMessage && i === 0" [innerHTML]="content.textContent! | artemisTranslate"></span>
+                        <span *ngIf="!isFirstMessage || (isFirstMessage && i !== 0)" [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                     </div>
                 </div>
             </div>
