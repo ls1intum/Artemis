@@ -64,11 +64,11 @@ describe('SubmissionResultStatusComponent', () => {
             [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
             [{ dueDate: dayjs().add(1, 'hour') } as Exercise, false],
             [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
-        ])('should determine if missed deadline', (exercise: Exercise, expected: boolean) => {
+        ])('should determine if missed due date', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
             comp.studentParticipation = exercise.studentParticipations?.[0];
             comp.ngOnChanges();
-            expect(comp.exerciseMissedDeadline).toBe(expected);
+            expect(comp.exerciseMissedDueDate).toBe(expected);
         });
 
         it.each([

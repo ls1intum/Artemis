@@ -60,12 +60,12 @@
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
                 "shortDueDate": "Bis",
-                "noDueDate": "Keine Deadline",
+                "noDueDate": "Keine Einreichungsfrist",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
                 "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, noch keine Bewertung.",
                 "exerciseNotSubmitted": "Noch nicht abgegeben",
-                "exerciseMissedDeadline": "Abgabefrist abgelaufen",
+                "exerciseMissedDueDate": "Einreichungsfrist abgelaufen",
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
                 "exerciseLateFeedback": "Verspätete Abgabe, mit Feedback.",
                 "quizNotStarted": "Das Quiz ist nicht aktiv.",
@@ -74,7 +74,7 @@
                 "userSubmitted": "Du hast bereits abgegeben.",
                 "userNotStartedExerciseShort": "Noch nicht angefangen.",
                 "exerciseNotSubmittedShort": "Noch nicht abgegeben",
-                "exerciseMissedDeadlineShort": "Abgabefrist abgelaufen",
+                "exerciseMissedDueDateShort": "Einreichungsfrist abgelaufen",
                 "quizNotStartedShort": "Noch nicht begonnen.",
                 "userNotParticipatedShort": "Nicht teilgenommen.",
                 "userParticipatingShort": "Aktuelle Teilnahme",
@@ -104,7 +104,7 @@
                         "acceptButton": "Ja, ich möchte mich austragen.",
                         "unenrollmentSuccessful": "Austragung erfolgreich"
                     },
-                    "upcomingDeadlines": "Bevorstehende Termine:",
+                    "upcomingDueDates": "Bevorstehende Einreichungsfristen:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }
             },
@@ -180,7 +180,7 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
-                "complaintDeadline": "Beschwerdefrist:",
+                "complaintDueDate": "Beschwerdefrist:",
                 "categories": "Kategorien:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",

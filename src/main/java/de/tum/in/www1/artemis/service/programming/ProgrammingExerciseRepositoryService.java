@@ -20,11 +20,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.SubmissionPolicyResource;
 
 @Service
 public class ProgrammingExerciseRepositoryService {
@@ -607,100 +609,90 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     /**
-     * Unlock all repositories of the programming exercise
-     *
-     * @param exerciseId of the exercise
-     */
-    public void unlockAllRepositories(final Long exerciseId) {
-        instanceMessageSendService.sendUnlockAllRepositories(exerciseId);
-    }
-
-    /**
-     * Lock all repositories of the programming exercise
-     *
-     * @param exerciseId of the exercise
-     */
-    public void lockAllRepositories(final Long exerciseId) {
-        instanceMessageSendService.sendLockAllRepositories(exerciseId);
-    }
-
-    /**
-     * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
-     * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
+     * Locks or unlocks the participations and repositories if necessary due to the changes in the programming exercise.
+     * This might be because of changes in the release date or due date, or because of a change in whether offline IDEs are allowed or not.
+     * As of now the submission policy cannot be changed here. See {@link SubmissionPolicyResource#updateSubmissionPolicy(Long, SubmissionPolicy)} for that.
      *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
-        if (!programmingExerciseBeforeUpdate.isReleased()) {
-            if (updatedProgrammingExercise.isReleased() && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
-                // There might be some repositories that have to be unlocked
-                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
-            }
-            return;
-        }
-        if (!updatedProgrammingExercise.isReleased()) {
-            if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())) {
-                // Hide exercise again and lock repos
-                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
-            }
-            return;
-        }
 
-        final boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
-        if (lockedUnlockedRepos) {
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        // Figure out if we have to lock repositories and participations.
+        // This is the case if the updated configuration further restricts when students can submit.
+
+        // Case 1: The exercise start date was unset or in the past and the update moves it into the future.
+        boolean stricterStartDate = programmingExerciseBeforeUpdate.isReleased() && !updatedProgrammingExercise.isReleased();
+
+        if (stricterStartDate) {
+            // In this case we don't have to consider any of the other attributes. No repository or participation should be unlocked if the start date is in the future.
+            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
             return;
         }
 
-        handleRepoAccessRightChangesChangesOfflineIDE(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
-    }
+        // Case 2: The exercise due date was unset or in the future and is moved to the past.
+        boolean stricterDueDate = (programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
+                && (updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now));
 
-    /**
-     * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
-     *
-     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise      the updated exercise with new values
-     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
-     */
-    private boolean handleRepoAccessRightChangesDueDates(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
-        if (!Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
-            final ZonedDateTime now = ZonedDateTime.now();
+        // Case 3: Offline IDE usage was allowed and is now disallowed.
+        // Note: isAllowOfflineIde() == null means that the offline IDE is allowed.
+        boolean oldExerciseAllowsIdeUsage = !Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde());
+        boolean updatedExerciseAllowsIdeUsage = !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde());
+        boolean stricterIdeUsage = oldExerciseAllowsIdeUsage && !updatedExerciseAllowsIdeUsage;
 
-            if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
-                    && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
-                // New due date allows students to continue working on exercise
-                instanceMessageSendService.sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExerciseBeforeUpdate.getId());
-                return true;
+        if (stricterIdeUsage) {
+            // Lock all repositories but leave the participations untouched as the locked state of the participations is independent of whether offline IDE usage is allowed or not.
+            instanceMessageSendService.sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
+        }
+
+        if (stricterDueDate) {
+            if (stricterIdeUsage) {
+                // Repositories were already locked in the step before. Only lock the participations that are not allowed to submit under the updated configuration, i.e. with a due
+                // date in the past.
+                instanceMessageSendService.sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
             }
-            else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
-                    && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
-                // New due date forbids students to continue working on exercise, if their individual due date does not override the new due date
-                instanceMessageSendService.sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExerciseBeforeUpdate.getId());
-                return true;
+            else {
+                // Lock all repositories and participations that are not allowed to submit under the updated configuration.
+                instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
             }
         }
-        return false;
-    }
 
-    /**
-     * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
-     *
-     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise      the updated exercise with new values
-     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
-     */
-    private boolean handleRepoAccessRightChangesChangesOfflineIDE(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
-        if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
-                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
-                return true;
+        // Figure out if we have to unlock repositories and participations.
+        // This is the case if the updated configuration relaxes when students can submit.
+
+        // Case 1: The exercise start date was in the future and is moved to the past or is unset.
+        boolean moreLenientStartDate = !programmingExerciseBeforeUpdate.isReleased() && updatedProgrammingExercise.isReleased();
+
+        // Case 2: The exercise due date was in the past and is moved to the future or is unset.
+        boolean moreLenientDueDate = (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now))
+                && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now));
+
+        // Case 3: Offline IDE usage was disallowed and is now allowed.
+        boolean moreLenientIdeUsage = !oldExerciseAllowsIdeUsage && updatedExerciseAllowsIdeUsage;
+
+        if (moreLenientIdeUsage) {
+            if (moreLenientStartDate || moreLenientDueDate) {
+                // In this case unlock all repositories and participations within the time frame.
+                instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
             }
-            else if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
-                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
-                return true;
+            else {
+                // If the start date or the due date were not changed, the participations are not affected, and we only unlock the repositories.
+                instanceMessageSendService.sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
             }
         }
-        return false;
+        else if (moreLenientStartDate || moreLenientDueDate) {
+            // The offline IDE usage was not changed, but the start date or the due date were changed.
+            // Unlock the participations that are allowed to submit under the updated configuration, i.e. the current date is within the working time frame.
+            // But only unlock the repositories in addition to the participations if offline IDE usage is allowed.
+            if (updatedExerciseAllowsIdeUsage) {
+                instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+            }
+            else {
+                instanceMessageSendService.sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+            }
+        }
     }
 
     /**
