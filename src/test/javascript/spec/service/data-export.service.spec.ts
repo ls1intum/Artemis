@@ -25,8 +25,8 @@ describe('DataExportService', () => {
         dataExport.user = new User();
         dataExport.user.id = 1;
         dataExport.id = 1;
-        dataExport.requestDate = dayjs();
-        dataExport.creationDate = dayjs();
+        dataExport.createdDate = dayjs();
+        dataExport.creationFinishedDate = dayjs();
         service.requestDataExport().subscribe((resp) => expect(resp).toEqual(dataExport));
         const req = httpMock.expectOne({ method: 'POST', url: `api/data-exports` });
         req.flush(dataExport);
