@@ -271,9 +271,9 @@ public class QuizScheduleService {
                 log.info("Stop Quiz Schedule Service already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
-            for (Cache quizCache : quizCache.getAllCaches()) {
-                if (((QuizExerciseCache) quizCache).getQuizStart() != null) {
-                    cancelScheduledQuizStart(((QuizExerciseCache) quizCache).getExerciseId());
+            for (QuizExerciseCache quizCache : quizCache.getAllCaches()) {
+                if (quizCache.getQuizStart() != null) {
+                    cancelScheduledQuizStart(quizCache.getExerciseId());
                 }
             }
             threadPoolTaskScheduler.shutdown();
@@ -305,7 +305,7 @@ public class QuizScheduleService {
                         var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                         // save scheduled future in HashMap
                         quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
-                            ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
+                            quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
                             return quizExerciseCache;
                         });
                     }
@@ -346,7 +346,7 @@ public class QuizScheduleService {
             }
         });
         quizCache.performCacheWriteIfPresent(quizExerciseId, cachedQuiz -> {
-            ((QuizExerciseCache) cachedQuiz).setQuizStart(QuizExerciseCache.getEmptyQuizStartList());
+            cachedQuiz.setQuizStart(QuizExerciseCache.getEmptyQuizStartList());
             return cachedQuiz;
         });
     }
@@ -356,7 +356,7 @@ public class QuizScheduleService {
      */
     void executeQuizStartNowTask(Long quizExerciseId) {
         quizCache.performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
-            ((QuizExerciseCache) quizExerciseCache).getQuizStart().clear();
+            quizExerciseCache.getQuizStart().clear();
             log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
@@ -697,10 +697,10 @@ public class QuizScheduleService {
     }
 
     QuizExerciseCache getWriteCache(long exerciseId) {
-        return (QuizExerciseCache) quizCache.getTransientWriteCacheFor(exerciseId);
+        return quizCache.getTransientWriteCacheFor(exerciseId);
     }
 
     private QuizExerciseCache getReadCache(long exerciseId) {
-        return (QuizExerciseCache) quizCache.getReadCacheFor(exerciseId);
+        return quizCache.getReadCacheFor(exerciseId);
     }
 }
