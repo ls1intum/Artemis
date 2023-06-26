@@ -192,8 +192,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
-        Result result = new Result().submission(submission).feedbacks(feedbacks).participation(submission.getParticipation());
-        submission.addResult(result);
+        Result result = new Result().submission(submissionWithoutResult).feedbacks(feedbacks).participation(submissionWithoutResult.getParticipation());
+        result.getSubmission().addResult(result);
 
         resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);

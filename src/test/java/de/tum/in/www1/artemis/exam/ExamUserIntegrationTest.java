@@ -207,8 +207,9 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
-            database.changeUser(user.getLogin());
-            var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", OK, StudentExam.class, headers);
+            userUtilService.changeUser(user.getLogin());
+            var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", OK,
+                    StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
