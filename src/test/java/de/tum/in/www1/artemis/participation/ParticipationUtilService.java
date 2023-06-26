@@ -2,12 +2,19 @@ package de.tum.in.www1.artemis.participation;
 
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory.DEFAULT_BRANCH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +28,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 
@@ -79,6 +89,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
         var storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
@@ -574,5 +587,43 @@ public class ParticipationUtilService {
 
     public List<Result> getResultsForExercise(Exercise exercise) {
         return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+    }
+
+    public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UrlService urlService,
+            VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+        String templateRepoName;
+        if (useGradedParticipationOfResult) {
+            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUrl());
+        }
+        else {
+            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl());
+        }
+        mockCreationOfExerciseParticipation(templateRepoName, programmingExercise, versionControlService, continuousIntegrationService);
+    }
+
+    public void mockCreationOfExerciseParticipation(String templateRepoName, ProgrammingExercise programmingExercise, VersionControlService versionControlService,
+            ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
+        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class));
+        mockCreationOfExerciseParticipationInternal(programmingExercise, versionControlService, continuousIntegrationService);
+    }
+
+    public void mockCreationOfExerciseParticipation(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
+            ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
+        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class));
+        mockCreationOfExerciseParticipationInternal(programmingExercise, versionControlService, continuousIntegrationService);
+    }
+
+    private void mockCreationOfExerciseParticipationInternal(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
+            ContinuousIntegrationService continuousIntegrationService) {
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
+
+        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
+        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        doNothing().when(versionControlService).addWebHookForParticipation(any());
     }
 }
