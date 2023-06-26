@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="keller" id="20230626170300">
+        <sql dbms="mysql">
+            UPDATE conversation c
+            SET name = REGEXP_REPLACE(name, '[-\\s]+', '-')
+            WHERE c.exercise_id IS NOT NULL OR c.lecture_id IS NOT NULL OR c.exam_id IS NOT NULL;
+        </sql>
+        <sql dbms="postgresql">
+            UPDATE conversation c
+            SET name = REGEXP_REPLACE(name, '[-\\s]+', '-', 'g')
+            WHERE c.exercise_id IS NOT NULL OR c.lecture_id IS NOT NULL OR c.exam_id IS NOT NULL;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
