@@ -33,34 +33,14 @@
             (onClick)="downloadDataExport()"
         ></jhi-button>
     </div>
-    <div class="mt-3 d-flex align-content-center">
-        <!--        <p *ngIf="">-->
-        <!--            {{ 'artemisApp.dataExport.canRequest' | artemisTranslate }}-->
-        <!--        </p>-->
-        <!--        <p *ngIf="canDownload && downloadMode">-->
-        <!--            {{ 'artemisApp.dataExport.canDownload' | artemisTranslate }}-->
-        <!--        </p>-->
-        <!--        <div class="mt-3 row d-flex align-content-center">-->
-        <!--            <p *ngIf="!canRequestDataExport && !downloadMode && state !== DataExportState.REQUESTED && state !== DataExportState.IN_CREATION">-->
-        <!--                {{ 'artemisApp.dataExport.recentlyRequested' | artemisTranslate }}-->
-        <!--            </p>-->
-        <!--            <p *ngIf="!canRequestDataExport && !downloadMode && (state === DataExportState.REQUESTED || state === DataExportState.IN_CREATION)">-->
-        <!--                {{ 'artemisApp.dataExport.isBeingCreated' | artemisTranslate }}-->
-        <!--            </p>-->
-        <!--            <p *ngIf="!canDownload && downloadMode">-->
-        <!--                {{ 'artemisApp.dataExport.notDownloadable' | artemisTranslate }}-->
-        <!--            </p>-->
-        <!--            <p *ngIf="!canDownload && !downloadMode && (state === DataExportState.DOWNLOADED_DELETED || state === DataExportState.DELETED)">-->
-        <!--                {{ 'artemisApp.dataExport.mostRecentNotDownloadable' | artemisTranslate }}-->
-        <!--            </p>-->
-        <!--        </div>-->
-        <div *ngIf="dataExport?.requestDate">
-            <span> {{ 'artemisApp.dataExport.requestDate' }}</span>
-            <span class="bold">{{ dataExport?.requestDate | artemisDate }}</span>
-        </div>
-        <div *ngIf="dataExport?.nextRequestDate && dataExport?.dataExportState !== DataExportState.FAILED">
-            <span> {{ 'artemisApp.dataExport.nextRequestDate' }}</span>
+    <div class="mt-3 d-flex-column align-content-center">
+        <p *ngIf="dataExport?.createdDate">
+            <span> {{ 'artemisApp.dataExport.lastRequestDate' | artemisTranslate }}</span>
+            <span class="bold">{{ dataExport?.createdDate | artemisDate }}</span>
+        </p>
+        <p *ngIf="dataExport?.nextRequestDate && dataExport?.dataExportState !== DataExportState.FAILED">
+            <span> {{ 'artemisApp.dataExport.nextRequestDate' | artemisTranslate }}</span>
             <span class="bold">{{ dataExport?.nextRequestDate | artemisDate }}</span>
-        </div>
+        </p>
     </div>
 </div>

@@ -71,8 +71,6 @@ public class DataExportCreationService {
     @Value("${artemis.repo-download-clone-path}")
     private Path repoClonePath;
 
-    private final CourseRepository courseRepository;
-
     private final ZipFileService zipFileService;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
@@ -106,8 +104,6 @@ public class DataExportCreationService {
 
     private final DataExportRepository dataExportRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final UserRepository userRepository;
 
     private final MailService mailService;
@@ -116,14 +112,12 @@ public class DataExportCreationService {
 
     private final ComplaintRepository complaintRepository;
 
-    public DataExportCreationService(CourseRepository courseRepository, ZipFileService zipFileService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExamService examService, QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
+    public DataExportCreationService(ZipFileService zipFileService, ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService,
+            QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService,
-            DataExportRepository dataExportRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, MailService mailService,
-            UserService userService, ComplaintRepository complaintRepository) {
-        this.courseRepository = courseRepository;
+            DataExportRepository dataExportRepository, UserRepository userRepository, MailService mailService, UserService userService, ComplaintRepository complaintRepository) {
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.examService = examService;
@@ -140,7 +134,6 @@ public class DataExportCreationService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.userService = userService;
@@ -180,7 +173,7 @@ public class DataExportCreationService {
             if (!exercises.isEmpty()) {
                 Files.createDirectory(courseDir);
             }
-            for (var exercise : entry.getValue()) {
+            for (var exercise : exercises) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     createProgrammingExerciseExport(programmingExercise, courseDir, userId);
                 }
@@ -245,7 +238,7 @@ public class DataExportCreationService {
         return true;
     }
 
-    private void handleCreationFailure(DataExport dataExport, Exception e) {
+    private void handleCreationFailure(DataExport dataExport, Exception exception) {
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExport = dataExportRepository.save(dataExport);
         singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
@@ -254,7 +247,7 @@ public class DataExportCreationService {
             log.warn("No internal admin user found. Cannot send email to admin about data export failure.");
             return;
         }
-        mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, e);
+        mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, exception);
     }
 
     private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
@@ -316,11 +309,10 @@ public class DataExportCreationService {
     }
 
     private void addGeneralExamInformation(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
+        String[] headers = { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + CSV_FILE_EXTENSION)),
-                csvFormat)) {
+        try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
                     studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
             printer.flush();
@@ -328,10 +320,10 @@ public class DataExportCreationService {
     }
 
     private void addGeneralUserInformation(User user, Path workingDirectory) throws IOException {
-        String[] headers = new String[] { "login", "name", "email", "registration number" };
+        String[] headers = { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("general_user_information" + CSV_FILE_EXTENSION)), csvFormat)) {
+        try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("general_user_information" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
             printer.flush();
         }
@@ -372,8 +364,8 @@ public class DataExportCreationService {
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
-                if (submission instanceof FileUploadSubmission) {
-                    copyFileUploadSubmissionFile(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), exerciseDir);
+                if (submission instanceof FileUploadSubmission fileUploadSubmission) {
+                    copyFileUploadSubmissionFile(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), exerciseDir, fileUploadSubmission);
                 }
                 else if (submission instanceof TextSubmission textSubmission) {
                     storeTextSubmissionContent(textSubmission, exerciseDir);
@@ -445,7 +437,7 @@ public class DataExportCreationService {
             else {
                 addExplanationToAnswerOptionWithoutResult(multipleChoiceSubmittedAnswer, stringBuilder, answerOption);
             }
-            stringBuilder.append(answerOption.getText()).append("\t").append("\n");
+            stringBuilder.append(answerOption.getText()).append("\n");
         }
         return stringBuilder.toString();
     }
@@ -462,8 +454,7 @@ public class DataExportCreationService {
         }
     }
 
-    private static void addExplanationToAnswerOptionWithResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder,
-            AnswerOption answerOption) {
+    private void addExplanationToAnswerOptionWithResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOption answerOption) {
         if (answerOption.isInvalid()) {
             stringBuilder.append("Invalid answer option: ");
         }
@@ -492,7 +483,6 @@ public class DataExportCreationService {
     }
 
     private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder submittedAnswer, boolean includeResults) {
-
         var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
         submittedAnswer.append("Your answer: ").append("\n");
         submittedAnswer.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
@@ -674,6 +664,10 @@ public class DataExportCreationService {
             Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
             Files.write(outputDir.resolve(fileName + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
         }
+        catch (IOException e) {
+            log.warn("Failed to include the model as pdf, going to include it as plain JSON file.");
+            addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
+        }
     }
 
     private void addModelJsonWithExplanationHowToView(String model, Path outputDir, String fileName) throws IOException {
@@ -808,13 +802,20 @@ public class DataExportCreationService {
 
     }
 
-    private void copyFileUploadSubmissionFile(String submissionFilePath, Path outputDir) {
+    private void copyFileUploadSubmissionFile(String submissionFilePath, Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         try {
             FileUtils.copyDirectory(new File(submissionFilePath), outputDir.toFile());
         }
-        catch (IOException ignored) {
-            // ignore if we cannot retrieve the submitted file, it might no longer exist.
+        catch (IOException exception) {
+            log.info("Cannot include submission for file upload exercise stored at {}", submissionFilePath);
+            addInfoThatFileForFileUploadSubmissionNoLongerExists(outputDir, fileUploadSubmission);
         }
+    }
+
+    private void addInfoThatFileForFileUploadSubmissionNoLongerExists(Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
+        var exercise = fileUploadSubmission.getParticipation().getExercise();
+        Files.writeString(outputDir.resolve("submission_file_no_longer_exists.md"),
+                String.format("Your submitted file for the exercise %s no longer exists on the file system.", exercise));
     }
 
     private Path createDataExportZipFile(String userLogin, Path workingDirectory) throws IOException {
@@ -826,7 +827,6 @@ public class DataExportCreationService {
     }
 
     private void createSubmissionCsvFile(Submission submission, Path outputPath) throws IOException {
-
         List<String> headers = new ArrayList<>(List.of("id", "submissionDate"));
         if (submission instanceof ProgrammingSubmission) {
             headers.add("commitHash");
