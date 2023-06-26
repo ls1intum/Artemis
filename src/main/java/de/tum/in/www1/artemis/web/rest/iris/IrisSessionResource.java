@@ -9,8 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -89,9 +87,6 @@ public class IrisSessionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
         var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
-        if (session instanceof IrisChatSession) {
-            irisMessageService.saveMessage(irisSessionService.createInitialSystemMessage((IrisChatSession) session), session, IrisMessageSender.ARTEMIS);
-        }
 
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

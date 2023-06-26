@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,9 +10,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -149,31 +144,6 @@ public class IrisSessionService {
         else {
             throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
         }
-    }
-
-    /**
-     * Creates the initial system message for the session and set LLM
-     *
-     * @param session The session to generate the initial system message for
-     * @return The created IrisMessage for storing in the database
-     */
-    public IrisMessage createInitialSystemMessage(IrisChatSession session) {
-        var exercise = session.getExercise();
-        // TODO: Error handling in the future
-        String title = "undefined";
-        if (exercise.getCourseViaExerciseGroupOrCourseMember() != null && exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() != null) {
-            title = exercise.getCourseViaExerciseGroupOrCourseMember().getTitle();
-        }
-        String initialSystemMessage = INITIAL_PROMPT_TEMPLATE.formatted(title, ProblemStatementUtils.truncateProblemStatement(exercise.getProblemStatement()));
-
-        var messageContent = new IrisMessageContent();
-        messageContent.setTextContent(initialSystemMessage);
-        var message = new IrisMessage();
-        message.setContent(List.of(messageContent));
-        message.setSender(IrisMessageSender.ARTEMIS);
-        message.setSentAt(ZonedDateTime.now());
-        message.setSession(session);
-        return message;
     }
 
     /**
