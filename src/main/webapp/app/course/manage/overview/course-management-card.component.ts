@@ -81,6 +81,11 @@ export class CourseManagementCardComponent implements OnChanges {
     readonly isCommunicationEnabled = isCommunicationEnabled;
 
     ngOnChanges() {
+        const targetCourseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
+        if (this.courseColor !== targetCourseColor) {
+            this.courseColor = targetCourseColor;
+        }
+
         // Only sort one time once loaded
         if (!this.statisticsSorted && this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
             this.statisticsSorted = true;
@@ -99,8 +104,6 @@ export class CourseManagementCardComponent implements OnChanges {
 
         // If there are no future exercises either, show the past exercises by default
         this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
-
-        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**
