@@ -103,10 +103,10 @@ describe('CourseManagementCardComponent', () => {
     });
 
     it('should use default color if the course does not have a color', () => {
-        component.course = {
-            ...course,
-            color: undefined,
-        };
+        const course = new Course();
+        course.id = 1;
+
+        component.course = course;
         component.ngOnChanges();
         expect(component.courseColor).toBe('#3E8ACC');
     });
@@ -119,13 +119,13 @@ describe('CourseManagementCardComponent', () => {
     });
 
     it('should display loading spinner if courseWithExercises is undefined', () => {
-        component.courseWithExercises = undefined;
+        component.courseStatistics = courseStatisticsDTO;
         fixture.detectChanges();
         expect(fixture.debugElement.nativeElement.querySelector('.loading-spinner')).toBeTruthy();
     });
 
     it('should display loading spinner if courseStatistics is undefined', () => {
-        component.courseStatistics = undefined;
+        component.courseWithExercises = course;
         fixture.detectChanges();
         expect(fixture.debugElement.nativeElement.querySelector('.loading-spinner')).toBeTruthy();
     });
