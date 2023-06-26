@@ -140,7 +140,7 @@ public class ReactionService {
 
     private Conversation mayInteractWithConversationIfConversationMessage(User user, Post post) {
         if (post.getConversation() != null) {
-            return conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
+            return conversationService.mayInteractWithConversationElseThrow(post.getConversation(), user);
         }
         else {
             return null;

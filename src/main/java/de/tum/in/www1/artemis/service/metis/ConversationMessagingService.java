@@ -76,7 +76,7 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation().getId(), author);
+        var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation(), author);
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
@@ -86,6 +86,7 @@ public class ConversationMessagingService extends PostingService {
 
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
+        conversation.setCourse(course);
         conversation = conversationService.updateConversation(conversation);
 
         // update last read date and unread message count of author

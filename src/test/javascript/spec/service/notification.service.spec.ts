@@ -5,7 +5,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
-import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -33,7 +33,6 @@ describe('Notification Service', () => {
 
     let websocketService: JhiWebsocketService;
     let wsSubscribeStub: jest.SpyInstance;
-    let wsUnSubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
     let wsNotificationSubject: Subject<Notification | undefined>;
     let tutorialGroup: TutorialGroup;
@@ -111,20 +110,6 @@ describe('Notification Service', () => {
 
     const conversationCreationNotification = generateConversationsCreationNotification();
 
-    const generateConversationsDeletionNotification = () => {
-        const generatedNotification = { title: CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE, text: 'This is a simple group chat deletion notification' } as Notification;
-        generatedNotification.target = JSON.stringify({
-            message: 'conversation-deletion',
-            entity: 'conversation',
-            mainPage: 'courses',
-            id: 124,
-            course: course.id,
-            conversation: groupChat.id,
-        });
-        generatedNotification.notificationDate = dayjs();
-        return generatedNotification;
-    };
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
@@ -158,7 +143,6 @@ describe('Notification Service', () => {
 
                 websocketService = TestBed.inject(JhiWebsocketService);
                 wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
-                wsUnSubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
                 wsNotificationSubject = new Subject<Notification | undefined>();
                 wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
 

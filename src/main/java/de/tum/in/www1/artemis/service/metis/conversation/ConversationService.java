@@ -315,12 +315,16 @@ public class ConversationService {
      * @param user           the user to check
      * @return conversation if the user is a member
      */
-    public Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
-        Conversation conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(conversationId);
-        if (conversation.getConversationParticipants().stream().map(ConversationParticipant::getUser).noneMatch(user::equals)) {
+    public Conversation mayInteractWithConversationElseThrow(Conversation conversation, User user) {
+        Conversation conversationWithParticipants = conversationRepository.findWithConversationParticipantsByIdElseThrow(conversation.getId());
+        // Create a new object and check if an equal object is contained in the participant set. This is in O(1) runtime instead of iterating over all participants
+        ConversationParticipant allegedParticipant = new ConversationParticipant();
+        allegedParticipant.setConversation(conversation);
+        allegedParticipant.setUser(user);
+        if (!conversationWithParticipants.getConversationParticipants().contains(allegedParticipant)) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
-        return conversation;
+        return conversationWithParticipants;
     }
 
     /**

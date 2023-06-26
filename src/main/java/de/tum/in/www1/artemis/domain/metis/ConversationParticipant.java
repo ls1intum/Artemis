@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -106,5 +107,21 @@ public class ConversationParticipant extends DomainObject {
 
     public void setIsHidden(Boolean hidden) {
         isHidden = hidden;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ConversationParticipant that)) {
+            return false;
+        }
+        return Objects.equals(conversation, that.conversation) && Objects.equals(user, that.user);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(conversation, user);
     }
 }

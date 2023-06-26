@@ -79,7 +79,7 @@ public class AnswerMessageService extends PostingService {
         }
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
-        Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
+        Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation(), user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         if (conversation instanceof Channel channel) {
