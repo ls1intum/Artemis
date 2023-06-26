@@ -439,6 +439,10 @@ public class RequestUtilService {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
     }
 
+    public File getFile(String path, HttpStatus expectedStatus) throws Exception {
+        return getFile(path, expectedStatus, new LinkedMultiValueMap<>());
+    }
+
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
