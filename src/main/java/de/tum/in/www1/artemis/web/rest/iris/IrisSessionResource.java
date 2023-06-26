@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
@@ -37,19 +36,15 @@ public class IrisSessionResource {
 
     private final IrisSessionService irisSessionService;
 
-    private final IrisMessageService irisMessageService;
-
     private final IrisSettingsService irisSettingsService;
 
     public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisSettingsService irisSettingsService) {
+            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
-        this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
     }
 
