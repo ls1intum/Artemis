@@ -11,8 +11,9 @@ Naming Conventions for GitHub Pull Requests
 
 1. The first term is a main feature of Artemis and is using code highlighting, e.g.  “``Programming exercises``:”.
 
-    1. Possible feature tags are: ``Programming exercises``, ``Modeling exercises``, ``Text exercises``, ``Quiz exercises``, ``File upload exercises``, ``Lectures``, ``Exam mode``, ``Assessment``, ``Communication``, ``Notifications``, ``Tutorial groups``. More tags are possible if they make sense.
-    2. If no feature makes sense, and it is a pure development or test improvement, we use the term “``Development``:”. More tags are also possible if they make sense.
+    1. Possible feature tags are: ``Programming exercises``, ``Quiz exercises``, ``Modeling exercises``, ``Text exercises``, ``File upload exercises``, ``Exam mode``,
+       ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team exercises``, ``Lectures``, ``Plagiarism checks``, ``Learning analytics``, ``Tutorial groups``.
+    2. If the change is not visible to end users, or it is a pure development or test improvement, we use the term “``Development``:”.
     3. Everything else belongs to the ``General`` category.
 
 2. The colon is not highlighted.

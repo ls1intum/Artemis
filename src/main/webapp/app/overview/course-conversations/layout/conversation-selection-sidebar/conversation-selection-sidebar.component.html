@@ -47,84 +47,154 @@
                         </jhi-conversation-sidebar-section>
                     </div>
                     <!-- Channels -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length" class="mb-2" id="channel-section">
-                        <jhi-conversation-sidebar-section
-                            [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.channels' | artemisTranslate"
-                            [headerKey]="'channels'"
-                            [conversations]="displayedChannelConversations"
-                            [activeConversation]="activeConversation"
-                            (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                            [course]="course"
-                        >
-                            <ng-template>
-                                <div ngbDropdown container="body" class="d-inline-block">
-                                    <button id="channelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
-                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                    <jhi-conversation-sidebar-section
+                        [searchTerm]="searchTerm"
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.generalChannels' | artemisTranslate"
+                        [headerKey]="'channels'"
+                        [conversations]="filterChannelsOfType(channelSubType.GENERAL)"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                        [course]="course"
+                    >
+                        <ng-template>
+                            <div ngbDropdown container="body" class="d-inline-block">
+                                <button id="channelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                    <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                </button>
+                                <div ngbDropdownMenu>
+                                    <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.GENERAL)">
+                                        {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
                                     </button>
-                                    <div ngbDropdownMenu>
-                                        <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event)">
-                                            {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
-                                        </button>
-                                        <button id="createChannel" ngbDropdownItem (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
-                                            {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel' | artemisTranslate }}
-                                        </button>
-                                    </div>
+                                    <button id="createChannel" ngbDropdownItem (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
+                                        {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel' | artemisTranslate }}
+                                    </button>
                                 </div>
-                            </ng-template>
-                        </jhi-conversation-sidebar-section>
-                    </div>
+                            </div>
+                        </ng-template>
+                    </jhi-conversation-sidebar-section>
+                    <!-- Exercise Channels -->
+                    <jhi-conversation-sidebar-section
+                        [searchTerm]="searchTerm"
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.exerciseChannels' | artemisTranslate"
+                        [headerKey]="'exerciseChannels'"
+                        [conversations]="filterChannelsOfType(channelSubType.EXERCISE)"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                        [course]="course"
+                    >
+                        <ng-template>
+                            <div ngbDropdown container="body" class="d-inline-block">
+                                <button id="exerciseChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                    <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                </button>
+                                <div ngbDropdownMenu>
+                                    <button id="exerciseChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXERCISE)">
+                                        {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </jhi-conversation-sidebar-section>
+                    <!-- Lecture Channels -->
+                    <jhi-conversation-sidebar-section
+                        [searchTerm]="searchTerm"
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.lectureChannels' | artemisTranslate"
+                        [headerKey]="'lectureChannels'"
+                        [conversations]="filterChannelsOfType(channelSubType.LECTURE)"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                        [course]="course"
+                    >
+                        <ng-template>
+                            <div ngbDropdown container="body" class="d-inline-block">
+                                <button id="lectureChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                    <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                </button>
+                                <div ngbDropdownMenu>
+                                    <button id="lectureChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.LECTURE)">
+                                        {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </jhi-conversation-sidebar-section>
+                    <!-- Exam Channels -->
+                    <jhi-conversation-sidebar-section
+                        [searchTerm]="searchTerm"
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.examChannels' | artemisTranslate"
+                        [headerKey]="'examChannels'"
+                        [conversations]="filterChannelsOfType(channelSubType.EXAM)"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                        [course]="course"
+                    >
+                        <ng-template>
+                            <div ngbDropdown container="body" class="d-inline-block">
+                                <button id="examChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                    <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                </button>
+                                <div ngbDropdownMenu>
+                                    <button id="examChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXAM)">
+                                        {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </jhi-conversation-sidebar-section>
                     <!-- Group Chats -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length" class="mb-2" id="group-chat-section">
-                        <jhi-conversation-sidebar-section
-                            [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
-                            [headerKey]="'groupChats'"
-                            [conversations]="displayedGroupChats"
-                            [activeConversation]="activeConversation"
-                            (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                            [course]="course"
-                        >
-                            <ng-template>
-                                <div class="d-inline-block">
-                                    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary sidebar-button" type="button" (click)="openCreateGroupChatDialog($event)">
-                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
-                                    </button>
-                                </div>
-                            </ng-template>
-                        </jhi-conversation-sidebar-section>
-                    </div>
+                    <jhi-conversation-sidebar-section
+                        [searchTerm]="searchTerm"
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
+                        [headerKey]="'groupChats'"
+                        [conversations]="displayedGroupChats"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                        [course]="course"
+                    >
+                        <ng-template>
+                            <div class="d-inline-block">
+                                <button id="createGroupChat" class="btn btn-sm btn-outline-secondary sidebar-button" type="button" (click)="openCreateGroupChatDialog($event)">
+                                    <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                </button>
+                            </div>
+                        </ng-template>
+                    </jhi-conversation-sidebar-section>
                     <!-- Direct Messages -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length" class="mb-2" id="direct-messages-section">
-                        <jhi-conversation-sidebar-section
-                            [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
-                            [headerKey]="'directMessages'"
-                            [conversations]="displayedOneToOneChats"
-                            [activeConversation]="activeConversation"
-                            (conversationSelected)="onConversationSelected($event)"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                            [course]="course"
-                        >
-                            <ng-template>
-                                <div class="d-inline-block">
-                                    <button
-                                        id="createOneToOne"
-                                        class="btn btn-sm btn-outline-secondary sidebar-button"
-                                        type="button"
-                                        (click)="openCreateOneToOneChatDialog($event)"
-                                    >
-                                        <fa-icon [icon]="faPlus" size="sm"></fa-icon>
-                                    </button>
-                                </div>
-                            </ng-template>
-                        </jhi-conversation-sidebar-section>
-                    </div>
+                    <jhi-conversation-sidebar-section
+                        [searchTerm]="searchTerm"
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
+                        [headerKey]="'directMessages'"
+                        [conversations]="displayedOneToOneChats"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                        [course]="course"
+                    >
+                        <ng-template>
+                            <div class="d-inline-block">
+                                <button id="createOneToOne" class="btn btn-sm btn-outline-secondary sidebar-button" type="button" (click)="openCreateOneToOneChatDialog($event)">
+                                    <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                </button>
+                            </div>
+                        </ng-template>
+                    </jhi-conversation-sidebar-section>
                 </div>
             </div>
         </div>

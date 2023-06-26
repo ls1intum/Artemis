@@ -104,7 +104,7 @@
                         "acceptButton": "Ja, ich möchte mich austragen.",
                         "unenrollmentSuccessful": "Austragung erfolgreich"
                     },
-                    "upcomingDueDate": "Bevorstehende Einreichungsfristen:",
+                    "upcomingDueDates": "Bevorstehende Einreichungsfristen:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }
             },

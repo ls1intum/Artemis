@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
@@ -103,6 +102,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -637,16 +639,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSaveFiles_submissionLimitReached() throws Exception {
-        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
-        lockRepositoryPolicy.setSubmissionLimit(0);
-        lockRepositoryPolicy.setActive(true);
-        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
-        request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
@@ -900,42 +892,19 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         testCommitChanges();
     }
 
-    private void setBuildAndTestForProgrammingExercise() {
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCommitChangesNotAllowedForLockedParticipation() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
-    }
+        this.programmingExerciseStudentParticipationRepository.updateLockedById(participation.getId(), true);
 
-    private void setManualAssessmentForProgrammingExercise() {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExerciseRepository.save(programmingExercise);
-    }
-
-    private void assertUnchangedRepositoryStatusForForbiddenCommit() throws Exception {
         // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
-        setBuildAndTestForProgrammingExercise();
-        assertUnchangedRepositoryStatusForForbiddenCommit();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
-        setManualAssessmentForProgrammingExercise();
-        assertUnchangedRepositoryStatusForForbiddenCommit();
     }
 
     private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
@@ -948,15 +917,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
-        setBuildAndTestForProgrammingExercise();
-        assertUnchangedRepositoryStatusForForbiddenReset();
-    }
+    void testResetNotAllowedForLockedParticipation() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        this.programmingExerciseStudentParticipationRepository.updateLockedById(participation.getId(), true);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
-        setManualAssessmentForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
@@ -1063,7 +1029,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             return null;
         }).when(versionControlService).configureRepository(programmingExercise, participation, true);
 
-        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
         assertThat(participation.isLocked()).isFalse();
@@ -1073,7 +1039,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnlockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
@@ -1089,7 +1055,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             return null;
         }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
 
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
         assertThat(participation.isLocked()).isTrue();
     }
 
@@ -1097,7 +1063,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testLockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
