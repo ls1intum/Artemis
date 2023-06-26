@@ -317,10 +317,9 @@ public class ConversationService {
      */
     public Conversation mayInteractWithConversationElseThrow(Conversation conversation, User user) {
         Conversation conversationWithParticipants = conversationRepository.findWithConversationParticipantsByIdElseThrow(conversation.getId());
-        // Create a new object and check if an equal object is contained in the participant set. This is in O(1) runtime instead of iterating over all participants
-        ConversationParticipant allegedParticipant = new ConversationParticipant();
-        allegedParticipant.setConversation(conversation);
-        allegedParticipant.setUser(user);
+        // Find the alleged participant to determine if they are in the conversation in O(1) runtime
+        ConversationParticipant allegedParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
+                user.getId());
         if (!conversationWithParticipants.getConversationParticipants().contains(allegedParticipant)) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
