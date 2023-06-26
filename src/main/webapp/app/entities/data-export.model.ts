@@ -5,8 +5,8 @@ import dayjs from 'dayjs/esm';
 export class DataExport implements BaseEntity {
     id?: number;
     dataExportState?: DataExportState;
-    requestDate?: dayjs.Dayjs;
-    creationDate?: dayjs.Dayjs;
+    createdDate?: dayjs.Dayjs;
+    creationFinishedDate?: dayjs.Dayjs;
     downloadDate?: dayjs.Dayjs;
     nextRequestDate?: dayjs.Dayjs;
     user?: User;

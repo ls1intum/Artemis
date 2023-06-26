@@ -26,8 +26,6 @@ export class DataExportComponent implements OnInit {
 
     canDownload = false;
     canRequestDataExport = false;
-    hasToBeCreatedDataExport = false;
-
     currentLogin: string | undefined;
     dataExportId: number;
     downloadMode = false;
@@ -60,7 +58,7 @@ export class DataExportComponent implements OnInit {
                 this.canRequestDataExport = canRequestDataExport;
             });
             this.dataExportService.canDownloadAnyDataExport().subscribe((dataExport) => {
-                this.dataExport.requestDate = convertDateFromServer(dataExport.requestDate);
+                this.dataExport.createdDate = convertDateFromServer(dataExport.createdDate);
                 this.dataExport.nextRequestDate = convertDateFromServer(dataExport.nextRequestDate);
                 this.canDownload = !!dataExport.id;
                 if (this.canDownload) {
