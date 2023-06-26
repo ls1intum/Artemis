@@ -457,6 +457,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(generalInstantNotificationService, times(1)).sendNotification(any(), (User) any(), any());
 
         verifyRepositoryCallWithCorrectNotification(MESSAGE_REPLY_IN_CONVERSATION_TITLE);
     }
