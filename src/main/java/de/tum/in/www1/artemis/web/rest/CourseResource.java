@@ -301,7 +301,7 @@ public class CourseResource {
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
     public ResponseEntity<User> enrollInCourse(@PathVariable Long courseId) {
-        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseService.enrollUserForCourseOrThrow(user, course);

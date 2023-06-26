@@ -2,13 +2,17 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
@@ -18,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -28,6 +33,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private LearningPathService learningPathService;
@@ -58,6 +66,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
+    private User studentNotInCourse;
+
     @BeforeEach
     void setupTestScenario() {
         participantScoreScheduleService.activate();
@@ -65,7 +75,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
+        studentNotInCourse = userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
         // creating course
@@ -143,9 +153,21 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course.setEnrollmentEndDate(future(1));
         course = courseRepository.save(course);
         enableLearningPathsForTestingCourse();
-        final var updatedStudent = request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getLearningPaths()).isNotNull();
-        assertThat(updatedStudent.getLearningPaths().size()).isEqualTo(1).as("should create LearningPath for student");
+
+        this.setupEnrollmentRequestMocks();
+
+        final var updatedUser = request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, User.class, HttpStatus.OK);
+        final var updatedUserWithLearningPaths = userRepository.findWithLearningPathsByIdElseThrow(updatedUser.getId());
+        assertThat(updatedUserWithLearningPaths.getLearningPaths()).isNotNull();
+        assertThat(updatedUserWithLearningPaths.getLearningPaths().size()).isEqualTo(1).as("should create LearningPath for student");
+    }
+
+    private void setupEnrollmentRequestMocks() throws JsonProcessingException, URISyntaxException {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(studentNotInCourse.getLogin(), studentNotInCourse.getEmail(), studentNotInCourse.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
     }
 
     @Test

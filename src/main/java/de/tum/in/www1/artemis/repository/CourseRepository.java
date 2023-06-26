@@ -189,6 +189,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
+    @Query("""
+                SELECT course
+                FROM Course course
+                    LEFT JOIN FETCH course.organizations
+                    LEFT JOIN FETCH course.competencies
+                    LEFT JOIN FETCH course.learningPaths
+                WHERE course.id = :courseId
+            """)
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndLearningPaths(@Param("courseId") long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
@@ -327,6 +337,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
+        return findWithEagerOrganizationsAndCompetenciesAndLearningPaths(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
