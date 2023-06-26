@@ -22,6 +22,10 @@ label {
     display: flex;
     flex-shrink: 0;
 
+    .form-control {
+        padding-right: 0;
+    }
+
     &.disabled .form-control {
         opacity: 0.4;
     }
@@ -40,9 +44,5 @@ label {
     #plagiarism-minimum-size {
         margin-right: 0.5rem;
         width: 4rem;
-    }
-
-    .form-control {
-        padding-right: 0;
     }
 }
