@@ -295,9 +295,6 @@ public class TestwiseCoverageService {
      */
     public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         var optionalLazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);
-        if (optionalLazyReport.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(optionalLazyReport.get().getId()));
+        return optionalLazyReport.map(coverageReport -> coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(coverageReport.getId()));
     }
 }

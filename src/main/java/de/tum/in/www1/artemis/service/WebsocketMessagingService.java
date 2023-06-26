@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,7 +124,7 @@ public class WebsocketMessagingService {
      * @return flag whether the destination is a 'non-personal' exercise result subscription
      */
     public static boolean isNonPersonalExerciseResultDestination(String destination) {
-        return Optional.ofNullable(getExerciseIdFromNonPersonalExerciseResultDestination(destination)).isPresent();
+        return getExerciseIdFromNonPersonalExerciseResultDestination(destination) != null;
     }
 
     /**

@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -58,8 +57,6 @@ public abstract class RepositoryResource {
 
     protected final AuthorizationCheckService authCheckService;
 
-    protected final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     protected final GitService gitService;
 
     protected final UserRepository userRepository;
@@ -75,14 +72,12 @@ public abstract class RepositoryResource {
     private final Optional<LocalCIConnectorService> localCIConnectorService;
 
     public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalCIConnectorService> localCIConnectorService) {
+            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
+            RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
         this.versionControlService = versionControlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
