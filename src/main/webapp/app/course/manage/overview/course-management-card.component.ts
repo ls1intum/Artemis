@@ -18,6 +18,7 @@ import {
     faGraduationCap,
     faListAlt,
     faPersonChalkboard,
+    faSpinner,
     faTable,
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
@@ -73,8 +74,9 @@ export class CourseManagementCardComponent implements OnChanges {
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
     faPersonChalkboard = faPersonChalkboard;
+    faSpinner = faSpinner;
 
-    courseColor: string;
+    courseColor: string = ARTEMIS_DEFAULT_COLOR;
 
     readonly FeatureToggle = FeatureToggle;
 
