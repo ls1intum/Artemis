@@ -220,6 +220,29 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
+    onInput() {
+        this.adjustTextareaRows();
+    }
+
+    onPaste(event: ClipboardEvent) {
+        setTimeout(() => {
+            this.adjustTextareaRows();
+        }, 0);
+    }
+
+    adjustTextareaRows() {
+        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        textarea.style.height = 'auto'; // Reset the height to auto
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10);
+        const maxRows = 3;
+        const maxHeight = lineHeight * maxRows;
+
+        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+
+        if (Math.min(textarea.scrollHeight, maxHeight) / lineHeight > 2) this.adjustChatBodyHeight(Math.min(textarea.scrollHeight, maxHeight) / lineHeight);
+        this.onRowChange();
+    }
+
     onRowChange() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const newRows = textarea.value.split('\n').length;
