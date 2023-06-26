@@ -51,23 +51,20 @@ export class LinkPreviewComponent implements OnInit {
                 const end = start + url.length;
 
                 if (url === urlToSearchFor) {
-                    // Append <!-- LinkPreviewRemoved --> after the URL ends, plus 3 more characters
+                    // Append <!--LinkPreviewRemoved--> after the URL ends, plus 2 more characters
                     const modifiedUrl = '<!--LinkPreviewRemoved-->';
-                    modifiedContent = modifiedContent.substring(0, end) + ' ' + modifiedUrl + modifiedContent.substring(end + url.length);
+                    modifiedContent = modifiedContent.substring(0, end + 2) + ' ' + modifiedUrl + modifiedContent.substring(end + url.length);
                 }
             }
 
             // Update the posting content with modified content
             this.posting.content = modifiedContent;
 
+            // TODO: call based on POST or ANSWER
             // Call the service to update the posting
             this.metisService.updatePost(this.posting).subscribe({
                 next: () => {
-                    // Update any necessary UI states or variables
-                    // ...
                     console.log('Link preview removed successfully');
-                    this.linkPreview.shouldPreviewBeShown = false;
-                    //todo: somehow reload the link preview container component or communicate througth websocket
                 },
             });
         }
