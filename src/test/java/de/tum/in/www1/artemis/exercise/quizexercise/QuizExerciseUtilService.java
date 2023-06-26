@@ -657,6 +657,10 @@ public class QuizExerciseUtilService {
         MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
         submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0), multipleChoiceQuestion.getAnswerOptions().get(1)));
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
+        var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
+        MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
+        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0)));
+        submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
         submittedShortAnswer.setQuizQuestion(shortAnswerQuestion);
@@ -703,6 +707,7 @@ public class QuizExerciseUtilService {
         quizSubmissionRepository.save(quizSubmission);
         submittedShortAnswer.setSubmission(quizSubmission);
         submittedAnswerMC.setSubmission(quizSubmission);
+        submittedAnswerSC.setSubmission(quizSubmission);
         submittedDragAndDropAnswer.setSubmission(quizSubmission);
         dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
         incorrectDragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
@@ -719,10 +724,12 @@ public class QuizExerciseUtilService {
         mappingWithImage.setQuestion(dragAndDropQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
+        submittedAnswerRepository.save(submittedAnswerSC);
         submittedAnswerRepository.save(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedAnswerMC);
         quizSubmission.addSubmittedAnswers(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
+        quizSubmission.addSubmittedAnswers(submittedAnswerSC);
         studentParticipation.addSubmission(quizSubmission);
         quizQuestionRepository.save(dragAndDropQuestion);
         quizExercise = quizExerciseRepository.save(quizExercise);

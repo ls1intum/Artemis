@@ -422,6 +422,25 @@ public class ConversationUtilService {
         return conversationRepository.save(channel);
     }
 
+    public Conversation addOneMessageForUserInCourse(String login, Course course, String messageText) {
+        Post message = new Post();
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("channel");
+        channel.setCourse(course);
+        message.setConversation(channel);
+        message.setAuthor(userUtilService.getUserByLogin(login));
+        message.setContent(messageText);
+        message.setCreationDate(ZonedDateTime.now());
+        channel.setCreator(message.getAuthor());
+        addReactionForUserToPost(login, message);
+        conversationRepository.save(channel);
+        message = postRepository.save(message);
+        return conversationRepository.save(channel);
+    }
+
     private Post createMessageWithReactionForUser(String login, String messageText, Conversation conversation) {
         Post message = new Post();
         message.setConversation(conversation);

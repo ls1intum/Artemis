@@ -443,6 +443,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         boolean assessmentDueDateInTheFuture = true;
         var courseShortName = "unenrolled";
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
+        conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
         // by setting the course groups to a different value we simulate unenrollment because the user is no longer part of the user group and hence, the course.
         courseUtilService.updateCourseGroups("abc", course, "");

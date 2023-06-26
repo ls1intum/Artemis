@@ -104,8 +104,6 @@ public class DataExportCreationService {
 
     private final DataExportRepository dataExportRepository;
 
-    private final UserRepository userRepository;
-
     private final MailService mailService;
 
     private final UserService userService;
@@ -117,7 +115,7 @@ public class DataExportCreationService {
             DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, Optional<ApollonConversionService> apollonConversionService,
             StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository, SingleUserNotificationService singleUserNotificationService,
-            DataExportRepository dataExportRepository, UserRepository userRepository, MailService mailService, UserService userService, ComplaintRepository complaintRepository) {
+            DataExportRepository dataExportRepository, MailService mailService, UserService userService, ComplaintRepository complaintRepository) {
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.examService = examService;
@@ -134,7 +132,6 @@ public class DataExportCreationService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
-        this.userRepository = userRepository;
         this.mailService = mailService;
         this.userService = userService;
         this.complaintRepository = complaintRepository;
@@ -149,8 +146,7 @@ public class DataExportCreationService {
     private void createDataExportWithContent(DataExport dataExport) throws IOException {
         log.info("Creating data export for user {}", dataExport.getUser().getLogin());
         var userId = dataExport.getUser().getId();
-        // we need to load the user with the authorities and groups to avoid lazy loading exception when passing the user to the authorization check service
-        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        var user = dataExport.getUser();
         var workingDirectory = prepareDataExport(dataExport);
         createExercisesExport(workingDirectory, userId);
         createExportForExams(userId, workingDirectory);
@@ -569,7 +565,7 @@ public class DataExportCreationService {
             var postReactionsInCourse = entry.getValue();
             var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
             createDirectoryIfNotExistent(courseDir);
-            createCommunicationDataCsvFile(courseDir, List.of(), List.of(), postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
+            createCommunicationDataCsvFile(courseDir, List.of(), List.of(), postReactionsInCourse, answerPostReactionsInCourse);
         }
     }
 
@@ -583,8 +579,7 @@ public class DataExportCreationService {
             var postReactionsInCourse = reactionsToPostsPerCourse.remove(course);
             var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
             createDirectoryIfNotExistent(courseDir);
-            createCommunicationDataCsvFile(courseDir, List.of(), answerPostsInCourse == null ? List.of() : answerPostsInCourse,
-                    postReactionsInCourse == null ? List.of() : postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
+            createCommunicationDataCsvFile(courseDir, List.of(), answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
         }
     }
 
@@ -600,8 +595,7 @@ public class DataExportCreationService {
             var postReactionsInCourse = reactionsToPostsPerCourse.remove(course);
             var answerPostReactionsInCourse = reactionsToAnswerPostsPerCourse.remove(course);
             createDirectoryIfNotExistent(courseDir);
-            createCommunicationDataCsvFile(courseDir, postsInCourse, answerPostsInCourse == null ? List.of() : answerPostsInCourse,
-                    postReactionsInCourse == null ? List.of() : postReactionsInCourse, answerPostReactionsInCourse == null ? List.of() : answerPostReactionsInCourse);
+            createCommunicationDataCsvFile(courseDir, postsInCourse, answerPostsInCourse, postReactionsInCourse, answerPostReactionsInCourse);
         }
     }
 
@@ -617,6 +611,17 @@ public class DataExportCreationService {
 
     private void createCommunicationDataCsvFile(Path courseDir, List<Post> postsInCourse, List<AnswerPost> answerPostsInCourse, List<Reaction> postReactionsInCourse,
             List<Reaction> answerPostReactionsInCourse) throws IOException {
+
+        // all lists apart from postsInCourse can be null, if postsInCourse is null, this method is not invoked
+        if (answerPostsInCourse == null) {
+            answerPostsInCourse = List.of();
+        }
+        if (postReactionsInCourse == null) {
+            postReactionsInCourse = List.of();
+        }
+        if (answerPostReactionsInCourse == null) {
+            answerPostReactionsInCourse = List.of();
+        }
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -661,7 +666,6 @@ public class DataExportCreationService {
         }
 
         try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
-            Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
             Files.write(outputDir.resolve(fileName + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
         }
         catch (IOException e) {
@@ -849,5 +853,4 @@ public class DataExportCreationService {
         }
         return builder.build();
     }
-
 }
