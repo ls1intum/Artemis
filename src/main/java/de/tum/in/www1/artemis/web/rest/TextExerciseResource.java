@@ -349,7 +349,7 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            if (ExerciseDateService.isBeforeAssessmentDueDate(textExercise)) {
+            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
                 textSubmission.setResults(Collections.emptyList());
                 participation.setResults(Collections.emptySet());
             }

@@ -309,7 +309,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             // if the assessment is not finished
             boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
             // or the assessment due date isn't over yet
-            boolean assessmentDueDateNotOver = ExerciseDateService.isBeforeAssessmentDueDate(fileUploadExercise);
+            boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
                 fileUploadSubmission.setResults(Collections.emptyList());

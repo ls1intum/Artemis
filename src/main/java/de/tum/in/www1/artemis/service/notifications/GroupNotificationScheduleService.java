@@ -171,7 +171,7 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise) {
-        if (exercise.isCourseExercise() && ExerciseDateService.isBeforeAssessmentDueDate(exercise)) {
+        if (exercise.isCourseExercise() && !ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }
