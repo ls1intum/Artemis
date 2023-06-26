@@ -276,7 +276,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         testExam1 = examUtilService.addTestExam(course1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
 
-        studentExam1 = database.addStudentExam(exam1);
+        studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
         studentExam1.setUser(student1);
         studentExamRepository.save(studentExam1);
@@ -3156,13 +3156,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRetrieveOwnStudentExam_noInformationLeaked() throws Exception {
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         ExamUser examUser = new ExamUser();
         examUser.setUser(student1);
         exam.addExamUser(examUser);
         examUserRepository.save(examUser);
-        StudentExam studentExam = database.addStudentExam(exam);
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
         studentExam.setUser(student1);
         studentExamRepository.save(studentExam);
 
@@ -3176,8 +3176,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
-        Exam exam = database.addExam(course1);
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.addExam(course1);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var examUser1 = new ExamUser();
         examUser1.setExam(exam);
         examUser1.setUser(student1);

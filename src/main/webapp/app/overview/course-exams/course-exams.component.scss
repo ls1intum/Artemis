@@ -10,7 +10,7 @@
     pointer-events: none;
 }
 
-.hover-effect:hover {
+.hover-effect:has(.clickable):hover {
     transition: transform 0.2s linear;
     transform: scale(1.012);
     background-color: var(--hover-slightly-darker-body-bg);

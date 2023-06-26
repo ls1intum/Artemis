@@ -111,7 +111,23 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.loadStudentExam();
+        this.updateExamStateWithStudentExamOrTestExam();
+    }
+
+    updateExamStateWithStudentExamOrTestExam() {
+        if (!this.studentExam && !this.exam.testExam && this.course?.id && this.exam?.id) {
+            this.examParticipationService.getOwnStudentExam(this.course.id, this.exam.id).subscribe({
+                next: (studentExam) => {
+                    this.studentExam = studentExam;
+                    this.updateExamStateWithLoadedStudentExamOrTestExam();
+                },
+            });
+        } else {
+            this.updateExamStateWithLoadedStudentExamOrTestExam();
+        }
+    }
+
+    updateExamStateWithLoadedStudentExamOrTestExam() {
         const potentialLaterEndDate = this.studentExam?.workingTime ? dayjs(this.exam.startDate).add(this.studentExam.workingTime, 'seconds') : undefined;
         const noOrOverPotentialLaterEndDate = !potentialLaterEndDate || dayjs().isAfter(potentialLaterEndDate);
         if ((!this.studentExam || (!this.studentExam.submitted && noOrOverPotentialLaterEndDate)) && !this.exam.testExam) {
@@ -147,16 +163,6 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
         }
         this.examState = ExamState.UNDEFINED;
         this.cancelExamStateSubscription();
-    }
-
-    loadStudentExam() {
-        if (!this.studentExam && !this.exam.testExam && this.course?.id && this.exam?.id) {
-            this.examParticipationService.getOwnStudentExam(this.course.id, this.exam.id).subscribe({
-                next: (studentExam) => {
-                    this.studentExam = studentExam;
-                },
-            });
-        }
     }
 
     /**
