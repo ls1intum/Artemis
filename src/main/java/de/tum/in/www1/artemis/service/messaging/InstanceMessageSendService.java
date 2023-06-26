@@ -63,32 +63,68 @@ public interface InstanceMessageSendService {
     void sendTextExerciseInstantClustering(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories of an exercise should be instantly unlocked
+     * Send a message to the main server that all student repositories and student participations of an exercise should be instantly locked
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories of an exercise should be instantly locked.
+     * This does not lock the participations associated with the repositories! See {@link #sendLockAllStudentRepositoriesAndParticipations(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllStudentRepositories(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories and student participations, whose due date is in the past, should be instantly locked.
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student participations, whose due date is in the past, should be instantly locked.
+     * This does not lock the repositories associated with the participations! See {@link #sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories and student participations of an exercise should be instantly unlocked.
      *
      * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllRepositories(Long exerciseId);
+    void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories of an exercise should be instantly locked
+     * Send a message to the main server that all student repositories and student participations, whose start date is before now and whose due date is after now, should be
+     * instantly unlocked.
+     * Submissions are allowed if the start date is in the past and the due date is in the future.
      *
-     * @param exerciseId the id of the exercise that should be locked
+     * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendLockAllRepositories(Long exerciseId);
+    void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories without an individual due date before now of an exercise should be instantly unlocked
+     * Send a message to the main server that all student repositories, whose start date is before now and whose due date is after now, should be instantly unlocked.
+     * This does not unlock the participations associated with the repositories! See
+     * {@link #sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long)} for that.
      *
-     * @param exerciseId the id of the exercise that should be locked
+     * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId);
+    void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories without an individual due date after now of an exercise should be instantly locked
+     * Send a message to the main server that all student participations, whose start date is before now and whose due date is after now, should be instantly unlocked.
+     * This does not unlock the repositories associated with the participations! See
+     * {@link #sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long)} for that.
      *
-     * @param exerciseId the id of the exercise that should be locked
+     * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId);
+    void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId);
 
     /**
      * Send a message to the main server that the non-activated should be deleted.
