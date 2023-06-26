@@ -9,7 +9,7 @@ import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
@@ -138,6 +138,16 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
         this.scrollToBottom('smooth');
         this.resetChatBodyHeight();
+    }
+
+    scrollToBottom(behavior: ScrollBehavior) {
+        setTimeout(() => {
+            const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
+            chatBodyElement.scrollTo({
+                top: chatBodyElement.scrollHeight,
+                behavior: behavior,
+            });
+        });
     }
 
     scrollToUnread() {
@@ -319,5 +329,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         setTimeout(() => {
             this.shakeErrorField = false;
         }, 1000);
+    }
+
+    isArtemisSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return message.sender === IrisSender.LLM;
+    }
+
+    isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+        return message.sender === IrisSender.USER;
     }
 }
