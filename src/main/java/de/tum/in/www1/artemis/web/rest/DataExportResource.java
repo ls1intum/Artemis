@@ -9,12 +9,14 @@ import java.util.Comparator;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -28,6 +30,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RestController
 @RequestMapping("api/")
 public class DataExportResource {
+
+    @Value("${artemis.data-export.days-between-data-exports:14}")
+    private int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final DataExportService dataExportService;
 
@@ -50,7 +55,7 @@ public class DataExportResource {
     @EnforceAtLeastStudent
     public DataExport requestDataExport() throws IOException {
         if (!canRequestDataExport()) {
-            throw new AccessForbiddenException("You can only request a data export every " + dataExportService.DAYS_BETWEEN_DATA_EXPORTS + " days");
+            throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
         return dataExportService.requestDataExport();
     }
@@ -68,9 +73,9 @@ public class DataExportResource {
         }
         var latestDataExport = dataExports.stream().max(Comparator.comparing(DataExport::getCreatedDate)).get();
         var olderThanDaysBetweenDataExports = Duration.between(latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()), ZonedDateTime.now())
-                .toDays() >= dataExportService.DAYS_BETWEEN_DATA_EXPORTS;
+                .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
 
-        return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState().hasFailed();
+        return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState() == DataExportState.FAILED;
 
     }
 

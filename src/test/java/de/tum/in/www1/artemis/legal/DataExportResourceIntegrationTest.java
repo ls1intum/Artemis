@@ -6,20 +6,18 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
-import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -47,6 +45,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private DataExportService dataExportService;
+
+    @Autowired
+    private AuditingHandler auditingHandler;
 
     @BeforeEach
     void initTestCase() {
@@ -216,26 +217,17 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @Disabled("doesn't work at the moment")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanRequest_ifNoDataExportInThePast14Days() throws Exception {
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        var fifteenDaysInSeconds = 15 * 24 * 60 * 60;
-        var mockedValue = Instant.now().minusSeconds(fifteenDaysInSeconds);
-        Clock spyClock = spy(Clock.class);
-        MockedStatic<Clock> clockMock = mockStatic(Clock.class);
-        clockMock.when(Clock::systemDefaultZone).thenReturn(spyClock);
-        clockMock.when(Clock::systemUTC).thenReturn(spyClock);
-        when(spyClock.instant()).thenReturn(mockedValue);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // this is needed to fake the date used for @CreatedDate of the AbstractAuditingEntity
+        auditingHandler.setDateTimeProvider(() -> Optional.of(ZonedDateTime.now().minusDays(15)));
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
-
-    }
-
-    private void mockInstant(long expected) {
 
     }
 
@@ -245,20 +237,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(10));
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        dataExportRepository.save(dataExport);
-        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
-        assertThat(canRequest).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCannotRequest_ifDataExportRequestedInThePast14DaysAndNotYetCreated() throws Exception {
-        dataExportRepository.deleteAll();
-        DataExport dataExport = new DataExport();
-        dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // created date is automatically set on save
         dataExportRepository.save(dataExport);
         boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isFalse();
@@ -267,18 +247,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRequest_ifDataExportInThePast14Days_forbidden() throws Exception {
-        dataExportRepository.deleteAll();
-        DataExport dataExport = new DataExport();
-        dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(10));
-        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        dataExportRepository.save(dataExport);
-        request.postWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRequest_ifDataExportRequestedInThePast14DaysButNotYetCreated_forbidden() throws Exception {
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.DOWNLOADED);

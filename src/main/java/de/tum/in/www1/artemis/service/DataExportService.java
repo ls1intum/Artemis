@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 public class DataExportService {
 
     @Value("${artemis.data-export.days-between-data-exports:14}")
-    public int DAYS_BETWEEN_DATA_EXPORTS;
+    private int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final UserRepository userRepository;
 
