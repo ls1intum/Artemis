@@ -100,6 +100,7 @@
               }
             ],
             "styles": [
+                "node_modules/angular2-draggable/css/resizable.min.css",
               "src/main/webapp/content/scss/themes/theme-default.scss",
               {
                 "bundleName": "theme-dark",

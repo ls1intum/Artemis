@@ -1,23 +1,56 @@
 <div class="container">
     <!-- chat box -->
-    <div class="chat-widget" #chatWidget>
+    <div
+        *ngIf="showChatWidget"
+        [style.width]="widgetWidth"
+        [style.height]="widgetHeight"
+        class="chat-widget"
+        #chatWidget
+        ngDraggable
+        [handle]="chatWidget"
+        ngResizable
+        rzHandles="all"
+        [rzMinWidth]="250"
+        [rzMinHeight]="200"
+        [rzMaxWidth]="1200"
+        [rzMaxHeight]="700"
+    >
         <!-- client -->
         <div class="client">
             <div class="chat-header">
-                <button class="header-icon">
-                    <fa-icon size="lg" [icon]="faExpand"></fa-icon>
-                </button>
-                <h2>Iris</h2>
-                <button (click)="closeChat()" class="header-icon">
-                    <fa-icon size="lg" [icon]="faXmark"></fa-icon>
-                </button>
+                <h3 class="header-start">
+                    <fa-icon size="xs" [icon]="faRobot" style="padding-right: 5px"></fa-icon>
+                    Iris
+                    <a [routerLink]="'/aboutIris'" target="_blank">
+                        <fa-icon [icon]="faCircleInfo" class="info-button"></fa-icon>
+                    </a>
+                </h3>
+                <div class="button-container">
+                    <button *ngIf="!fullSize; else compressButton" (click)="maximizeScreen()" class="header-icon">
+                        <fa-icon [icon]="faExpand"></fa-icon></button
+                    ><ng-template #compressButton>
+                        <button (click)="minimizeScreen()" class="header-icon">
+                            <fa-icon [icon]="faCompress"></fa-icon>
+                        </button>
+                    </ng-template>
+                    <button (click)="closeChat()" class="header-icon">
+                        <fa-icon [icon]="faXmark"></fa-icon>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- main chat section -->
-        <div class="chat-body" #chatBody>
+        <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
+            <div class="p-chat" *ngIf="!userAccepted">
+                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
+                <div class="button-container">
+                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
+                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
+                </div>
+            </div>
             <div *ngFor="let message of messages; let i = index">
-                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</span>
+                <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
                     <div *ngIf="message.sender === SENDER_USER" style="display: flex; flex-direction: row">
                         <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
@@ -52,27 +85,62 @@
                                 <fa-icon [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'" [icon]="faThumbsDown" size="sm" />
                             </button>
                         </div>
+                        <div [ngClass]="{ 'bubble-right': message.sender === SENDER_USER, 'bubble-left': message.sender === SENDER_SERVER }">
+                            <pre><span [innerHTML]="content.textContent! | htmlForMarkdown"></span></pre>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="client-chat" *ngIf="isLoading">
-                <div class="blinking-dots">
-                    <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
-                        <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                <div class="bubble-left" *ngIf="isLoading">
+                    <div class="blinking-dots">
+                        <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
+                            <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="client-chat-error" *ngIf="error" [ngClass]="{ 'shake-animation': shakeErrorField }">
-                {{ error.key | artemisTranslate }}
-            </div>
-        </div>
+                <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
+                    <fa-icon [icon]="faArrowDown"></fa-icon>
+                </div>
+                <div class="client-chat-error" *ngIf="error">
+                    {{ error }}
+                    <div class="client-chat-error" *ngIf="error" [ngClass]="{ 'shake-animation': shakeErrorField }">
+                        {{ error.key | artemisTranslate }}
+                    </div>
+                </div>
 
-        <!-- input field section -->
-        <div class="chat-input">
-            <input [(ngModel)]="newMessageTextContent" type="text" (keyup.enter)="onSend()" placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}" />
-            <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading || !!error">
-                <fa-icon [icon]="faPaperPlane"></fa-icon>
-            </button>
+                <!-- input field section -->
+                <div class="chat-input">
+                    <input
+                        [(ngModel)]="newMessageTextContent"
+                        type="text"
+                        (keyup.enter)="onSend()"
+                        placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                    />
+                    <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading || !!error">
+                        <fa-icon [icon]="faPaperPlane"></fa-icon>
+                    </button>
+                    <textarea
+                        [disabled]="!userAccepted || isLoading"
+                        [(ngModel)]="newMessageTextContent"
+                        (input)="onInput()"
+                        (paste)="onPaste($event)"
+                        (ngModelChange)="onRowChange()"
+                        type="text"
+                        rows="1"
+                        maxRows="3"
+                        class="form-control"
+                        (keydown)="handleKey($event)"
+                        placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                        #messageTextarea
+                    ></textarea>
+                    <jhi-button
+                        [disabled]="!userAccepted || isLoading"
+                        [btnType]="ButtonType.SUCCESS"
+                        [icon]="faPaperPlane"
+                        (onClick)="onSend()"
+                        style="margin-bottom: auto"
+                    ></jhi-button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

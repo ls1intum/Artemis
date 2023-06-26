@@ -2,11 +2,13 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockPipe } from 'ng-mocks';
-import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import {
@@ -19,6 +21,14 @@ import {
 import { of, throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { IrisSender } from 'app/entities/iris/iris-message.model';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
@@ -42,22 +52,31 @@ describe('ExerciseChatWidgetComponent', () => {
 
         mockHttpMessageService = {
             createMessage: jest.fn(),
-            rateMessage: jest.fn(),
         } as any;
 
         stateStore = new IrisStateStore();
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
-            declarations: [ExerciseChatWidgetComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
                 { provide: MatDialog, useValue: mockDialog },
+                { provide: ActivatedRoute, useValue: {} },
+                { provide: LocalStorageService, useValue: {} },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: HttpClient, useClass: MockHttpService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
             .then(() => {
+                jest.spyOn(console, 'error').mockImplementation(() => {});
+                global.window ??= window;
+                window.scroll = jest.fn();
+                window.HTMLElement.prototype.scrollTo = jest.fn();
                 fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
                 component = fixture.componentInstance;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
@@ -126,6 +145,7 @@ describe('ExerciseChatWidgetComponent', () => {
         fixture.detectChanges();
 
         expect(stateStore.dispatchAndThen).toHaveBeenCalled();
+        expect(mockHttpMessageService.createMessage).toHaveBeenCalledWith(component.sessionId, mockMessage);
         expect(component.newMessageTextContent).toBe('');
         expect(component.error).toEqual(error);
         expect(component.scrollToBottom).toHaveBeenCalled();
@@ -172,6 +192,7 @@ describe('ExerciseChatWidgetComponent', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
 
         fixture.detectChanges();
+        await fixture.whenStable();
 
         const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
         const clientChats = chatBodyElement.querySelectorAll('.client-chat');
