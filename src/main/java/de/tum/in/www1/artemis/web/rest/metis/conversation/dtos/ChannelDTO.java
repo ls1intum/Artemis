@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.ChannelSubType;
 
 public class ChannelDTO extends ConversationDTO {
 
@@ -40,8 +41,15 @@ public class ChannelDTO extends ConversationDTO {
      */
     private String tutorialGroupTitle;
 
+    // property not taken from entity
+    /**
+     * Determines the subtype of the channel depending on whether the channel is associated with an exercise/lecture/exam or not
+     */
+    private ChannelSubType subType;
+
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
+        this.setSubTypeFromChannel(channel);
         this.name = channel.getName();
         this.description = channel.getDescription();
         this.isPublic = channel.getIsPublic();
@@ -134,10 +142,30 @@ public class ChannelDTO extends ConversationDTO {
         this.tutorialGroupTitle = tutorialGroupTitle;
     }
 
+    public ChannelSubType getSubType() {
+        return subType;
+    }
+
     @Override
     public String toString() {
-        return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isAnnouncementChannel="
-                + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights
-                + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}" + super.toString();
+        return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
+                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator
+                + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}"
+                + super.toString();
+    }
+
+    private void setSubTypeFromChannel(Channel channel) {
+        if (channel.getExercise() != null) {
+            this.subType = ChannelSubType.EXERCISE;
+        }
+        else if (channel.getLecture() != null) {
+            this.subType = ChannelSubType.LECTURE;
+        }
+        else if (channel.getExam() != null) {
+            this.subType = ChannelSubType.EXAM;
+        }
+        else {
+            this.subType = ChannelSubType.GENERAL;
+        }
     }
 }
