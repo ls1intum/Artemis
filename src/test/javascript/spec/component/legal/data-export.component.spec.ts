@@ -75,7 +75,7 @@ describe('DataExportComponent', () => {
         dataExportReturned.id = 1;
         dataExportReturned.user = new User();
         const date = new Date(2023, 4, 26);
-        dataExportReturned.creationDate = dayjs(date);
+        dataExportReturned.createdDate = dayjs(date);
         const dataExportServiceSpy = jest.spyOn(dataExportService, 'requestDataExport').mockReturnValue(of(dataExportReturned));
         const alertServiceSpy = jest.spyOn(alertService, 'success');
         component.requestExport();
@@ -97,7 +97,7 @@ describe('DataExportComponent', () => {
         expect(dataExportServiceSpy).toHaveBeenCalledOnce();
         expect(dataExportServiceSpy).toHaveBeenCalledWith(1);
     });
-    it.each([true, false])('should execute correct checks on init on init', (downloadMode: boolean) => {
+    it.each([true, false])('should execute correct checks on init', (downloadMode: boolean) => {
         if (downloadMode) {
             route.params = of({ id: 1 });
         }
