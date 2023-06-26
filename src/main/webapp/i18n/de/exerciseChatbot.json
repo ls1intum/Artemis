@@ -7,7 +7,8 @@
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
             "unreadMessages": "Ungelesene Nachrichten",
-            "buttonTooltip": "Beginne mit Iris zu chatten!"
+            "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "firstMessage": "Hallo, ich bin Iris! Ich kann Ihnen bei Ihrer Programmierübung helfen. Du kannst hier mehr über mich erfahren."
         }
     }
 }

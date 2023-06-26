@@ -36,7 +36,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
     }
-
     // Icons
     faPaperPlane = faPaperPlane;
     faCircle = faCircle;
@@ -56,7 +55,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngAfterViewInit() {
-        this.unreadMessageIndex = this.messages.length <= 1 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
+        this.unreadMessageIndex = this.messages.length <= 1 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages; //<=1 first greeting message from chatbot will not show as unread
         if (this.numNewMessages > 0) {
             this.scrollToUnread();
         } else {
@@ -77,13 +76,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     loadFirstMessage(): void {
         if (this.messages.length === 0) {
             const firstMessageContent = {
-                textContent: "Hi, I'm Iris! I can help you with your programming exercise. You can know more about me here.",
+                textContent: 'artemisApp.exerciseChatbot.firstMessage',
                 type: IrisMessageContentType.TEXT,
             } as IrisMessageContent;
 
             const firstMessage = {
                 sender: IrisSender.LLM,
-                id: 1,
+                id: 0,
                 content: [firstMessageContent],
                 sentAt: dayjs(),
             } as IrisServerMessage;
