@@ -9,13 +9,13 @@
             "unreadMessages": "Ungelesene Nachrichten",
             "buttonTooltip": "Beginne mit Iris zu chatten!",
             "errors": {
-                "invalidSessionState": "Der Iris-Sitzungszustand ist ungültig. Es ist unmöglich, in diesem Zustand Nachrichten zu senden.",
-                "historyLoadFailed": "Konnte Nachrichten nicht abrufen.",
-                "sessionLoadFailed": "Konnte Sitzungsdetails nicht abrufen.",
-                "sessionCreationFailed": "Konnte keine neue Sitzung erstellen.",
+                "invalidSessionState": "Der Zustand der Iris Session ist ungültig. Es ist nicht möglich, in diesem Zustand Nachrichten zu senden.",
+                "historyLoadFailed": "Der Chatverlauf konnte nicht abgerufen werden.",
+                "sessionLoadFailed": "Die Sitzungsdetails konnten nicht abrufen werden.",
+                "sessionCreationFailed": "Die Sitzung konnte nicht erstellt werden.",
                 "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
-                "rateMessageFailed": "Bewertung der Nachricht fehlgeschlagen. Versuche es später erneut!",
-                "irisDisabled": "Iris wurde für diese Aufgabe ausgeschalten."
+                "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
+                "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten."
             }
         }
     }
