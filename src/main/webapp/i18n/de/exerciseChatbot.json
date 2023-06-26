@@ -14,8 +14,8 @@
                 "sessionLoadFailed": "Konnte Sitzungsdetails nicht abrufen.",
                 "sessionCreationFailed": "Konnte keine neue Sitzung erstellen.",
                 "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
-                "rateMessageFailed": "Bewertung der Nachricht fehlgeschlagen. Versuchen Sie es später erneut.",
-                "irisDisabled": "Iris wurde inzwischen ausgeschaltet."
+                "rateMessageFailed": "Bewertung der Nachricht fehlgeschlagen. Versuche es später erneut!",
+                "irisDisabled": "Iris wurde für diese Aufgabe ausgeschalten."
             }
         }
     }

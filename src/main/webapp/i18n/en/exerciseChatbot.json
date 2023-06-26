@@ -14,7 +14,7 @@
                 "sessionLoadFailed": "Could not fetch session details.",
                 "sessionCreationFailed": "Could not create a new session.",
                 "sendMessageFailed": "Something went wrong while sending the message. Please try again later!",
-                "rateMessageFailed": "Could not rate message. Try again later.",
+                "rateMessageFailed": "Could not rate message. Please try again later.",
                 "irisDisabled": "Iris has been disabled for this exercise."
             }
         }

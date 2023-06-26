@@ -107,15 +107,6 @@ describe('ExerciseChatWidgetComponent', () => {
         tick();
         const message = 'Hello';
         const error = { fatal: false, key: 'artemisApp.exerciseChatbot.errors.sendMessageFailed' };
-        const mockMessage = {
-            sender: component.SENDER_USER,
-            content: [
-                {
-                    type: 'TEXT',
-                    textContent: 'Hello',
-                },
-            ],
-        };
         jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValue(
             throwError({
                 status: 500,
