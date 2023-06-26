@@ -72,7 +72,7 @@ public class Channel extends Conversation {
 
     @OneToOne
     @JoinColumn(unique = true, name = "lecture_id")
-    @JsonIgnoreProperties("channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Lecture lecture;
 
     @OneToOne
