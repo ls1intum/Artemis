@@ -9,7 +9,7 @@
         <hr />
         <div class="col-12">
             <p>{{ 'artemisApp.pages.checklist.timeZoneExplanation' | artemisTranslate }}</p>
-            <div class="form-check">
+            <div>
                 <jhi-checklist-check id="timeZone" [checkAttribute]="isTimeZoneConfigured" />
                 <label class="form-check-label pe-4" for="timeZone">
                     {{ 'artemisApp.pages.checklist.timeZone' | artemisTranslate }}
@@ -22,7 +22,7 @@
         <hr />
         <div class="col-12">
             <p>{{ 'artemisApp.pages.checklist.configurationExplanation' | artemisTranslate }}</p>
-            <table class="form-check">
+            <table>
                 <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated" />
                 <label class="form-check-label pe-4" for="configuration">
                     {{ 'artemisApp.pages.checklist.configuration' | artemisTranslate }}
