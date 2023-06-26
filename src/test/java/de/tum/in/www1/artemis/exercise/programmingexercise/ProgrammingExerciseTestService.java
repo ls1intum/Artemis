@@ -75,8 +75,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
@@ -191,6 +190,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ProgrammingExerciseService programmingExerciseService;
 
     public Course course;
 
@@ -671,6 +673,19 @@ public class ProgrammingExerciseTestService {
 
         // Check that the tasks were imported correctly (see #5474)
         assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
+    }
+
+    void createJavaBlackboxProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
+        setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+        exercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
+        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        exercise.setPackageName("blackbox");
+        exercise.setChannelName("testchannel-blackbox");
+        var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
     }
 
     // TEST
