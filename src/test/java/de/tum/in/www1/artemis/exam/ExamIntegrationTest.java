@@ -2584,7 +2584,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
 
         final var examId = exam.getId();
-        await().until(() -> examRepository.findById(examId).get().getExamArchivePath() != null);
+        await().until(() -> {
+            var archivePathNotNull = examRepository.findById(examId).get().getExamArchivePath() != null;
+            log.debug("await util check: " + archivePathNotNull);
+            return archivePathNotNull;
+        });
 
         var updatedExam = examRepository.findById(examId).get();
         assertThat(updatedExam.getExamArchivePath()).isNotEmpty();
