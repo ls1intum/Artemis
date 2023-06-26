@@ -103,7 +103,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngAfterViewInit() {
-        console.log('hey');
         this.unreadMessageIndex = this.messages.length === 0 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
         if (this.numNewMessages > 0) {
             this.scrollToUnread();
