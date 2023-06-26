@@ -1365,28 +1365,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
     }
 
-    @NotNull
-    private List<TextSubmission> prepareTextSubmissionsWithFeedback() {
-        TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is first submission's first sentence.", Language.ENGLISH, true);
-        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("This is second submission's first sentence.", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
-
-        final TextBlock textBlock1 = new TextBlock().startIndex(0).endIndex(42).automatic();
-        final TextBlock textBlock2 = new TextBlock().startIndex(0).endIndex(43).automatic();
-        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
-        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
-
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
-        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D).reference(textBlock2.getId());
-        textSubmission1 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1",
-                TEST_PREFIX + "tutor1", List.of(feedback1));
-        textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
-                TEST_PREFIX + "tutor2", List.of(feedback2));
-
-        return asList(textSubmission1, textSubmission2);
-    }
-
     private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj")
