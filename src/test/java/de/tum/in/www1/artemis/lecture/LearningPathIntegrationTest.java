@@ -121,7 +121,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPaths() throws Exception {
         request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.OK);
-        final var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
+        final var updatedCourse = courseRepository.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).isTrue().as("should enable LearningPaths");
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).isEqualTo(NUMBER_OF_STUDENTS).as("should create LearningPath for each student");

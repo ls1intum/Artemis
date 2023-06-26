@@ -56,7 +56,7 @@ public class LearningPathResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Course> enableLearningPathsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         if (course.getLearningPathsEnabled()) {
