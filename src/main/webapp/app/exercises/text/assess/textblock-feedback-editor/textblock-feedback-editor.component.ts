@@ -37,7 +37,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() highlightDifferences: boolean;
     @Input() criteria?: GradingCriterion[];
     private textareaElement: HTMLTextAreaElement;
-    listOfBlocksWithFeedback: any[];
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
