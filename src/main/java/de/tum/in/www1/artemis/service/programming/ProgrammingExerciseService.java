@@ -636,14 +636,15 @@ public class ProgrammingExerciseService {
 
     private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
         final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         if (templateBuildPlanId != null) {
-            continuousIntegrationService.orElseThrow().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
         }
         final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
         if (solutionBuildPlanId != null) {
-            continuousIntegrationService.orElseThrow().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
         }
-        continuousIntegrationService.orElseThrow().deleteProject(programmingExercise.getProjectKey());
+        continuousIntegration.deleteProject(programmingExercise.getProjectKey());
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {

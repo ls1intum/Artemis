@@ -348,7 +348,7 @@ public class ModelingExerciseUtilService {
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).orElseThrow();
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
@@ -365,7 +365,7 @@ public class ModelingExerciseUtilService {
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).orElseThrow();
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
 
     public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
