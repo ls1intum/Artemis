@@ -11,7 +11,7 @@
 }
 
 .spinner {
-    border: 4px solid #f3f3f3; /* Light gray */
+    border: 4px solid var(--secondary);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -22,6 +22,7 @@
     0% {
         transform: rotate(0deg);
     }
+
     100% {
         transform: rotate(360deg);
     }
@@ -29,6 +30,7 @@
 
 .loading-container,
 .preview-content {
+    margin-left: 10px;
     max-width: 600px;
 
     /* Add responsive styles */
@@ -51,7 +53,7 @@
 .preview-url {
     display: block;
     margin-top: 10px;
-    color: #3498db;
+    color: var(--primary);
 }
 
 .preview-container {
@@ -73,7 +75,7 @@
     top: 0;
     width: 4px;
     height: 100%;
-    background-color: #ccc;
+    background-color: var(--secondary);
     border-radius: 4px;
 }
 

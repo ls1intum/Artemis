@@ -12,11 +12,7 @@ import { Post } from 'app/entities/metis/post.model';
 })
 export class LinkPreviewComponent implements OnInit {
     @Input() linkPreview: LinkPreview;
-
-    // forwarded from the container
-    @Input() color = 'primary'; // accent | warn
     @Input() showLoadingsProgress: boolean;
-
     @Input() loaded: boolean;
     @Input() hasError: boolean;
     @Input() author?: User;

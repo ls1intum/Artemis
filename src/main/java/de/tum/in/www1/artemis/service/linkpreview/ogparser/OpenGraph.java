@@ -39,7 +39,7 @@ public class OpenGraph {
         if (openGraphMap.get(property) == null) {
             return null;
         }
-        if (openGraphMap.get(property).size() == 0) {
+        if (openGraphMap.get(property).isEmpty()) {
             return null;
         }
         return openGraphMap.get(property).get(index);
