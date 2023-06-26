@@ -1,0 +1,146 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet id="20230624090900" author="frederik_kutsch" context="prod">
+        <comment>Lock all programming exercise student participations with a start date in the future, a due date in the past, or too many submissions</comment>
+        <!-- Lock all participations with start date in the future:
+            Update the "locked" column in the "participation" table by setting its value to 1 for all rows that meet the following conditions:
+                - The participation has a valid "exercise_id" that refers to an existing exercise in the "exercise" table.
+                - The exercise has a non-null "release_date" that is in the future, or it has a non-null "start_date" that is in the future.
+        -->
+        <sql>
+            UPDATE participation
+            SET locked = TRUE
+            WHERE participation.discriminator = 'PESP'
+                AND participation.test_run = FALSE
+                AND EXISTS (
+                    SELECT 1
+                    FROM exercise
+                    WHERE exercise.id = participation.exercise_id
+                        AND (
+                            (exercise.release_date IS NOT NULL AND exercise.release_date &gt; NOW())
+                            OR (exercise.start_date IS NOT NULL AND exercise.start_date &gt; NOW())
+                        )
+                );
+        </sql>
+        <!-- Lock all participations with due date in the past:
+            Update the "locked" column in the "participation" table by setting its value to 1 for all rows that meet the following conditions:
+                - The participation has a valid "exercise_id" that refers to an existing exercise in the "exercise" table.
+                - The exercise has a non-null "due_date" that is in the past and the participation has a null "individual_due_date".
+                - Alternatively, the participation has a non-null "individual_due_date" that is in the past.
+        -->
+        <sql>
+            UPDATE participation
+            SET locked = TRUE
+            WHERE participation.discriminator = 'PESP'
+              AND participation.test_run = FALSE
+              AND EXISTS(
+                SELECT 1
+                FROM exercise
+                WHERE participation.exercise_id = exercise.id
+                  AND (
+                        (
+                            exercise.due_date IS NOT NULL
+                            AND participation.individual_due_date IS NULL
+                            AND exercise.due_date &lt; NOW()
+                        ) OR (
+                            participation.individual_due_date IS NOT NULL
+                            AND participation.individual_due_date &lt; NOW()
+                        )
+                    )
+                );
+        </sql>
+        <!-- Lock all particiations with too many submissions:
+            valid_submissions: Retrieves the distinct "commit_hash" values of "MANUAL" submissions connected to the participation that have at least one result in the "result" table.
+            count_valid_submissions: Calculates the count of unique "commit_hash" values for each participation.
+
+            The main UPDATE statement updates the "locked" column in the "participation" table by setting its value to 1 for all rows that meet the following conditions:
+                - The participation has a valid "exercise_id" that refers to an existing exercise in the "exercise" table.
+                - The exercise has a non-null "submission_policy_id" that refers to an existing submission policy in the "submission_policy" table.
+                - The submission policy has a "discriminator" of 'LRP' (lock repository policy) and an "active" value of 1.
+                - The "submission_limit" of the submission policy is smaller or equal to the count of unique "commit_hash" values in the "MANUAL" submissions connected to the participation that have at least one result in the "result" table.
+        -->
+        <sql>
+            WITH valid_submissions AS (
+                SELECT DISTINCT s.participation_id, s.commit_hash
+                FROM submission s
+                INNER JOIN result r ON s.id = r.submission_id
+                WHERE s.jhi_type = 'MANUAL'
+            ),
+            count_valid_submissions AS (
+                SELECT participation_id, COUNT(commit_hash) AS submission_count
+                FROM valid_submissions
+                GROUP BY participation_id
+            )
+            UPDATE participation
+            SET locked = TRUE
+            WHERE participation.discriminator = 'PESP'
+              AND participation.test_run = FALSE
+              AND EXISTS (
+                  SELECT 1
+                  FROM exercise, submission_policy sp, count_valid_submissions cvs
+                  WHERE participation.exercise_id = exercise.id
+                      AND exercise.submission_policy_id = sp.id
+                      AND participation.id = cvs.participation_id
+                      AND sp.discriminator = 'LRP'
+                      AND sp.active = TRUE
+                      AND sp.submission_limit &lt;= cvs.submission_count
+                );
+        </sql>
+    </changeSet>
+    <changeSet id="20230624091800m" author="krusche" context="prod">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <!-- Lock all participations for exam exercises where the exam start date is in the future or the individual exam end date is in the past.
+        -->
+        <sql>
+            UPDATE participation
+            SET locked = TRUE
+            WHERE participation.discriminator = 'PESP'
+              AND participation.test_run = FALSE
+              AND EXISTS (
+                  SELECT 1
+                  FROM exercise, exercise_group, exam, student_exam
+                  WHERE participation.exercise_id = exercise.id
+                    AND exercise.exercise_group_id = exercise_group.id
+                    AND exercise_group.exam_id = exam.id
+                    AND exam.id = student_exam.exam_id
+                    AND (
+                        exam.start_date &gt; NOW()
+                        OR TIMESTAMPADD(SQL_TSI_SECOND, student_exam.working_time, exam.start_date) &lt; NOW()
+                      )
+                );
+        </sql>
+    </changeSet>
+    <changeSet id="20230624091800p" author="krusche" context="prod">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgres"/>
+        </preConditions>
+
+        <!-- Lock all participations for exam exercises where the exam start date is in the future or the individual exam end date is in the past.
+        -->
+        <sql>
+            UPDATE participation
+            SET locked = TRUE
+            WHERE participation.discriminator = 'PESP'
+              AND participation.test_run = FALSE
+              AND EXISTS (
+                SELECT 1
+                FROM exercise, exercise_group, exam, student_exam
+                WHERE participation.exercise_id = exercise.id
+                  AND exercise.exercise_group_id = exercise_group.id
+                  AND exercise_group.exam_id = exam.id
+                  AND exam.id = student_exam.exam_id
+                  AND (
+                        exam.start_date &gt; NOW()
+                        OR exam.start_date + student_exam.working_time * interval '1 second' &lt; NOW()
+                    )
+            );
+        </sql>
+    </changeSet>
+</databaseChangeLog>

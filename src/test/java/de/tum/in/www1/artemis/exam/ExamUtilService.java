@@ -435,6 +435,13 @@ public class ExamUtilService {
         return studentExam;
     }
 
+    public StudentExam addStudentExamForActiveExamWithUser(String user) {
+        Course course = courseUtilService.addEmptyCourse();
+        User studentUser = userUtilService.getUserByLogin(user);
+        Exam exam = addActiveTestExamWithRegisteredUserWithoutStudentExam(course, studentUser);
+        return addStudentExamWithUser(exam, studentUser, 0);
+    }
+
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);
