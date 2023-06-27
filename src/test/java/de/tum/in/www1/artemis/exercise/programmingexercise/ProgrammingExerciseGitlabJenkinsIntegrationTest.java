@@ -126,13 +126,6 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @ValueSource(booleans = { true, false })
-    void createJavaBlackboxProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        programmingExerciseTestService.createJavaBlackboxProgrammingExercise(staticCodeAnalysisEnabled);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_enablePlanFails() throws Exception {

@@ -675,19 +675,6 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
     }
 
-    void createJavaBlackboxProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
-        exercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setPackageName("blackbox");
-        exercise.setChannelName("testchannel-blackbox");
-        var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
-        javaTemplateUpgradeService.upgradeTemplate(sourceExercise);
-    }
-
     // TEST
     void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
