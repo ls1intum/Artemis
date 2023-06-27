@@ -2,7 +2,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
 import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { CourseWideContext } from '../../support/constants';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { generateUUID, titleCaseWord, titleLowercase } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
@@ -22,7 +22,7 @@ describe('Course communication', () => {
         courseManagementRequest
             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
             .then((response) => {
-                course = convertCourseAfterMultiPart(response);
+                course = convertModelAfterMultiPart(response);
                 courseManagementRequest.addInstructorToCourse(course, instructor);
                 courseManagementRequest.addStudentToCourse(course, studentOne);
                 courseManagementRequest.addStudentToCourse(course, studentTwo);
@@ -35,7 +35,7 @@ describe('Course communication', () => {
         courseManagementRequest
             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
             .then((response) => {
-                courseWithMessaging = convertCourseAfterMultiPart(response);
+                courseWithMessaging = convertModelAfterMultiPart(response);
                 courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
                 courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
                 courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
