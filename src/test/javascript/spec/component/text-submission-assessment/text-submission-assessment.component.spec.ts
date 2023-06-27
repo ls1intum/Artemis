@@ -402,11 +402,22 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
 
+    it('should always let instructors override', () => {
+        component.exercise!.isAtLeastInstructor = true;
+        expect(component.canOverride).toBeTrue();
+    });
+
+    it('should not allow tutors to override after the assessment due date', () => {
+        component.exercise!.isAtLeastInstructor = false;
+        component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
+        component.complaint = undefined;
+        expect(component.canOverride).toBeFalse();
+    });
+
     it('should recalculate text block refs correctly', () => {
         component.recalculateTextBlockRefs();
         fixture.detectChanges();
 
-        // Expectations based on the new state of component.textBlockRefs and component.unusedTextBlockRefs
         expect(component.textBlockRefs).toHaveLength(3);
         expect(component.unusedTextBlockRefs).toHaveLength(0);
     });
