@@ -21,6 +21,7 @@
             "createModalTitlePost": "Beitrag erstellen",
             "createModalTitleAnswer": "Antwort erstellen",
             "editPosting": "Inhalt bearbeiten",
+            "edited": "(bearbeitet)",
             "markAsResolvingAnswerTooltip": "Bestätige, dass der ursprüngliche Beitrag durch diese Antwort geklärt wird",
             "resolvingAnswerTooltip": "Der ursprüngliche Beitrag wird durch diese Antwort geklärt",
             "unmarkAsResolvingAnswerTooltip": "Widerrufe dass der ursprüngliche Beitrag durch diese Antwort geklärt wird",
