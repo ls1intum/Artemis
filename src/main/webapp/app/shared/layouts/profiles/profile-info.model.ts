@@ -8,7 +8,6 @@ export class ProfileInfo {
     public ribbonEnv: string;
     public inProduction: boolean;
     public openApiEnabled?: boolean;
-    public irisEnabled: boolean;
     public sentry?: { dsn: string };
     public features: ActiveFeatureToggles;
     public guidedTourMapping?: GuidedTourMapping;
