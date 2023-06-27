@@ -368,7 +368,7 @@ public class MetricsBean {
         List<Exam> examsInActiveCourses = new ArrayList<>();
         activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
         studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
-                // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contians the semester
+                // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
                 "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
                 studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toList()));
 

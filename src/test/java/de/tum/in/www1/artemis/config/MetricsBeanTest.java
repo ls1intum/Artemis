@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,16 +101,17 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPublicMetricsUpdatedWhenTriggered() {
+        var courseCountBefore = courseRepository.count();
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = courseUtilService.createCourse();
 
         // This is still zero because the update function has not been called yet
-        assertMetricEquals(0, "artemis.statistics.public.courses");
+        assertMetricEquals(courseCountBefore, "artemis.statistics.public.courses");
 
         metricsBean.updatePublicArtemisMetrics();
 
         // After the update: the course is returned
-        assertMetricEquals(1, "artemis.statistics.public.courses");
+        assertMetricEquals(courseCountBefore + 1, "artemis.statistics.public.courses");
     }
 
     @Test
@@ -148,22 +148,37 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testPublicMetricsActiveCourses() {
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = courseUtilService.createCourse();
+
+        var course2 = courseUtilService.createCourse();
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        assertMetricEquals(courseRepository.count(), "artemis.statistics.public.courses");
+    }
+
+    @Test
+    void testPublicMetricsCourseStudents() {
+        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        var course1 = courseUtilService.createCourse();
         course1.setSemester(null);
-        course1.setStudentGroupName("course1Students");
+        course1.setStudentGroupName(TEST_PREFIX + "course1Students");
         courseRepository.save(course1);
 
         var course2 = courseUtilService.createCourse();
         course2.setSemester("WS 2023/24");
-        course1.setStudentGroupName("course2Students");
+        course2.setStudentGroupName(TEST_PREFIX + "course2Students");
         courseRepository.save(course2);
 
-        users.get(0).setGroups(new HashSet<>());
+        users.get(0).getGroups().add(TEST_PREFIX + "course1Students");
+        users.get(1).getGroups().add(TEST_PREFIX + "course1Students");
+        users.get(2).getGroups().add(TEST_PREFIX + "course1Students");
+        users.get(2).getGroups().add(TEST_PREFIX + "course2Students");
+        userRepository.saveAll(users);
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(2, "artemis.statistics.public.courses");
-
-        // meterRegistry.get(metricName).tags(tags).gauge();
+        assertMetricEquals(3, "artemis.statistics.public.course_students", "courseName", course1.getTitle(), "semester", "No semester");
+        assertMetricEquals(1, "artemis.statistics.public.course_students", "courseName", course2.getTitle(), "semester", "WS 2023/24");
     }
 
     @Test
