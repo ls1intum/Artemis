@@ -263,6 +263,11 @@ public class ChannelService {
         if (channel.getName() != null && !channel.getName().matches(CHANNEL_NAME_REGEX)) {
             throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
+
+        if (this.allowDuplicateChannelName(channel)) {
+            return;
+        }
+
         Optional<Channel> channelWithSameName;
         if (channel.getId() != null) {
             channelWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
@@ -438,5 +443,9 @@ public class ChannelService {
         defaultChannel.setIsAnnouncementChannel(false);
         defaultChannel.setIsArchived(false);
         return defaultChannel;
+    }
+
+    private boolean allowDuplicateChannelName(Channel channel) {
+        return channel.getExercise() != null || channel.getLecture() != null || channel.getExam() != null;
     }
 }
