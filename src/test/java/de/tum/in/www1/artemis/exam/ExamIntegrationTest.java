@@ -630,7 +630,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 // No initial submissions should be created for programming exercises
                 assertThat(participation.getSubmissions()).isEmpty();
                 assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isTrue();
-                verify(versionControlService, times(0)).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
+                verify(versionControlService, never()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
             }
         }
 
@@ -3075,7 +3075,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
 
-        verify(gitService, times(0)).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
 
         // invoke prepare exercise start
         prepareExerciseStart(exam1);

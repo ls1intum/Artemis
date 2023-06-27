@@ -248,7 +248,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setExerciseIds(new Long[] { firstExerciseId });
         assertThat(postsBelongingToFirstExercise).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
 
@@ -326,7 +326,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // assertThat(existingPostsAndConversationPosts.size()).isEqualTo(postRepository.count());
 
         assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore);
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
     @Test
@@ -360,7 +360,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(sizeBefore);
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
     @Test
@@ -373,7 +373,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setCourseWideContext(CourseWideContext.RANDOM);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewCoursePost(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewCoursePost(any(), any());
     }
 
     @Test

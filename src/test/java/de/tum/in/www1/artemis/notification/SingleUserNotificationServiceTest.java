@@ -248,7 +248,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
-        verify(messagingTemplate, times(0)).convertAndSend(any());
+        verify(messagingTemplate, never()).convertAndSend(any());
     }
 
     /**

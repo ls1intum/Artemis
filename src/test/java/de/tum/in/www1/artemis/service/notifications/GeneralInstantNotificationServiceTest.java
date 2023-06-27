@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,7 +92,7 @@ class GeneralInstantNotificationServiceTest {
 
         verify(applePushNotificationService).sendNotification(notification, student1, null);
         verify(firebasePushNotificationService).sendNotification(notification, student1, null);
-        verify(mailService, times(0)).sendNotification(notification, student1, null);
+        verify(mailService, never()).sendNotification(notification, student1, null);
     }
 
     /**
@@ -108,8 +107,8 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, student1, null);
 
-        verify(applePushNotificationService, times(0)).sendNotification(notification, student1, null);
-        verify(firebasePushNotificationService, times(0)).sendNotification(notification, student1, null);
+        verify(applePushNotificationService, never()).sendNotification(notification, student1, null);
+        verify(firebasePushNotificationService, never()).sendNotification(notification, student1, null);
         verify(mailService).sendNotification(notification, student1, null);
     }
 
