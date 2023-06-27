@@ -112,6 +112,10 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     private Instant lastModifiedDate;
 
+    @OneToOne
+    @JoinColumn(name = "review_note", referencedColumnName = "id")
+    private ReviewNote reviewNote;
+
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
     // at this point of time but the required test case name would be lost, otherwise.

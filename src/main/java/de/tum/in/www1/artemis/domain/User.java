@@ -180,6 +180,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<DataExport> dataExports = new HashSet<>();
 
+    @OneToOne(mappedBy = "jhi_user", fetch = FetchType.LAZY)
+    private ReviewNote note;
+
     public String getLogin() {
         return login;
     }
