@@ -401,4 +401,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
+
+    it('should recalculate text block refs correctly', () => {
+        component.recalculateTextBlockRefs();
+        fixture.detectChanges();
+
+        // Expectations based on the new state of component.textBlockRefs and component.unusedTextBlockRefs
+        expect(component.textBlockRefs).toHaveLength(3);
+        expect(component.unusedTextBlockRefs).toHaveLength(0);
+    });
 });
