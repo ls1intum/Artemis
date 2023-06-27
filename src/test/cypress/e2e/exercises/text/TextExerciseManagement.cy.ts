@@ -14,7 +14,7 @@ import {
 import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import dayjs from 'dayjs/esm';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 
 describe('Text exercise management', () => {
@@ -23,7 +23,7 @@ describe('Text exercise management', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
         });
     });
 
