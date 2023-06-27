@@ -115,11 +115,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             localStorage.setItem('widgetWidth', chatWidget.style.width);
             localStorage.setItem('widgetHeight', chatWidget.style.height);
         });
-        this.toggleScrollLock(false);
     }
 
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
+        this.toggleScrollLock(false);
     }
 
     animateDots() {
