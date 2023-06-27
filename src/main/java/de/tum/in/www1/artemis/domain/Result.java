@@ -112,7 +112,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     private Instant lastModifiedDate;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "review_note", referencedColumnName = "id")
     private ReviewNote reviewNote;
 
