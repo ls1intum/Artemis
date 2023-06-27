@@ -27,6 +27,8 @@ export class TitleChannelNameComponent implements OnInit {
         }
 
         if (this.initChannelName) {
+            // Defer updating the channel name into the next change detection cycle to avoid the
+            // "NG0100: Expression has changed after it was checked" error
             setTimeout(() => {
                 let defaultChannelName = this.channelNamePrefix + (this.title ?? '');
                 defaultChannelName = defaultChannelName.replace(/[\s-]+/g, '-');
