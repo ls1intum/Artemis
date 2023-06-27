@@ -16,6 +16,7 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() emphasizeLabels = false;
     @Input() hideChannelName?: boolean;
     @Input() minTitleLength: number;
+    @Input() initChannelName = true;
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
@@ -23,6 +24,14 @@ export class TitleChannelNameComponent implements OnInit {
     ngOnInit(): void {
         if (!this.channelNamePrefix) {
             this.channelNamePrefix = '';
+        }
+
+        if (this.initChannelName) {
+            setTimeout(() => {
+                let defaultChannelName = this.channelNamePrefix + (this.title ?? '');
+                defaultChannelName = defaultChannelName.replace(/[\s-]+/g, '-');
+                this.formatChannelName(defaultChannelName);
+            });
         }
     }
 
