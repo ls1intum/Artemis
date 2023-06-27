@@ -19,10 +19,6 @@ import {
 } from '../../support/artemis';
 import { admin, instructor, studentOne } from '../../support/users';
 
-// Common primitives
-const uid = generateUUID();
-const examTitle = 'exam' + uid;
-
 describe('Exam management', () => {
     let course: Course;
     let exam: Exam;
@@ -34,7 +30,7 @@ describe('Exam management', () => {
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
-            const examConfig = new ExamBuilder(course).title(examTitle).build();
+            const examConfig = new ExamBuilder(course).title('Exam ' + generateUUID()).build();
             courseManagementRequest.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
@@ -79,7 +75,7 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
-            const textExerciseTitle = 'text' + uid;
+            const textExerciseTitle = 'Text ' + generateUUID();
             textExerciseCreation.typeTitle(textExerciseTitle);
             textExerciseCreation.typeMaxPoints(10);
             textExerciseCreation.create().its('response.statusCode').should('eq', 201);
@@ -91,7 +87,7 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddQuizExercise(exerciseGroup.id!);
-            const quizExerciseTitle = 'quiz' + uid;
+            const quizExerciseTitle = 'Quiz ' + generateUUID();
             quizExerciseCreation.setTitle(quizExerciseTitle);
             quizExerciseCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
             quizExerciseCreation.saveQuiz().its('response.statusCode').should('eq', 201);
@@ -103,7 +99,7 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddModelingExercise(exerciseGroup.id!);
-            const modelingExerciseTitle = 'modeling' + uid;
+            const modelingExerciseTitle = 'Modeling ' + generateUUID();
             modelingExerciseCreation.setTitle(modelingExerciseTitle);
             modelingExerciseCreation.setPoints(10);
             modelingExerciseCreation.save().its('response.statusCode').should('eq', 201);
@@ -115,9 +111,11 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
-            const programmingExerciseTitle = 'programming' + uid;
+            const uid = generateUUID();
+            const programmingExerciseTitle = 'Programming ' + uid;
+            const programmingExerciseShortName = 'programming' + uid;
             programmingExerciseCreation.setTitle(programmingExerciseTitle);
-            programmingExerciseCreation.setShortName(programmingExerciseTitle);
+            programmingExerciseCreation.setShortName(programmingExerciseShortName);
             programmingExerciseCreation.setPackageName('de.test');
             programmingExerciseCreation.setPoints(10);
             programmingExerciseCreation.generate().its('response.statusCode').should('eq', 201);

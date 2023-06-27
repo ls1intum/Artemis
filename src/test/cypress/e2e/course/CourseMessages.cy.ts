@@ -9,15 +9,10 @@ import { generateUUID, titleLowercase } from '../../support/utils';
 
 describe('Course messages', () => {
     let course: Course;
-    let courseName: string;
-    let courseShortName: string;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addTutorToCourse(course, tutor);

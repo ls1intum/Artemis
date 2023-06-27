@@ -3,20 +3,14 @@ import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_ch
 import { courseManagementRequest, courseOverview } from '../../support/artemis';
 import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin } from '../../support/users';
-import { generateUUID } from '../../support/utils';
 import { QuizExercise } from '../../../../main/webapp/app/entities/quiz/quiz-exercise.model';
 
 describe('Course Exercise', () => {
     let course: Course;
-    let courseName: string;
-    let courseShortName: string;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });

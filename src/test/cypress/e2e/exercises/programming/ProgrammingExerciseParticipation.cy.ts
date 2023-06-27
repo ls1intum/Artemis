@@ -3,7 +3,6 @@ import { Course } from 'app/entities/course.model';
 import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
 import partiallySuccessful from '../../../fixtures/exercise/programming/partially_successful/submission.json';
 import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
-import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, programmingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
@@ -52,29 +51,4 @@ describe('Programming exercise participation', () => {
     after('Delete course', () => {
         courseManagementRequest.deleteCourse(course, admin);
     });
-
-    /**
-     * Creates a course and a programming exercise inside that course.
-     */
-    function setupCourseAndProgrammingExercise() {
-        cy.login(admin, '/');
-        courseManagementRequest.createCourse(true).then((response) => {
-            course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
-            courseManagementRequest.addStudentToCourse(course, studentThree);
-            courseManagementRequest.createProgrammingExercise({ course }).then((exerciseResponse) => {
-                exercise = exerciseResponse.body;
-            });
-        });
-    }
-
-    /**
-     * Makes a submission, which fails the CI build and asserts that this is highlighted in the UI.
-     */
-    function makeSubmission(exercise: ProgrammingExercise, submission: ProgrammingExerciseSubmission) {
-        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
-            programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
-        });
-    }
 });

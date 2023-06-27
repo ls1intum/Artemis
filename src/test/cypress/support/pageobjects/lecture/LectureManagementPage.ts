@@ -24,10 +24,6 @@ export class LectureManagementPage {
         return cy.get(`#lecture-${lectureId}`);
     }
 
-    openUnitsPage(lectureID: number) {
-        cy.get(`#lecture-${lectureID}`).find('#units').click();
-    }
-
     getLectureContainer() {
         return cy.get('#lecture-preview');
     }

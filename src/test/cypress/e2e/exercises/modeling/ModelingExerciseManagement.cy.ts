@@ -116,7 +116,7 @@ describe('Modeling Exercise Management', () => {
             });
         });
 
-        it('Deletes an existing text exercise', () => {
+        it('Deletes an existing Modeling exercise', () => {
             cy.login(instructor, '/');
             navigationBar.openCourseManagement();
             courseManagement.openExercisesOfCourse(course.id!);

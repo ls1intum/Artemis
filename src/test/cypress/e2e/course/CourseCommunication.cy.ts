@@ -17,8 +17,8 @@ describe('Course communication', () => {
         cy.login(admin);
 
         let uid = generateUUID();
-        let courseName = 'Cypress course' + uid;
-        let courseShortName = 'cypress' + uid;
+        const courseName = 'Course ' + uid;
+        const courseShortName = 'course' + uid;
         courseManagementRequest
             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
             .then((response) => {
@@ -30,15 +30,17 @@ describe('Course communication', () => {
             });
 
         uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
-            courseManagementRequest.addStudentToCourse(course, studentThree);
-        });
+        const courseWithMessagingName = 'Course ' + uid;
+        const courseWithMessagingShortName = 'course' + uid;
+        courseManagementRequest
+            .createCourse(false, courseWithMessagingName, courseWithMessagingShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
+            .then((response) => {
+                courseWithMessaging = convertModelAfterMultiPart(response);
+                courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
+                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
+                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
+                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentThree);
+            });
     });
 
     describe('Course overview communication', () => {
@@ -616,13 +618,8 @@ describe('Course communication', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (course.id) {
-            courseManagementRequest.deleteCourse(course, admin);
-        }
-        if (courseWithMessaging.id) {
-            courseManagementRequest.deleteCourse(courseWithMessaging, admin);
-        }
+    after('Delete Courses', () => {
+        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementRequest.deleteCourse(courseWithMessaging, admin);
     });
 });
