@@ -242,7 +242,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         postContextFilter.setConversationId(postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
-        Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
+        Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.NOT_FOUND);
         assertThat(notCreatedPost).isNull();
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 

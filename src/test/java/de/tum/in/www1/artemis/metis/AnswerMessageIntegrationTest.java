@@ -158,7 +158,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         var countBefore = answerPostRepository.count();
 
-        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.FORBIDDEN);
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.NOT_FOUND);
 
         assertThat(notCreatedAnswerPost).isNull();
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
