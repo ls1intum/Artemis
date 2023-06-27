@@ -96,4 +96,25 @@ describe('TitleChannelNameComponent', () => {
 
         expect(component.channelName).toBe('prefix-');
     }));
+
+    it('remove consecutive/alternating hyphens and spaces from channel name on init', fakeAsync(() => {
+        component.channelNamePrefix = '-- ----p ---';
+        component.title = '-- -  t--- -- ';
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.channelName).toBe('-p-t-');
+    }));
+
+    it("don't init channel name if not allowed", fakeAsync(() => {
+        component.channelNamePrefix = '-- ---- ---';
+        component.title = '-  --- -- ';
+        component.initChannelName = false;
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.channelName).toBeUndefined();
+    }));
 });
