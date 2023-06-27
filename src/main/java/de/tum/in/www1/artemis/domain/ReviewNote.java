@@ -24,6 +24,6 @@ public class ReviewNote extends DomainObject {
     @Column(name = "note")
     private String note;
 
-    @OneToOne(mappedBy = "review_note", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "review_note")
     private Result result;
 }
