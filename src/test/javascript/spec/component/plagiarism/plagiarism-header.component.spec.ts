@@ -13,11 +13,21 @@ import { HttpResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
+    let router: Router;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [RouterTestingModule],
+            declarations: [PlagiarismHeaderComponent],
+        }).compileComponents();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -31,6 +41,7 @@ describe('Plagiarism Header Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismHeaderComponent);
         comp = fixture.componentInstance;
+        router = TestBed.inject(Router);
 
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         comp.comparison = {
@@ -44,6 +55,16 @@ describe('Plagiarism Header Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should navigate to plagiarism cases', () => {
+        const exerciseId = 123;
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        comp.exercise = { course: { id: exerciseId } } as Exercise;
+
+        comp.navigateToPlagiarismCases();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management/' + exerciseId + '/plagiarism-cases']);
     });
 
     it('should confirm a plagiarism', () => {

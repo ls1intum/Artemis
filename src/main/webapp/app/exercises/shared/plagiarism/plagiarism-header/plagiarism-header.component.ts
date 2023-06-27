@@ -12,6 +12,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -26,7 +27,7 @@ export class PlagiarismHeaderComponent {
     readonly plagiarismStatus = PlagiarismStatus;
     disableConfirmDenyButton = false;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal, public router: Router) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
@@ -44,6 +45,14 @@ export class PlagiarismHeaderComponent {
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
         }
+    }
+
+    /**
+     *  Goes to Plagiarism-Cases for the specific exercise.
+     */
+
+    navigateToPlagiarismCases() {
+        this.router.navigate(['course-management/' + this.exercise.course?.id + '/plagiarism-cases']);
     }
 
     private askForConfirmationOfDenying(onConfirm: () => void) {
