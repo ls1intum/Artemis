@@ -67,7 +67,7 @@ public class TutorialGroupNotification extends Notification {
      * @param userId id of user that should be notified
      * @return the channel
      */
-    public String getTopic(Long userId) {
+    public String getTopic(long userId) {
         return "/topic/user/" + userId + "/notifications/tutorial-groups";
     }
 
