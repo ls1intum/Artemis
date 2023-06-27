@@ -55,7 +55,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     fullSize = localStorage.getItem('fullSize') === 'true';
     widgetWidth = localStorage.getItem('widgetWidth') || `${this.initialWidth}px`;
     widgetHeight = localStorage.getItem('widgetHeight') || `${this.initialHeight}px`;
-    public ButtonType = ButtonType;
+    ButtonType = ButtonType;
 
     constructor(
         private dialog: MatDialog,
@@ -85,7 +85,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     ngOnInit() {
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
-                this.userAccepted = localStorage.getItem(user!.login) == 'true';
+                this.userAccepted = localStorage.getItem(user!.login) == 'true' || this.userAccepted;
             }
         });
         this.animateDots();
@@ -95,6 +95,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
+
+            if (this.messages.length > 0) {
+                this.userAccepted = true;
+            }
         });
     }
 
