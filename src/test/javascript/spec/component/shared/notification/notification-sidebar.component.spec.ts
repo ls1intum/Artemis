@@ -244,6 +244,34 @@ describe('Notification Sidebar Component', () => {
             notification.click();
             expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
+
+        it('should load notifications if none are present', () => {
+            jest.spyOn(notificationSidebarComponent, 'loadNotifications');
+            notificationSidebarComponent.page = 0;
+            notificationSidebarComponent.toggleSidebar();
+            expect(notificationSidebarComponent.loadNotifications).toHaveBeenCalledOnce();
+        });
+
+        it('should not load notifications if some are present', () => {
+            jest.spyOn(notificationSidebarComponent, 'loadNotifications');
+            notificationSidebarComponent.page = 42;
+            notificationSidebarComponent.toggleSidebar();
+            expect(notificationSidebarComponent.loadNotifications).not.toHaveBeenCalled();
+        });
+
+        it('should update last notification read if some new notifications exist', () => {
+            jest.spyOn(notificationSidebarComponent, 'updateLastNotificationRead');
+            notificationSidebarComponent.recentNotificationCount = 42;
+            notificationSidebarComponent.toggleSidebar();
+            expect(notificationSidebarComponent.updateLastNotificationRead).toHaveBeenCalledOnce();
+        });
+
+        it('should not update last notification read if no new notifications exist', () => {
+            jest.spyOn(notificationSidebarComponent, 'updateLastNotificationRead');
+            notificationSidebarComponent.recentNotificationCount = 0;
+            notificationSidebarComponent.toggleSidebar();
+            expect(notificationSidebarComponent.updateLastNotificationRead).not.toHaveBeenCalled();
+        });
     });
 
     describe('Notification click', () => {
