@@ -78,7 +78,7 @@
                 [disabled]="!userAccepted || isLoading"
                 [(ngModel)]="newMessageTextContent"
                 (input)="onInput()"
-                (paste)="onPaste($event)"
+                (paste)="onPaste()"
                 (ngModelChange)="onRowChange()"
                 type="text"
                 rows="1"
