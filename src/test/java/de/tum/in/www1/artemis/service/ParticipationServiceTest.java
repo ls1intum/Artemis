@@ -22,12 +22,16 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -51,16 +55,31 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private AutoCloseable closeable;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 3, 0, 0, 1);
-        Course course = database.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        this.programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         // TODO: is this actually needed?
         closeable = MockitoAnnotations.openMocks(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
@@ -83,7 +102,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        mockCreationOfExerciseParticipation(false, null);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();
@@ -97,9 +116,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartExerciseWithInitializationDate_newParticipation() {
-        Course course = database.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
-        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
+        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
 
         StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
@@ -114,15 +133,15 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
-        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
-        mockCreationOfExerciseParticipation(false, null);
+        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
+        exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
         StudentParticipation practiceParticipation = participationService.startPracticeMode(programmingExercise, participant, Optional.empty(), false);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
-        database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
+        exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
         StudentParticipation studentParticipationReceived = participationService.startExercise(programmingExercise, participant, true);
 
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
@@ -134,9 +153,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartExercise_newParticipation() {
-        Course course = database.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
-        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
+        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
 
@@ -153,11 +172,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
-        database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
-        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
-        Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
+        exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
+        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult);
+        participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, urlService, versionControlService,
+                continuousIntegrationService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
                 Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
@@ -175,26 +195,26 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteParticipation_removesBuildLogEntries() {
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Setup: Create participation, submission and build log entries for template, solution and student
-        var templateParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        var templateSubmission = database.createProgrammingSubmission(templateParticipation, true);
+        var templateParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
         BuildLogEntry buildLogEntryTemplate = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var templateSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryTemplate), templateSubmission);
         templateSubmission.setBuildLogEntries(templateSavedBuildLogs);
         programmingSubmissionRepository.save(templateSubmission);
 
-        var solutionParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        var solutionSubmission = database.createProgrammingSubmission(solutionParticipation, true);
+        var solutionParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
         BuildLogEntry buildLogEntrySolution = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var solutionSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntrySolution), solutionSubmission);
         solutionSubmission.setBuildLogEntries(solutionSavedBuildLogs);
         programmingSubmissionRepository.save(solutionSubmission);
 
-        var studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var studentSubmission = database.createProgrammingSubmission(studentParticipation, true);
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var studentSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true);
         BuildLogEntry buildLogEntryStudent = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var studentSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryStudent), studentSubmission);
         studentSubmission.setBuildLogEntries(studentSavedBuildLogs);
@@ -212,24 +232,5 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isPresent();
         participationService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
         assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isEmpty();
-    }
-
-    private void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult) throws URISyntaxException {
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
-        String templateRepoName;
-        if (useGradedParticipationOfResult) {
-            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUrl());
-        }
-        else {
-            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl());
-        }
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class));
-        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
-        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
-        doNothing().when(versionControlService).addWebHookForParticipation(any());
     }
 }

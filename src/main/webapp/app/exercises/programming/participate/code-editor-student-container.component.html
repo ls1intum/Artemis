@@ -35,7 +35,7 @@
                 ></jhi-included-in-score-badge
             ></span>
         </div>
-        <div submissionPolicy *ngIf="exercise.submissionPolicy && numberOfSubmissionsForSubmissionPolicy !== undefined">
+        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined">
             <br />
             <span>
                 {{

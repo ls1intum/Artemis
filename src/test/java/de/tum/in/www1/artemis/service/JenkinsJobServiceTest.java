@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -33,6 +34,9 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private JenkinsJobService jenkinsJobService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private static MockedStatic<XmlFileUtils> mockedXmlFileUtils;
 
@@ -42,7 +46,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly

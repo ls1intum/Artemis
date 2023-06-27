@@ -11,7 +11,6 @@ import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,6 +18,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.LspException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -154,7 +155,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
         return super.getFiles(participationId);
     }
@@ -168,7 +169,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
      */
     @GetMapping(value = "/repository/{participationId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
@@ -183,7 +184,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.getFile(participationId, filename);
     }
@@ -197,7 +198,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and a map of files with their content
      */
     @GetMapping(value = "/repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
@@ -213,7 +214,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and a set of file names
      */
     @GetMapping(value = "/repository/{participationId}/file-names", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<String>> getFileNames(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
@@ -227,7 +228,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(participationId, filename, request);
     }
@@ -235,7 +236,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(participationId, folderName, request);
     }
@@ -243,7 +244,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove, @RequestParam(required = false) String monacoServerUrl) {
         ResponseEntity<Void> response = super.renameFile(participationId, fileMove);
         if (monacoServerUrl != null && !monacoServerUrl.isEmpty()) {
@@ -259,7 +260,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename, @RequestParam(required = false) String monacoServerUrl) {
         ResponseEntity<Void> response = super.deleteFile(participationId, filename);
         if (monacoServerUrl != null && !monacoServerUrl.isEmpty()) {
@@ -275,7 +276,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
         return super.pullChanges(participationId);
     }
@@ -290,7 +291,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/repository/{participationId}/files")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit, @RequestParam(required = false) String LSPServerUrl) {
 
@@ -319,7 +320,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         catch (AccessForbiddenException e) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
+            FileSubmissionError error = new FileSubmissionError(participationId, e.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
 
@@ -350,7 +351,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
         return super.commitChanges(participationId);
     }
@@ -358,14 +359,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
         return super.resetToLastCommit(participationId);
     }
 
     @Override
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException {
         return super.getStatus(participationId);
     }
@@ -380,7 +381,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     // TODO: rename to participation/{participationId}/buildlogs
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build log : {}", participationId);
 

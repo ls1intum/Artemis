@@ -6,7 +6,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-paging.service';
+import { CompetencyPagingService } from 'app/course/competencies/competency-paging.service';
 
 export enum TableColumn {
     ID = 'ID',
@@ -43,7 +43,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
 
     @Input() public disabledIds: number[];
 
-    constructor(private router: Router, public pagingService: LearningGoalPagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
+    constructor(private router: Router, public pagingService: CompetencyPagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     get page(): number {
         return this.state.page;

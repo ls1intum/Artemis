@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Fail.fail;
@@ -49,6 +49,9 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -61,10 +64,16 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 public class LocalVCLocalCITestService {
 
     @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -77,6 +86,28 @@ public class LocalVCLocalCITestService {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getRepositorySlug(String projectKey, String repositoryTypeOrUserName) {
+        return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
+    }
+
+    /**
+     * Create a participation for a given user in a given programming exercise.
+     *
+     * @param programmingExercise the programming exercise.
+     * @param userLogin           the user login.
+     * @return the participation.
+     */
+    public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, String userLogin) {
+        String projectKey = programmingExercise.getProjectKey();
+        String repositorySlug = getRepositorySlug(projectKey, userLogin);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
+        participation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
+        participation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(participation);
+
+        return participation;
     }
 
     /**

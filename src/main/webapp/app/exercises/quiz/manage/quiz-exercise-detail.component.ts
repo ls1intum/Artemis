@@ -44,7 +44,7 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 })
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')
-    quizQuestionsEditComponent: QuizQuestionListEditComponent;
+    quizQuestionListEditComponent: QuizQuestionListEditComponent;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -217,6 +217,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
+            if (!this.isExamMode) {
+                if (this.quizExercise.id == undefined && this.quizExercise.channelName == undefined) {
+                    this.quizExercise.channelName = '';
+                }
+            }
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
@@ -397,12 +402,17 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
 
         Exercise.sanitize(this.quizExercise);
+        const filesMap = this.quizQuestionListEditComponent.fileMap;
+        const files = new Map<string, Blob>();
+        filesMap.forEach((value, key) => {
+            files.set(key, value.file);
+        });
 
         this.isSaving = true;
-        this.quizQuestionsEditComponent.parseAllQuestions();
+        this.quizQuestionListEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
-                this.quizExerciseService.import(this.quizExercise).subscribe({
+                this.quizExerciseService.import(this.quizExercise, files).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         if (quizExerciseResponse.body) {
                             this.onSaveSuccess(quizExerciseResponse.body);
@@ -410,14 +420,14 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.onSaveError();
                         }
                     },
-                    error: () => this.onSaveError(),
+                    error: (error) => this.onSaveError(error),
                 });
             } else {
                 const requestOptions = {} as any;
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }
-                this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe({
+                this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         this.notificationText = undefined;
                         if (quizExerciseResponse.body) {
@@ -426,11 +436,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.onSaveError();
                         }
                     },
-                    error: () => this.onSaveError(),
+                    error: (error) => this.onSaveError(error),
                 });
             }
         } else {
-            this.quizExerciseService.create(this.quizExercise).subscribe({
+            this.quizExerciseService.create(this.quizExercise, files).subscribe({
                 next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);
@@ -438,7 +448,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.onSaveError();
                     }
                 },
-                error: () => this.onSaveError(),
+                error: (error) => this.onSaveError(error),
             });
         }
     }
@@ -474,7 +484,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /**
      * Callback function for when the save fails
      */
-    private onSaveError = (): void => {
+    private onSaveError = (errorRes?: HttpErrorResponse): void => {
+        if (errorRes?.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        }
         console.error('Saving Quiz Failed! Please try again later.');
         this.alertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;
@@ -583,6 +596,16 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     handleQuestionChanged() {
+        this.cacheValidation();
+    }
+
+    updateChannelName(newName: string) {
+        this.quizExercise.channelName = newName;
+        this.cacheValidation();
+    }
+
+    updateTitle(newTitle: string) {
+        this.quizExercise.title = newTitle;
         this.cacheValidation();
     }
 }

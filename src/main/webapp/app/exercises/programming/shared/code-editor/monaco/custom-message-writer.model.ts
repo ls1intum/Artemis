@@ -44,19 +44,19 @@ export class CustomWebSocketMessageWriter extends WebSocketMessageWriter {
             case 'textDocument/documentLink': // Disable because of AST error in Clang
                 return;
             case 'textDocument/codeLens':
-                this.debounce(msg, 1000);
+                this.debounce(msg, 500);
                 return;
             case 'textDocument/hover':
-                this.debounce(msg, 1000);
+                this.debounce(msg, 500);
                 return;
             case 'textDocument/didChange':
-                this.handleDidChange(msg as DidChangeRequestMessage, 2000);
+                this.handleDidChange(msg as DidChangeRequestMessage, 1000);
                 return;
             case 'textDocument/completion':
-                this.debounce(msg, 1000);
+                this.debounce(msg, 500);
                 return;
             case 'textDocument/codeAction':
-                this.debounce(msg, 1000);
+                this.debounce(msg, 500);
                 return;
             default:
                 this.send(msg);

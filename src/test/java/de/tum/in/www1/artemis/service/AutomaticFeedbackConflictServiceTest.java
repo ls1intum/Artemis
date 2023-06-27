@@ -16,9 +16,11 @@ import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -48,12 +50,18 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Autowired
     private ResultService resultService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
     private TextExercise textExercise;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 1, 0, 0);
-        textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 0);
+        textExercise = (TextExercise) textExerciseUtilService.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();
 
         feedbackConflictRepository.deleteAll(); // TODO: This should be improved by better tests that do not rely on an empty repository
@@ -62,6 +70,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @AfterEach
     void tearDown() throws Exception {
         atheneRequestMockProvider.reset();
+        super.resetSpyBeans();
     }
 
     /**
@@ -72,10 +81,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createFeedbackConflicts() {
-        TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
-        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
-        database.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student1");
+        TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
+        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -83,8 +92,8 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         final TextBlock textBlock1 = new TextBlock().startIndex(0).endIndex(21).automatic().cluster(cluster);
         final TextBlock textBlock2 = new TextBlock().startIndex(0).endIndex(22).automatic().cluster(cluster);
 
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
 
         cluster.blocks(List.of(textBlock1, textBlock2));
         textClusterRepository.save(cluster);
@@ -92,10 +101,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
         Feedback feedback2 = new Feedback().detailText("Good answer").credits(2D).reference(textBlock2.getId());
 
-        textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-                List.of(feedback1));
-        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1",
-                List.of(feedback2));
+        textSubmission1 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", List.of(feedback1));
+        textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
+                TEST_PREFIX + "tutor1", List.of(feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         feedback1 = textSubmission1.getLatestResult().getFeedbacks().get(0);
@@ -120,24 +129,24 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     void changedFeedbackConflictsType() {
         long feedbackConflictCountBefore = feedbackConflictRepository.count();
 
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
 
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), textSubmission);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), textSubmission);
 
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
         Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+        textSubmission = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         Feedback updatedFeedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
         Feedback updatedFeedback2 = textSubmission.getLatestResult().getFeedbacks().get(1);
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(updatedFeedback1, updatedFeedback2);
+        FeedbackConflict feedbackConflict = ParticipationFactory.generateFeedbackConflictBetweenFeedbacks(updatedFeedback1, updatedFeedback2);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
 
@@ -166,24 +175,24 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void solveFeedbackConflicts() {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
 
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), textSubmission);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), textSubmission);
 
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
         Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+        textSubmission = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         feedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
         feedback2 = textSubmission.getLatestResult().getFeedbacks().get(1);
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
+        FeedbackConflict feedbackConflict = ParticipationFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
         atheneRequestMockProvider.mockFeedbackConsistency(List.of());
@@ -237,14 +246,14 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     }
 
     private TextSubmission createTextSubmissionWithResultFeedbackAndConflicts() {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D);
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+        textSubmission = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
                 List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getLatestResult().getFeedbacks().get(0),
+        FeedbackConflict feedbackConflict = ParticipationFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getLatestResult().getFeedbacks().get(0),
                 textSubmission.getLatestResult().getFeedbacks().get(1));
         feedbackConflictRepository.save(feedbackConflict);
         return textSubmission;
