@@ -9,7 +9,7 @@
             id="submit-modeling-submission"
             *ngIf="isOwnerOfParticipation"
             [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
-            [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+            [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
             (onClick)="submit()"
             [isLoading]="isSaving"
             [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"

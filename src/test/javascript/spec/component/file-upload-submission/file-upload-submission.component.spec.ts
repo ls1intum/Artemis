@@ -23,7 +23,6 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -48,7 +47,6 @@ describe('FileUploadSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let debugElement: DebugElement;
     let router: Router;
-    let fileUploaderService: FileUploaderService;
     let alertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
@@ -89,7 +87,6 @@ describe('FileUploadSubmissionComponent', () => {
                 fixture.ngZone!.run(() => {
                     router.initialNavigation();
                 });
-                fileUploaderService = TestBed.inject(FileUploaderService);
                 alertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
@@ -131,7 +128,6 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         let submitFileButton = debugElement.query(By.css('jhi-button'));
-        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
         submitFileButton.nativeElement.click();
         comp.submission!.submitted = true;
         comp.result = new Result();
@@ -203,7 +199,7 @@ describe('FileUploadSubmissionComponent', () => {
         flush();
     }));
 
-    it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
@@ -222,7 +218,7 @@ describe('FileUploadSubmissionComponent', () => {
         flush();
     }));
 
-    it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
+    it('should allow to submit after the due date if the initialization date is after the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
@@ -371,7 +367,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submitExercise();
 
         expect(comp.isActive).toBeFalse();
-        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
 
         submission.participation.exercise = undefined;
         comp.ngOnInit();
@@ -379,7 +375,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submitExercise();
 
         expect(comp.isActive).toBeFalse();
-        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
     });
 
     it('should set file name and type correctly', () => {

@@ -13,8 +13,8 @@ import org.hibernate.annotations.Cache;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.Competency;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 
 @Entity
 @DiscriminatorValue("E")
