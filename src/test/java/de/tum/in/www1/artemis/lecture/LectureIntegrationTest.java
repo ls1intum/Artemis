@@ -184,14 +184,17 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
-        originalLecture.setChannelName(uniqueChannelName);
+        String channelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        // create channel with same name
+        conversationUtilService.createChannel(originalLecture.getCourse(), channelName);
+        originalLecture.setChannelName(channelName);
+        // lecture channel should be updated despite another channel with the same name
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
         Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
 
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo(uniqueChannelName);
+        assertThat(channel.getName()).isEqualTo(channelName);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }
