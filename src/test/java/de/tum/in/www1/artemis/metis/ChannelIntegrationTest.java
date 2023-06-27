@@ -309,6 +309,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void updateChannel_asUserWithChannelModerationRights_shouldUpdateChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX + "1");
+        var channelForDuplicateCheck = createChannel(isPublicChannel, TEST_PREFIX + "duplicate");
         var updateDTO = new ChannelDTO();
         updateDTO.setName(TEST_PREFIX + "2");
         updateDTO.setDescription("new description");
@@ -323,6 +324,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         resetWebsocketMock();
+        // The channel name can not be modified if it matches another existing channel
+        updateDTO.setName(channelForDuplicateCheck.getName());
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // channel moderators can also update the channel
         updateDTO.setName(TEST_PREFIX + "3");
@@ -333,6 +337,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        // The channel name can not be modified if it matches another existing channel
+        updateDTO.setName(channelForDuplicateCheck.getName());
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
