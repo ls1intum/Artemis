@@ -508,7 +508,7 @@ export class CourseManagementService {
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
-        this.setLearningGoalsIfNone(courseRes);
+        this.setCompetenciesIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
@@ -643,7 +643,7 @@ export class CourseManagementService {
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
-    private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
+    private setCompetenciesIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];

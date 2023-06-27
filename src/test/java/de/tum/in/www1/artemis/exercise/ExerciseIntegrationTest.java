@@ -751,7 +751,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestDueDateWhenNoIndividualDeadline() throws Exception {
+    void testGetLatestDueDateWhenNoIndividualDueDate() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");

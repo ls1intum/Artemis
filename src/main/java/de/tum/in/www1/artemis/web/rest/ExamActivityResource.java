@@ -6,13 +6,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -61,7 +61,7 @@ public class ExamActivityResource {
      * @return all exam actions of the exam
      */
     @GetMapping("api/exam-monitoring/{examId}/load-actions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
         return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
     }
@@ -75,7 +75,7 @@ public class ExamActivityResource {
      * @return all exam actions of the exam
      */
     @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ExamLiveStatistics)
     public ResponseEntity<Boolean> updateMonitoring(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean monitoring) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

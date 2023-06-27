@@ -9,6 +9,7 @@ export abstract class Posting implements BaseEntity {
     public author?: User;
     public authorRole?: UserRole;
     public creationDate?: dayjs.Dayjs;
+    public updatedDate?: dayjs.Dayjs;
     public content?: string;
     public reactions?: Reaction[];
 }

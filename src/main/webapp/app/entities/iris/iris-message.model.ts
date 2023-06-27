@@ -29,6 +29,6 @@ export function isServerSentMessage(message: IrisMessage): message is IrisServer
     return message.sender === IrisSender.ARTEMIS || message.sender === IrisSender.LLM;
 }
 
-export function isStudentSentMessage(message: IrisMessage): message is IrisServerMessage {
+export function isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
     return message.sender === IrisSender.USER;
 }

@@ -57,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -84,6 +84,9 @@ jobs:
         name: H2 Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
+    - name: Number of Server Starts
+      if: success() || failure()
+      run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-mysql:
       needs: [ server-tests ]
@@ -125,6 +128,9 @@ jobs:
                 name: MySQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-postgres:
       needs: [ server-tests ]
@@ -166,6 +172,9 @@ jobs:
                 name: PostgreSQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-style:
     runs-on: ubuntu-latest
