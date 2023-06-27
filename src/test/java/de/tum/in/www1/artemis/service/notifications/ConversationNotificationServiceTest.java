@@ -102,7 +102,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         post = conversationMessageRepository.save(post);
 
         conversationNotificationService.notifyAboutNewMessage(post);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());

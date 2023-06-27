@@ -231,7 +231,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
     /**
@@ -251,7 +251,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         examExercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(examExercise, null);
-        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
     /**
@@ -263,7 +263,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
     /// CheckNotificationForExerciseRelease
@@ -274,7 +274,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
         groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(groupNotificationService, timeout(1500).times(1)).notifyAllGroupsAboutReleasedExercise(any());
+        verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
@@ -284,7 +284,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(groupNotificationService, timeout(1500).times(1)).notifyAllGroupsAboutReleasedExercise(any());
+        verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
@@ -294,7 +294,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(instanceMessageSendService, timeout(1500).times(1)).sendExerciseReleaseNotificationSchedule(any());
+        verify(instanceMessageSendService, timeout(1500)).sendExerciseReleaseNotificationSchedule(any());
     }
 
     /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
@@ -312,7 +312,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT);
 
-        verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyAboutExerciseUpdate(any(), any());
 
         // Exercise Released Notifications
         verify(groupNotificationService, times(expectNotifyAboutExerciseReleaseNow ? 1 : 0)).notifyAllGroupsAboutReleasedExercise(any());
