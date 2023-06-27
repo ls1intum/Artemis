@@ -98,7 +98,7 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
      */
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
         log.debug("REST request to generate description with Iris for CodeHint: {}", codeHintId);
 
