@@ -441,7 +441,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo("change-imported-lecture-" + lecture.getId()); // default name of imported lecture channel
+        assertThat(channel.getName()).isEqualTo("lecture-" + lecture.getTitle().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
 
         // Check that the conversation participants are added correctly to the lecture channel
         await().until(() -> {
