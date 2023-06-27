@@ -112,13 +112,13 @@ jobs:
           - name: Count failed tests
             id: failedTestCounter
             if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*) FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*) FAILED" | wc -l)" >> $GITHUB_OUTPUT
           - name: Report action
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - MySQL'
-                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test/s'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Test Report
@@ -156,13 +156,13 @@ jobs:
           - name: Count failed tests
             id: failedTestCounter
             if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*) FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*) FAILED" | wc -l)" >> $GITHUB_OUTPUT
           - name: Report action
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - PostgreSQL'
-                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test/s'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Test Report
