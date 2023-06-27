@@ -40,7 +40,7 @@ describe('Quiz Exercise Management', () => {
             quizExerciseCreation.addShortAnswerQuestion(title);
             quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
-                cy.contains(quizQuestionTitle).should('be.visible');
+                cy.contains(title).should('be.visible');
             });
         });
 

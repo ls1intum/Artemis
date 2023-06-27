@@ -31,7 +31,7 @@ describe('Programming exercise assessment', () => {
     before('Creates a programming exercise and makes a student submission', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addInstructorToCourse(course, instructor);

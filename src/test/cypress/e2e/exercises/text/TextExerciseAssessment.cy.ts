@@ -27,7 +27,7 @@ describe('Text exercise assessment', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addInstructorToCourse(course, instructor);

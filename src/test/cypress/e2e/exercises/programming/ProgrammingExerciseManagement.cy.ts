@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
 import { generateUUID } from '../../../support/utils';
-import { PROGRAMMING_EXERCISE_BASE, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 
 describe('Programming Exercise Management', () => {

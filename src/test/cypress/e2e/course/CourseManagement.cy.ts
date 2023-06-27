@@ -213,7 +213,7 @@ describe('Course management', () => {
         beforeEach(() => {
             cy.login(admin, '/');
             courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
-                course = convertCourseAfterMultiPart(response);
+                course = convertModelAfterMultiPart(response);
             });
         });
 
@@ -248,7 +248,7 @@ describe('Course management', () => {
         before(() => {
             cy.login(admin);
             courseManagementRequest.createCourse().then((response) => {
-                course = convertCourseAfterMultiPart(response);
+                course = convertModelAfterMultiPart(response);
             });
         });
 

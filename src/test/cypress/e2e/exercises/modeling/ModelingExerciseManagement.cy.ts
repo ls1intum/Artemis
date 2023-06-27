@@ -2,7 +2,15 @@ import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
-import { courseManagementExercises, courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
+import {
+    courseManagement,
+    courseManagementExercises,
+    courseManagementRequest,
+    modelingExerciseAssessment,
+    modelingExerciseCreation,
+    modelingExerciseEditor,
+    navigationBar,
+} from '../../../support/artemis';
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from 'src/test/cypress/support/utils';

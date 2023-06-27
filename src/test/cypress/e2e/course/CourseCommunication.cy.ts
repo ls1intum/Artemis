@@ -11,7 +11,7 @@ import { Channel } from '../../../../main/webapp/app/entities/metis/conversation
 
 describe('Course communication', () => {
     let course: Course;
-    let courseId: number;
+    let courseWithMessaging: Course;
 
     before('Create course', () => {
         cy.login(admin);
@@ -619,10 +619,10 @@ describe('Course communication', () => {
     after('Delete Course', () => {
         cy.login(admin);
         if (course.id) {
-            courseManagementRequest.deleteCourse(course.id!);
+            courseManagementRequest.deleteCourse(course, admin);
         }
         if (courseWithMessaging.id) {
-            courseManagementRequest.deleteCourse(courseWithMessaging.id).its('status').should('eq', 200);
+            courseManagementRequest.deleteCourse(courseWithMessaging, admin);
         }
     });
 });

@@ -20,7 +20,7 @@ describe('Modeling Exercise Assessment', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addInstructorToCourse(course, instructor);
