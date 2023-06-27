@@ -75,21 +75,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     loadFirstMessage(): void {
+        const firstMessageContent = {
+            textContent: 'artemisApp.exerciseChatbot.firstMessage',
+            type: IrisMessageContentType.TEXT,
+        } as IrisMessageContent;
+
+        const firstMessage = {
+            sender: IrisSender.LLM,
+            id: 0,
+            content: [firstMessageContent],
+            sentAt: dayjs(),
+        } as IrisServerMessage;
+
         if (this.messages.length === 0) {
             this.isFirstMessage = true;
-            const firstMessageContent = {
-                textContent: 'artemisApp.exerciseChatbot.firstMessage',
-                type: IrisMessageContentType.TEXT,
-            } as IrisMessageContent;
-
-            const firstMessage = {
-                sender: IrisSender.LLM,
-                id: 0,
-                content: [firstMessageContent],
-                sentAt: dayjs(),
-            } as IrisServerMessage;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
+        } else if (this.messages[0].id === 0) {
+            this.isFirstMessage = true;
         }
+        console.log(this.isFirstMessage);
     }
 
     onSend(): void {
