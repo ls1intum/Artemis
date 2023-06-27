@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -15,9 +15,9 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     courseId: number;
 
     isLoading = false;
-    prerequisites: LearningGoal[] = [];
+    prerequisites: Competency[] = [];
 
-    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private learningGoalService: LearningGoalService) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private competencyService: CompetencyService) {}
 
     ngOnInit(): void {
         if (this.courseId) {
@@ -31,7 +31,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
      */
     loadData() {
         this.isLoading = true;
-        this.learningGoalService
+        this.competencyService
             .getAllPrerequisitesForCourse(this.courseId)
             .pipe(
                 finalize(() => {
@@ -51,10 +51,10 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     /**
      * Calculates a unique identity for each competency card shown in the component
      * @param index The index in the list
-     * @param learningGoal The competency of the current iteration
+     * @param competency The competency of the current iteration
      */
-    identify(index: number, learningGoal: LearningGoal) {
-        return `${index}-${learningGoal.id}`;
+    identify(index: number, competency: Competency) {
+        return `${index}-${competency.id}`;
     }
 
     /**
