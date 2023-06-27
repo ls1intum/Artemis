@@ -14,13 +14,14 @@ import { lectureRoute } from 'app/lecture/lecture.route';
 import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
-import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
-import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
+import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -33,7 +34,8 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
-        ArtemisLearningGoalsModule,
+        ArtemisCompetenciesModule,
+        TitleChannelNameModule,
     ],
     declarations: [
         LectureComponent,
@@ -46,7 +48,7 @@ const ENTITY_STATES = [...lectureRoute];
         LectureUpdateWizardPeriodComponent,
         LectureUpdateWizardAttachmentsComponent,
         LectureUpdateWizardUnitsComponent,
-        LectureUpdateWizardLearningGoalsComponent,
+        LectureUpdateWizardCompetenciesComponent,
         LectureUpdateWizardStepComponent,
     ],
 })

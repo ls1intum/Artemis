@@ -12,12 +12,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -49,7 +50,7 @@ public class PostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/posts")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         Post createdPost = postService.createPost(courseId, post);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
@@ -65,7 +66,7 @@ public class PostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
         Post updatedPost = postService.updatePost(courseId, postId, post);
         return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
@@ -81,7 +82,7 @@ public class PostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
         Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
@@ -95,7 +96,7 @@ public class PostResource {
      *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @GetMapping("courses/{courseId}/posts/tags")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
         List<String> tags = postService.getAllCourseTags(courseId);
         return new ResponseEntity<>(tags, null, HttpStatus.OK);
@@ -111,7 +112,7 @@ public class PostResource {
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getPostsInCourse(@ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
             PostContextFilter postContextFilter) {
 
@@ -130,7 +131,7 @@ public class PostResource {
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @DeleteMapping("courses/{courseId}/posts/{postId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
         postService.deletePostById(courseId, postId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
@@ -144,7 +145,7 @@ public class PostResource {
      * @return ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/posts/similarity-check")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
         List<Post> similarPosts = postService.getSimilarPosts(courseId, post);
         return ResponseEntity.ok().body(similarPosts);

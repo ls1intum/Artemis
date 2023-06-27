@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 
