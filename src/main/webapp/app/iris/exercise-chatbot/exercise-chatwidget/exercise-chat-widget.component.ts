@@ -223,7 +223,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.adjustTextareaRows();
     }
 
-    onPaste(event: ClipboardEvent) {
+    onPaste() {
         setTimeout(() => {
             this.adjustTextareaRows();
         }, 0);
@@ -238,8 +238,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
         textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
 
-        if (Math.min(textarea.scrollHeight, maxHeight) / lineHeight > 2) this.adjustChatBodyHeight(Math.min(textarea.scrollHeight, maxHeight) / lineHeight);
-        this.onRowChange();
+        this.adjustChatBodyHeight(Math.min(textarea.scrollHeight, maxHeight) / lineHeight);
     }
 
     onRowChange() {
@@ -260,8 +259,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows;
-        scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
-        chatBody.style.height = `calc(100% - ${rowHeight}px - 77px)`;
+        setTimeout(() => {
+            scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
+        }, 10);
+        setTimeout(() => {
+            chatBody.style.height = `calc(100% - ${rowHeight}px - 64px)`;
+        }, 10);
     }
 
     resetChatBodyHeight() {
