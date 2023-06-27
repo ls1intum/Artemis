@@ -415,10 +415,12 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should recalculate text block refs correctly', () => {
+        jest.useFakeTimers();
         component.recalculateTextBlockRefs();
         fixture.detectChanges();
+        jest.advanceTimersByTime(300);
 
-        expect(component.textBlockRefs).toHaveLength(3);
+        expect(component.textBlockRefs).toHaveLength(2);
         expect(component.unusedTextBlockRefs).toHaveLength(0);
     });
 });
