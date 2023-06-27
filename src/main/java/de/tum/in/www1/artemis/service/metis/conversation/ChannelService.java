@@ -445,6 +445,11 @@ public class ChannelService {
         return defaultChannel;
     }
 
+    /**
+     * Determines whether duplicate channel names are allowed for the given channel
+     *
+     * @return true if the channel does not belong to a lecture/exercise/exam
+     */
     private boolean allowDuplicateChannelName(Channel channel) {
         return channel.getExercise() != null || channel.getLecture() != null || channel.getExam() != null;
     }
