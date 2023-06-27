@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { DELETE } from '../../../support/constants';
 import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
 import { generateUUID } from '../../../support/utils';
-import { PROGRAMMING_EXERCISE_BASE, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { PROGRAMMING_EXERCISE_BASE, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 
 describe('Programming Exercise Management', () => {
@@ -13,7 +13,7 @@ describe('Programming Exercise Management', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             expect(course).property('id').to.be.a('number');
         });
     });

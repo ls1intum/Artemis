@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { dayjsToString, generateUUID, trimDate } from '../../../support/utils';
 import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../../support/artemis';
@@ -28,7 +28,7 @@ describe('Test Exam creation/deletion', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
         });
     });
 
