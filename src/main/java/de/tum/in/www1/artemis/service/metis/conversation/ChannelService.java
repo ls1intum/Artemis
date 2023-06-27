@@ -268,16 +268,16 @@ public class ChannelService {
             return;
         }
 
-        Optional<Channel> channelWithSameName;
+        Set<Channel> channelsWithSameName;
         if (channel.getId() != null) {
-            channelWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
+            channelsWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
         }
         else {
-            channelWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
+            channelsWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
         }
-        channelWithSameName.ifPresent(existingChannel -> {
-            throw new ChannelNameDuplicateException(existingChannel.getName());
-        });
+        if (!channelsWithSameName.isEmpty()) {
+            throw new ChannelNameDuplicateException(channel.getName());
+        }
     }
 
     /**
