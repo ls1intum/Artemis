@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.stream.Collectors;
+
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -9,9 +11,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.LearningPathRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -25,9 +27,16 @@ public class LearningPathService {
 
     private final LearningPathRepository learningPathRepository;
 
-    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository) {
+    private final CompetencyProgressRepository competencyProgressRepository;
+
+    private final CourseRepository courseRepository;
+
+    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
+            CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -72,5 +81,59 @@ public class LearningPathService {
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginInCourse(searchTerm, course.getId(), pageable);
         return new SearchResultPageDTO<>(learningPathPage.getContent(), learningPathPage.getTotalPages());
+    }
+
+    /**
+     * Links given competency to all learning paths of the course.
+     *
+     * @param competency Competency that should be added to each learning path
+     * @param courseId   course id that the learning paths belong to
+     */
+    public void linkCompetencyToLearningPathsOfCourse(Competency competency, long courseId) {
+        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+        var learningPaths = course.getLearningPaths();
+        learningPaths.forEach(learningPath -> {
+            learningPath.addCompetency(competency);
+        });
+        learningPathRepository.saveAll(learningPaths);
+        log.debug("Linked competency (id={}) to learning paths", competency.getId());
+    }
+
+    /**
+     * Remove linked competency from all learning paths of the course.
+     *
+     * @param competency Competency that should be removed from each learning path
+     * @param courseId   course id that the learning paths belong to
+     */
+    public void removeLinkedCompetencyFromLearningPathsOfCourse(Competency competency, long courseId) {
+        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+        var learningPaths = course.getLearningPaths();
+        learningPaths.forEach(learningPath -> {
+            learningPath.removeCompetency(competency);
+        });
+        learningPathRepository.saveAll(learningPaths);
+        log.debug("Removed linked competency (id={}) from learning paths", competency.getId());
+    }
+
+    public void updateLearningPathProgress(final long learningPathId) {
+        final var learningPath = learningPathRepository.findWithEagerCompetenciesByIdElseThrow(learningPathId);
+        this.updateLearningPathProgress(learningPath);
+    }
+
+    public void updateLearningPathProgress(final long courseId, final long userId) {
+        final var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
+        learningPath.ifPresent(this::updateLearningPathProgress);
+    }
+
+    private void updateLearningPathProgress(final LearningPath learningPath) {
+        final var userId = learningPath.getUser().getId();
+        final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
+        final var progress = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
+
+        // TODO: consider optional competencies
+        final var mastered = (int) progress.stream().filter(CompetencyProgressService::isMastered).count();
+        learningPath.setMasteredCompetencies(mastered);
+        learningPathRepository.save(learningPath);
+        log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
     }
 }

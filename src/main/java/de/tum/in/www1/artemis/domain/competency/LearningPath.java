@@ -20,6 +20,9 @@ import de.tum.in.www1.artemis.domain.User;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class LearningPath extends DomainObject {
 
+    @Column(name = "mastered_competencies")
+    private int masteredCompetencies;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnore
@@ -34,6 +37,14 @@ public class LearningPath extends DomainObject {
     @JoinTable(name = "competency_learning_path", joinColumns = @JoinColumn(name = "learning_path_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course", "learningPaths" })
     private Set<Competency> competencies = new HashSet<>();
+
+    public int getMasteredCompetencies() {
+        return masteredCompetencies;
+    }
+
+    public void setMasteredCompetencies(int masteredCompetencies) {
+        this.masteredCompetencies = masteredCompetencies;
+    }
 
     public User getUser() {
         return user;
@@ -57,6 +68,14 @@ public class LearningPath extends DomainObject {
 
     public void setCompetencies(Set<Competency> competencies) {
         this.competencies = competencies;
+    }
+
+    public void addCompetency(Competency competency) {
+        this.competencies.add(competency);
+    }
+
+    public void removeCompetency(Competency competency) {
+        this.competencies.remove(competency);
     }
 
     @Override

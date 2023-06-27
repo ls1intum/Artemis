@@ -30,24 +30,18 @@ public class LearningPathResource {
 
     private final UserRepository userRepository;
 
-    private final CompetencyRepository competencyRepository;
-
-    private final LearningPathRepository learningPathRepository;
-
     private final LearningPathService learningPathService;
 
     public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            CompetencyRepository competencyRepository, LearningPathService learningPathService, LearningPathRepository learningPathRepository) {
+            LearningPathService learningPathService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-        this.competencyRepository = competencyRepository;
         this.learningPathService = learningPathService;
-        this.learningPathRepository = learningPathRepository;
     }
 
     /**
-     * PUT /courses/:courseId/learning-paths/enable : enables and generates learning paths for the course
+     * PUT /courses/:courseId/learning-paths/enable : Enables and generates learning paths for the course
      *
      * @param courseId the id of the course for which the learning paths should be enabled
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
@@ -72,7 +66,7 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-paths : gets all the learning paths of a course
+     * GET /courses/:courseId/learning-paths : Gets all the learning paths of a course. The result is pageable.
      *
      * @param courseId the id of the course for which the learning paths should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
