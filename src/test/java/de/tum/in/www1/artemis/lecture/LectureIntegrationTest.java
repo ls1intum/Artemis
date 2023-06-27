@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -68,6 +69,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     private Course course1;
 
     private Lecture lecture1;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -137,6 +141,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void createLecture_correctRequestBody_shouldCreateLecture() throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
         courseUtilService.enableMessagingForCourse(course);
+
+        conversationUtilService.createChannel(course, "loremipsum");
 
         Lecture lecture = new Lecture();
         lecture.setTitle("loremIpsum");

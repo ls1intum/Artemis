@@ -114,6 +114,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
 
+        // cannot create channels with duplicate names
+        expectCreateBadRequest(channelDTO);
+
         // cleanup
         conversationRepository.deleteById(chat.getId());
     }
