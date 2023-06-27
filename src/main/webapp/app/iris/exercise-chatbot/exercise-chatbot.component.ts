@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-exercise-chatbot',
     templateUrl: './exercise-chatbot.component.html',
-    styleUrls: ['./exercise-chatbot.component.scss'],
+    styleUrls: ['./exercise-chatbot.component.scss', '../../../../../../node_modules/angular2-draggable/css/resizable.min.css'],
     providers: [IrisStateStore, IrisWebsocketService, IrisSessionService],
     animations: [shakeAnimation({ anchor: 'shake', direction: '=>', duration: 700 })],
 })
