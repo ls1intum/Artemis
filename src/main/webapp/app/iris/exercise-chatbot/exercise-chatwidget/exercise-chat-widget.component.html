@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
     <!-- chat box -->
     <div
         *ngIf="showChatWidget"
@@ -100,7 +100,7 @@
                     </div>
                 </div>
             </div>
-            <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
+            <div class="scroll-to-bottom" [hidden]="true" (click)="scrollToBottom('smooth')" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
             <div class="client-chat-error" *ngIf="error" [ngClass]="{ 'shake-animation': shakeErrorField }">

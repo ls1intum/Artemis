@@ -342,4 +342,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
         return message.sender === IrisSender.USER;
     }
+
+    toggleScrollLock(lockParent: boolean): void {
+        if (lockParent) {
+            document.body.classList.add('cdk-global-scrollblock');
+        } else {
+            document.body.classList.remove('cdk-global-scrollblock');
+        }
+    }
 }
