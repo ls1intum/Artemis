@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.monaco;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,16 +13,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.LspConfig;
-import de.tum.in.www1.artemis.domain.LspServerStatus;
+import de.tum.in.www1.artemis.domain.monaco.LspConfig;
+import de.tum.in.www1.artemis.domain.monaco.LspServerStatus;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exception.LspException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.service.MonacoEditorService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.service.monaco.MonacoEditorService;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -48,8 +47,7 @@ public class MonacoEditorResource {
 
     private final ParticipationAuthorizationCheckService authCheckService;
 
-    public MonacoEditorResource(ParticipationAuthorizationCheckService authCheckService, FeatureToggleService featureToggleService, MonacoEditorService monacoEditorService,
-            ParticipationRepository participationRepository) {
+    public MonacoEditorResource(ParticipationAuthorizationCheckService authCheckService, MonacoEditorService monacoEditorService, ParticipationRepository participationRepository) {
         this.participationRepository = participationRepository;
         this.monacoEditorService = monacoEditorService;
         this.authCheckService = authCheckService;

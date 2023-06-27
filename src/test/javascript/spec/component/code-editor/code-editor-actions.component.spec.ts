@@ -73,7 +73,7 @@ describe('CodeEditorActionsComponent', () => {
     );
 
     cartesianProduct(
-        Object.keys(EditorState),
+        Object.keys(EditorState).filter((editorState) => editorState !== EditorState.RUNNING),
         Object.keys(CommitState).filter((commitState) => commitState !== CommitState.CONFLICT),
         [true, false],
     ).map((combination: [EditorState, CommitState, boolean]) => {

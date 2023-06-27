@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.monaco;
 
 import java.io.IOException;
 import java.net.URL;
@@ -29,8 +29,8 @@ import org.springframework.stereotype.Service;
 
 import com.nimbusds.jose.shaded.json.JSONObject;
 
-import de.tum.in.www1.artemis.domain.LspConfig;
-import de.tum.in.www1.artemis.domain.LspServerStatus;
+import de.tum.in.www1.artemis.domain.monaco.LspConfig;
+import de.tum.in.www1.artemis.domain.monaco.LspServerStatus;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LspException;
@@ -39,6 +39,10 @@ import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
+/**
+ * Service class of the Monaco editor powering the
+ * web-ide.
+ */
 @Service
 public class MonacoEditorService {
 
