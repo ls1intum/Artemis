@@ -122,7 +122,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
                 },
                 {
-                    path: 'aboutIris',
+                    path: 'about-iris',
                     component: AboutIrisComponent,
                     pathMatch: 'full',
                 },
