@@ -4,6 +4,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MockComponent } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 describe('LectureWizardTitleComponent', () => {
     let wizardTitleComponentFixture: ComponentFixture<LectureUpdateWizardTitleComponent>;
@@ -12,7 +13,7 @@ describe('LectureWizardTitleComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [LectureUpdateWizardTitleComponent, MockComponent(MarkdownEditorComponent)],
+            declarations: [LectureUpdateWizardTitleComponent, MockComponent(MarkdownEditorComponent), MockComponent(TitleChannelNameComponent)],
             providers: [],
             schemas: [],
         })

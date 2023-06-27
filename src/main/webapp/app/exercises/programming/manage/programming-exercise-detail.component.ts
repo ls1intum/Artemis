@@ -193,9 +193,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
 
                 this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
-                    if (submissionPolicy) {
-                        this.programmingExercise.submissionPolicy = submissionPolicy;
-                    }
+                    this.programmingExercise.submissionPolicy = submissionPolicy;
                 });
 
                 this.loadGitDiffReport();

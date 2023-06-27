@@ -53,9 +53,8 @@ public class LectureService {
      * Lecture with only active attachment units
      *
      * @param lectureWithAttachmentUnits lecture that has attachment units
-     * @return lecture with filtered attachments
      */
-    public Lecture filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
+    public void filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
 
         List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
         for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
@@ -65,7 +64,6 @@ public class LectureService {
             }
         }
         lectureWithAttachmentUnits.setLectureUnits(filteredAttachmentUnits);
-        return lectureWithAttachmentUnits;
     }
 
     /**

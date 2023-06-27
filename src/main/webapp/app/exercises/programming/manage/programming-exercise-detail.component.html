@@ -262,7 +262,7 @@
                 <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title">Max Static Code Analysis Penalty</span></dt>
                     <dd>
-                        <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
+                        <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty ?? '-' }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title">Submission Policy Type</span></dt>
@@ -275,13 +275,13 @@
                         }}"
                     ></span>
                 </dd>
-                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
+                <ng-container *ngIf="programmingExercise.submissionPolicy">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission limit</span></dt>
                     <dd>
                         <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
                     </dd>
                 </ng-container>
-                <ng-container *ngIf="programmingExercise.submissionPolicy != undefined && programmingExercise.submissionPolicy.exceedingPenalty">
+                <ng-container *ngIf="programmingExercise.submissionPolicy && programmingExercise.submissionPolicy.exceedingPenalty">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
                     <dd>
                         <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
@@ -297,7 +297,7 @@
                         <jhi-clone-repo-button
                             class="ms-2"
                             [smallButtons]="true"
-                            [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
+                            [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl || ''"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ms-2"

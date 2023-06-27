@@ -16,23 +16,29 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -54,6 +60,8 @@ public class ProgrammingExerciseResource {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
+
+    private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -100,15 +108,20 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    public ProgrammingExerciseResource(ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+    private final ConversationService conversationService;
+
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ConversationService conversationService, ChannelRepository channelRepository,
+            InstanceMessageSendService instanceMessageSendService) {
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -130,6 +143,9 @@ public class ProgrammingExerciseResource {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.conversationService = conversationService;
+        this.channelRepository = channelRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -170,7 +186,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping(SETUP)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
@@ -184,6 +200,7 @@ public class ProgrammingExerciseResource {
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
+
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
@@ -207,7 +224,7 @@ public class ProgrammingExerciseResource {
      *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping(PROGRAMMING_EXERCISES)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -283,7 +300,7 @@ public class ProgrammingExerciseResource {
      *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
     @PutMapping(TIMELINE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -307,7 +324,7 @@ public class ProgrammingExerciseResource {
      *         user does not have permissions to access the programming exercise.
      */
     @PatchMapping(PROBLEM)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
@@ -328,7 +345,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping(GET_FOR_COURSE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -349,7 +366,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(PROGRAMMING_EXERCISE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
@@ -365,6 +382,13 @@ public class ProgrammingExerciseResource {
         else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
+        if (programmingExercise.isCourseExercise()) {
+            Channel channel = channelRepository.findChannelByExerciseId(programmingExercise.getId());
+            if (channel != null) {
+                programmingExercise.setChannelName(channel.getName());
+            }
+        }
+
         return ResponseEntity.ok().body(programmingExercise);
     }
 
@@ -375,7 +399,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -396,7 +420,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
     @GetMapping(PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
             @RequestParam(defaultValue = "false") boolean withSubmissionResults) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
@@ -420,7 +444,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping(PROGRAMMING_EXERCISE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
@@ -429,6 +453,7 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        conversationService.deregisterAllClientsFromChannel(programmingExercise);
         exerciseDeletionService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
@@ -443,7 +468,7 @@ public class ProgrammingExerciseResource {
      *         500 (Internal Server Error)
      */
     @PutMapping(value = COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
         log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
@@ -466,7 +491,7 @@ public class ProgrammingExerciseResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping(value = GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
@@ -515,7 +540,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the exercise does not exist.
      */
     @GetMapping(TEST_CASE_STATE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -535,7 +560,7 @@ public class ProgrammingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping(PROGRAMMING_EXERCISES)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -553,7 +578,7 @@ public class ProgrammingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping(PROGRAMMING_EXERCISES + "/with-sca")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(PageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
             @RequestParam ProgrammingLanguage programmingLanguage) {
@@ -568,7 +593,7 @@ public class ProgrammingExerciseResource {
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
     @PutMapping(UNLOCK_ALL_REPOSITORIES)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         // Locking and unlocking repositories is not supported when using the local version control system.
         // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
@@ -577,7 +602,7 @@ public class ProgrammingExerciseResource {
         }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseRepositoryService.unlockAllRepositories(exerciseId);
+        instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(exerciseId);
         log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -589,7 +614,7 @@ public class ProgrammingExerciseResource {
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
     @PutMapping(LOCK_ALL_REPOSITORIES)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         // Locking and unlocking repositories is not supported when using the local version control system.
         // Repository access is checked in the LocalVCFetchFilter and LocalVCPushFilter.
@@ -598,7 +623,7 @@ public class ProgrammingExerciseResource {
         }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseRepositoryService.lockAllRepositories(exerciseId);
+        instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -611,7 +636,7 @@ public class ProgrammingExerciseResource {
      *         given programming exercise. 404 when the programming exercise was not found.
      */
     @GetMapping(AUXILIARY_REPOSITORY)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -633,7 +658,7 @@ public class ProgrammingExerciseResource {
      * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
     @PutMapping(RESET)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
@@ -671,7 +696,7 @@ public class ProgrammingExerciseResource {
      *         couldn't be updated
      */
     @PutMapping(REEVALUATE_EXERCISE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
@@ -699,7 +724,7 @@ public class ProgrammingExerciseResource {
      *         or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
      */
     @DeleteMapping(TASKS)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteTaskWithSolutionEntries(@PathVariable Long exerciseId) {
         log.debug("REST request to delete ProgrammingExerciseTasks with ProgrammingExerciseSolutionEntries for ProgrammingExercise with id : {}", exerciseId);
@@ -721,7 +746,7 @@ public class ProgrammingExerciseResource {
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping(SOLUTION_REPOSITORY_FILES_WITH_CONTENT)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
@@ -744,7 +769,7 @@ public class ProgrammingExerciseResource {
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping(TEMPLATE_REPOSITORY_FILES_WITH_CONTENT)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
@@ -767,7 +792,7 @@ public class ProgrammingExerciseResource {
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping(SOLUTION_REPOSITORY_FILE_NAMES)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest solution repository file names for ProgrammingExercise with id : {}", exerciseId);
@@ -788,7 +813,7 @@ public class ProgrammingExerciseResource {
      * @return a DTO containing the average build log statistics
      */
     @GetMapping(BUILD_LOG_STATISTICS)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<BuildLogStatisticsDTO> getBuildLogStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get build log statistics for ProgrammingExercise with id : {}", exerciseId);

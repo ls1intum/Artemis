@@ -700,7 +700,7 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
-            // as their relevantDueDate is before the deadline
+            // as their relevantDueDate is before the due date
             if (getAllowManualFeedbackRequests()) {
                 return true;
             }

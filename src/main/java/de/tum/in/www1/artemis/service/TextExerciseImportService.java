@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class TextExerciseImportService extends ExerciseImportService {
@@ -26,14 +28,17 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final ChannelService channelService;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository) {
+            TextSubmissionRepository textSubmissionRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -51,7 +56,11 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        textExerciseRepository.save(newExercise);
+
+        TextExercise newTextExercise = textExerciseRepository.save(newExercise);
+
+        Channel createdChannel = channelService.createExerciseChannel(newTextExercise, importedExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, newTextExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }
