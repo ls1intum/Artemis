@@ -19,7 +19,7 @@ import {
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
-import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisServerMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 
 type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: IrisErrorType) => void };
 
@@ -144,7 +144,11 @@ export class IrisStateStore implements OnDestroy {
             };
         }
         if (isActiveConversationMessageLoadedAction(action)) {
+            // TODO workaround move to backend in the future
             const castedAction = action as ActiveConversationMessageLoadedAction;
+            const clientMessages = state.messages.filter((message) => isStudentSentMessage(message)) as IrisClientMessage[];
+            clientMessages[clientMessages.length - 1].answerReceived = true;
+
             return {
                 messages: [...state.messages, castedAction.message],
                 sessionId: state.sessionId,
@@ -172,6 +176,14 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isStudentMessageSentAction(action)) {
             const castedAction = action as StudentMessageSentAction;
+            if (castedAction.message.answerReceived === false) {
+                return {
+                    ...state,
+                    messages: [...state.messages],
+                    isLoading: true,
+                    error: null,
+                };
+            }
             return {
                 ...state,
                 messages: [...state.messages, castedAction.message],

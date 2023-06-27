@@ -95,7 +95,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
-
             if (this.messages.length > 0) {
                 this.userAccepted = true;
             }
@@ -134,7 +133,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => this.scrollToBottom('smooth'))
+                .then(() => {
+                    this.startWaitingForAnAnswer(message);
+                    this.scrollToBottom('smooth');
+                })
                 .catch(() => {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
                 });
@@ -310,19 +312,24 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     resendMessage(message: IrisClientMessage) {
         this.resendAnimationActive = true;
 
-        this.triggerShake();
+        this.startWaitingForAnAnswer(message);
 
-        this.httpMessageService
-            .createMessage(<number>this.sessionId, message)
-            .toPromise()
-            .then(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(null)))
-            .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
-                this.triggerShake();
-            })
+        this.stateStore
+            .dispatchAndThen(new StudentMessageSentAction(message))
+            .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
             .finally(() => {
                 this.resendAnimationActive = false;
             });
+    }
+
+    private startWaitingForAnAnswer(message: IrisClientMessage) {
+        setTimeout(() => {
+            if (!message.answerReceived) {
+                message.answerReceived = false;
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                this.triggerShake();
+            }
+        }, 20000);
     }
 
     isSendMessageFailedError(): boolean {

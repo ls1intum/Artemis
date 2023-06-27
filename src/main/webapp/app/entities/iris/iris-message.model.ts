@@ -21,6 +21,7 @@ export class IrisClientMessage implements BaseEntity {
     content: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.USER;
+    answerReceived?: boolean;
 }
 
 export type IrisMessage = IrisServerMessage | IrisClientMessage;
