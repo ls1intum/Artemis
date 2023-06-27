@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, NumNewMessagesResetAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 
@@ -41,6 +41,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faCircle = faCircle;
     faExpand = faExpand;
     faXmark = faXmark;
+    faThumbsUp = faThumbsUp;
+    faThumbsDown = faThumbsDown;
 
     ngOnInit() {
         this.animateDots();
@@ -105,6 +107,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     closeChat() {
         this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.dialog.closeAll();
+    }
+
+    rateMessage(message_id: number, index: number, helpful: boolean) {
+        this.httpMessageService
+            .rateMessage(<number>this.sessionId, message_id, helpful)
+            .toPromise()
+            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
+                this.scrollToBottom('smooth');
+            });
+    }
+
+    isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+        return isStudentSentMessage(message);
+    }
+
+    isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return isServerSentMessage(message);
     }
 
     private newUserMessage(message: string): IrisClientMessage {
