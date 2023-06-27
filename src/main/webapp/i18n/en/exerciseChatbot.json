@@ -25,7 +25,8 @@
                 "sessionCreationFailed": "Could not create a new session.",
                 "sendMessageFailed": "Something went wrong while sending the message. Please try again later!",
                 "rateMessageFailed": "Could not rate message. Please try again later.",
-                "irisDisabled": "Iris has been disabled for this exercise."
+                "irisDisabled": "Iris has been disabled for this exercise.",
+                "noResponseFromServer": "The server has not been responding for a longer time. You might want to retry again or reload the page."
             }
         }
     }

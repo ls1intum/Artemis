@@ -25,7 +25,8 @@
                 "sessionCreationFailed": "Die Sitzung konnte nicht erstellt werden.",
                 "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
                 "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
-                "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten."
+                "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
+                "noResponseFromServer": "Der Server antwortet seit geraumer Zeit nicht. Möchtest du es erneut versuchen oder die Seite neu laden?"
             }
         }
     }

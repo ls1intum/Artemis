@@ -326,14 +326,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         setTimeout(() => {
             if (!message.answerReceived) {
                 message.answerReceived = false;
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.NO_RESPONSE_FROM_SERVER));
                 this.triggerShake();
             }
         }, 20000);
     }
 
-    isSendMessageFailedError(): boolean {
-        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+    isResendable(): boolean {
+        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED || this.error?.key == IrisErrorMessageKey.NO_RESPONSE_FROM_SERVER;
     }
 
     triggerShake() {
