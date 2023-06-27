@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.IrisGPT3_5RequestMockProvider;
+import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
@@ -28,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon", "iris-gpt3_5" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon", "iris" })
 public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -41,8 +40,8 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
     protected IrisTemplateRepository irisTemplateRepository;
 
     @Autowired
-    @Qualifier("irisGPT3_5RequestMockProvider")
-    protected IrisGPT3_5RequestMockProvider gpt35RequestMockProvider;
+    @Qualifier("irisRequestMockProvider")
+    protected IrisRequestMockProvider irisRequestMockProvider;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
@@ -58,20 +57,20 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     void setup() {
-        gpt35RequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        gpt35RequestMockProvider.reset();
+        irisRequestMockProvider.reset();
     }
 
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
         globalSettings.getIrisChatSettings().setEnabled(true);
-        globalSettings.getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        globalSettings.getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         globalSettings.getIrisHestiaSettings().setEnabled(true);
-        globalSettings.getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35);
+        globalSettings.getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         irisSettingsService.saveGlobalIrisSettings(globalSettings);
     }
 
@@ -79,10 +78,10 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
         var courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(course);
         courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
         courseWithSettings.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         courseWithSettings.getIrisSettings().getIrisHestiaSettings().setEnabled(true);
         courseWithSettings.getIrisSettings().getIrisHestiaSettings().setTemplate(createDummyTemplate());
-        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35);
+        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         courseRepository.save(courseWithSettings);
     }
 
@@ -90,7 +89,7 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
         var exerciseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(exercise);
         exerciseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
         exerciseWithSettings.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         programmingExerciseRepository.save(exerciseWithSettings);
     }
 
@@ -110,5 +109,10 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(irisMessageContent.getTextContent()).isEqualTo(message);
             }
         }));
+    }
+
+    protected void verifyNoMessageWasSentOverWebsocket() throws InterruptedException {
+        Thread.sleep(1000);
+        verifyNoInteractions(websocketMessagingService);
     }
 }

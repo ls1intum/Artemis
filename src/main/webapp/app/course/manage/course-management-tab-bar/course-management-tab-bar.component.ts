@@ -95,7 +95,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.irisEnabled = profileInfo.activeProfiles.includes('iris-gpt3_5');
+                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
             }
         });
     }

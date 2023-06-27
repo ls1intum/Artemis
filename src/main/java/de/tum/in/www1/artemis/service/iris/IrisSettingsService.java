@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -64,7 +65,7 @@ public class IrisSettingsService {
             return;
         }
 
-        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of("iris-gpt3_5"))) {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of("iris"))) {
             var settings = createDefaultIrisSettings(true);
             settings.setGlobal(true);
             settings.getIrisChatSettings().setEnabled(true);
@@ -224,15 +225,32 @@ public class IrisSettingsService {
         var combinedSettings = new IrisSubSettings();
 
         var enabled = subSettings2 != null && subSettings2.isEnabled() && subSettings1 != null && subSettings1.isEnabled()
-                && applicationContext.getEnvironment().acceptsProfiles(Profiles.of("iris-gpt3_5"));
+                && applicationContext.getEnvironment().acceptsProfiles(Profiles.of("iris"));
         combinedSettings.setEnabled(enabled);
 
         if (!reduced) {
-            var preferredModel = subSettings2 != null && subSettings2.getPreferredModel() != null ? subSettings2.getPreferredModel()
-                    : subSettings1 != null ? subSettings1.getPreferredModel() : null;
+            IrisModel preferredModel;
+            if (subSettings2 != null && subSettings2.getPreferredModel() != null) {
+                preferredModel = subSettings2.getPreferredModel();
+            }
+            else if (subSettings1 != null && subSettings1.getPreferredModel() != null) {
+                preferredModel = subSettings1.getPreferredModel();
+            }
+            else {
+                preferredModel = IrisModel.GPT35_TURBO;
+            }
             combinedSettings.setPreferredModel(preferredModel);
 
-            var template = subSettings2 != null && subSettings2.getTemplate() != null ? subSettings2.getTemplate() : subSettings1 != null ? subSettings1.getTemplate() : null;
+            IrisTemplate template;
+            if (subSettings2 != null && subSettings2.getTemplate() != null) {
+                template = subSettings2.getTemplate();
+            }
+            else if (subSettings1 != null) {
+                template = subSettings1.getTemplate();
+            }
+            else {
+                template = null;
+            }
             combinedSettings.setTemplate(template);
         }
 

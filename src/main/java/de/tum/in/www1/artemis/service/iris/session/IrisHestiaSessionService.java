@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -20,8 +22,8 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisModelService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * Service to handle the Hestia integration of Iris.
  */
 @Service
+@Profile("iris")
 public class IrisHestiaSessionService implements IrisSessionSubServiceInterface {
 
     // TODO: Make configurable in future
@@ -43,7 +46,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
     private final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
 
-    private final IrisModelService irisModelService;
+    private final IrisConnectorService irisConnectorService;
 
     private final IrisMessageService irisMessageService;
 
@@ -53,9 +56,9 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisHestiaSessionService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
+    public IrisHestiaSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository) {
-        this.irisModelService = irisModelService;
+        this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
@@ -83,16 +86,19 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.ARTEMIS);
         irisMessageService.saveMessage(userMessage, irisSession, IrisMessageSender.USER);
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-
+        Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
+        var irisSettings = irisSettingsService.getCombinedIrisSettings(irisSession.getCodeHint().getExercise(), false);
         try {
-            var irisMessage1 = irisModelService.requestResponse(irisSession).get();
-            irisMessageService.saveMessage(irisMessage1, irisSession, IrisMessageSender.LLM);
+            var irisMessage1 = irisConnectorService
+                    .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
+            irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-            var irisMessage2 = irisModelService.requestResponse(irisSession).get();
-            irisMessageService.saveMessage(irisMessage2, irisSession, IrisMessageSender.LLM);
+            var irisMessage2 = irisConnectorService
+                    .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
+            irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
-            codeHint.setContent(irisMessage1.getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
-            codeHint.setDescription(irisMessage2.getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
             return codeHint;
         }
         catch (InterruptedException | ExecutionException e) {

@@ -135,11 +135,11 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         course.getIrisSettings().setIrisChatSettings(new IrisSubSettings());
         course.getIrisSettings().getIrisChatSettings().setEnabled(true);
         course.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        course.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        course.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         course.getIrisSettings().setIrisHestiaSettings(new IrisSubSettings());
         course.getIrisSettings().getIrisHestiaSettings().setEnabled(true);
         course.getIrisSettings().getIrisHestiaSettings().setTemplate(createDummyTemplate());
-        course.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35);
+        course.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35_TURBO);
 
         var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", course.getIrisSettings(), IrisSettings.class, HttpStatus.OK);
         var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
@@ -253,11 +253,11 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         programmingExercise.getIrisSettings().setIrisChatSettings(new IrisSubSettings());
         programmingExercise.getIrisSettings().getIrisChatSettings().setEnabled(true);
         programmingExercise.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        programmingExercise.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35);
+        programmingExercise.getIrisSettings().getIrisChatSettings().setPreferredModel(IrisModel.GPT35_TURBO);
         programmingExercise.getIrisSettings().setIrisHestiaSettings(new IrisSubSettings());
         programmingExercise.getIrisSettings().getIrisHestiaSettings().setEnabled(true);
         programmingExercise.getIrisSettings().getIrisHestiaSettings().setTemplate(createDummyTemplate());
-        programmingExercise.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35);
+        programmingExercise.getIrisSettings().getIrisHestiaSettings().setPreferredModel(IrisModel.GPT35_TURBO);
 
         var updatedSettings = request.putWithResponseBody("/api/programming-exercises/" + programmingExercise.getId() + "/raw-iris-settings", programmingExercise.getIrisSettings(),
                 IrisSettings.class, HttpStatus.OK);
