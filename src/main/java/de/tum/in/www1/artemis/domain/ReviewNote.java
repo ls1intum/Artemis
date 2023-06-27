@@ -15,7 +15,7 @@ public class ReviewNote extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "creator_id", referencedColumnName = "id")
-    private User creatorId;
+    private User creator;
 
     @CreatedDate
     @Column(name = "created_date", updatable = false)
@@ -24,6 +24,11 @@ public class ReviewNote extends DomainObject {
     @Column(name = "note")
     private String note;
 
-    @OneToOne(mappedBy = "review_note")
-    private Result result;
+    public void setCreator(final User user) {
+        this.creator = user;
+    }
+
+    public void setNote(final String note) {
+        this.note = note;
+    }
 }

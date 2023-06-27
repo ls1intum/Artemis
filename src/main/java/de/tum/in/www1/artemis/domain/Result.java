@@ -97,6 +97,12 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    // OneToMany is needed, otherwise the lazy loading does not work
+    // it will be ensured programmatically that only ever one note exists for every result object
+    @JoinColumn(name = "result_id")
+    private List<ReviewNote> reviewNote = new ArrayList<>();
+
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")
     private Integer testCaseCount = 0;
@@ -111,10 +117,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JoinColumn(name = "review_note", referencedColumnName = "id")
-    private ReviewNote reviewNote;
 
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
@@ -445,6 +447,15 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     public void setCoverageFileReportsByTestCaseName(Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName) {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
+    }
+
+    public void setReviewNote(@Nullable ReviewNote reviewNote) {
+        this.reviewNote = new ArrayList<>();
+        this.reviewNote.add(reviewNote);
+    }
+
+    public ReviewNote getReviewNote() {
+        return this.reviewNote.get(0);
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
