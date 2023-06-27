@@ -17,7 +17,7 @@
             [minTitleLength]="3"
             [emphasizeLabels]="true"
             [hideChannelName]="isExamMode || (!isImport && textExercise.channelName === undefined)"
-            [initChannelName]="isImport"
+            [initChannelName]="isImport || textExercise.id === undefined"
         ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>

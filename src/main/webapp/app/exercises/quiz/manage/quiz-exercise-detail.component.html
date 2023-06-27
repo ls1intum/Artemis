@@ -35,7 +35,7 @@
                     channelNamePrefix="exercise-"
                     [emphasizeLabels]="true"
                     [hideChannelName]="isExamMode || (!isImport && quizExercise.channelName === undefined)"
-                    [initChannelName]="isImport"
+                    [initChannelName]="isImport || quizExercise.id === undefined"
                 ></jhi-title-channel-name>
             </form>
 
