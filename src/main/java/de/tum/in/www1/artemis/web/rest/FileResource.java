@@ -127,6 +127,10 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        String normalizedFileName = Paths.get(filename).normalize().toString();
+        if (!normalizedFileName.equals(filename)) {
+            throw new EntityNotFoundException("Filename is invalid");
+        }
         return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
     }
 
@@ -284,7 +288,11 @@ public class FileResource {
         log.debug("REST request to get file : {}", filename);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
-        return buildFileResponse(FilePathService.getExamUserSignatureFilePath(), filename);
+        if (examUser.getSigningImagePath() == null || !examUser.getSigningImagePath().endsWith(filename)) {
+            throw new EntityNotFoundException("The filename does not match the image link connected to the requested exam user.");
+        }
+
+        return buildFileResponse(fileService.actualPathForPublicPath(examUser.getSigningImagePath()), false);
     }
 
     /**
@@ -300,7 +308,11 @@ public class FileResource {
         log.debug("REST request to get file : {}", filename);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
-        return buildFileResponse(FilePathService.getStudentImageFilePath(), filename, true);
+        if (examUser.getStudentImagePath() == null || !examUser.getStudentImagePath().endsWith(filename)) {
+            throw new EntityNotFoundException("The filename does not match the image link connected to the requested exam user.");
+        }
+
+        return buildFileResponse(fileService.actualPathForPublicPath(examUser.getStudentImagePath()), true);
     }
 
     /**
@@ -326,7 +338,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
+        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId()), filename).toString(), false);
     }
 
     /**
@@ -384,11 +396,11 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        if (attachment.getLink().endsWith(filename)) {
+        if (!attachment.getLink().endsWith(filename)) {
             throw new EntityNotFoundException("The filename does not match the attachment link connected to the requested attachment unit.");
         }
 
-        return buildFileResponse(fileService.actualPathForPublicPath(attachment.getLink()), filename);
+        return buildFileResponse(fileService.actualPathForPublicPath(attachment.getLink()), false);
     }
 
     /**
@@ -436,6 +448,19 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
         return buildFileResponse(path, filename, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path containing the file name
+     *
+     * @param path  to the file including the file name
+     * @param cache true if the response should contain a header that allows caching; false otherwise
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(String path, boolean cache) {
+        String pathWithoutFilename = path.substring(0, path.lastIndexOf("\\"));
+        String filename = path.substring(path.lastIndexOf("\\") + 1);
+        return buildFileResponse(pathWithoutFilename, filename, cache);
     }
 
     /**
