@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet author="chrisknedl" id="20230628215302">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="review_note"/>
+            </not>
+        </preConditions>
         <createTable tableName="review_note">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="review_notePK"/>
@@ -10,8 +15,8 @@
             <column name="result_id" type="BIGINT"/>
         </createTable>
 
-        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="review_note" constraintName="FK4qkoj63giwc0hu2j67uh78w8q" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="review_note" constraintName="FK_creator_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
 
-        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="review_note" constraintName="FKgilla9hnfggk4tm26a028i79g" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="review_note" constraintName="FK_result_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result" validate="true"/>
     </changeSet>
 </databaseChangeLog>
