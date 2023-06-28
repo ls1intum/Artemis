@@ -311,8 +311,8 @@ public class ConversationService {
     /**
      * Checks if a user is a member of a conversation and therefore can access it else throws an exception
      *
-     * @param conversationId the id of the conversation
-     * @param user           the user to check
+     * @param conversation the conversation the user wants to interact with
+     * @param user         the user to check
      * @return conversation if the user is a member
      */
     public Conversation mayInteractWithConversationElseThrow(Conversation conversation, User user) {
