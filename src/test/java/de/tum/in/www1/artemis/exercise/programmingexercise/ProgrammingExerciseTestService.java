@@ -75,7 +75,8 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.programming.*;
+import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
@@ -190,9 +191,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ProgrammingExerciseService programmingExerciseService;
 
     public Course course;
 

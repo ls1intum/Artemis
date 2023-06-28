@@ -1,6 +1,7 @@
 package ${packageName};
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 public class Context {
     private SortStrategy sortAlgorithm = new MergeSort();
