@@ -50,11 +50,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ReviewNoteRepository reviewNoteRepository;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ReviewNoteRepository reviewNoteRepository) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
@@ -62,6 +64,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         this.ltiNewResultService = ltiNewResultService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.reviewNoteRepository = reviewNoteRepository;
     }
 
     /**
@@ -181,6 +184,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
+        ReviewNote reviewNote = reviewNoteRepository.setReviewNoteForResult("blablabla", newManualResult);
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
         if (submission.getParticipation() == null) {

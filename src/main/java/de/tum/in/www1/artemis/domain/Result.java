@@ -101,6 +101,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     // OneToMany is needed, otherwise the lazy loading does not work
     // it will be ensured programmatically that only ever one note exists for every result object
     @JoinColumn(name = "result_id")
+    @JsonIgnore
     private List<ReviewNote> reviewNote = new ArrayList<>();
 
     // The following attributes are only used for Programming Exercises
@@ -450,7 +451,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     public void setReviewNote(@Nullable ReviewNote reviewNote) {
-        this.reviewNote = new ArrayList<>();
+        this.reviewNote.clear();
         this.reviewNote.add(reviewNote);
     }
 
