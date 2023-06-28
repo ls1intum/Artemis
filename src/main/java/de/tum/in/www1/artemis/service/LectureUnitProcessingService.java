@@ -54,7 +54,6 @@ public class LectureUnitProcessingService {
      * @return The prepared units to be saved
      */
     public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
-
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = PDDocument.load(file.getBytes())) {
             List<AttachmentUnit> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();

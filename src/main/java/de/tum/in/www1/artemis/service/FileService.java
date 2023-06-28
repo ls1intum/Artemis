@@ -1224,14 +1224,16 @@ public class FileService implements DisposableBean {
      * @param fileName        file name to set file name
      * @param extension       extension of the file (e.g .pdf or .png)
      * @param streamByteArray byte array to save to the temp file
-     * @return multipartFile wrapper for the file stored on disk
+     * @return multipartFile wrapper for the file stored on disk with a cleared name
      */
     public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
         try {
-            Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
+            String cleanFileName = sanitizeFilename(fileName);
+            Path tempPath = Path.of(FilePathService.getTempFilePath(), cleanFileName + extension);
             Files.write(tempPath, streamByteArray);
             File outputFile = tempPath.toFile();
-            FileItem fileItem = new DiskFileItem(fileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+            FileItem fileItem = new DiskFileItem(cleanFileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),
+                    outputFile.getParentFile());
 
             try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
                 IOUtils.copy(input, fileItemOutputStream);
