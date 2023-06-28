@@ -4,7 +4,7 @@ import allSuccessful from '../../../fixtures/exercise/programming/all_successful
 import partiallySuccessful from '../../../fixtures/exercise/programming/partially_successful/submission.json';
 import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, programmingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
 
@@ -44,7 +44,7 @@ describe('Programming exercise participations', () => {
     function setupCourseAndProgrammingExercise() {
         cy.login(admin, '/');
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addStudentToCourse(course, studentTwo);
             courseManagementRequest.addStudentToCourse(course, studentThree);

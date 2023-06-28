@@ -1,6 +1,6 @@
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
 
@@ -12,7 +12,7 @@ describe('Modeling Exercise Participation Spec', () => {
     before('Log in as admin and create a course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response: Cypress.Response<Course>) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
