@@ -92,7 +92,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastTutor
-    public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
+    public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("filePath") String filename) {
         return super.getFile(exerciseId, filename);
     }
 
@@ -100,16 +100,16 @@ public class TestRepositoryResource extends RepositoryResource {
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(exerciseId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("filePath") String filePath, HttpServletRequest request) {
+        return super.createFile(exerciseId, filePath, request);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(exerciseId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folderPath") String folderPath, HttpServletRequest request) {
+        return super.createFolder(exerciseId, folderPath, request);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
+    public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("filePath") String filename) {
         return super.deleteFile(exerciseId, filename);
     }
 

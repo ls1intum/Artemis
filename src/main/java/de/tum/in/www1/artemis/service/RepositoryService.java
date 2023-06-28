@@ -181,13 +181,16 @@ public class RepositoryService {
      * Create a file in a repository.
      *
      * @param repository  in which the file should be created.
-     * @param filename    of the file to be created.
+     * @param filePath    of the file to be created.
      * @param inputStream byte representation of the file to be created.
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
-    public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
-        String cleanFileName = fileService.sanitizeFilename(filename);
-        File file = checkIfFileExistsInRepository(repository, cleanFileName);
+    public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
+        String cleanFilePath = Paths.get(filePath).normalize().toString();
+        if (cleanFilePath.startsWith("..")) {
+            throw new IllegalArgumentException();
+        }
+        File file = checkIfFileExistsInRepository(repository, cleanFilePath);
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -209,12 +212,15 @@ public class RepositoryService {
      * Create a folder in a repository.
      *
      * @param repository  in which the folder should be created.
-     * @param folderName  of the folder to be created.
+     * @param folderPath  of the folder to be created.
      * @param inputStream byte representation of the folder to be created.
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
-    public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
-        String cleanFolderName = fileService.sanitizeFolderName(folderName);
+    public void createFolder(Repository repository, String folderPath, InputStream inputStream) throws IOException {
+        String cleanFolderName = Paths.get(folderPath).toString();
+        if (cleanFolderName.startsWith("..")) {
+            throw new IllegalArgumentException();
+        }
         checkIfFileExistsInRepository(repository, cleanFolderName);
         Files.createDirectory(repository.getLocalPath().resolve(cleanFolderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
@@ -234,7 +240,7 @@ public class RepositoryService {
      * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        if (Paths.get(fileMove.currentFilePath()).normalize().toString().startsWith("../") || Paths.get(fileMove.newFilename()).normalize().toString().startsWith("../")) {
+        if (Paths.get(fileMove.currentFilePath()).normalize().toString().startsWith("..") || Paths.get(fileMove.newFilename()).normalize().toString().startsWith("..")) {
             throw new IllegalArgumentException("Invalid file path");
         }
         Optional<File> existingFile = gitService.getFileByName(repository, fileMove.currentFilePath());
@@ -269,7 +275,10 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
-        String cleanFileName = fileService.sanitizeFilename(filename);
+        String cleanFileName = Paths.get(filename).normalize().toString();
+        if (cleanFileName.startsWith("..")) {
+            throw new IllegalArgumentException();
+        }
         Optional<File> file = gitService.getFileByName(repository, cleanFileName);
 
         if (file.isEmpty()) {

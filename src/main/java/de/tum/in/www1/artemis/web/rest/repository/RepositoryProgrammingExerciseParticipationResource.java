@@ -180,7 +180,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
+    public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("filePath") String filename) {
         return super.getFile(participationId, filename);
     }
 
@@ -224,16 +224,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(participationId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("filePath") String filePath, HttpServletRequest request) {
+        return super.createFile(participationId, filePath, request);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(participationId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folderPath") String folderPath, HttpServletRequest request) {
+        return super.createFolder(participationId, folderPath, request);
     }
 
     @Override
@@ -247,7 +247,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
+    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("filePath") String filename) {
         return super.deleteFile(participationId, filename);
     }
 

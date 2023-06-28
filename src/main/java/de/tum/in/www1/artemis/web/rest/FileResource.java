@@ -164,7 +164,7 @@ public class FileResource {
         log.debug("REST request to get file '{}'", filePath);
         // As the file already exists in the file system, the path should not change if requested genuinely
         String cleanFilePath = Paths.get(filePath).normalize().toString();
-        if (cleanFilePath.startsWith("../")) {
+        if (cleanFilePath.startsWith("..")) {
             throw new EntityNotFoundException("File not found due to improper filename");
         }
 
