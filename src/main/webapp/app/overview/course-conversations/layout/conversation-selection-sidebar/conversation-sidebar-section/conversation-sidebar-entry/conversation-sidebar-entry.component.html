@@ -21,7 +21,7 @@
                 <fa-icon [icon]="faEllipsis" size="sm"></fa-icon>
             </button>
             <div ngbDropdownMenu>
-                <button *ngIf="getAsChannel(conversation)" class="subTypeReference" ngbDropdownItem (click)="navigateToReference(getAsChannel(conversation))">
+                <button *ngIf="getAsChannel(conversation)?.subTypeReferenceId" class="subTypeReference" ngbDropdownItem (click)="navigateToReference(getAsChannel(conversation))">
                     {{ navigationTranslationKey(getAsChannel(conversation)?.subType) | artemisTranslate }}
                 </button>
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">
