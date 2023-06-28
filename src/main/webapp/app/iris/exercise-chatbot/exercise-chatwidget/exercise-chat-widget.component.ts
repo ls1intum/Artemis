@@ -70,6 +70,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
+        this.toggleScrollLock(false);
     }
 
     private newUserMessage(message: string): IrisClientMessage {
@@ -162,5 +163,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         setTimeout(() => {
             this.shakeErrorField = false;
         }, 1000);
+    }
+
+    toggleScrollLock(lockParent: boolean): void {
+        if (lockParent) {
+            document.body.classList.add('cdk-global-scrollblock');
+        } else {
+            document.body.classList.remove('cdk-global-scrollblock');
+        }
     }
 }
