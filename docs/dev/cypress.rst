@@ -1,5 +1,5 @@
-Cypress Bamboo Plans
-====================
+E2E Testing based on Cypress
+============================
 
 **Background**
 
@@ -17,6 +17,80 @@ the external services (Jira, Bitbucket and Bamboo) and connect them directly wit
 
 Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
 the prelive system, which is already properly setup in the university data center.
+
+Local Cypress Setup
+-------------------
+Sometimes developers need to setup Cypress locally, in order to debug failing E2E tests or write new tests.
+In order to setup cypress locally, we need to follow these steps:
+
+1. Install dependencies
+
+   First head into the cypress folder by using ``cd /src/test/cypress``. Now run ``npm install``.
+
+2. Customize Cypress settings
+
+   To connect cypress to our local Artemis instance, we need to adjust some configurations. 
+   First we need to set the URL or IP of the Artemis instance in the ``cypress.config.ts`` file.
+   Adjust the ``baseUrl`` setting to fit your setup (e.g. ``baseUrl: 'http://localhost:9000',``)
+
+3. Adjust user settings
+
+   We also need to adjust the user setting, which will determine the usernames and passwords, that cypress
+   will use. These settings are located within the ``cypress.env.json`` file. If you use the Atlassian setup,
+   the file should typically look like this:
+   .. code:: yaml
+      {
+         "username": "artemis_test_user_USERID",
+         "password": "artemis_test_user_USERID",
+         "adminUsername": "artemis_admin",
+         "adminPassword": "artemis_admin",
+         "allowGroupCustomization": true,
+         "studentGroupName": "students",
+         "tutorGroupName": "tutors",
+         "editorGroupName": "editors",
+         "instructorGroupName": "instructors"
+      }
+
+   The ``USERID`` part will be replaced by different user ids. These are set within the ``support/users.ts`` file. 
+   For a typical local installation the IDs are:
+   - studentOne: 1
+   - studentTwo: 2
+   - studentThree: 3
+   - instructor: 16
+   - tutor: 6
+
+   For cypress to use the correct IDs, you have to adjust the code like this:
+
+   .. code:: javascript
+      export const USER_ID = {
+         studentOne: 1,
+         studentTwo: 2,
+         studentThree: 3,
+         instructor: 16,
+         tutor: 6,
+      };
+
+4. Open Cypress browser
+
+   If you want to use a different browser than chrome, you can set this within the ``package.json`` file
+   within the cypress subfolder like this ``"cypress:open": "cypress open --browser=edge",``.
+   To now run the test suites selectively instead of in full, we need to open the cypress
+   browser, which is by default chrome by running the following command ``npm run cypress:open``.
+   Now select ``E2E Testing``, followed by ``Start E2E testing in ...``. A new browser window
+   should open, which should look like this:
+
+   .. figure:: cypress/cypress-open-screenshot.png
+      :align: center
+      :alt: Cypress cypress-open-screenshot
+
+   You can now click on any test suite and it should run. 
+   **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
+   since it will create the necessary users.
+
+Debug using Sorry Cypress
+-------------------------
+In order to debug failing E2E Cypress tests with a dashboard (called Sorry Cypress), please follow the instructions
+on confluence: https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
 
 Artemis Deployment on Bamboo Build Agent
 ----------------------------------------
