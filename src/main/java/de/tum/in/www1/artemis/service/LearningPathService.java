@@ -46,9 +46,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         var students = userRepository.getStudents(course);
-        students.forEach((student) -> {
-            generateLearningPathForUser(course, student);
-        });
+        students.forEach((student) -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
 
@@ -59,8 +57,8 @@ public class LearningPathService {
      * @param user   student for which the learning path is generated
      */
     public void generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
-        var existingLearningPaths = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
-        if (existingLearningPaths == null || existingLearningPaths.isEmpty()) {
+        var existingLearningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
+        if (existingLearningPath.isEmpty()) {
             LearningPath lpToCreate = new LearningPath();
             lpToCreate.setUser(user);
             lpToCreate.setCourse(course);
@@ -90,11 +88,9 @@ public class LearningPathService {
      * @param courseId   course id that the learning paths belong to
      */
     public void linkCompetencyToLearningPathsOfCourse(Competency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> {
-            learningPath.addCompetency(competency);
-        });
+        learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
         learningPathRepository.saveAll(learningPaths);
         log.debug("Linked competency (id={}) to learning paths", competency.getId());
     }
@@ -106,11 +102,9 @@ public class LearningPathService {
      * @param courseId   course id that the learning paths belong to
      */
     public void removeLinkedCompetencyFromLearningPathsOfCourse(Competency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
         var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> {
-            learningPath.removeCompetency(competency);
-        });
+        learningPaths.forEach(learningPath -> learningPath.removeCompetency(competency));
         learningPathRepository.saveAll(learningPaths);
         log.debug("Removed linked competency (id={}) from learning paths", competency.getId());
     }

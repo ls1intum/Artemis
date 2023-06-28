@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface LearningPathRepository extends JpaRepository<LearningPath, Long> {
 
-    List<LearningPath> findByCourseIdAndUserId(long courseId, long userId);
+    Optional<LearningPath> findByCourseIdAndUserId(long courseId, long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
     Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
