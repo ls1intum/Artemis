@@ -294,9 +294,7 @@ public class FileResource {
         Course course = lecture.getCourse();
 
         // check if the user is authorized to access the requested attachment unit
-        if (!checkAttachmentAuthorization(course, attachment)) {
-            throw new AccessForbiddenException();
-        }
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
         return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
     }
@@ -354,11 +352,13 @@ public class FileResource {
         Course course = attachmentUnit.getLecture().getCourse();
 
         // check if the user is authorized to access the requested attachment unit
-        if (!checkAttachmentAuthorization(course, attachment)) {
-            throw new AccessForbiddenException();
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
+        if (attachment.getLink().endsWith(filename)) {
+            throw new EntityNotFoundException("The filename does not match the attachment link connected to the requested attachment unit.");
         }
 
-        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
+        return buildFileResponse(fileService.actualPathForPublicPath(attachment.getLink()), filename);
     }
 
     /**
@@ -377,9 +377,8 @@ public class FileResource {
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = attachmentUnit.getLecture().getCourse();
 
-        if (!checkAttachmentAuthorization(course, attachment)) {
-            throw new AccessForbiddenException();
-        }
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
         Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
         String directoryPath = slide.getSlideImagePath();
 
@@ -461,15 +460,14 @@ public class FileResource {
      *
      * @param course     the course to check if the user is part of it
      * @param attachment the attachment for which the authentication should be checked
-     * @return true if the user is authorized to access the attachment, otherwise false is returned
      */
-    private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        if (attachment.isVisibleToStudents() || authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            return true;
+    private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment) {
+        if (attachment.isVisibleToStudents()) {
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         }
-        log.info("User not authorized to access attachment");
-        return false;
+        else {
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        }
     }
 
     /**
