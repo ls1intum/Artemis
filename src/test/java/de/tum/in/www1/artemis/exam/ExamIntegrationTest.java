@@ -2663,7 +2663,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     // TODO remove RepeatedTest annotation
-    // @RepeatedTest(1000)
     @RepeatedTest(100)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDownloadExamArchiveAsInstructor() throws Exception {
