@@ -1,3 +1,4 @@
+import { Params } from '@angular/router';
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
 import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
@@ -24,13 +25,13 @@ import {
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -375,6 +376,30 @@ export class MetisService implements OnDestroy {
      */
     getLinkForExam(examId: string): string {
         return `/courses/${this.getCourse().id}/exams/${examId}`;
+    }
+
+    /**
+     * returns the router link required for navigating to the channel subtype reference
+     *
+     * @param {ChannelDTO} channel
+     * @return {string} router link of the channel subtype reference
+     */
+    getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {
+        const referenceId = channel?.subTypeReferenceId?.toString();
+        if (!referenceId) {
+            return undefined;
+        }
+
+        switch (channel?.subType) {
+            case ChannelSubType.EXERCISE:
+                return this.getLinkForExercise(referenceId);
+            case ChannelSubType.LECTURE:
+                return this.getLinkForLecture(referenceId);
+            case ChannelSubType.EXAM:
+                return this.getLinkForExam(referenceId);
+            default:
+                return undefined;
+        }
     }
 
     /**

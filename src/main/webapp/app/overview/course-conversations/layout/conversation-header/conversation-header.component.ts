@@ -14,8 +14,9 @@ import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -39,7 +40,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
         public conversationService: ConversationService,
+        public metisService: MetisService,
     ) {}
+
+    getChannelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey;
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;

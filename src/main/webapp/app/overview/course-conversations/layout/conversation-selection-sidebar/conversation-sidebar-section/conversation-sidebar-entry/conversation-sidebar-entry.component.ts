@@ -1,8 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-
-import { Router } from '@angular/router';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
@@ -17,7 +15,7 @@ import {
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
 
@@ -54,14 +52,9 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     faEllipsis = faEllipsis;
     faMessage = faMessage;
-    constructor(
-        public conversationService: ConversationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private router: Router,
-        private metisService: MetisService,
-    ) {}
+    constructor(public conversationService: ConversationService, public metisService: MetisService, private alertService: AlertService, private modalService: NgbModal) {}
 
+    getChannelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey;
     get isConversationUnread(): boolean {
         // do not show unread count for open conversation that the user is currently reading
         if (this.isActiveConversation || !this.conversation) {
@@ -130,43 +123,5 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-    }
-
-    navigateToReference(channel?: ChannelDTO) {
-        const referenceId = channel?.subTypeReferenceId?.toString();
-        if (!referenceId) {
-            return;
-        }
-
-        let routerLink = undefined;
-        switch (channel?.subType) {
-            case ChannelSubType.EXERCISE:
-                routerLink = this.metisService.getLinkForExercise(referenceId);
-                break;
-            case ChannelSubType.LECTURE:
-                routerLink = this.metisService.getLinkForLecture(referenceId);
-                break;
-            case ChannelSubType.EXAM:
-                routerLink = this.metisService.getLinkForExam(referenceId);
-                break;
-        }
-
-        if (routerLink) {
-            this.router.navigate([routerLink]);
-        }
-    }
-
-    navigationTranslationKey(subType: ChannelSubType | undefined) {
-        const prefix = 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.';
-        switch (subType) {
-            case ChannelSubType.EXERCISE:
-                return prefix + 'goToExercise';
-            case ChannelSubType.LECTURE:
-                return prefix + 'goToLecture';
-            case ChannelSubType.EXAM:
-                return prefix + 'goToExam';
-            default:
-                return undefined;
-        }
     }
 }
