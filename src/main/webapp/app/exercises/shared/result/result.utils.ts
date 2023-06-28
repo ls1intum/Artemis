@@ -30,7 +30,7 @@ export enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
     /**
      * A regular, finished result is available.
-     * Can be rated (counts toward the score) or not rated (after the deadline for practice).
+     * Can be rated (counts toward the score) or not rated (after the due date for practice).
      */
     HAS_RESULT = 'HAS_RESULT',
     /**
@@ -363,4 +363,27 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
     }
     const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
     return i !== -1 ? feedbacks[i] : null;
+}
+
+/**
+ * Removes references from the {@link Participation}, {@link Submission}, and {@link Feedback} back to the result itself.
+ *
+ * To be used before sending data to the server.
+ * Otherwise, no valid JSON can be constructed.
+ *
+ * @param result Some result.
+ */
+export function breakCircularResultBackReferences(result: Result) {
+    if (result.participation?.results) {
+        result.participation.results = [];
+    }
+    if (result.submission?.participation?.results) {
+        result.submission.participation.results = [];
+    }
+    if (result.submission?.results) {
+        result.submission.results = [];
+    }
+    if (result.feedbacks) {
+        result.feedbacks.forEach((feedback) => (feedback.result = undefined));
+    }
 }

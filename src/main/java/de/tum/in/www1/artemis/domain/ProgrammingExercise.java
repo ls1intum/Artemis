@@ -575,6 +575,10 @@ public class ProgrammingExercise extends Exercise {
         this.staticCodeAnalysisCategories = staticCodeAnalysisCategories;
     }
 
+    public void addStaticCodeAnalysisCategory(final StaticCodeAnalysisCategory category) {
+        staticCodeAnalysisCategories.add(category);
+    }
+
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
         return Objects.requireNonNullElse(sequentialTestRuns, false);
@@ -691,7 +695,7 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
-            // as their relevantDueDate is before the deadline
+            // as their relevantDueDate is before the due date
             if (getAllowManualFeedbackRequests()) {
                 return true;
             }
@@ -845,5 +849,15 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void disconnectRelatedEntities() {
+        Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
+
+        super.disconnectRelatedEntities();
     }
 }

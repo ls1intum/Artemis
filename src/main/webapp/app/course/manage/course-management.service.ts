@@ -160,7 +160,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request
+     * Finds one course using a GET request.
+     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
@@ -274,6 +275,22 @@ export class CourseManagementService {
     }
 
     /**
+     * unenroll from course with the provided unique identifier using a POST request
+     * NB: the body is null, because the server can identify the user anyway
+     * @param courseId - the id of the course
+     */
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<User>> {
+        return this.http.post<User>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<User>) => {
+                if (res.body != undefined) {
+                    this.accountService.syncGroups(res.body);
+                }
+                return res;
+            }),
+        );
+    }
+
+    /**
      * finds all courses using a GET request
      * @param req
      */
@@ -284,13 +301,6 @@ export class CourseManagementService {
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
-    }
-
-    /**
-     * finds all groups for all courses using a GET request
-     */
-    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
     }
 
     /**
@@ -498,7 +508,7 @@ export class CourseManagementService {
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
-        this.setLearningGoalsIfNone(courseRes);
+        this.setCompetenciesIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
@@ -533,6 +543,9 @@ export class CourseManagementService {
         return Object.assign({}, course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
+            enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+            enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+            unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
         });
     }
 
@@ -630,7 +643,7 @@ export class CourseManagementService {
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
-    private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
+    private setCompetenciesIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];

@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+
 @Controller
 public class ClientForwardResource {
 
@@ -11,7 +14,9 @@ public class ClientForwardResource {
      *
      * @return Forward Instruction for Browser
      */
-    @RequestMapping({ "/{path:[^\\.]*}", "/{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
+    @RequestMapping({ "{path:[^\\.]*}", "{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
+    @EnforceNothing
+    @ManualConfig
     public String forward() {
         return "forward:/";
     }

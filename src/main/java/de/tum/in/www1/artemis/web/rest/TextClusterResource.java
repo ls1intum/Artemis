@@ -6,7 +6,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -16,6 +15,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 
@@ -53,7 +53,7 @@ public class TextClusterResource {
      * @return The list of cluster ids adjacent to their respective sizes and automatically graded text blocks
      */
     @GetMapping("text-exercises/{exerciseId}/cluster-statistics")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<TextClusterStatisticsDTO>> getClusterStats(@PathVariable Long exerciseId) {
         // Check if instructor has permission to access the exercise with given exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -82,7 +82,7 @@ public class TextClusterResource {
      * @return The status whether the boolean value was set successfully or the setting failed.
      */
     @PatchMapping("text-exercises/{exerciseId}/text-clusters/{clusterId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> toggleClusterDisabledPredicate(@PathVariable Long exerciseId, @PathVariable Long clusterId, @RequestParam boolean disabled) {
         // Check if Instructor has permission to access the exercise that the cluster with id clusterId belongs to.
         TextCluster cluster = textClusterRepository.findWithEagerExerciseByIdElseThrow(clusterId);

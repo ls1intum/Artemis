@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationRegisterBody;
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationRegisterDTO;
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationUnregisterRequest;
@@ -31,10 +31,10 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
     UserRepository userRepository;
 
     @Autowired
-    DatabaseUtilService databaseUtilService;
+    PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
     @Autowired
-    PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
+    private UserUtilService userUtilService;
 
     private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4eDQ0eHh4IiwiYXV0aCI6IlJPTEVfVEEsUk9MRV9JTlNUUlVDVE9SLFJPTEVfVVNFUiIsImV4cCI6NDgzMjgzODk2M30.jTzuQGl1nwvkKfwRUa8DpoAotw0zXf9DuLo2-OPYFub7GyBheKHBRgsqtFKSdv5ISYuEFuPIWJCuQOA8cH5UWA";
 
@@ -46,7 +46,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void setup() {
-        user = databaseUtilService.createAndSaveUser(USER_LOGIN);
+        user = userUtilService.createAndSaveUser(USER_LOGIN);
     }
 
     @AfterEach

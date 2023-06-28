@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../support/constants';
 import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
@@ -59,7 +59,7 @@ describe('Course management', () => {
 
         beforeEach(() => {
             courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
-                course = convertCourseAfterMultiPart(response);
+                course = convertModelAfterMultiPart(response);
             });
         });
 
@@ -124,8 +124,6 @@ describe('Course management', () => {
             courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
             courseCreation.setOnlineCourse(courseData.onlineCourse);
-            courseCreation.setPresentationScoreEnabled(courseData.presentationScoreEnabled);
-            courseCreation.setPresentationScore(courseData.presentationScore);
             courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
@@ -145,7 +143,6 @@ describe('Course management', () => {
                 expect(courseBody.maxComplaintTimeDays).to.eq(courseData.maxComplaintTimeDays);
                 expect(courseBody.requestMoreFeedbackEnabled).to.eq(courseData.enableMoreFeedback);
                 expect(courseBody.onlineCourse).to.eq(courseData.onlineCourse);
-                expect(courseBody.presentationScore).to.eq(courseData.presentationScore);
                 expect(courseBody.studentGroupName).to.eq(`artemis-${courseData.shortName}-students`);
                 expect(courseBody.editorGroupName).to.eq(`artemis-${courseData.shortName}-editors`);
                 expect(courseBody.instructorGroupName).to.eq(`artemis-${courseData.shortName}-instructors`);
@@ -165,8 +162,6 @@ describe('Course management', () => {
             courseManagement.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
             courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
             courseManagement.getCourseOnlineCourse().contains(convertBooleanToYesNo(courseData.onlineCourse));
-            courseManagement.getCoursePresentationScoreEnabled().contains(convertBooleanToYesNo(courseData.presentationScoreEnabled));
-            courseManagement.getCoursePresentationScore().contains(courseData.presentationScore);
             courseManagement.getCourseMaxComplaints().contains(courseData.maxComplaints);
             courseManagement.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
             courseManagement.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
@@ -282,7 +277,7 @@ describe('Course management', () => {
                     courseManagementRequest
                         .createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
                         .then((response) => {
-                            course = convertCourseAfterMultiPart(response);
+                            course = convertModelAfterMultiPart(response);
                             courseId = course.id!;
                             cy.intercept(PUT, BASE_API + 'courses/' + courseId).as('updateCourseQuery');
                         });
@@ -303,7 +298,7 @@ describe('Course management', () => {
 
         it('Deletes not existing course icon', () => {
             courseManagementRequest.createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
-                course = convertCourseAfterMultiPart(response);
+                course = convertModelAfterMultiPart(response);
                 courseId = course.id!;
             });
             navigationBar.openCourseManagement();

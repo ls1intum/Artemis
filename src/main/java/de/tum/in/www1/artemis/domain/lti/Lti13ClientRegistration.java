@@ -52,7 +52,7 @@ public class Lti13ClientRegistration {
         this.setScope(String.join(" ", List.of(Scopes.AGS_SCORE, Scopes.AGS_RESULT)));
         this.setRedirectUris(List.of(serverUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH));
         this.setInitiateLoginUri(serverUrl + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId);
-        this.setJwksUri(serverUrl + CustomLti13Configurer.JWKS_PATH);
+        this.setJwksUri(serverUrl + "/.well-known/jwks.json");
 
         Lti13ToolConfiguration toolConfiguration = new Lti13ToolConfiguration();
         String domain = serverUrl.split("://").length >= 1 ? serverUrl.split("://")[1] : ""; // Domain cannot include protocol

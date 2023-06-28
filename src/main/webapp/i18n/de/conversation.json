@@ -35,6 +35,10 @@
                 "notFound": "Keine Konversation gefunden",
                 "favorites": "Favoriten",
                 "channels": "Kanäle",
+                "generalChannels": "Allgemein",
+                "exerciseChannels": "Aufgaben",
+                "lectureChannels": "Vorlesungen",
+                "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
                 "groupChats": "Gruppen-Chats",
@@ -181,7 +185,12 @@
                 }
             },
             "channelOverview": {
-                "title": "Alle Kanäle im Kurs {{ courseTitle }}",
+                "title": {
+                    "general": "Alle allgemeinen Kanäle im Kurs {{ courseTitle }}",
+                    "exercise": "Alle Aufgabenkanäle im Kurs {{ courseTitle }}",
+                    "lecture": "Alle Vorlesungskanäle im Kurs {{ courseTitle }}",
+                    "exam": "Alle Klausurkanäle im Kurs {{ courseTitle }}"
+                },
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
                     "joined:": "Beigetreten",
