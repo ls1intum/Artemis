@@ -119,7 +119,7 @@ jobs:
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - MySQL'
-                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test/s'
+                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
                 state: 'failure'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Report action success
@@ -173,7 +173,7 @@ jobs:
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - PostgreSQL'
-                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test/s'
+                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
                 state: 'failure'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Report action success
