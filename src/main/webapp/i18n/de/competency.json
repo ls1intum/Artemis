@@ -149,7 +149,14 @@
                 "title": "Lernpfadmanagement",
                 "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
                 "enable": "Lernpfade aktivieren",
-                "enableHint": "Die Erstellung von Lernppfaden für alle Studierende kann einige Minuten dauern."
+                "enableHint": "Die Erstellung von Lernpfaden für alle Studierende kann einige Minuten dauern.",
+                "search": "Suche nach Lernpfaden:",
+                "table": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Fortschritt",
+                    "view": "Ansehen"
+                }
             }
         }
     }
