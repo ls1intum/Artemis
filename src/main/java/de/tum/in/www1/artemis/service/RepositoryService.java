@@ -28,10 +28,13 @@ public class RepositoryService {
 
     private final GitService gitService;
 
+    private final FileService fileService;
+
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService) {
+    public RepositoryService(GitService gitService, FileService fileService) {
         this.gitService = gitService;
+        this.fileService = fileService;
     }
 
     /**
@@ -183,7 +186,8 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
-        File file = checkIfFileExistsInRepository(repository, filename);
+        String cleanFileName = fileService.sanitizeFilename(filename);
+        File file = checkIfFileExistsInRepository(repository, cleanFileName);
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -210,10 +214,11 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
-        checkIfFileExistsInRepository(repository, folderName);
-        Files.createDirectory(repository.getLocalPath().resolve(folderName));
+        String cleanFolderName = fileService.sanitizeFolderName(folderName);
+        checkIfFileExistsInRepository(repository, cleanFolderName);
+        Files.createDirectory(repository.getLocalPath().resolve(cleanFolderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(repository.getLocalPath().resolve(folderName).resolve(".keep"), repository);
+        File keep = new File(repository.getLocalPath().resolve(cleanFolderName).resolve(".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -229,6 +234,9 @@ public class RepositoryService {
      * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
+        if (Paths.get(fileMove.currentFilePath()).normalize().toString().startsWith("../") || Paths.get(fileMove.newFilename()).normalize().toString().startsWith("../")) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
         Optional<File> existingFile = gitService.getFileByName(repository, fileMove.currentFilePath());
         if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
@@ -261,8 +269,8 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
-
-        Optional<File> file = gitService.getFileByName(repository, filename);
+        String cleanFileName = fileService.sanitizeFilename(filename);
+        Optional<File> file = gitService.getFileByName(repository, cleanFileName);
 
         if (file.isEmpty()) {
             throw new FileNotFoundException();

@@ -139,6 +139,16 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Sanitize the folder name and replace all invalid characters with an underscore
+     *
+     * @param folderName the folder name to sanitize
+     * @return the sanitized folder name
+     */
+    public String sanitizeFolderName(String folderName) {
+        return folderName.replaceAll("[^a-zA-Z\\d\\-]", "_");
+    }
+
+    /**
      * Helper method which handles the file creation for both normal file uploads and for markdown
      *
      * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
