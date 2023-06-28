@@ -453,14 +453,13 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
-     * @param path  to the file including the file name
-     * @param cache true if the response should contain a header that allows caching; false otherwise
+     * @param pathString to the file including the file name
+     * @param cache      true if the response should contain a header that allows caching; false otherwise
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(String path, boolean cache) {
-        String pathWithoutFilename = path.substring(0, path.lastIndexOf("\\"));
-        String filename = path.substring(path.lastIndexOf("\\") + 1);
-        return buildFileResponse(pathWithoutFilename, filename, cache);
+    private ResponseEntity<byte[]> buildFileResponse(String pathString, boolean cache) {
+        Path path = Path.of(pathString);
+        return buildFileResponse(path.getParent().toString(), path.getFileName().toString(), cache);
     }
 
     /**
