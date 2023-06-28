@@ -298,11 +298,11 @@ public class ProgrammingExerciseRepositoryService {
 
         // Java both supports Gradle and Maven as a test template
         Path projectTemplatePath = templatePath;
-        if (isMavenProject(projectType)) {
-            projectTemplatePath = projectTemplatePath.resolve("maven");
-        }
-        else if (projectType.isGradle()) {
+        if (projectType != null && projectType.isGradle()) {
             projectTemplatePath = projectTemplatePath.resolve("gradle");
+        }
+        else if (isMavenProject(projectType)) {
+            projectTemplatePath = projectTemplatePath.resolve("maven");
         }
         else {
             projectTemplatePath = projectTemplatePath.resolve("blackbox");
