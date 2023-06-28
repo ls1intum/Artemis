@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -130,29 +131,58 @@ public class FileResource {
     }
 
     /**
-     * GET /files/templates/:filename : Get the template file with the given filename
+     * GET /files/templates/:language/:projectType/:filename : Get the template file with the given filename
+     * GET /files/templates/:language/:filename : Get the template file with the given filename
      *
      * @param filename    The filename of the file to get
      * @param language    The programming language for which the template file should be returned
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "files/templates/{language}/{projectType}/{filename}", "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
+    @GetMapping({ "files/templates/{language}/{projectType}/{filename}", "files/templates/{language}/{filename}" })
     @EnforceAtLeastEditor
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable Optional<ProjectType> projectType,
             @PathVariable String filename) {
         log.debug("REST request to get file '{}' for programming language {} and project type {}", filename, language, projectType);
-        try {
-            String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
-            String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+        String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+        // As the file already exist in the file system, the name should not change if requested genuinely
+        String cleanFilename = fileService.sanitizeFilename(filename);
 
+        return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, cleanFilename);
+    }
+
+    /**
+     * GET /files/templates/:filePath : Get the template file with the given filePath
+     *
+     * @param filePath The filename of the file to get
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping("/files/templates/{filePath:.+}")
+    @EnforceAtLeastEditor
+    public ResponseEntity<byte[]> getTemplateFileByPath(@PathVariable String filePath) {
+        log.debug("REST request to get file '{}'", filePath);
+        // As the file already exists in the file system, the path should not change if requested genuinely
+        String cleanFilePath = Paths.get(filePath).normalize().toString();
+        if (cleanFilePath.startsWith("../")) {
+            throw new EntityNotFoundException("File not found due to improper filename");
+        }
+
+        return getTemplateFileContentWithResponse(cleanFilePath);
+    }
+
+    private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String filePath) {
+        return getTemplateFileContentWithResponse("", "", filePath);
+    }
+
+    private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, String filename) {
+        try {
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, filename));
-            if (!fileResource.exists()) {
+            if (!fileResource.exists() && !projectTypePrefix.isEmpty()) {
                 // Load without project type if not found with project type
                 fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, filename));
             }
-
-            var fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
