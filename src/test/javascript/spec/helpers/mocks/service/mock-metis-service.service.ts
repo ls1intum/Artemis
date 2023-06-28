@@ -88,6 +88,10 @@ export class MockMetisService {
         return '/courses/' + metisCourse.id + '/lectures/' + lectureId;
     }
 
+    getLinkForExam(examId: string): string {
+        return '/courses/' + metisCourse.id + '/exams/' + examId;
+    }
+
     getContextInformation(post: Post): ContextInformation {
         let routerLinkComponents = undefined;
         let displayName;
