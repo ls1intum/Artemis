@@ -51,7 +51,10 @@
                     "hide": "Ausblenden",
                     "favorite": "Zu Favoriten hinzufügen",
                     "unfavorite": "Aus Favoriten entfernen",
-                    "settings": "Einstellungen"
+                    "settings": "Einstellungen",
+                    "goToExercise": "Zur Aufgabe gehen",
+                    "goToLecture": "Zur Vorlesung gehen",
+                    "goToExam": "Zur Klausur gehen"
                 }
             }
         },

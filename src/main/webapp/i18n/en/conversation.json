@@ -51,7 +51,10 @@
                     "hide": "Hide",
                     "favorite": "Favorite",
                     "unfavorite": "Unfavorite",
-                    "settings": "Settings"
+                    "settings": "Settings",
+                    "goToExercise": "Go to exercise",
+                    "goToLecture": "Go to lecture",
+                    "goToExam": "Go to exam"
                 }
             }
         },
