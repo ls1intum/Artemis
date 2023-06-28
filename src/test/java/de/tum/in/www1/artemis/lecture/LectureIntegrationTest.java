@@ -86,7 +86,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         channel.setIsAnnouncementChannel(false);
         channel.setIsPublic(true);
         channel.setIsArchived(false);
-        channel.setName("lecture" + UUID.randomUUID().toString().substring(0, 8));
+        channel.setName("lecture-channel");
         lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(lecture);
         channel.setLecture(this.lecture1);
@@ -184,7 +184,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        String channelName = "test" + UUID.randomUUID().toString().substring(0, 8);
+        String channelName = "lecture-channel";
         // create channel with same name
         conversationUtilService.createChannel(originalLecture.getCourse(), channelName);
         originalLecture.setChannelName(channelName);
