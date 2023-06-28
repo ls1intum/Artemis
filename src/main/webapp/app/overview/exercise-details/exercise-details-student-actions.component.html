@@ -73,7 +73,7 @@
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
-            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
+            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                 <button
                     [id]="'start-exercise-' + exercise.id"
                     class="start-exercise"
@@ -198,7 +198,7 @@
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
-            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
+            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                 <button
                     [id]="'start-exercise-' + exercise.id"
                     class="start-exercise"

@@ -95,7 +95,10 @@
                 "saveFailedInternetDisconnected": "Speichern ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
                 "submitFailedInternetDisconnected": "Absenden ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
                 "refreshFailedInternetDisconnected": "Aktualisieren ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
-                "resetFailed": "Dein Repository konnte nicht zurückgesetzt werden."
+                "resetFailed": "Dein Repository konnte nicht zurückgesetzt werden.",
+                "submitBeforeStartDate": "Du kannst vor dem Startdatum keine Abgaben einreichen.",
+                "submitAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Abgaben einreichen.",
+                "submitAfterReachingSubmissionLimit": "Du hast das Abgabelimit erreicht und kannst keine weiteren Abgaben einreichen."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",

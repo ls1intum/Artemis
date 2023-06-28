@@ -83,7 +83,6 @@ $pagination-disabled-border-color: transparent;
 $toast-background-color: $gray-700;
 $toast-header-background-color: $gray-800;
 
-$modal-content-bg: $gray-800;
 $modal-content-border-color: $gray-700;
 $modal-header-border-color: $gray-700;
 
@@ -270,8 +269,8 @@ $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-accent-color: $metis-blue;
 $reaction-button-emoji-count-color: $gray-200;
 
-$metis-post-tag-selector-tag-option-background: $neutral-dark;
-$metis-post-tag-selector-tag-option-hover-background: $neutral-dark-l-5;
+$metis-selection-option-background: $neutral-dark;
+$metis-selection-option-hover-background: $neutral-dark-l-5;
 
 // Component: plagiarism-case-instructor-detail-view.component.scss
 $plagiarism-verdict-disabled-overlay-color: rgba(0, 0, 0, 0.9);
@@ -603,9 +602,9 @@ $user-management-background-color: rgba($white, 0.02);
 $user-management-border-color: rgba($white, 0.15);
 
 // Competency Rings
-$learning-goal-rings-red: $red;
-$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
-$learning-goal-rings-green: $green;
-$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
-$learning-goal-rings-blue: $blue;
-$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);
+$competency-rings-red: $red;
+$competency-rings-red-bg: transparentize($competency-rings-red, 0.8);
+$competency-rings-green: $green;
+$competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
+$competency-rings-blue: $blue;
+$competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);

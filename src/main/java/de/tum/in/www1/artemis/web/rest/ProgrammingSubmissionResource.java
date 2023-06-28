@@ -6,7 +6,6 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -17,6 +16,9 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
@@ -101,7 +103,7 @@ public class ProgrammingSubmissionResource {
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping("programming-submissions/{participationId}/trigger-build")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -135,14 +137,14 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
-     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or
-     *                            after the deadline by the INSTRUCTOR.
+     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the due date or
+     *                            after the due date by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the
      *         build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping("programming-submissions/{participationId}/trigger-failed-build")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         final Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -183,7 +185,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -205,7 +207,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
@@ -237,7 +239,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
     @GetMapping("exercises/{exerciseId}/programming-submissions")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
@@ -272,7 +274,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
     @GetMapping("programming-submissions/{submissionId}/lock")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
@@ -337,7 +339,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
@@ -357,7 +359,7 @@ public class ProgrammingSubmissionResource {
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
         if (programmingExercise.getAllowManualFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            // Assess manual feedback request before the deadline
+            // Assess manual feedback request before the due date
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -131,7 +129,7 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
-        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
 
         // protect sample solution, grading instructions, etc.
         conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -163,19 +161,9 @@ public class ConversationMessagingService extends PostingService {
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
-
-        // ToDo: find a cleaner way to do this instead of making the string here in the server
-
-        var nameOfEditor = user.getName();
-        // use login as fallback
-        if (nameOfEditor == null || nameOfEditor.isBlank()) {
-            nameOfEditor = user.getLogin();
-        }
-        var editedByText = "(edited by " + nameOfEditor + " on " + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) + " [UTC])";
-        messagePost.setContent(messagePost.getContent() + "\n" + editedByText);
-
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
+        existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
         updatedPost.setConversation(conversation);

@@ -203,6 +203,7 @@ During the exam creation and configuration, you can create your exam and configu
         Configure the Grading of a Programming Exercise
 
 .. _register_students:
+
 1.5 Register Students
 ^^^^^^^^^^^^^^^^^^^^^
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
