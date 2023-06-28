@@ -33,8 +33,11 @@ COPY gradle gradle/
 # (from https://stackoverflow.com/questions/63961934/how-to-use-docker-build-cache-when-version-bumping-a-react-app)
 COPY package.json package-lock.json ./
 RUN \
+  --mount=type=cache,target=/opt/artemis/.gradle/caches \
+  --mount=type=cache,target=/root/.gradle/caches \
   --mount=type=cache,target=/opt/artemis/.npm \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_set_cache /opt/artemis/.npm && \
+  mkdir -p /opt/artemis/.npm && \
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_set_cache && \
   ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_ci
 
 # so far just using the .dockerignore to define what isn't necessary here
@@ -43,6 +46,7 @@ COPY . .
 RUN \
   --mount=type=cache,target=/opt/artemis/.gradle/caches \
   --mount=type=cache,target=/root/.gradle/caches \
+  --mount=type=cache,target=/opt/artemis/.npm \
   --mount=type=cache,target=/opt/artemis/.cache \
   ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
