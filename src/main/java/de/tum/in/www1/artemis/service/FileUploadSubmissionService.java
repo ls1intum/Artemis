@@ -161,12 +161,12 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
         Optional<FileUploadSubmission> lastSubmission = participation.findLatestSubmission();
-        if (lastSubmission.isPresent()) {
+        if (lastSubmission.isPresent() && lastSubmission.get().getFilePath() != null) {
             FileUploadSubmission submission = lastSubmission.get();
             // check if we already had a file associated with this submission
             if (!submission.getFilePath().equals(newFilePath)) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
-                fileUploadSubmission.onDelete();
+                submission.onDelete();
             }
             else { // same name
                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
