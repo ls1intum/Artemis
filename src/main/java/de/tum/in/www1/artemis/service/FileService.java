@@ -1103,18 +1103,6 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Removes illegal characters for filenames from the string.
-     * <p>
-     * S<a href="ee:">https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#1507</a>5907
-     *
-     * @param string the string with the characters
-     * @return stripped string
-     */
-    public String removeIllegalCharacters(String string) {
-        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
-    }
-
-    /**
      * create a directory at a given path
      *
      * @param path the original path, e.g. /opt/artemis/repos-download

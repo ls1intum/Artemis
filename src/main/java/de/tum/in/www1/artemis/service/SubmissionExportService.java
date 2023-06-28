@@ -162,7 +162,7 @@ public abstract class SubmissionExportService {
 
         // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = fileService.sanitizeFilename(zipGroupName);
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
@@ -206,8 +206,8 @@ public abstract class SubmissionExportService {
         }).flatMap(Optional::stream).toList();
 
         // Add report entry
-        reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
-                skippedEntries.intValue()));
+        reportData.add(
+                new ArchivalReportEntry(exercise, fileService.sanitizeFilename(exercise.getTitle()), participations.size(), submissionFilePaths.size(), skippedEntries.intValue()));
 
         if (submissionFilePaths.isEmpty()) {
             return Optional.empty();
