@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Subscription } from 'rxjs';
-import { LearningPathService } from 'app/course/learning-paths/learningPathService.service';
+import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
