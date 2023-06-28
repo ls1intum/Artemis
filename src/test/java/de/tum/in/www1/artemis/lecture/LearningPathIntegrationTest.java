@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -51,6 +52,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    LearningPathRepository learningPathRepository;
 
     private Course course;
 
@@ -82,12 +86,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = courseUtilService.createCourse();
 
         competencies = competencyUtilService.createCompetencies(course, 5);
-
     }
 
     private void enableLearningPathsForTestingCourse() {
-        course.setLeanringPathsEnabled(true);
+        course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
         learningPathService.generateLearningPaths(course);
+        course.setLeanringPathsEnabled(true);
         course = courseRepository.save(course);
     }
 
@@ -107,6 +111,19 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", null, Course.class, HttpStatus.FORBIDDEN);
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
+    }
+
+    private Competency createCompetencyRESTCall() throws Exception {
+        final var competencyToCreate = new Competency();
+        competencyToCreate.setTitle("CompetencyToCreateTitle");
+        competencyToCreate.setCourse(course);
+        return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencyToCreate, Competency.class, HttpStatus.CREATED);
+    }
+
+    private Competency importCompetencyRESTCall() throws Exception {
+        final var course2 = courseUtilService.createCourse();
+        final var competencyToImport = competencyUtilService.createCompetency(course2);
+        return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport, Competency.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -131,10 +148,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPaths() throws Exception {
         request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.OK);
-        final var updatedCourse = courseRepository.findWithEagerLearningPathsByIdElseThrow(course.getId());
-        assertThat(updatedCourse.getLearningPathsEnabled()).isTrue().as("should enable LearningPaths");
+        final var updatedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
-        assertThat(updatedCourse.getLearningPaths().size()).isEqualTo(NUMBER_OF_STUDENTS).as("should create LearningPath for each student");
+        assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);
+        updatedCourse.getLearningPaths().forEach(
+                lp -> assertThat(lp.getCompetencies().size()).as("LearningPath (id={}) should have be linked to all Competencies", lp.getId()).isEqualTo(competencies.length));
     }
 
     @Test
@@ -159,7 +178,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var updatedUser = request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, User.class, HttpStatus.OK);
         final var updatedUserWithLearningPaths = userRepository.findWithLearningPathsByIdElseThrow(updatedUser.getId());
         assertThat(updatedUserWithLearningPaths.getLearningPaths()).isNotNull();
-        assertThat(updatedUserWithLearningPaths.getLearningPaths().size()).isEqualTo(1).as("should create LearningPath for student");
+        assertThat(updatedUserWithLearningPaths.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
     }
 
     private void setupEnrollmentRequestMocks() throws JsonProcessingException, URISyntaxException {
@@ -195,5 +214,91 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPath.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testAddCompetencyToLearningPathsOnCreateCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+
+        final var createdCompetency = createCompetencyRESTCall();
+
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
+        assertThat(learningPathOptional).isPresent();
+        assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(createdCompetency);
+        assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
+        final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
+        assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testAddCompetencyToLearningPathsOnImportCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+
+        final var importedCompetency = importCompetencyRESTCall();
+
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
+        assertThat(learningPathOptional).isPresent();
+        assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(importedCompetency);
+        assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
+        final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
+        assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testRemoveCompetencyFromLearningPathsOnDeleteCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+
+        request.delete("/api/courses/" + course.getId() + "/competencies/" + competencies[0].getId(), HttpStatus.OK);
+
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
+        assertThat(learningPathOptional).isPresent();
+        assertThat(learningPathOptional.get().getCompetencies()).as("should not contain deleted competency").doesNotContain(competencies[0]);
+        final var nonDeletedCompetencies = Set.of(competencies[1], competencies[2], competencies[3], competencies[4]);
+        assertThat(learningPathOptional.get().getCompetencies().size()).as("should contain competencies that have not been deleted").isEqualTo(nonDeletedCompetencies.size());
+        assertThat(learningPathOptional.get().getCompetencies()).as("should contain competencies that have not been deleted").containsAll(nonDeletedCompetencies);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testUpdateLearningPathProgressOnCreateCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+        final var createdCompetency = createCompetencyRESTCall();
+        // TODO
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testUpdateLearningPathProgressOnUpdateCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+        // TODO
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testUpdateLearningPathProgressOnImportCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+        final var importedCompetency = importCompetencyRESTCall();
+        // TODO
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testUpdateLearningPathProgressOnDeleteCompetency() throws Exception {
+        enableLearningPathsForTestingCourse();
+        request.delete("/api/courses/" + course.getId() + "/competencies/" + competencies[0].getId(), HttpStatus.OK);
+        // TODO
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testUpdateLearningPathProgress() {
+        enableLearningPathsForTestingCourse();
+        // TODO
     }
 }
