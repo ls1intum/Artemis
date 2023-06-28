@@ -715,4 +715,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         }
         return results;
     }
+
+    @EntityGraph("result_id")
+    default void setReviewNoteForResult(final String note, final Result result) {
+        ReviewNote reviewNote = result.getReviewNoteIfPresent().orElseGet(ReviewNote::new);
+        reviewNote.setCreator(result.getAssessor());
+        reviewNote.setNote(note);
+        result.setReviewNote(reviewNote);
+    }
 }
