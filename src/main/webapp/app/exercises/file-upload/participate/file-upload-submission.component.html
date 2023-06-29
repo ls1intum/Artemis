@@ -6,7 +6,7 @@
         submitbutton
         *ngIf="isOwnerOfParticipation"
         [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
-        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
         (onClick)="submitExercise()"
         [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
         [tooltip]="submitButtonTooltip"

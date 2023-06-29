@@ -68,6 +68,11 @@
                 </label>
                 <input type="range" min="0" max="100" class="form-range" id="masteryThreshold" formControlName="masteryThreshold" />
             </div>
+            <div class="form-group">
+                <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
+                <label class="form-control-label" jhiTranslate="artemisApp.competency.optional" for="optional"></label>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}"></fa-icon>
+            </div>
             <div>
                 <label>{{ 'artemisApp.competency.createCompetency.connectWithLectureUnits' | artemisTranslate }}</label>
                 <div

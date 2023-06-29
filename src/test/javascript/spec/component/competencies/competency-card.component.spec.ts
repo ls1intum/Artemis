@@ -78,6 +78,30 @@ describe('CompetencyCardComponent', () => {
         expect(competencyCardComponent.isMastered).toBeTrue();
     });
 
+    it('should display optional badge for optional competency', () => {
+        competencyCardComponent.competency = {
+            id: 1,
+            optional: true,
+        } as Competency;
+
+        competencyCardComponentFixture.detectChanges();
+
+        const badge = competencyCardComponentFixture.debugElement.query(By.css('#optional-badge'));
+        expect(badge).not.toBeNull();
+    });
+
+    it('should not display optional badge for non-optional competency', () => {
+        competencyCardComponent.competency = {
+            id: 1,
+            optional: false,
+        } as Competency;
+
+        competencyCardComponentFixture.detectChanges();
+
+        const badge = competencyCardComponentFixture.debugElement.query(By.css('#optional-badge'));
+        expect(badge).toBeNull();
+    });
+
     it('should detect if due date is passed', () => {
         const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
         competencyCardComponent.competency = competencyFuture;

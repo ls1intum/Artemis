@@ -57,7 +57,7 @@ describe('Exercise Info Component', () => {
 
             comp.ngOnInit();
 
-            expect(comp.individualComplaintDeadline).toEqual(expectedComplaintDate);
+            expect(comp.individualComplaintDueDate).toEqual(expectedComplaintDate);
             expect(comp.canComplainLaterOn).toBe(canComplainLaterOn);
         },
     );

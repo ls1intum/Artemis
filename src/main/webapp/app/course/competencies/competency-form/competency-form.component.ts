@@ -50,6 +50,7 @@ export interface CompetencyFormData {
     description?: string;
     softDueDate?: dayjs.Dayjs;
     taxonomy?: CompetencyTaxonomy;
+    optional?: boolean;
     masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
 }
@@ -68,6 +69,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         softDueDate: undefined,
         taxonomy: undefined,
         masteryThreshold: undefined,
+        optional: false,
         connectedLectureUnits: undefined,
     };
 
@@ -120,6 +122,10 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         return this.form.get('masteryThreshold');
     }
 
+    get optionalControl() {
+        return this.form.get('optional');
+    }
+
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
@@ -149,6 +155,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
             softDueDate: [undefined],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.competencyTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
+            optional: [false],
         });
         this.selectedLectureUnitsInTable = [];
 

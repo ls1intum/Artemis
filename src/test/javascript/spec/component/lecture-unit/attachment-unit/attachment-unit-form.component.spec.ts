@@ -161,7 +161,7 @@ describe('AttachmentUnitFormComponent', () => {
         // Set file size to exceed the maximum file size
         Object.defineProperty(fakeFile, 'size', { value: MAX_FILE_SIZE + 1 });
 
-        attachmentUnitFormComponent.onFileChange({ target: { files: [fakeFile] } });
+        attachmentUnitFormComponent.onFileChange({ target: { files: [fakeFile] } as unknown as EventTarget } as Event);
         attachmentUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');

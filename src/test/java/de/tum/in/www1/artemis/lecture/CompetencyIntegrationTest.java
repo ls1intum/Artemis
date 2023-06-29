@@ -9,9 +9,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -21,7 +25,12 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -308,7 +317,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         List<Competency> competenciesOfCourse = request.getList("/api/courses/" + course.getId() + "/competencies", HttpStatus.OK, Competency.class);
 
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(competency.getId())).findFirst()).isPresent();
+        assertThat(competenciesOfCourse).anyMatch(competency -> competency.getId().equals(this.competency.getId()));
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().get().getLectureUnits()).isEmpty();
     }
 
@@ -316,6 +325,33 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void getCompetenciesOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/competencies", HttpStatus.FORBIDDEN, Competency.class);
+    }
+
+    private static Stream<Arguments> competencyUpdateToOptionalProvider() {
+        return Stream.of(Arguments.of(IncludedInOverallScore.NOT_INCLUDED), Arguments.of(IncludedInOverallScore.INCLUDED_AS_BONUS),
+                Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY));
+    }
+
+    @ParameterizedTest
+    @MethodSource("competencyUpdateToOptionalProvider")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(competency.getId());
+
+        Competency newCompetency = new Competency();
+        newCompetency.setTitle("Title");
+        newCompetency.setDescription("Description");
+        newCompetency.setCourse(course);
+        newCompetency = competencyRepository.save(newCompetency);
+
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise.setMaxPoints(1.0);
+        exercise.setIncludedInOverallScore(includedInOverallScore);
+        exercise.setCompetencies(Set.of(newCompetency));
+        exerciseRepository.save(exercise);
+
+        newCompetency.setOptional(true);
+        request.put("/api/courses/" + competency.getId() + "/competencies", newCompetency, HttpStatus.OK);
     }
 
     @Test
@@ -327,7 +363,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteCompetency_witRelatedCompetencies_shouldReturnBadRequest() throws Exception {
+    void deleteCompetency_withRelatedCompetencies_shouldReturnBadRequest() throws Exception {
         Competency competency1 = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();

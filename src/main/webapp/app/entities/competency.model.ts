@@ -32,6 +32,7 @@ export class Competency implements BaseEntity {
     public softDueDate?: dayjs.Dayjs;
     public taxonomy?: CompetencyTaxonomy;
     public masteryThreshold?: number;
+    public optional?: boolean;
     public course?: Course;
     public exercises?: Exercise[];
     public lectureUnits?: LectureUnit[];
