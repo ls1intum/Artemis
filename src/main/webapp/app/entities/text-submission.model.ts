@@ -7,9 +7,6 @@ export class TextSubmission extends Submission {
     public blocks?: TextBlock[];
     public language?: Language;
 
-    // needed for tutor assessment tracking of text exercises with athene
-    public atheneTextAssessmentTrackingToken?: string;
-
     constructor() {
         super(SubmissionExerciseType.TEXT);
     }

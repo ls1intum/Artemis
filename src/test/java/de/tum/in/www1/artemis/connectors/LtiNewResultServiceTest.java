@@ -70,7 +70,7 @@ class LtiNewResultServiceTest {
 
         ltiNewResultService.onNewResult(participation);
 
-        verify(lti10Service, times(1)).onNewResult(participation);
-        verify(lti13Service, times(1)).onNewResult(participation);
+        verify(lti10Service).onNewResult(participation);
+        verify(lti13Service).onNewResult(participation);
     }
 }
