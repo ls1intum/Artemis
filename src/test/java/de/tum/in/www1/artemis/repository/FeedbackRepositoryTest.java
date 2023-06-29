@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.LongFeedbackText;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
@@ -17,6 +20,163 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Test
+    void createFeedbackFromTestCaseCombineMultiple() {
+        String msg1 = """
+                java.lang.AssertionError: expected:
+                    4
+                but was:
+                    5""";
+        String msg2 = """
+                org.opentest4j.AssertionFailedError: Message2
+                with additions""";
+        String msg3 = """
+                org.opentest4j.AssertionFailedError:\s
+                message is only here on the next line:
+                  expected:
+                    []
+                  to contain:
+                    ["Java"]""";
+
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+
+        assertThat(actualFeedback).isEqualTo("""
+                expected:
+                    4
+                but was:
+                    5
+
+                Message2
+                with additions
+
+                message is only here on the next line:
+                  expected:
+                    []
+                  to contain:
+                    ["Java"]""");
+
+    }
+
+    @Test
+    void createFeedbackFromTestCaseMatchMultiple() {
+        String msgMatchMultiple = """
+                java.lang.AssertionError: expected:
+                    4
+                but was:
+                    5
+                org.opentest4j.AssertionFailedError: expected:
+                    something else""";
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN, null).getDetailText();
+        assertThat(actualFeedback).isEqualTo("""
+                expected:
+                    4
+                but was:
+                    5
+                expected:
+                    something else""");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseUnchanged() {
+        String msgUnchanged = "Should not be changed";
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo(msgUnchanged);
+
+    }
+
+    @Test
+    void createFeedbackFromTestCaseWithStackTrace() {
+        String msgWithStackTrace = """
+                org.opentest4j.AssertionFailedError: the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.
+                \tat test.MethodTest.checkMethods(MethodTest.java:129)
+                \tat test.MethodTest.testMethods(MethodTest.java:72)
+                \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseWithStackTraceAndCause() {
+        String msgWithStackTrace = """
+                org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups
+                \tat org.springframework.orm.jpa.vendor.HibernateJpaDialect.convertHibernateAccessException(HibernateJpaDialect.java:353)
+                \tat org.springframework.orm.jpa.vendor.HibernateJpaDialect.translateExceptionIfPossible(HibernateJpaDialect.java:255)
+                \tat org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.translateExceptionIfPossible(AbstractEntityManagerFactoryBean.java:528)
+                \tat org.springframework.dao.support.ChainedPersistenceExceptionTranslator.translateExceptionIfPossible(ChainedPersistenceExceptionTranslator.java:61)
+                \tat org.springframework.dao.support.DataAccessUtils.translateIfNecessary(DataAccessUtils.java:242)
+                Caused by: org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups
+                \tat org.hibernate.persister.collection.AbstractCollectionPersister.readIndex(AbstractCollectionPersister.java:874)
+                \tat org.hibernate.collection.internal.PersistentList.readFrom(PersistentList.java:401)
+                \tat org.hibernate.loader.plan.exec.process.internal.CollectionReferenceInitializerImpl.finishUpRow(CollectionReferenceInitializerImpl.java:76)
+                \tat org.hibernate.loader.plan.exec.process.internal.AbstractRowReader.readRow(AbstractRowReader.java:125)
+                \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractRows(ResultSetProcessorImpl.java:157)
+                \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo(
+                "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseOfAssertJ() {
+        String msgWithStackTrace = """
+                org.opentest4j.AssertionFailedError:\s
+                Expecting:
+                 <"expected:
+                    4
+                but was:XXXXXXXXXXXXX
+                    5
+                expected:
+                    something else">
+                to be equal to:
+                 <"expected:
+                    4
+                but was:
+                    5
+                expected:
+                    something else">
+                but was not.
+                \tat java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+                \tat java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:64)
+                \tat java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+                \tat java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:500)
+                \tat de.tum.in.www1.artemis.FeedbackServiceTest.createFeedbackFromTestCaseMatchMultiple(FeedbackServiceTest.java:66)
+                """;
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo("""
+                Expecting:
+                 <"expected:
+                    4
+                but was:XXXXXXXXXXXXX
+                    5
+                expected:
+                    something else">
+                to be equal to:
+                 <"expected:
+                    4
+                but was:
+                    5
+                expected:
+                    something else">
+                but was not.""");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseSuccessfulWithMessage() {
+        String msg = "success\nmessage";
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText())
+                .isEqualTo("success\nmessage");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseSuccessfulNoMessage() {
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isNull();
+    }
 
     @Test
     void copyFeedbackWithLongFeedback() {
@@ -30,12 +190,14 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
         final Feedback savedFeedback = feedbackRepository.save(feedback);
 
         final Feedback copiedFeedback = savedFeedback.copyFeedback();
-        assertThat(copiedFeedback.getLongFeedbackText()).isNotNull();
-        assertThat(copiedFeedback.getLongFeedbackText().getText()).isEqualTo(longText);
+        assertThat(copiedFeedback.getLongFeedback()).isNotEmpty();
+        final LongFeedbackText longFeedback = copiedFeedback.getLongFeedback().orElseThrow();
+        assertThat(longFeedback.getText()).isEqualTo(longText);
 
         final Feedback newSavedFeedback = feedbackRepository.save(copiedFeedback);
         assertThat(newSavedFeedback.getId()).isNotEqualTo(savedFeedback.getId());
-        assertThat(newSavedFeedback.getLongFeedbackText().getId()).isEqualTo(newSavedFeedback.getId());
+        final LongFeedbackText savedLongFeedback = newSavedFeedback.getLongFeedback().orElseThrow();
+        assertThat(savedLongFeedback.getId()).isEqualTo(newSavedFeedback.getId());
     }
 
     @Test
@@ -58,7 +220,7 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         final Feedback scaFeedback = scaFeedbacks.get(0);
         assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
-        assertThat(scaFeedback.getLongFeedbackText()).isNull();
+        assertThat(scaFeedback.getLongFeedback()).isEmpty();
         assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
                 .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
     }

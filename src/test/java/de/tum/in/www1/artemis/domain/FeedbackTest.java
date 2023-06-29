@@ -55,7 +55,7 @@ class FeedbackTest {
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
         assertThat(feedback.getHasLongFeedbackText()).isTrue();
 
-        final LongFeedbackText longFeedbackText = feedback.getLongFeedbackText();
+        final LongFeedbackText longFeedbackText = feedback.getLongFeedback().orElseThrow();
         assertThat(longFeedbackText.getFeedback()).isSameAs(feedback);
         assertThat(longFeedbackText.getText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10);
     }
@@ -68,7 +68,7 @@ class FeedbackTest {
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
         assertThat(feedback.getHasLongFeedbackText()).isTrue();
 
-        final LongFeedbackText longFeedbackText = feedback.getLongFeedbackText();
+        final LongFeedbackText longFeedbackText = feedback.getLongFeedback().orElseThrow();
         assertThat(longFeedbackText.getFeedback()).isSameAs(feedback);
         assertThat(longFeedbackText.getText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH + 100);
     }
@@ -89,7 +89,8 @@ class FeedbackTest {
         final Feedback feedback = new Feedback();
         feedback.setDetailText(veryLongFeedback);
 
-        assertThat(feedback.getLongFeedbackText().getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
+        final LongFeedbackText longFeedback = feedback.getLongFeedback().orElseThrow();
+        assertThat(longFeedback.getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
     }
 
     @Test
@@ -103,7 +104,7 @@ class FeedbackTest {
         assertThat(copiedFeedback.getHasLongFeedbackText()).isTrue();
         assertThat(copiedFeedback.getDetailText()).hasSize(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
 
-        final LongFeedbackText copiedLongFeedback = copiedFeedback.getLongFeedbackText();
+        final LongFeedbackText copiedLongFeedback = copiedFeedback.getLongFeedback().orElseThrow();
         assertThat(copiedLongFeedback).isNotNull();
         assertThat(copiedLongFeedback.getText()).isEqualTo(feedbackText);
         assertThat(copiedLongFeedback.getFeedback()).isSameAs(copiedFeedback);
