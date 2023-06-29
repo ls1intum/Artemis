@@ -2,33 +2,27 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, courseOverview, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
 
-// Common primitives
-let course: Course;
-let quizExercise: QuizExercise;
-
 describe('Quiz Exercise Participation', () => {
-    before('Set up course', () => {
+    let course: Course;
+    let quizExercise: QuizExercise;
+
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
         });
-    });
-
-    after('Delete Course', () => {
-        cy.login(admin);
-        courseManagementRequest.deleteCourse(course.id!);
     });
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
-                quizExercise = quizResponse.body;
+                quizExercise = convertModelAfterMultiPart(quizResponse);
             });
         });
 
@@ -60,7 +54,7 @@ describe('Quiz Exercise Participation', () => {
         before('Create SA quiz', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
-                quizExercise = quizResponse.body;
+                quizExercise = convertModelAfterMultiPart(quizResponse);
                 courseManagementRequest.setQuizVisible(quizExercise.id!);
                 courseManagementRequest.startQuizNow(quizExercise.id!);
             });
@@ -84,7 +78,7 @@ describe('Quiz Exercise Participation', () => {
     // describe.skip('DnD Quiz participation', () => {
     //     before('Create DND quiz', () => {
     //         cy.login(admin, '/course-management/' + course.id + '/exercises');
-    //         cy.get('#create-quiz-button').should('be.visible').click();
+    //         courseManagementExercises.createQuizExercise();
     //         quizExerciseCreation.setTitle('Cypress Quiz');
     //         quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
     //         quizExerciseCreation.saveQuiz().then((quizResponse) => {
@@ -101,4 +95,8 @@ describe('Quiz Exercise Participation', () => {
     //         quizExerciseDragAndDropQuiz.submit();
     //     });
     // });
+
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
+    });
 });

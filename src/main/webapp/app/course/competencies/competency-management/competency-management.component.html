@@ -154,6 +154,7 @@
                     <th width="300"><span jhiTranslate="artemisApp.competency.description">Description</span></th>
                     <th><span jhiTranslate="artemisApp.competency.taxonomy">Taxonomy</span></th>
                     <th class="d-none d-lg-table-cell"><span jhiTranslate="artemisApp.competency.masteredStudents">Mastered Students</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.optional">Optional</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -179,6 +180,9 @@
                             [value]="competency.courseProgress?.numberOfMasteredStudents ?? 0"
                             [max]="competency.courseProgress?.numberOfStudents ?? 0"
                         ></ngb-progressbar>
+                    </td>
+                    <td>
+                        <span>{{ 'global.generic.' + (competency.optional ? 'yes' : 'no') | artemisTranslate }}</span>
                     </td>
                     <td class="text-end">
                         <a

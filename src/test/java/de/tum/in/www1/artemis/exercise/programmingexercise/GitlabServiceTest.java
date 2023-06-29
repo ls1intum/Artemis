@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
@@ -115,7 +114,7 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
         versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
 
-        verify(versionControlService, times(1)).getDefaultBranchOfRepository(any());
+        verify(versionControlService).getDefaultBranchOfRepository(any());
     }
 
     @Test
