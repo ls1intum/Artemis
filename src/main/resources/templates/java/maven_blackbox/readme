@@ -73,30 +73,30 @@ class Client {
 }
 
 class Policy {
-  <color:testsColor(testMethods[Policy])>+configure()</color>
+  +configure()
 }
 
 class Context {
-  <color:testsColor(testAttributes[Context])>-dates: List<Date></color>
-  <color:testsColor(testMethods[Context])>+sort()</color>
+  -dates: List<Date>
+  +sort()
 }
 
 interface SortStrategy {
-  <color:testsColor(testMethods[SortStrategy])>+performSort(List<Date>)</color>
+  +performSort(List<Date>)
 }
 
 class BubbleSort {
-  <color:testsColor(testBubbleSort)>+performSort(List<Date>)</color>
+  +performSort(List<Date>)
 }
 
 class MergeSort {
-  <color:testsColor(testMergeSort)>+performSort(List<Date>)</color>
+  +performSort(List<Date>)
 }
 
-MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])
-BubbleSort -up-|> SortStrategy #testsColor(testClass[BubbleSort])
-Policy -right-> Context #testsColor(testAttributes[Policy]): context
-Context -right-> SortStrategy #testsColor(testAttributes[Context]): sortAlgorithm
+MergeSort -up-|> SortStrategy
+BubbleSort -up-|> SortStrategy
+Policy -right-> Context: context
+Context -right-> SortStrategy: sortAlgorithm
 Client .down.> Policy
 Client .down.> Context
 
