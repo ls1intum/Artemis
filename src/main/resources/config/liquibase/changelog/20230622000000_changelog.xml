@@ -14,7 +14,7 @@
             </column>
             <column name="user_id" type="bigint"/>
             <column name="course_id" type="bigint"/>
-            <column name="mastered_competencies" type="int"/>
+            <column name="progress" type="int"/>
         </createTable>
         <addUniqueConstraint columnNames="user_id, course_id" constraintName="learning_path_user_course_uq" tableName="learning_path"/>
         <createTable tableName="competency_learning_path">

@@ -122,11 +122,11 @@ public class LearningPathService {
     private void updateLearningPathProgress(final LearningPath learningPath) {
         final var userId = learningPath.getUser().getId();
         final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
-        final var progress = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
+        final var competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
 
         // TODO: consider optional competencies
-        final var mastered = (int) progress.stream().filter(CompetencyProgressService::isMastered).count();
-        learningPath.setMasteredCompetencies(mastered);
+        final var completed = (float) competencyProgresses.stream().filter(CompetencyProgressService::isMastered).count();
+        learningPath.setProgress(Math.round(completed / (float) learningPath.getCompetencies().size()));
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
     }

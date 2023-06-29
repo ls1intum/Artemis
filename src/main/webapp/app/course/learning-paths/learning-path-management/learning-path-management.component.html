@@ -60,7 +60,7 @@
                         <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td class="col-4">
-                        <span>{{ learningPath.masteredCompetencies }}</span>
+                        <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100"></ngb-progressbar>
                     </td>
                     <td class="col-1">
                         <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'artemisApp.learningPath.manageLearningPaths.table.view'"></jhi-button>

@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.User;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class LearningPath extends DomainObject {
 
-    @Column(name = "mastered_competencies")
-    private int masteredCompetencies;
+    @Column(name = "progress")
+    private int progress;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -38,12 +38,12 @@ public class LearningPath extends DomainObject {
     @JsonIgnoreProperties({ "exercises", "course", "learningPaths" })
     private Set<Competency> competencies = new HashSet<>();
 
-    public int getMasteredCompetencies() {
-        return masteredCompetencies;
+    public int getProgress() {
+        return progress;
     }
 
-    public void setMasteredCompetencies(int masteredCompetencies) {
-        this.masteredCompetencies = masteredCompetencies;
+    public void setProgress(int progress) {
+        this.progress = progress;
     }
 
     public User getUser() {

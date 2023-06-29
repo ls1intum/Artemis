@@ -5,7 +5,7 @@ import { Competency } from 'app/entities/competency.model';
 
 export class LearningPath implements BaseEntity {
     public id?: number;
-    public masteredCompetencies?: number;
+    public progress?: number;
     public user?: User;
     public course?: Course;
     public competencies?: Competency[];
