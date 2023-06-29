@@ -23,12 +23,3 @@ cd docker
 docker compose -f $COMPOSE_FILE pull artemis-app $DB
 docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
 docker compose -f $COMPOSE_FILE up --exit-code-from migration-check
-exitCode=$?
-cd ..
-echo "Migration check container exit code: $exitCode"
-if [ $exitCode -eq 0 ]
-then
-    touch .successful
-else
-    echo "Not creating success file because the migration check failed"
-fi
