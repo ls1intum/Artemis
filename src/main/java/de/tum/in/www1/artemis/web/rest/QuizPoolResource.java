@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -59,7 +59,7 @@ public class QuizPoolResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the QuizPool, or with status 400 (Bad Request) if the QuizPool is invalid
      */
     @PutMapping("courses/{courseId}/exams/{examId}/quiz-pools")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<QuizPool> updateQuizPool(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody QuizPool quizPool) {
         log.info("REST request to update QuizPool : {}", quizPool);
 
@@ -77,7 +77,7 @@ public class QuizPoolResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the QuizPool, or with status 404 (Not Found) if the QuizPool is not found
      */
     @GetMapping("courses/{courseId}/exams/{examId}/quiz-pools")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<QuizPool> getQuizPool(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to get QuizPool given examId : {}", examId);
 
