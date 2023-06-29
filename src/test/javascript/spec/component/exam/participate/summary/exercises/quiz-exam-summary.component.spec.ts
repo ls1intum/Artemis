@@ -98,7 +98,7 @@ describe('QuizExamSummaryComponent', () => {
 
     it('should initialize', () => {
         component.exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
-        fixture.detectChanges();
+        component.ngOnChanges();
         expect(component).not.toBeNull();
         expect(component.exam).not.toBeNull();
         expect(component.showMissingResultsNotice).toBeTrue();
