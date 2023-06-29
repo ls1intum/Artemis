@@ -333,7 +333,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param exercise                 - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
-     *         f
      */
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds) {
 
