@@ -4,14 +4,14 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { generateUUID } from '../../support/utils';
-import { courseManagementRequest, courseOverview, examNavigation, examStartEnd, textExerciseEditor } from '../../support/artemis';
+import { courseManagementRequest, courseOverview, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { admin, studentOne } from '../../support/users';
 
 describe('Exam date verification', () => {
     let course: Course;
     let examTitle: string;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -118,23 +118,15 @@ describe('Exam date verification', () => {
                         if (examEnd.isAfter(dayjs())) {
                             cy.wait(examEnd.diff(dayjs()));
                         }
-                        cy.get('#exam-finished-title').should('contain.text', exam.title, { timeout: 40000 });
+                        examParticipation.checkExamFinishedTitle(exam.title!);
                         examStartEnd.finishExam();
                     });
                 });
             });
         });
-
-        afterEach(() => {
-            cy.login(admin);
-            courseManagementRequest.deleteExam(exam);
-        });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });
