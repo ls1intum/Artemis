@@ -1222,7 +1222,7 @@ public class FileService implements DisposableBean {
      * @param fileName        file name to set file name
      * @param extension       extension of the file (e.g .pdf or .png)
      * @param streamByteArray byte array to save to the temp file
-     * @return multipartFile wrapper for the file stored on disk with a cleared name
+     * @return multipartFile wrapper for the file stored on disk with a sanitized name
      */
     public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
         try {
