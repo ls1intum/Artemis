@@ -288,7 +288,7 @@ class Lti13ServiceTest {
 
         lti13Service.buildLtiResponse(UriComponentsBuilder.newInstance(), mock(HttpServletResponse.class));
 
-        verify(ltiService, times(1)).buildLtiResponse(any(), any());
+        verify(ltiService).buildLtiResponse(any(), any());
     }
 
     @Test
