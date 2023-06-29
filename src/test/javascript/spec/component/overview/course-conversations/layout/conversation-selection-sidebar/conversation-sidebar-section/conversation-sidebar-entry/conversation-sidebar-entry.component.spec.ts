@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { Location } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ConversationSidebarEntryComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-entry/conversation-sidebar-entry.component';
 import { NgbDropdownMocksModule } from '../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
@@ -44,7 +44,7 @@ examples.forEach((conversation) => {
         let conversationService: ConversationService;
         let changeHiddenStatusSpy: jest.SpyInstance;
         let changeFavoriteStatusSpy: jest.SpyInstance;
-        let router: Router;
+        let location: Location;
         const course = { id: 1 } as any;
         const activeConversation = generateExampleGroupChatDTO({ id: 99 });
 
@@ -75,7 +75,7 @@ examples.forEach((conversation) => {
             changeHiddenStatusSpy = jest.spyOn(conversationService, 'changeHiddenStatus').mockReturnValue(of(new HttpResponse<void>()));
             changeFavoriteStatusSpy = jest.spyOn(conversationService, 'changeFavoriteStatus').mockReturnValue(of(new HttpResponse<void>()));
 
-            router = TestBed.inject(Router);
+            location = TestBed.inject(Location);
 
             component = fixture.componentInstance;
             component.conversation = conversation;
@@ -140,15 +140,12 @@ examples.forEach((conversation) => {
             it(
                 'should navigate to ' + conversation.subType,
                 fakeAsync(() => {
-                    const navigateSpy = jest.spyOn(router, 'navigate');
-
                     const button = fixture.debugElement.nativeElement.querySelector('.sub-type-reference');
                     button.click();
                     tick();
 
                     // Assert that the router has navigated to the correct link
-                    expect(navigateSpy).toHaveBeenCalledOnce();
-                    expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/' + conversation.subType + 's/1']);
+                    expect(location.path()).toBe('/courses/1/' + conversation.subType + 's/1');
                 }),
             );
         }
