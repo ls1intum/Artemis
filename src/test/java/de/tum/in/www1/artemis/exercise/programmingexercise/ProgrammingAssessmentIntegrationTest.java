@@ -904,7 +904,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         var responseParticipation = response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
 
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
     }
 
     @Test

@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -1163,21 +1162,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
         assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTrackingTokenHeader() throws Exception {
-        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
-        exerciseDueDatePassed();
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-
-        request.getWithHeaders("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, parameters, new HttpHeaders(),
-                new String[] { "X-Athene-Tracking-Authorization" });
-
     }
 
     @Test

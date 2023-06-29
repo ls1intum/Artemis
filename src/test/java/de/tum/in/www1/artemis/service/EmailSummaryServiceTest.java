@@ -131,8 +131,8 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
         ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
-        verify(mailService, timeout(5000).times(1)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
-        verify(javaMailSender, timeout(5000).times(1)).send(any(MimeMessage.class));
+        verify(mailService, timeout(5000)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
+        verify(javaMailSender, timeout(5000)).send(any(MimeMessage.class));
 
         Set<Exercise> capturedExerciseSet = captor.getValue();
         assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")

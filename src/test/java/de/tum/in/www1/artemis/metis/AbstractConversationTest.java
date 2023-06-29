@@ -134,7 +134,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
-        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
+        verify(messagingTemplate).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).metisCrudAction().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 

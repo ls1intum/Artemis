@@ -22,6 +22,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
     @Input() course: Course;
     @Input() activeConversation?: ConversationDto;
     @Input() headerKey: string;
+    @Input() searchTerm: string;
 
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
