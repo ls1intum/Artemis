@@ -92,8 +92,8 @@
                 align-items: center;
             }
 
-            &-default > * {
-                margin-top: 5px;
+            .mat-mdc-button {
+                height: fit-content;
             }
         }
 
