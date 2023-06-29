@@ -18,7 +18,7 @@ export function getUserLabel({ firstName, lastName, login }: User | Conversation
 }
 
 export function getChannelSubTypeReferenceTranslationKey(subType: ChannelSubType | undefined) {
-    const prefix = 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.';
+    const prefix = 'artemisApp.conversationsLayout.';
     switch (subType) {
         case ChannelSubType.EXERCISE:
             return prefix + 'goToExercise';

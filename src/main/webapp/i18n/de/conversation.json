@@ -15,6 +15,9 @@
             "onlyYou": "Nur du",
             "archived": "Archiviert",
             "sendMessage": "Senden",
+            "goToExercise": "Zur Aufgabe gehen",
+            "goToLecture": "Zur Vorlesung gehen",
+            "goToExam": "Zur Klausur gehen",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",
@@ -51,10 +54,7 @@
                     "hide": "Ausblenden",
                     "favorite": "Zu Favoriten hinzufügen",
                     "unfavorite": "Aus Favoriten entfernen",
-                    "settings": "Einstellungen",
-                    "goToExercise": "Zur Aufgabe gehen",
-                    "goToLecture": "Zur Vorlesung gehen",
-                    "goToExam": "Zur Klausur gehen"
+                    "settings": "Einstellungen"
                 }
             }
         },

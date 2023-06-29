@@ -1,4 +1,3 @@
-import { Params } from '@angular/router';
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
 import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
@@ -25,6 +24,7 @@ import {
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';

@@ -15,6 +15,9 @@
             "onlyYou": "Only you",
             "archived": "Archived",
             "sendMessage": "Send",
+            "goToExercise": "Go to exercise",
+            "goToLecture": "Go to lecture",
+            "goToExam": "Go to exam",
             "conversationMessages": {
                 "searchLabel": "Search messages",
                 "clearSearch": "Clear search",
@@ -51,10 +54,7 @@
                     "hide": "Hide",
                     "favorite": "Favorite",
                     "unfavorite": "Unfavorite",
-                    "settings": "Settings",
-                    "goToExercise": "Go to exercise",
-                    "goToLecture": "Go to lecture",
-                    "goToExam": "Go to exam"
+                    "settings": "Settings"
                 }
             }
         },
