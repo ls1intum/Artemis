@@ -108,5 +108,5 @@ services:
         source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-./files/nginx/privkey.pem}
         target: '/etc/certificates/privkey.pem'
       - type: bind
-        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-./files/nginx/.htpasswd}
+        source: ${NGINX_PROXY_HTPASSWD:-./files/nginx/.htpasswd}
         target: '/etc/nginx/.htpasswd'
