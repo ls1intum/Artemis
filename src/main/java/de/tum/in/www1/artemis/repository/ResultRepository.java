@@ -123,7 +123,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor", "reviewNote" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
 
     /**
@@ -333,6 +333,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param exercise                 - the exercise we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
+     *         f
      */
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds) {
 
@@ -716,7 +717,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return results;
     }
 
-    @EntityGraph("result_id")
     default void setReviewNoteForResult(final String note, final Result result) {
         ReviewNote reviewNote = result.getReviewNoteIfPresent().orElseGet(ReviewNote::new);
         reviewNote.setCreator(result.getAssessor());
