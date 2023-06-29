@@ -19,10 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
@@ -2107,6 +2104,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
+        gradingScaleRepository.deleteAll();
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -2234,9 +2232,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
                 Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true, 1);
         gradingScale.setExam(exam);
-        gradingScaleRepository.save(gradingScale);
+        gradingScale = gradingScaleRepository.save(gradingScale);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+        waitForParticipantScores();
 
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
@@ -2447,9 +2445,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Make sure delete also works if so many objects have been created before
-        await().until(() -> participantScoreScheduleService.isIdle());
+        waitForParticipantScores();
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam.getId())).isEmpty();
+    }
+
+    private void waitForParticipantScores() {
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(() -> participantScoreScheduleService.isIdle());
     }
 
     private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {
