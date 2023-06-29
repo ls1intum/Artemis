@@ -7,8 +7,6 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
-        ports:
-            - "8080:8080"
         env_file:
             - ./artemis/config/cypress-postgres.env
         environment:
