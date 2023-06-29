@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
@@ -48,6 +48,7 @@ export interface CompetencyFormData {
     title?: string;
     description?: string;
     taxonomy?: CompetencyTaxonomy;
+    optional?: boolean;
     masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
 }
@@ -65,6 +66,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         description: undefined,
         taxonomy: undefined,
         masteryThreshold: undefined,
+        optional: false,
         connectedLectureUnits: undefined,
     };
 
@@ -97,6 +99,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     suggestedTaxonomies: string[] = [];
 
     faTimes = faTimes;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(private fb: FormBuilder, private competencyService: CompetencyService, private translateService: TranslateService, public lectureUnitService: LectureUnitService) {}
 
@@ -110,6 +113,10 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
 
     get masteryThresholdControl() {
         return this.form.get('masteryThreshold');
+    }
+
+    get optionalControl() {
+        return this.form.get('optional');
     }
 
     ngOnChanges(): void {
@@ -140,6 +147,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.competencyTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
+            optional: [false],
         });
         this.selectedLectureUnitsInTable = [];
 
