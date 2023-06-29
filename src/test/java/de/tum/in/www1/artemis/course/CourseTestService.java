@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
@@ -3090,6 +3093,11 @@ public class CourseTestService {
         var result = request.getMvc().perform(buildCreateCourse(course, "testIcon")).andExpect(status().isCreated()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
+        assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
+        var imgResult = request.getMvc().perform(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andReturn();
+        assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
+
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());
         assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();
 
@@ -3120,7 +3128,7 @@ public class CourseTestService {
 
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
-        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPathOrThrow(iconPath))).as("course icon file was deleted correctly").isNull();
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {

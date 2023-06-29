@@ -75,7 +75,7 @@
                 "liveExamExerciseUpdate": "The exam Exercise \"{{ placeholderValues.1 }}\" got updated.",
                 "exerciseUpdated": "The exercise \"{{ placeholderValues.1 }}\" in course \"{{ placeholderValues.0 }}\" got updated.",
                 "programmingTestCasesChanged": "The test cases of the programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" were updated. The students' submissions should be rebuilt and tested in order to create new results.",
-                "newManualFeedbackRequest": "The programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" has a new manual feedback request. Please assess the feedback before the deadline.",
+                "newManualFeedbackRequest": "The programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" has a new manual feedback request. Please assess the feedback before the due date.",
                 "illegalSubmission": "The exercise \"{{ placeholderValues.1 }}\" has illegal submissions of students.",
                 "newExercisePost": "The exercise \"{{ placeholderValues.5 }}\" in the course \"{{ placeholderValues.0 }}\" got a new post: \"{{ placeholderValues.2 }}\"",
                 "newLecturePost": "The lecture \"{{ placeholderValues.5 }}\" in the course \"{{ placeholderValues.0 }}\" got a new post: \"{{ placeholderValues.2 }}\"",

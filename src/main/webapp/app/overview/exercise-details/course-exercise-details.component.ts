@@ -91,7 +91,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -210,10 +209,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
-                this.hasSubmissionPolicy = true;
             });
         }
 
