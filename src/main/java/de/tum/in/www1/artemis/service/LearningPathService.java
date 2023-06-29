@@ -126,7 +126,7 @@ public class LearningPathService {
 
         // TODO: consider optional competencies
         final var completed = (float) competencyProgresses.stream().filter(CompetencyProgressService::isMastered).count();
-        learningPath.setProgress(Math.round(completed / (float) learningPath.getCompetencies().size()));
+        learningPath.setProgress(Math.round(completed * 100 / (float) learningPath.getCompetencies().size()));
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
     }

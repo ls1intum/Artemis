@@ -21,11 +21,14 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LearningPathService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
@@ -75,11 +78,19 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    LectureUnitService lectureUnitService;
+
+    @Autowired
+    CompetencyProgressService competencyProgressService;
+
     private Course course;
 
     private Competency[] competencies;
 
     private TextExercise textExercise;
+
+    private TextUnit textUnit;
 
     private final int NUMBER_OF_STUDENTS = 5;
 
@@ -95,8 +106,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void setupTestScenario() throws Exception {
-        participantScoreScheduleService.activate();
-
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
         // Add users that are not in the course
@@ -116,9 +125,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         lecture.setCourse(course);
         lectureRepository.save(lecture);
 
-        final var textUnit = lectureUtilService.createTextUnit();
+        textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
 
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
     }
 
     private void enableLearningPathsForTestingCourse() {
@@ -150,6 +161,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var competencyToCreate = new Competency();
         competencyToCreate.setTitle("CompetencyToCreateTitle");
         competencyToCreate.setCourse(course);
+        competencyToCreate.setLectureUnits(Set.of(textUnit));
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencyToCreate, Competency.class, HttpStatus.CREATED);
     }
 
@@ -308,39 +320,20 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testUpdateLearningPathProgressOnCreateCompetency() throws Exception {
+    void testUpdateLearningPathProgress() throws Exception {
         enableLearningPathsForTestingCourse();
+
+        // add competency with completed learning unit
         final var createdCompetency = createCompetencyRESTCall();
-        // TODO
-    }
 
-    @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testUpdateLearningPathProgressOnUpdateCompetency() throws Exception {
-        enableLearningPathsForTestingCourse();
-        // TODO
-    }
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
 
-    @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testUpdateLearningPathProgressOnImportCompetency() throws Exception {
-        enableLearningPathsForTestingCourse();
-        final var importedCompetency = importCompetencyRESTCall();
-        // TODO
-    }
+        // force update to avoid waiting for scheduler
+        competencyProgressService.updateCompetencyProgress(createdCompetency.getId(), student);
 
-    @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testUpdateLearningPathProgressOnDeleteCompetency() throws Exception {
-        enableLearningPathsForTestingCourse();
-        deleteCompetencyRESTCall(competencies[0]);
-        // TODO
-    }
-
-    @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testUpdateLearningPathProgress() {
-        enableLearningPathsForTestingCourse();
-        // TODO
+        learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        assertThat(learningPath.getProgress()).as("contains completed competency").isNotEqualTo(0);
     }
 }
