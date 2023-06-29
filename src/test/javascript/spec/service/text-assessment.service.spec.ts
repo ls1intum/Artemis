@@ -192,17 +192,6 @@ describe('TextAssessment Service', () => {
         httpMock.verify();
     });
 
-    it('should not send feedback', () => {
-        service.trackAssessment();
-        httpMock.expectNone({ method: 'POST' });
-    });
-
-    it('should send feedback', async () => {
-        textSubmission.atheneTextAssessmentTrackingToken = '12345';
-        service.trackAssessment(textSubmission);
-        httpMock.expectOne({ url: 'athene-tracking/text-exercise-assessment', method: 'POST' });
-    });
-
     it('should send assessment event to analytics', fakeAsync(() => {
         const assessmentEvent: TextAssessmentEvent = new TextAssessmentEvent();
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
@@ -210,26 +199,6 @@ describe('TextAssessment Service', () => {
         });
         const mockRequest = httpMock.expectOne({ url: 'api/event-insights/text-assessment/events', method: 'POST' });
         mockRequest.flush(mockResponse);
-        tick();
-    }));
-
-    it('should not parse jwt from header', fakeAsync(() => {
-        service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
-            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse);
-        tick();
-    }));
-
-    it('should parse jwt from header', fakeAsync(() => {
-        service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
-            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBe('12345');
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
         tick();
     }));
 
