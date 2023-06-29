@@ -9,8 +9,7 @@ services:
             service: artemis-app
         env_file:
             - ./artemis/config/cypress-postgres.env
-        environment:
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,dev,docker
+            - ./artemis/config/migration-check.env
         depends_on:
             postgresql:
                 condition: service_healthy

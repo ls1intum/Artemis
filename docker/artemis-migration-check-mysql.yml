@@ -7,8 +7,8 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
-        environment:
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,dev,docker
+        env_file:
+            - ./artemis/config/migration-check.env
         depends_on:
             mysql:
                 condition: service_healthy
