@@ -10,7 +10,6 @@ export class LearningPathService {
     constructor(private httpClient: HttpClient) {}
 
     enableLearningPaths(courseId: number): Observable<HttpResponse<Course>> {
-        // return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, { observe: 'response' })
-        return new Observable();
+        return this.httpClient.put<Course>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
     }
 }
