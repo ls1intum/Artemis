@@ -2,10 +2,11 @@ import { Component, Input } from '@angular/core';
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-exam-checklist-check',
-    templateUrl: './exam-checklist-check.component.html',
+    selector: 'jhi-checklist-check',
+    templateUrl: './checklist-check.component.html',
+    styleUrls: ['./checklist-check.component.scss'],
 })
-export class ExamChecklistCheckComponent {
+export class ChecklistCheckComponent {
     @Input() checkAttribute: boolean | undefined = false;
 
     // Icons

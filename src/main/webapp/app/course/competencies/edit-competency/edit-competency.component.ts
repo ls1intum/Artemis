@@ -81,6 +81,7 @@ export class EditCompetencyComponent implements OnInit {
                         connectedLectureUnits: this.competency.lectureUnits,
                         taxonomy: this.competency.taxonomy,
                         masteryThreshold: this.competency.masteryThreshold,
+                        optional: this.competency.optional,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -88,12 +89,13 @@ export class EditCompetencyComponent implements OnInit {
     }
 
     updateCompetency(formData: CompetencyFormData) {
-        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.competency.title = title;
         this.competency.description = description;
         this.competency.taxonomy = taxonomy;
         this.competency.masteryThreshold = masteryThreshold;
+        this.competency.optional = optional;
         this.competency.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;

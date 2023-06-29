@@ -165,12 +165,7 @@ describe('Import exercises', () => {
     });
 
     after('Delete Courses', () => {
-        cy.login(admin);
-        if (course.id) {
-            courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
-        }
-        if (secondCourse.id) {
-            courseManagementRequest.deleteCourse(secondCourse.id).its('status').should('eq', 200);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementRequest.deleteCourse(secondCourse, admin);
     });
 });

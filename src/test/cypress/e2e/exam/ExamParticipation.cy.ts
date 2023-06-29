@@ -13,10 +13,10 @@ import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users }
 // Common primitives
 const textFixture = 'loremIpsum.txt';
 const textFixtureAlternative = 'loremIpsum-alternative.txt';
-let exerciseArray: Array<Exercise> = [];
 
 describe('Exam participation', () => {
     let course: Course;
+    let exerciseArray: Array<Exercise> = [];
     let studentOneName: string;
     let studentTwoName: string;
     let studentThreeName: string;
@@ -236,12 +236,17 @@ describe('Exam participation', () => {
 
     describe('Normal Hand-in', () => {
         let exam: Exam;
+        let studentOneName: string;
         const examTitle = 'exam' + generateUUID();
 
         before('Create exam', () => {
             exerciseArray = [];
 
             cy.login(admin);
+            users.getUserInfo(studentOne.username, (userInfo) => {
+                studentOneName = userInfo.name;
+            });
+
             const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'minutes'))
@@ -269,7 +274,8 @@ describe('Exam participation', () => {
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
             examParticipation.clickSaveAndContinue();
-            cy.get('#fullname', { timeout: 20000 }).should('be.visible');
+            examParticipation.checkExamFullnameInputExists();
+            examParticipation.checkYourFullname(studentOneName);
             examStartEnd.finishExam().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
@@ -282,9 +288,6 @@ describe('Exam participation', () => {
     });
 
     after('Delete course', () => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

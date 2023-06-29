@@ -96,8 +96,8 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        verify(jwtCookieService, times(1)).buildLoginCookie(true);
-        verify(response, times(1)).addHeader(any(), any());
+        verify(jwtCookieService).buildLoginCookie(true);
+        verify(response).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
@@ -118,8 +118,8 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        verify(jwtCookieService, times(1)).buildLogoutCookie();
-        verify(response, times(1)).addHeader(any(), any());
+        verify(jwtCookieService).buildLogoutCookie();
+        verify(response).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
@@ -136,8 +136,8 @@ class LtiServiceTest {
         assertThat(user.getGroups()).contains(courseStudentGroupName);
         assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
 
-        verify(userCreationService, times(1)).saveUser(user);
-        verify(artemisAuthenticationProvider, times(1)).addUserToGroup(user, courseStudentGroupName);
+        verify(userCreationService).saveUser(user);
+        verify(artemisAuthenticationProvider).addUserToGroup(user, courseStudentGroupName);
     }
 
     @Test

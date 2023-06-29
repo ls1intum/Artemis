@@ -58,9 +58,6 @@ describe.skip('Quiz Exercise Drop Location Spec', () => {
     });
 
     after('Delete course', () => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });
