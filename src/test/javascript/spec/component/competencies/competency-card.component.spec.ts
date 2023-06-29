@@ -7,6 +7,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { By } from '@angular/platform-browser';
 
 describe('CompetencyCardComponent', () => {
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
@@ -67,5 +68,29 @@ describe('CompetencyCardComponent', () => {
         expect(competencyCardComponent.confidence).toBe(100);
         expect(competencyCardComponent.mastery).toBe(100);
         expect(competencyCardComponent.isMastered).toBeTrue();
+    });
+
+    it('should display optional badge for optional competency', () => {
+        competencyCardComponent.competency = {
+            id: 1,
+            optional: true,
+        } as Competency;
+
+        competencyCardComponentFixture.detectChanges();
+
+        const badge = competencyCardComponentFixture.debugElement.query(By.css('#optional-badge'));
+        expect(badge).not.toBeNull();
+    });
+
+    it('should not display optional badge for non-optional competency', () => {
+        competencyCardComponent.competency = {
+            id: 1,
+            optional: false,
+        } as Competency;
+
+        competencyCardComponentFixture.detectChanges();
+
+        const badge = competencyCardComponentFixture.debugElement.query(By.css('#optional-badge'));
+        expect(badge).toBeNull();
     });
 });
