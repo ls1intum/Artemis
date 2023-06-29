@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,13 +18,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LearningPathRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -56,9 +57,29 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     LearningPathRepository learningPathRepository;
 
+    @Autowired
+    ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    ParticipationUtilService participationUtilService;
+
+    @Autowired
+    LectureRepository lectureRepository;
+
+    @Autowired
+    LectureUtilService lectureUtilService;
+
+    @Autowired
+    GradingCriterionRepository gradingCriterionRepository;
+
     private Course course;
 
     private Competency[] competencies;
+
+    private TextExercise textExercise;
 
     private final int NUMBER_OF_STUDENTS = 5;
 
@@ -73,7 +94,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private User studentNotInCourse;
 
     @BeforeEach
-    void setupTestScenario() {
+    void setupTestScenario() throws Exception {
         participantScoreScheduleService.activate();
 
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
@@ -82,10 +103,22 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         studentNotInCourse = userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
-        // creating course
-        course = courseUtilService.createCourse();
-
+        course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
         competencies = competencyUtilService.createCompetencies(course, 5);
+
+        textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
+        List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
+
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        lectureRepository.save(lecture);
+
+        final var textUnit = lectureUtilService.createTextUnit();
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
+
     }
 
     private void enableLearningPathsForTestingCourse() {
@@ -124,6 +157,15 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var course2 = courseUtilService.createCourse();
         final var competencyToImport = competencyUtilService.createCompetency(course2);
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport, Competency.class, HttpStatus.CREATED);
+    }
+
+    private Competency updateCompetencyRESTCall() throws Exception {
+        competencies[0].setTitle("Updated Title");
+        return request.putWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencies[0], Competency.class, HttpStatus.OK);
+    }
+
+    private void deleteCompetencyRESTCall(Competency competency) throws Exception {
+        request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -253,7 +295,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testRemoveCompetencyFromLearningPathsOnDeleteCompetency() throws Exception {
         enableLearningPathsForTestingCourse();
 
-        request.delete("/api/courses/" + course.getId() + "/competencies/" + competencies[0].getId(), HttpStatus.OK);
+        deleteCompetencyRESTCall(competencies[0]);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
@@ -291,7 +333,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testUpdateLearningPathProgressOnDeleteCompetency() throws Exception {
         enableLearningPathsForTestingCourse();
-        request.delete("/api/courses/" + course.getId() + "/competencies/" + competencies[0].getId(), HttpStatus.OK);
+        deleteCompetencyRESTCall(competencies[0]);
         // TODO
     }
 
