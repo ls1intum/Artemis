@@ -49,7 +49,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -59,7 +59,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -72,7 +72,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -83,7 +83,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -94,7 +94,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -106,7 +106,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -117,7 +117,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -130,7 +130,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -140,7 +140,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendLockAllStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -151,6 +151,6 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 }

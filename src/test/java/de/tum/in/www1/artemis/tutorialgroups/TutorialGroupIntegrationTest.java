@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
@@ -593,7 +593,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
         assertThat(notFoundStudents).containsExactly(studentNotInCourse);
-        verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, instructor1);
+        verify(singleUserNotificationService).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, instructor1);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
         // remove registration of student 6 again
@@ -907,12 +907,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new LinkedMultiValueMap<>());
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
-        verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
+        verify(singleUserNotificationService).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
         if (expectTutorNotification) {
-            verify(singleUserNotificationService, times(1)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
+            verify(singleUserNotificationService).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
         }
         else {
-            verify(singleUserNotificationService, times(0)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
+            verify(singleUserNotificationService, never()).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
         }
 
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
@@ -935,12 +935,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
-        verify(singleUserNotificationService, times(1)).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+        verify(singleUserNotificationService).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
         if (expectTutorNotification) {
-            verify(singleUserNotificationService, times(1)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+            verify(singleUserNotificationService).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
         }
         else {
-            verify(singleUserNotificationService, times(0)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+            verify(singleUserNotificationService, never()).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
         }
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
