@@ -21,7 +21,7 @@ export class Result implements BaseEntity {
     public rated?: boolean;
     public hasComplaint?: boolean;
     public exampleResult?: boolean;
-    public reviewNote?: ReviewNote;
+    public reviewNote?: ReviewNote[];
     public testCaseCount?: number;
     public passedTestCaseCount?: number;
     public codeIssueCount?: number;

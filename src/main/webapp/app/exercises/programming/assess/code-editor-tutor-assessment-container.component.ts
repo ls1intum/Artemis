@@ -335,8 +335,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.avoidCircularStructure();
         if (this.manualResult) {
             const poc: ReviewNote = new ReviewNote();
+            this.manualResult.reviewNote = [];
             poc.note = 'Neuer Text';
-            this.manualResult.reviewNote = poc;
+            this.manualResult.reviewNote!.push(poc);
         }
         this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),

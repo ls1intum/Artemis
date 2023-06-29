@@ -450,9 +450,9 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
-    public void setReviewNote(ReviewNote reviewNote) {
+    public void setReviewNote(List<ReviewNote> reviewNote) {
         this.reviewNote.clear();
-        this.reviewNote.add(reviewNote);
+        this.reviewNote.add(reviewNote.get(0));
     }
 
     public Optional<ReviewNote> getReviewNoteIfPresent() {
@@ -460,6 +460,10 @@ public class Result extends DomainObject implements Comparable<Result> {
             return reviewNote.stream().findFirst();
         }
         return Optional.empty();
+    }
+
+    public List<ReviewNote> getReviewNote() {
+        return this.reviewNote;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

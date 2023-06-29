@@ -181,7 +181,12 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
-        System.out.println("NEWMANUALRESULTTEST: " + newManualResult.getReviewNoteIfPresent().get().getNote());
+
+        // set creator of review note on the server to minimize network load
+        if (newManualResult.getReviewNote() != null && !newManualResult.getReviewNote().isEmpty()) {
+            newManualResult.getReviewNote().get(0).setCreator(newManualResult.getAssessor());
+        }
+
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
         if (submission.getParticipation() == null) {
