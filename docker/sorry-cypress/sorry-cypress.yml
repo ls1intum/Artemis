@@ -99,14 +99,14 @@ services:
       NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
     volumes:
       - type: bind
-        source: ${NGINX_PROXY_CONFIG_PATH:-./files/nginx/nginx.conf}
+        source: ${NGINX_PROXY_CONFIG_PATH:-./nginx.conf}
         target: '/etc/nginx/templates/nginx.conf.template'
       - type: bind
-        source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-./files/nginx/fullchain.pem}
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../../src/test/cypress/certs/artemis-nginx+4.pem}
         target: '/etc/certificates/fullchain.pem'
       - type: bind
-        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-./files/nginx/privkey.pem}
+        source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-../../src/test/cypress/certs/artemis-nginx+4-key.pem}
         target: '/etc/certificates/privkey.pem'
       - type: bind
-        source: ${NGINX_PROXY_HTPASSWD:-./files/nginx/.htpasswd}
+        source: ${NGINX_PROXY_HTPASSWD:-./.htpasswd}
         target: '/etc/nginx/.htpasswd'
