@@ -152,7 +152,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
         final var newLocalFilePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final var newFilePath = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
+        final var newFilePath = fileService.publicPathForActualPathOrThrow(newLocalFilePath, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
         final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
