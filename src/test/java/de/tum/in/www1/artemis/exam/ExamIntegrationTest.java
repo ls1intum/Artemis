@@ -630,7 +630,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 // No initial submissions should be created for programming exercises
                 assertThat(participation.getSubmissions()).isEmpty();
                 assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isTrue();
-                verify(versionControlService, times(0)).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
+                verify(versionControlService, never()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
             }
         }
 
@@ -671,7 +671,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 assertThat(participation.getSubmissions()).isEmpty();
                 // The participation should not get locked if it gets created after the exam already started
                 assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isFalse();
-                verify(versionControlService, atLeast(1)).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
+                verify(versionControlService, atLeastOnce()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
             }
         }
 
@@ -1035,7 +1035,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
-        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
 
         Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
         assertThat(channelFromDB).isNotNull();
@@ -1080,7 +1080,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam examA = ExamFactory.generateTestExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
 
-        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 
     @Test
@@ -1091,7 +1091,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
 
-        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+        verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 
     @Test
@@ -1203,7 +1203,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
         examWithProgrammingEx.setWorkingTime(examWithProgrammingEx.getWorkingTime() - 1);
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
-        verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
     @Test
@@ -1213,7 +1213,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
-        verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
     @Test
@@ -1224,7 +1224,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
         examWithProgrammingEx.setWorkingTime(examWithProgrammingEx.getWorkingTime() - 1);
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
-        verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
 
     @Test
@@ -1235,7 +1235,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
         examWithModelingEx.setWorkingTime(examWithModelingEx.getWorkingTime() + 2);
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
-        verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
+        verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
     @Test
@@ -1291,7 +1291,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examRepository.findAllExercisesByExamId(Long.MAX_VALUE)).isEmpty();
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
+        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
     }
 
     @Test
@@ -1315,7 +1315,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam returnedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course.getId(), exam.getId());
+        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course.getId(), exam.getId());
     }
 
     @Test
@@ -1323,7 +1323,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetExamsForCourse_asInstructor() throws Exception {
 
         var exams = request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
+        verify(examAccessService).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
 
         for (int i = 0; i < exams.size(); i++) {
             Exam exam = exams.get(i);
@@ -1380,7 +1380,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
+        verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
     @Test
@@ -1389,7 +1389,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
+        verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
     }
 
     @Test
@@ -1402,7 +1402,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
+        verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
     @Test
@@ -1411,7 +1411,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
+        verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
     }
 
     @Test
@@ -1682,7 +1682,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
         StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
-        verify(examAccessService, times(1)).getExamInCourseElseThrow(course1.getId(), exam.getId());
+        verify(examAccessService).getExamInCourseElseThrow(course1.getId(), exam.getId());
     }
 
     @Test
@@ -1728,7 +1728,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // the course students + our custom student99
         assertThat(exam.getExamUsers()).hasSize(numberOfStudentsInCourse + 1);
         assertThat(exam.getExamUsers()).contains(examUser99.get());
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
+        verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
 
         Channel channelFromDB = channelRepository.findChannelByExamId(exam.getId());
         assertThat(channelFromDB).isNotNull();
@@ -1794,7 +1794,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Should save new order
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
+        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get().getExerciseGroups();
         assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
         assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
@@ -1872,8 +1872,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfLockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositoriesAndParticipations(programmingExercise);
-        verify(programmingExerciseScheduleService, times(1)).lockAllStudentRepositoriesAndParticipations(programmingExercise2);
+        verify(programmingExerciseScheduleService).lockAllStudentRepositoriesAndParticipations(programmingExercise);
+        verify(programmingExerciseScheduleService).lockAllStudentRepositoriesAndParticipations(programmingExercise2);
     }
 
     @Test
@@ -1943,8 +1943,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesAndParticipations(programmingExercise);
-        verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositoriesAndParticipations(programmingExercise2);
+        verify(programmingExerciseScheduleService).unlockAllStudentRepositoriesAndParticipations(programmingExercise);
+        verify(programmingExerciseScheduleService).unlockAllStudentRepositoriesAndParticipations(programmingExercise2);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -3075,7 +3075,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
 
-        verify(gitService, times(0)).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
 
         // invoke prepare exercise start
         prepareExerciseStart(exam1);
