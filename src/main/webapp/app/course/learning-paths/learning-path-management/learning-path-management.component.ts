@@ -127,7 +127,10 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         });
 
         if (this.course?.learningPathEnabled) {
-            // TODO: load learning paths of students
+            this.content = { resultsOnPage: [], numberOfPages: 0 };
+
+            this.performSearch(this.sort, 0);
+            this.performSearch(this.search, 300);
         }
 
         this.isLoading = false;
