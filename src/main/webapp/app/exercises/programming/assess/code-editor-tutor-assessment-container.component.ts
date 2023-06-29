@@ -39,6 +39,7 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ReviewNote } from 'app/entities/review-note.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -332,6 +333,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
+        if (this.manualResult) {
+            const poc: ReviewNote = new ReviewNote();
+            poc.note = 'Neuer Text';
+            this.manualResult.reviewNote = poc;
+        }
         this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
             error: (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),

@@ -181,7 +181,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
-        resultRepository.setReviewNoteForResult("blablabla", newManualResult);
+        System.out.println("NEWMANUALRESULTTEST: " + newManualResult.getReviewNoteIfPresent().get().getNote());
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
         if (submission.getParticipation() == null) {
