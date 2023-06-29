@@ -20,14 +20,14 @@ import { admin, instructor, studentOne } from '../../../support/users';
 // Common primitives
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
-let groupCount = 0;
-let createdGroup: ExerciseGroup;
 
 describe('Test Exam management', () => {
     let course: Course;
     let exam: Exam;
+    let createdGroup: ExerciseGroup;
+    let groupCount = 0;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -57,7 +57,7 @@ describe('Test Exam management', () => {
         it('Create exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
             examExerciseGroups.clickAddExerciseGroup();
@@ -138,7 +138,7 @@ describe('Test Exam management', () => {
         it('Delete an exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
             let group = exerciseGroup;
@@ -150,10 +150,7 @@ describe('Test Exam management', () => {
         });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });
