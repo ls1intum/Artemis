@@ -40,8 +40,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private User tutor1;
 
-    private User tutor2;
-
     private User student1;
 
     private User student2;
@@ -64,7 +62,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         instructor1 = userRepository.findOneByLogin(testPrefix + "instructor1").orElseThrow();
         tutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
-        tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
+        User tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
         student1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
         student2 = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow();
         student3 = userRepository.findOneByLogin(testPrefix + "student3").orElseThrow();
