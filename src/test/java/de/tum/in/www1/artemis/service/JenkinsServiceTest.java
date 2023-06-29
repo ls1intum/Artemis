@@ -223,7 +223,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
 
-        verify(jenkinsServer, times(1)).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
+        verify(jenkinsServer).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
     }
 
     @Test
