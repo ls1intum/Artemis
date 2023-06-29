@@ -749,7 +749,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(messagingTemplate, times(1)).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+        verify(messagingTemplate).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
     }
 
     @Test
@@ -822,7 +822,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+        verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(programmingExercise, participation);
         verify(programmingTriggerService, timeout(4000)).triggerBuildForParticipations(List.of(participation));
     }
 
@@ -1124,7 +1124,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // assert that all repositories of programming exercises have been locked
         assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
-            verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
+            verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepositoryAndParticipation(exercisesToBeLocked.get(i),
+                    studentProgrammingParticipations.get(i));
         }
         deleteExamWithInstructor(exam1);
     }
@@ -1297,7 +1298,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
         // The method lockStudentRepository will only be called if the student hands in early (see separate test)
-        verify(programmingExerciseParticipationService, never()).lockStudentRepository(any(), any());
+        verify(programmingExerciseParticipationService, never()).lockStudentRepositoryAndParticipation(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExamWithInstructor(exam1);

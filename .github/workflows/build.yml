@@ -99,7 +99,21 @@ jobs:
             }
           }
           return "FALSE";
-    - uses: actions/checkout@v3
+    - name: Git Checkout for PRs
+      if: ${{ github.event_name == 'pull_request' }}
+      # Checkout pull request HEAD commit instead of merge commit
+      # this is done to include the correct branch and git information inside the build
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+    - name: Git Checkout for push actions
+      if: ${{ github.event_name == 'push' }}
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref_name }}
+    - name: Git Checkout for push actions
+      if: ${{ github.event_name == 'release' }}
+      uses: actions/checkout@v3
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
     - name: Set up Docker Buildx

@@ -22,4 +22,12 @@ export class NavigationBar {
     getNotifications() {
         return cy.get('.notification-sidebar .notification-item');
     }
+
+    getAccountItem() {
+        return cy.get('#account-menu');
+    }
+
+    logout() {
+        this.getAccountItem().click().get('#logout').click();
+    }
 }

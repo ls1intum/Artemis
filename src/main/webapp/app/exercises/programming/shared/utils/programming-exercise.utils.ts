@@ -115,13 +115,13 @@ export const isProgrammingExerciseParticipation = (participation: Participation 
 };
 
 /**
- * The deadline has passed if:
+ * The due date has passed if:
  * - The dueDate is set and the buildAndTestAfterDueDate is not set and the dueDate has passed.
  * - The dueDate is set and the buildAndTestAfterDueDate is set and the buildAndTestAfterDueDate has passed.
  *
  * @param exercise
  */
-export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
+export const hasDueDatePassed = (exercise: ProgrammingExercise) => {
     // If there is no due date, the due date can't pass.
     if (!exercise.dueDate && !exercise.buildAndTestStudentSubmissionsAfterDueDate) {
         return false;
