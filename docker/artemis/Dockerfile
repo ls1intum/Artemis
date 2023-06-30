@@ -81,8 +81,8 @@ ARG GID=1337
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
 RUN \
-  --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  --mount=type=cache,target=/var/cache/apt \
+  --mount=type=cache,target=/var/lib/apt \
   echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
