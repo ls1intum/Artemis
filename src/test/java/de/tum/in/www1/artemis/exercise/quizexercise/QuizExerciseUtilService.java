@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -97,6 +99,9 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private QuizScheduleService quizScheduleService;
 
     /**
      * Create, join and start a batch for student by tutor
@@ -841,6 +846,12 @@ public class QuizExerciseUtilService {
         return singleChoiceQuestion;
     }
 
+    public void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
+        var user = new User();
+        user.setLogin(username);
+        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
+    }
+
     @NotNull
     public QuizGroup createQuizGroup(String name) {
         QuizGroup quizGroup = new QuizGroup();
@@ -868,5 +879,4 @@ public class QuizExerciseUtilService {
         quizQuestion.setQuizGroup(quizGroup);
         return quizQuestion;
     }
-
 }

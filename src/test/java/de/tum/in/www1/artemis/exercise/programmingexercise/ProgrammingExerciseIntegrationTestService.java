@@ -1980,7 +1980,7 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
-        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).isEmpty());
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {

@@ -145,7 +145,7 @@ public class ResultResource {
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(resultService.getFeedbacksForResult(result), HttpStatus.OK);
+        return new ResponseEntity<>(resultService.filterFeedbackForClient(result), HttpStatus.OK);
     }
 
     /**

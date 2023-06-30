@@ -49,7 +49,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * Get the result of the file upload submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
      *
      * @param submissionId the id of the submission that should be sent to the client
-     * @return the assessment or error
+     * @return the assessment of the given submission
      */
     @GetMapping("/file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
