@@ -1,6 +1,6 @@
-******************************************
-Development Process (How to Merge Changes)
-******************************************
+*******************
+Development Process
+*******************
 
 .. contents:: Content of this document
     :local:
