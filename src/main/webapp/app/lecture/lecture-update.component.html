@@ -35,7 +35,8 @@
                     [(title)]="lecture.title"
                     [(channelName)]="lecture.channelName"
                     channelNamePrefix="lecture-"
-                    [hideChannelName]="this.lecture.id !== undefined && this.lecture.channelName === undefined"
+                    [hideChannelName]="lecture.id !== undefined && lecture.channelName === undefined"
+                    [initChannelName]="lecture.id === undefined"
                 ></jhi-title-channel-name>
                 <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
