@@ -159,7 +159,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -958,7 +958,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         examRepository.save(exam);
         var studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
-        studentExam.setUser(participation.getStudent().get());
+        studentExam.setUser(participation.getStudent().orElseThrow());
         studentExam.addExercise(programmingExercise);
         studentExamRepository.save(studentExam);
         return programmingExercise;
