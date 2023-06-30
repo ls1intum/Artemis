@@ -89,6 +89,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     rangeFilter?: Range;
 
     resultCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
+    participationsPerFilter: Map<FilterProp, number> = new Map();
 
     isLoading: boolean;
 
@@ -203,6 +204,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 });
             }
         }
+
+        for (const filter of Object.values(FilterProp)) {
+            if (this.isFilterRelevantForConfiguration(filter)) {
+                this.participationsPerFilter.set(filter, this.filteredParticipations.filter((participation) => this.filterParticipationsByProp(participation, filter)).length);
+            }
+        }
+
         this.isLoading = false;
     }
 
@@ -221,9 +229,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     /**
      * Predicate used to filter participations by the current filter prop setting
      * @param participation Participation for which to evaluate the predicate
+     * @param filterProp the filter that should be used to determine if the participation should be included or excluded
      */
-    filterParticipationsByProp = (participation: Participation): boolean => {
-        switch (this.resultCriteria.filterProp) {
+    filterParticipationsByProp = (participation: Participation, filterProp = this.resultCriteria.filterProp): boolean => {
+        switch (filterProp) {
             case FilterProp.SUCCESSFUL:
                 return !!participation.results?.[0]?.successful;
             case FilterProp.UNSUCCESSFUL:
@@ -241,6 +250,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 return true;
         }
     };
+
+    isFilterRelevantForConfiguration(filterProp: FilterProp): boolean {
+        switch (filterProp) {
+            case FilterProp.BUILD_FAILED:
+                return this.exercise.type === ExerciseType.PROGRAMMING;
+            case FilterProp.MANUAL:
+            case FilterProp.AUTOMATIC:
+                return this.newManualResultAllowed || !!this.exercise.allowComplaintsForAutomaticAssessments;
+            case FilterProp.LOCKED:
+                return this.newManualResultAllowed && !!this.exercise.isAtLeastInstructor;
+            default:
+                return true;
+        }
+    }
 
     /**
      * Returns the build plan id for a participation

@@ -1548,7 +1548,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterForCourseDashboard_QuizSubmissionButNoParticipation() {
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
-        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
 
         QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
@@ -1558,7 +1558,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exerciseService.filterForCourseDashboard(quizExercise, List.of(), TEST_PREFIX + "student1", true);
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
-        assertThat(quizExercise.getStudentParticipations().stream().findFirst().get().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(quizExercise.getStudentParticipations().stream().findFirst().orElseThrow().getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {

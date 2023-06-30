@@ -172,7 +172,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         assertStudentExists();
 
         // Change Password
-        User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).get();
+        User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
         userRepository.saveAndFlush(student);
 
