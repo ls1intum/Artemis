@@ -207,24 +207,19 @@ describe('QuizParticipationComponent', () => {
             expect(component.submission).not.toBeNull();
         });
 
-        it('should update in intervals (individual quiz)', fakeAsync(() => {
-            participationSpy = jest.spyOn(participationService, 'findParticipationForCurrentUser').mockReturnValue(
-                of({
-                    body: {
-                        exercise: {
-                            ...quizExercise,
-                            quizStarted: false,
-                            quizBatches: [
-                                {
-                                    startTime: dayjs(now).subtract(2, 'minutes'),
-                                    started: false,
-                                },
-                            ],
-                            quizMode: QuizMode.INDIVIDUAL,
-                        },
-                    },
-                } as HttpResponse<StudentParticipation>),
-            );
+        it('should update in intervals of individual quiz', fakeAsync(() => {
+            const individualQuizExercise = { ...quizExercise };
+            individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
+            individualQuizExercise.quizStarted = false;
+            individualQuizExercise.quizBatches = [
+                {
+                    startTime: dayjs(now).subtract(2, 'minutes'),
+                    started: false,
+                },
+            ];
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
             const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
@@ -237,24 +232,19 @@ describe('QuizParticipationComponent', () => {
             expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
-        it('should update in intervals (not individual quiz)', fakeAsync(() => {
-            participationSpy = jest.spyOn(participationService, 'findParticipationForCurrentUser').mockReturnValue(
-                of({
-                    body: {
-                        exercise: {
-                            ...quizExercise,
-                            quizStarted: false,
-                            quizBatches: [
-                                {
-                                    startTime: dayjs(now).subtract(2, 'minutes'),
-                                    started: false,
-                                },
-                            ],
-                            quizMode: QuizMode.SYNCHRONIZED,
-                        },
-                    },
-                } as HttpResponse<StudentParticipation>),
-            );
+        it('should update in intervals of not individual quiz', fakeAsync(() => {
+            const notIndividualQuizExercise = { ...quizExercise };
+            notIndividualQuizExercise.quizMode = QuizMode.SYNCHRONIZED;
+            notIndividualQuizExercise.quizStarted = false;
+            notIndividualQuizExercise.quizBatches = [
+                {
+                    startTime: dayjs(now).subtract(2, 'minutes'),
+                    started: false,
+                },
+            ];
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: { exercise: notIndividualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
             const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
@@ -365,16 +355,11 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should submit quiz', () => {
-            participationSpy = jest.spyOn(participationService, 'findParticipationForCurrentUser').mockReturnValue(
-                of({
-                    body: {
-                        exercise: {
-                            ...quizExercise,
-                            quizMode: QuizMode.INDIVIDUAL,
-                        },
-                    },
-                } as HttpResponse<StudentParticipation>),
-            );
+            const individualQuizExercise = { ...quizExercise };
+            individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
