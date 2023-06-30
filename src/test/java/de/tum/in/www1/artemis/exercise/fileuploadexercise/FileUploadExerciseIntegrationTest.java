@@ -702,7 +702,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
-        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         Course course2 = courseUtilService.addEmptyCourse();
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
@@ -730,7 +730,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseFromCourseToCourseNegativeCourseIdBadRequest() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
-        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         Course course2 = courseUtilService.addEmptyCourse();
         expectedFileUploadExercise.setCourse(course2);
         request.postWithResponseBody("/api/file-upload-exercises/import/" + -1, expectedFileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
@@ -740,7 +740,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseCourseNotSetBadRequest() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
-        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         expectedFileUploadExercise.setCourse(null);
         request.postWithResponseBody("/api/file-upload-exercises/import/" + expectedFileUploadExercise.getId(), expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.BAD_REQUEST);
@@ -768,7 +768,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "ta1", roles = "TA")
     void testImportFileUploadExerciseAsTeachingAssistantFails() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
-        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         var sourceExerciseId = expectedFileUploadExercise.getId();
         request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
 
@@ -795,7 +795,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // Utility function to avoid duplication
         Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()
-                .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().get();
+                .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().orElseThrow();
 
         fileUploadExercise.setExampleSolution("Sample<br>solution");
 

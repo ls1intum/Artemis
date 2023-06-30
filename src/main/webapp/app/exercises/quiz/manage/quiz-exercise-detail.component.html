@@ -34,7 +34,8 @@
                     (channelNameChange)="updateChannelName($event)"
                     channelNamePrefix="exercise-"
                     [emphasizeLabels]="true"
-                    [hideChannelName]="this.isExamMode || (!this.isImport && this.quizExercise.channelName === undefined)"
+                    [hideChannelName]="isExamMode || (!isImport && quizExercise.channelName === undefined)"
+                    [initChannelName]="isImport || quizExercise.id === undefined"
                 ></jhi-title-channel-name>
             </form>
 
@@ -210,7 +211,7 @@
             <ng-container *ngIf="courseId">
                 <jhi-quiz-question-list-edit
                     #quizQuestionsEdit
-                    [courseId]="courseId"
+                    [courseId]="courseId!"
                     [quizQuestions]="quizExercise.quizQuestions ?? []"
                     (onQuestionAdded)="handleQuestionChanged()"
                     (onQuestionDeleted)="handleQuestionChanged()"
