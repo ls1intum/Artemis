@@ -505,19 +505,22 @@ public class ExamService {
 
         // To prevent LazyInitializationException.
         participation.setResults(Set.of());
-        if ((isStudentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
+        if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
-            // Also set the latest result into the participation as the client expects it there for programming exercises
-            Result latestResult = lastSubmission.getLatestResult();
-            if (latestResult != null) {
-                latestResult.setParticipation(null);
-                latestResult.setSubmission(lastSubmission);
-                // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                // lastResult -> lastSubmission
-                participation.setResults(Set.of(latestResult));
+            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
+                // Also set the latest result into the participation as the client expects it there for programming exercises
+                Result latestResult = lastSubmission.getLatestResult();
+                if (latestResult != null) {
+                    latestResult.setParticipation(null);
+                    latestResult.setSubmission(lastSubmission);
+                    latestResult.filterSensitiveInformation();
+                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
+                    // lastResult -> lastSubmission
+                    participation.setResults(Set.of(latestResult));
+                }
+                participation.setSubmissions(Set.of(lastSubmission));
             }
             lastSubmission.setResults(null);
-            participation.setSubmissions(Set.of(lastSubmission));
         }
     }
 

@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -202,8 +203,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
         ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
-        if (submit && ((newManualResult.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || newManualResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && ExerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
