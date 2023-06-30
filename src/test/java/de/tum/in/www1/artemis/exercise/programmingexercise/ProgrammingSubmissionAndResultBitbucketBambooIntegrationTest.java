@@ -143,16 +143,16 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
         exerciseId = exercise.getId();
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
 
-        templateParticipationId = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
-        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
+        templateParticipationId = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).orElseThrow().getId();
+        solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).orElseThrow().getId();
         participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).toList();
     }
 
@@ -213,9 +213,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
-        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
+        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participationId).orElseThrow();
         assertThat(updatedParticipation.getSubmissions()).hasSize(1);
-        assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
+        assertThat(updatedParticipation.getSubmissions().stream().findFirst().orElseThrow().getId()).isEqualTo(submission.getId());
 
         // Make sure the submission has the correct commit hash.
         assertThat(submission.getCommitHash()).isEqualTo(commitHash);
@@ -237,7 +237,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).get(0);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
@@ -252,13 +252,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
-        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
         List<Feedback> feedbacks = createdResult.getFeedbacks();
         assertThat(feedbacks).hasSize(3);
         assertThat(createdResult.getAssessor()).isNull();
         // Needs to be set for using a custom repository method, known spring bug.
-        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participation.getId()).get();
-        submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participation.getId()).orElseThrow();
+        submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
         assertThat(updatedParticipation.getSubmissions()).hasSize(1).anyMatch(s -> s.getId().equals(submissionId));
@@ -273,7 +273,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldHandleNewBuildResultCreatedByCommitForSolutionParticipation() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).get(0);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         exercise.setBranch(null);
         programmingExerciseRepository.save(exercise);
@@ -284,7 +284,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
 
-        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get();
+        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         postSubmission(participation.getId(), HttpStatus.OK);
 
         final var commit = new BambooBuildResultNotificationDTO.BambooCommitDTO("First commit", "asdf");
@@ -327,8 +327,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
         // Needs to be set for using a custom repository method, known spring bug.
-        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
-        submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).orElseThrow();
+        submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1).anyMatch(s -> s.getId().equals(submissionId));
@@ -414,8 +414,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // There should only be one submission and this submission should be linked to the created result.
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
-        submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).orElseThrow();
+        submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(result.getSubmission()).isNotNull();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(submission.getLatestResult()).isNotNull();
@@ -441,7 +441,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         Long participationId = getParticipationIdByType(participationType, 0);
         postResult(participationType, 0, HttpStatus.OK, false);
 
-        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).orElseThrow();
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -470,7 +470,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
-        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
         var repositoryUrl = (programmingParticipation).getVcsRepositoryUrl();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
@@ -484,7 +484,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
 
-        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).orElseThrow();
 
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -513,7 +513,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Set buildAndTestAfterDueDate in future.
         setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
-        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
         ObjectId objectId = COMMIT_HASH_OBJECT_ID;
@@ -528,7 +528,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(submission.isSubmitted()).isTrue();
 
-        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).orElseThrow();
 
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -550,7 +550,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCaseChanged() throws Exception {
-        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         postTestRepositorySubmissionWithoutCommit(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -566,14 +566,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
-        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).orElseThrow();
         bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
-        participations.add(participationRepository.findWithEagerLegalSubmissionsById(solutionParticipationId).get());
+        participations.add(participationRepository.findWithEagerLegalSubmissionsById(solutionParticipationId).orElseThrow());
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(solutionParticipationId);
         // We only create submissions for the solution participation after a push to the test repository.
         assertThat(submissions).hasSize(1);
@@ -605,7 +605,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         }
 
         participations = new ArrayList<>();
-        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
+        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).orElseThrow());
         for (Participation p : participations) {
             assertThat(p.getSubmissions()).hasSize(1);
             assertThat(p.getResults()).hasSize(1);
@@ -672,7 +672,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         String userLogin = TEST_PREFIX + "student1";
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
@@ -698,7 +698,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         String userLogin = TEST_PREFIX + "student1";
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -803,7 +803,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         exam.setGracePeriod(gracePeriod);
         exam = examRepository.save(exam);
 
-        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).get();
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).orElseThrow();
         studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).getSeconds());
         studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
         studentExam.setUser(user);
@@ -814,7 +814,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDateWithoutGracePeriod() throws Exception {
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
 
         // The exam has to be over.
         // Create an exam with programming exercise and no grace period.
@@ -843,14 +843,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
-        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
 
         // Student should not receive a result over WebSocket, the exam is over and therefore test after due date would be visible
         verify(messagingTemplate, never()).convertAndSendToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
-        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(illegalSubmission.getType()).isEqualTo(SubmissionType.ILLEGAL);
         assertThat(illegalSubmission.isSubmitted()).isTrue();
         assertThat(illegalSubmission.getLatestResult().isRated()).isFalse();
@@ -864,7 +864,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateLegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDateWithGracePeriod() throws Exception {
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
 
         // The exam has to be over.
         // Create an exam with programming exercise and no grace period.
@@ -886,14 +886,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
-        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
 
         // Student should receive a result over WebSocket, the exam not over (grace period still active)
-        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
+        verify(messagingTemplate).convertAndSendToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
-        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
         assertThat(illegalSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(illegalSubmission.isSubmitted()).isTrue();
         assertThat(illegalSubmission.getLatestResult().isRated()).isTrue();
@@ -1036,7 +1036,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     private String getStudentLoginFromParticipation(int participationIndex) {
-        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationIndex)).get();
+        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationIndex)).orElseThrow();
         return participation.getParticipantIdentifier();
     }
 
@@ -1049,7 +1049,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
+                .orElseThrow();
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExerciseRepository.save(programmingExercise);
     }

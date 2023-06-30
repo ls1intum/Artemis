@@ -138,7 +138,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // prevent that tutors create multiple manual results
         newManualResult.setId(existingManualResult.getId());
         // load assessor
-        existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).get();
+        existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).orElseThrow();
 
         // make sure that the participation and submission cannot be manipulated on the client side
         newManualResult.setParticipation(participation);

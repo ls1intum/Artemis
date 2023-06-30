@@ -53,7 +53,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        long lecture1Id = course1.getLectures().stream().findFirst().get().getId();
+        long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
         this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1Id);
         this.course2 = courseUtilService.createCourse();
 
@@ -77,7 +77,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(this.course2.getLectures()).hasSize(lectureCount + 1);
 
         // Find the imported lecture and fetch it with lecture units
-        Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().get().getId();
+        Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().orElseThrow().getId();
         Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());

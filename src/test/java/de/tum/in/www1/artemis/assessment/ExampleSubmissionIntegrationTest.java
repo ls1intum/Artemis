@@ -108,7 +108,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), emptyModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
-        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+        assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false);
         returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, ExampleSubmission.class,
@@ -117,7 +117,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), validModel);
         storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
-        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+        assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -133,7 +133,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updateExistingExampleSubmission.getSubmission().getId(), emptyModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(updateExistingExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
-        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+        assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         ExampleSubmission updatedExampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false);
         ExampleSubmission returnedUpdatedExampleSubmission = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions",
@@ -142,7 +142,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedUpdatedExampleSubmission.getSubmission().getId(), validModel);
         storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
-        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+        assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -157,7 +157,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(submissionId);
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
-        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+        assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
         assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).isEmpty();
@@ -176,7 +176,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(submissionId);
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
-        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+        assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
         assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).isEmpty();
@@ -222,7 +222,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
-        Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
+        Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
@@ -279,7 +279,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         dto.setFeedbacks(feedbacks);
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
                 Result.class, HttpStatus.OK);
-        Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
+        Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
@@ -391,12 +391,12 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
         gradingCriterionRepo.saveAll(gradingCriteria);
         var studentParticipation = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, TEST_PREFIX + "instructor1");
-        Submission originalSubmission = studentParticipation.findLatestSubmission().get();
+        Submission originalSubmission = studentParticipation.findLatestSubmission().orElseThrow();
         Optional<Result> orginalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
         assertThat(exampleSubmission.getSubmission().getResults().get(0).getFeedbacks().get(0).getGradingInstruction().getId())
-                .isEqualTo(orginalResult.get().getFeedbacks().get(0).getGradingInstruction().getId());
+                .isEqualTo(orginalResult.orElseThrow().getFeedbacks().get(0).getGradingInstruction().getId());
     }
 
     @Test
