@@ -1473,6 +1473,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     }
                 });
             }
+            else {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getResults()).isEmpty();
+                assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
+            }
         }
         deleteExamWithInstructor(exam1);
     }
@@ -1526,6 +1531,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         }
                     }
                 });
+            }
+            else {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getResults()).hasSize(1);
+                var result = participation.getResults().iterator().next();
+                assertThat(result.getAssessor()).as("no sensitive inforation get leaked").isNull();
             }
         }
         deleteExamWithInstructor(exam1);
