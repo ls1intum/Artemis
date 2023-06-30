@@ -155,6 +155,9 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe({
+                next: (res) => {
+                    this.course = res.body!;
+                },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
