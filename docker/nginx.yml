@@ -6,7 +6,7 @@ services:
     nginx:
         # nginx setup based on artemis prod ansible repository
         container_name: artemis-nginx
-        image: nginx:1.23
+        image: docker.io/library/nginx:1.23
         pull_policy: always
         volumes:
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
