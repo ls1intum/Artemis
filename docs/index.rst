@@ -31,6 +31,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/tutorialgroups
    user/plagiarism-check
    user/learning-analytics
+   user/adaptive-learning
    user/notifications
    user/user-experience
    user/grading
