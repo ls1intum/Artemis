@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @Service
@@ -35,6 +36,12 @@ public class ProgrammingExerciseFeedbackCreationService {
     private static final List<String> timeoutException = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
             "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
 
+    private final ProfileService profileService;
+
+    public ProgrammingExerciseFeedbackCreationService(ProfileService profileService) {
+        this.profileService = profileService;
+    }
+
     /**
      * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
      * the programming language, or just reformatting it to only show the most important details.
@@ -44,7 +51,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param message             The raw error message in the feedback
      * @return A filtered and better formatted error message
      */
-    private static String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String message) {
+    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String message) {
         final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
@@ -68,8 +75,8 @@ public class ProgrammingExerciseFeedbackCreationService {
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
             var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
 
-            // the feedback from gradle test result is duplicated therefore it's cut in half
-            if (projectType != null && projectType.isGradle()) {
+            // the feedback from gradle test result is duplicated on bamboo therefore it's cut in half
+            if (projectType != null && projectType.isGradle() && profileService.isBamboo()) {
                 long numberOfLines = messageWithoutStackTrace.lines().count();
                 messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
             }
