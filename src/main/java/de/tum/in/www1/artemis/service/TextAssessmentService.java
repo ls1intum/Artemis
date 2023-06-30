@@ -90,11 +90,5 @@ public class TextAssessmentService extends AssessmentService {
 
         // Remove participation after storing in database because submission already has the participation set
         result.setParticipation(null);
-
-        // Set each block's impact on other submissions for the current 'textSubmission'
-        if (computeFeedbackSuggestions) {
-            textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
-            result.setSubmission(textSubmission);
-        }
     }
 }

@@ -73,7 +73,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
     }
 
     private static Stream<Arguments> argumentsForGetParticipationWithLatestResult() {

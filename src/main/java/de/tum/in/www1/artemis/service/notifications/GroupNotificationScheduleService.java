@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
@@ -170,7 +171,7 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise) {
-        if (exercise.isCourseExercise() && exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.isCourseExercise() && !ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }

@@ -123,6 +123,6 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     private Condition<Optional<ScheduledFuture<?>>> scheduledInMinutes(long minutes) {
-        return new Condition<>(s -> Math.abs(s.get().getDelay(TimeUnit.MINUTES) - minutes) <= 1, "scheduled in %d minutes", minutes);
+        return new Condition<>(s -> Math.abs(s.orElseThrow().getDelay(TimeUnit.MINUTES) - minutes) <= 1, "scheduled in %d minutes", minutes);
     }
 }
