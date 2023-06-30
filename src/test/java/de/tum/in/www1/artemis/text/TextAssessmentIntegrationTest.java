@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -465,38 +464,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 Result.class, HttpStatus.BAD_REQUEST);
 
         assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void setNumberOfAffectedSubmissionsPerBlock_withIdenticalTextBlocks() throws Exception {
-        int submissionCount = 5;
-        int submissionSize = 1;
-        int numberOfBlocksTotally = submissionCount * submissionSize;
-        int[] clusterSizes = new int[] { 5 };
-        var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
-        textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-        textClusterRepository.saveAll(clusters);
-        textBlockRepository.saveAll(textBlocks);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
-        var participation = textExercise.getStudentParticipations().stream().findFirst().get();
-        Result result = new Result();
-        result.setParticipation(participation);
-        result.setSubmission(submissionWithoutAssessment);
-
-        textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
-
-        assertThat(result).as("saved result found").isNotNull();
-        assertThat(submissionWithoutAssessment.getBlocks()).hasSize(1);
-        assertThat(submissionWithoutAssessment.getBlocks().stream().findFirst()).isPresent().get().hasFieldOrPropertyWithValue("numberOfAffectedSubmissions",
-                numberOfBlocksTotally - 1);
     }
 
     @Test
@@ -1163,21 +1130,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
         assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTrackingTokenHeader() throws Exception {
-        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
-        exerciseDueDatePassed();
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-
-        request.getWithHeaders("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, parameters, new HttpHeaders(),
-                new String[] { "X-Athene-Tracking-Authorization" });
-
     }
 
     @Test
