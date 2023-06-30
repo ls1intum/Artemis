@@ -10,7 +10,6 @@ import { Post } from 'app/entities/metis/post.model';
     styleUrls: ['./link-preview-container.component.scss'],
 })
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
-    @Input() multiple: boolean;
     @Input() data: string | undefined;
     @Input() author?: User;
     @Input() posting?: Post;

@@ -28,7 +28,11 @@ public class OgMetaElementHtmlParser {
             log.info("Parsing html meta elements from url: {}", url);
             final Document document = Jsoup.connect(url).get();
             final Elements metaElements = document.select("meta");
+
+            // Filter and map the meta elements to OgMetaElement objects
             return metaElements.stream().filter(m -> m.attr("property").startsWith("og:")).map(m -> {
+                // Extract the property and content attributes from the meta element
+                // by removing the "og:" prefix from the property attribute
                 final String property = m.attr("property").substring(3).trim();
                 final String content = m.attr("content");
                 return new OgMetaElement(property, content);

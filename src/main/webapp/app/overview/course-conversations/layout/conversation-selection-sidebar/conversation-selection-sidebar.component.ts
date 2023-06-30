@@ -9,7 +9,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
@@ -60,6 +60,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     numberOfConversationsPassingFilter = 0;
 
     canCreateChannel = canCreateChannel;
+    channelSubType = ChannelSubType;
 
     constructor(
         private modalService: NgbModal,
@@ -292,11 +293,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
     }
 
-    openChannelOverviewDialog(event: MouseEvent) {
+    openChannelOverviewDialog(event: MouseEvent, subType: ChannelSubType) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
+        modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;
+        modalRef.componentInstance.channelSubType = subType;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -332,5 +334,9 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     onConversationFavoriteStatusChange() {
         this.onConversationsUpdate([...this.allConversations]);
+    }
+
+    filterChannelsOfType(subType: ChannelSubType): ChannelDTO[] {
+        return this.displayedChannelConversations.filter((channel) => channel.subType === subType);
     }
 }

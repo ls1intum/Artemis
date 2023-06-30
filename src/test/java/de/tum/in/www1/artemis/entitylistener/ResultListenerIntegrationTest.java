@@ -99,7 +99,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         idOfStudent1 = student1.getId();
         // creating course
         Course course = courseUtilService.createCourse();
@@ -108,7 +108,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfTeamTextExercise = teamExercise.getId();
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
     }
 
@@ -119,10 +119,10 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Exercise exercise;
         if (isTeamTest) {
-            exercise = exerciseRepository.findById(idOfTeamTextExercise).get();
+            exercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
         }
         else {
-            exercise = exerciseRepository.findById(idOfIndividualTextExercise).get();
+            exercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
         }
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
@@ -408,15 +408,15 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Long idOfExercise;
         Participant participant;
         if (isTeam) {
-            participant = teamRepository.findById(idOfTeam1).get();
+            participant = teamRepository.findById(idOfTeam1).orElseThrow();
             idOfExercise = idOfTeamTextExercise;
         }
         else {
-            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             idOfExercise = idOfIndividualTextExercise;
         }
 
-        var exercise = exerciseRepository.findById(idOfExercise).get();
+        var exercise = exerciseRepository.findById(idOfExercise).orElseThrow();
 
         Result persistedResult = participationUtilService.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
@@ -445,15 +445,15 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Long idOfExercise;
         Participant participant;
         if (isTeamTest) {
-            participant = teamRepository.findById(idOfTeam1).get();
+            participant = teamRepository.findById(idOfTeam1).orElseThrow();
             idOfExercise = idOfTeamTextExercise;
         }
         else {
-            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             idOfExercise = idOfIndividualTextExercise;
         }
 
-        var exercise = exerciseRepository.findById(idOfExercise).get();
+        var exercise = exerciseRepository.findById(idOfExercise).orElseThrow();
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
