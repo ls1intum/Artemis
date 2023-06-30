@@ -8,7 +8,6 @@ import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.s
     styleUrls: ['./link-preview-container.component.scss'],
 })
 export class LinkPreviewContainerComponent implements OnInit {
-    @Input() multiple: boolean;
     @Input() data: string | undefined;
 
     linkPreviews: LinkPreview[] = [];
