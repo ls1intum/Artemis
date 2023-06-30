@@ -110,7 +110,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         var participants = assertParticipants(chat.getId(), 1, loginNameWithoutPrefix);
         // creator is automatically added as channel moderator
-        assertThat(participants.stream().findFirst().get().getIsModerator()).isTrue();
+        assertThat(participants.stream().findFirst().orElseThrow().getIsModerator()).isTrue();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
 
@@ -245,8 +245,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
         var tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of());
-        var channelFromDatabase = channelRepository.findById(channel.getId()).get();
+                userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of());
+        var channelFromDatabase = channelRepository.findById(channel.getId()).orElseThrow();
 
         tutorialGroup.setTutorialGroupChannel(channelFromDatabase);
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
