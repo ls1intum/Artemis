@@ -33,21 +33,28 @@ COPY gradle gradle/
 # (from https://stackoverflow.com/questions/63961934/how-to-use-docker-build-cache-when-version-bumping-a-react-app)
 COPY package.json package-lock.json ./
 RUN \
-  --mount=type=cache,target=/opt/artemis/.gradle/caches \
+  # Mount global cache for Gradle (project cache in /opt/artemis/.gradle doesn't seem to be populated)
   --mount=type=cache,target=/root/.gradle/caches \
+  # Mount cache for npm
   --mount=type=cache,target=/opt/artemis/.npm \
-  mkdir -p /opt/artemis/.npm && \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_set_cache && \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_ci
+  # Create .npm directory if not yet available
+  mkdir -p /opt/artemis/.npm \
+  # Set .npm directory as npm cache
+  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_set_cache \
+  # Pre-populate the npm and gradle caches if related files change (see COPY statements above)
+  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_ci
 
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
 RUN \
-  --mount=type=cache,target=/opt/artemis/.gradle/caches \
+  # Mount global cache for Gradle (project cache in /opt/artemis/.gradle doesn't seem to be populated)
   --mount=type=cache,target=/root/.gradle/caches \
+  # Mount cache for npm
   --mount=type=cache,target=/opt/artemis/.npm \
+  # Mount cache for the Angular CLI
   --mount=type=cache,target=/opt/artemis/.cache \
+  # Build the .war file
   ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
 #-----------------------------------------------------------------------------------------------------------------------
