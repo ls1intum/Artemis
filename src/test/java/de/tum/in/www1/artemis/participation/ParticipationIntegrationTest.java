@@ -532,7 +532,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response.getResults()).allMatch(result1 -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
         assertThat(response.getIndividualDueDate()).isNotNull().isBefore(ZonedDateTime.now());
 
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(programmingExercise, participation);
     }
 
     @Test
@@ -902,8 +902,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(participation.getIndividualDueDate());
 
-        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(exercise, participation);
+        verify(programmingExerciseScheduleService).updateScheduling(exercise);
+        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(exercise, participation);
         verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(exercise, participation2);
     }
 
@@ -966,9 +966,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
-        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        verify(programmingExerciseScheduleService).updateScheduling(exercise);
         // make sure the student repo is unlocked as the due date is in the future
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(exercise, participation);
+        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     @Test
@@ -992,9 +992,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
-        verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
+        verify(programmingExerciseScheduleService).updateScheduling(exercise);
         // student repo should be locked as due date is in the past
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(exercise, participation);
+        verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     /**

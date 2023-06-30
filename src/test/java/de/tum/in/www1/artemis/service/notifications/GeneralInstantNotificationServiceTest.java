@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,9 +73,9 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, student1, null);
 
-        verify(applePushNotificationService, times(1)).sendNotification(notification, student1, null);
-        verify(firebasePushNotificationService, times(1)).sendNotification(notification, student1, null);
-        verify(mailService, times(1)).sendNotification(notification, student1, null);
+        verify(applePushNotificationService).sendNotification(notification, student1, null);
+        verify(firebasePushNotificationService).sendNotification(notification, student1, null);
+        verify(mailService).sendNotification(notification, student1, null);
     }
 
     /**
@@ -91,9 +90,9 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, student1, null);
 
-        verify(applePushNotificationService, times(1)).sendNotification(notification, student1, null);
-        verify(firebasePushNotificationService, times(1)).sendNotification(notification, student1, null);
-        verify(mailService, times(0)).sendNotification(notification, student1, null);
+        verify(applePushNotificationService).sendNotification(notification, student1, null);
+        verify(firebasePushNotificationService).sendNotification(notification, student1, null);
+        verify(mailService, never()).sendNotification(notification, student1, null);
     }
 
     /**
@@ -108,9 +107,9 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, student1, null);
 
-        verify(applePushNotificationService, times(0)).sendNotification(notification, student1, null);
-        verify(firebasePushNotificationService, times(0)).sendNotification(notification, student1, null);
-        verify(mailService, times(1)).sendNotification(notification, student1, null);
+        verify(applePushNotificationService, never()).sendNotification(notification, student1, null);
+        verify(firebasePushNotificationService, never()).sendNotification(notification, student1, null);
+        verify(mailService).sendNotification(notification, student1, null);
     }
 
     /**
@@ -129,9 +128,9 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
-        verify(applePushNotificationService, times(1)).sendNotification(notification, studentList, null);
-        verify(firebasePushNotificationService, times(1)).sendNotification(notification, studentList, null);
-        verify(mailService, times(1)).sendNotification(notification, studentList, null);
+        verify(applePushNotificationService).sendNotification(notification, studentList, null);
+        verify(firebasePushNotificationService).sendNotification(notification, studentList, null);
+        verify(mailService).sendNotification(notification, studentList, null);
     }
 
     @Test
@@ -146,9 +145,9 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
-        verify(applePushNotificationService, times(1)).sendNotification(notification, studentList, null);
-        verify(firebasePushNotificationService, times(1)).sendNotification(notification, studentList, null);
-        verify(mailService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(applePushNotificationService).sendNotification(notification, studentList, null);
+        verify(firebasePushNotificationService).sendNotification(notification, studentList, null);
+        verify(mailService).sendNotification(notification, Collections.singletonList(student1), null);
     }
 
     @Test
@@ -163,8 +162,8 @@ class GeneralInstantNotificationServiceTest {
 
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
-        verify(applePushNotificationService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
-        verify(firebasePushNotificationService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
-        verify(mailService, times(1)).sendNotification(notification, studentList, null);
+        verify(applePushNotificationService).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(firebasePushNotificationService).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(mailService).sendNotification(notification, studentList, null);
     }
 }
